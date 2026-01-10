@@ -13,11 +13,12 @@ struct TodayRootView: View {
         NavigationStack {
             DayTimelineScreen(
                 day: selectedDay,
-                onEdit: { activity in
-                    editingActivity = activity
+                onEdit: { editingActivity = $0 },
+                onCreateAt: { start in
+                    newDraft = NewActivityDraft(initialStart: start, initialEnd: nil)
                 },
-                onCreateAt: { startAt in
-                    newDraft = NewActivityDraft(initialStart: startAt)
+                onCreateRange: { start, end in
+                    newDraft = NewActivityDraft(initialStart: start, initialEnd: end)
                 }
             )
             .navigationTitle(dayTitle(selectedDay))
@@ -37,37 +38,44 @@ struct TodayRootView: View {
 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        newDraft = NewActivityDraft(initialStart: nil) // default (now or 9am)
+                        newDraft = NewActivityDraft(initialStart: nil, initialEnd: nil)
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
             }
         }
-        // Snap to Today when returning to the app (handy when app left open overnight)
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             if !cal.isDateInToday(selectedDay) {
                 selectedDay = Date()
             }
         }
-        // New activity sheet (optionally prefilled start time)
         .sheet(item: $newDraft) { draft in
-            ActivityEditorView(day: selectedDay, activity: nil, initialStart: draft.initialStart)
+            ActivityEditorView(
+                day: selectedDay,
+                activity: nil,
+                initialStart: draft.initialStart,
+                initialEnd: draft.initialEnd
+            )
         }
-        // Edit activity sheet
         .sheet(item: $editingActivity) { act in
-            ActivityEditorView(day: selectedDay, activity: act, initialStart: nil)
+            ActivityEditorView(
+                day: selectedDay,
+                activity: act,
+                initialStart: nil,
+                initialEnd: nil
+            )
         }
     }
 
     private func dayTitle(_ d: Date) -> String {
-        if cal.isDateInToday(d) { return "Today" }
-        return d.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
+        cal.isDateInToday(d) ? "Today" : d.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
     }
 }
 
 private struct NewActivityDraft: Identifiable {
     let id = UUID()
     let initialStart: Date?
+    let initialEnd: Date?
 }
