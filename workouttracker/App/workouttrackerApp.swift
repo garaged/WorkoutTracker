@@ -6,9 +6,10 @@ struct workouttrackerApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Activity.self,
+            TemplateActivity.self,
+            TemplateInstanceOverride.self,
             // Item.self, // include ONLY if you still have it
         ])
-
         let fm = FileManager.default
         let appSupport = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         do {
