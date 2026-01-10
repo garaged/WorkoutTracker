@@ -9,24 +9,36 @@ struct ActivityEditorView: View {
     private let activity: Activity?
     private let day: Date
     private let initialStart: Date?
+    private let initialEnd: Date?
 
     @State private var title: String
     @State private var startAt: Date
     @State private var hasEnd: Bool
     @State private var endAt: Date
 
-    init(day: Date, activity: Activity?, initialStart: Date?) {
+    init(day: Date, activity: Activity?, initialStart: Date?, initialEnd: Date?) {
         self.day = day
         self.activity = activity
         self.initialStart = initialStart
+        self.initialEnd = initialEnd
 
-        let fallback = ActivityEditorView.defaultStart(for: day)
-        let start = activity?.startAt ?? (initialStart ?? fallback)
-        let end = activity?.endAt ?? cal.date(byAdding: .minute, value: 30, to: start)!
+        let fallbackStart = ActivityEditorView.defaultStart(for: day)
+        let start = activity?.startAt ?? (initialStart ?? fallbackStart)
+
+        let minEnd = cal.date(byAdding: .minute, value: 15, to: start) ?? start
+        let proposedEnd =
+            activity?.endAt
+            ?? initialEnd
+            ?? cal.date(byAdding: .minute, value: 30, to: start)!
+
+        let end = max(proposedEnd, minEnd)
 
         _title = State(initialValue: activity?.title ?? "")
         _startAt = State(initialValue: start)
+
+        // ✅ Opinionated: new activities default to having an end time
         _hasEnd = State(initialValue: activity == nil ? true : (activity?.endAt != nil))
+
         _endAt = State(initialValue: end)
     }
 
@@ -40,15 +52,16 @@ struct ActivityEditorView: View {
                 Section("Time") {
                     DatePicker("Start", selection: $startAt, displayedComponents: [.date, .hourAndMinute])
                         .onChange(of: startAt) { _, newStart in
-                            if endAt < newStart {
-                                endAt = cal.date(byAdding: .minute, value: 30, to: newStart) ?? newStart
+                            let minEnd = cal.date(byAdding: .minute, value: 15, to: newStart) ?? newStart
+                            if endAt < minEnd {
+                                endAt = cal.date(byAdding: .minute, value: 30, to: newStart) ?? minEnd
                             }
                         }
 
                     Toggle("Set end time", isOn: $hasEnd)
 
                     if hasEnd {
-                        DatePicker("End", selection: $endAt, in: startAt..., displayedComponents: [.date, .hourAndMinute])
+                        DatePicker("End", selection: $endAt, in: minEndRange..., displayedComponents: [.date, .hourAndMinute])
                     }
                 }
             }
@@ -64,6 +77,10 @@ struct ActivityEditorView: View {
                 }
             }
         }
+    }
+
+    private var minEndRange: Date {
+        cal.date(byAdding: .minute, value: 15, to: startAt) ?? startAt
     }
 
     private func save() {
