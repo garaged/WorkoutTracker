@@ -4,6 +4,8 @@ import SwiftData
 struct DayTimelineScreen: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var activities: [Activity]
+    @State private var isSelectingRange: Bool = false
+    @State private var hoveredLaneWhileDraggingBlock: Int? = nil
 
     private let day: Date
     private let onEdit: (Activity) -> Void
@@ -48,6 +50,7 @@ struct DayTimelineScreen: View {
                     .padding(.horizontal, 8)
                     .padding(.bottom, 24)
             }
+            .scrollDisabled(isSelectingRange)
             .onAppear {
                 guard Calendar.current.isDateInToday(day) else { return }
                 let hour = Calendar.current.component(.hour, from: Date())
@@ -68,9 +71,13 @@ struct DayTimelineScreen: View {
             defaultDurationMinutes: defaultDurationMinutes
         )
 
+        let laneByID: [PersistentIdentifier: Int] = Dictionary(
+            uniqueKeysWithValues: laidOut.items.map { ($0.activity.persistentModelID, $0.lane) }
+        )
+
         return GeometryReader { geo in
             let availableWidth = max(0, geo.size.width - gutterWidth - sidePadding * 2)
-            let laneCount = max(1, laidOut.laneCount)
+            let laneCount = max(3, laidOut.laneCount)
             let laneWidth = (availableWidth - laneGap * CGFloat(laneCount - 1)) / CGFloat(laneCount)
 
             let lanesX0 = gutterWidth + sidePadding
@@ -91,6 +98,7 @@ struct DayTimelineScreen: View {
                     laneWidth: laneWidth,
                     laneGap: laneGap,
                     lanesX0: lanesX0,
+                    isSelecting: $isSelectingRange,
                     onTap: { minute, lane in
                         let start = dateFromMinutes(minute, dayStart: dayStart)
                         onCreateAt(start, lane)
@@ -113,6 +121,14 @@ struct DayTimelineScreen: View {
                         .opacity(0.75)
                 }
 
+                if let hl = hoveredLaneWhileDraggingBlock {
+                    LaneHighlight(
+                        x: lanesX0 + CGFloat(hl) * (laneWidth + laneGap),
+                        width: max(44, laneWidth),
+                        height: totalHeight
+                    )
+                }
+
                 // Activity blocks
                 ForEach(laidOut.items, id: \.activity.persistentModelID) { item in
                     let x = lanesX0 + CGFloat(item.lane) * laneSpan
@@ -126,7 +142,28 @@ struct DayTimelineScreen: View {
                         clippedEnd: item.clippedEnd,
                         hourHeight: hourHeight,
                         defaultDurationMinutes: defaultDurationMinutes,
-                        onEdit: { onEdit(item.activity) }
+                        currentLane: item.lane,
+                        laneCount: laneCount,
+                        laneWidth: laneWidth,
+                        laneGap: laneGap,
+                        onEdit: { onEdit(item.activity) },
+                        onCommitLaneChange: { oldLane, newLane in
+                            commitLaneChange(
+                                moved: item.activity,
+                                oldLane: oldLane,
+                                newLane: newLane,
+                                all: activities,
+                                laneByID: laneByID,
+                                maxLanes: laneCount,
+                                defaultDurationMinutes: defaultDurationMinutes
+                            )
+                        },
+                        onHoverLane: { lane in
+                            hoveredLaneWhileDraggingBlock = lane
+                        },
+                        onEndHoverLane: {
+                            hoveredLaneWhileDraggingBlock = nil
+                        }
                     )
                     .frame(width: max(60, laneWidth), height: h, alignment: .topLeading)
                     .offset(x: x, y: y)
@@ -161,6 +198,123 @@ struct DayTimelineScreen: View {
     private func dateFromMinutes(_ minutes: Int, dayStart: Date) -> Date {
         Calendar.current.date(byAdding: .minute, value: minutes, to: dayStart) ?? dayStart
     }
+    
+    private func resolveLaneHintsAfterDrop(
+        moved: Activity,
+        pinnedLane: Int,
+        all: [Activity],
+        maxLanes: Int,
+        defaultDurationMinutes: Int
+    ) {
+        let lanes = max(1, maxLanes)
+        func clampLane(_ x: Int) -> Int { min(max(x, 0), lanes - 1) }
+
+        let group = all.filter { overlaps($0, moved, defaultDurationMinutes: defaultDurationMinutes) }
+        guard group.count > 1 else { return }
+
+        var laneEnds = Array(repeating: Date.distantPast, count: lanes)
+
+        func assign(_ a: Activity, _ lane: Int) {
+            let l = clampLane(lane)
+            a.laneHint = l
+            laneEnds[l] = effectiveEnd(a, defaultDurationMinutes: defaultDurationMinutes)
+        }
+
+        // pin moved first
+        assign(moved, pinnedLane)
+
+        let others = group
+            .filter { $0.persistentModelID != moved.persistentModelID }
+            .sorted { $0.startAt < $1.startAt }
+
+        for a in others {
+            let s = a.startAt
+            let preferred = clampLane(a.laneHint)
+            let candidates = [preferred] + (0..<lanes).filter { $0 != preferred }
+
+            var chosen: Int? = nil
+            for l in candidates {
+                if laneEnds[l] <= s {
+                    chosen = l
+                    break
+                }
+            }
+            if chosen == nil {
+                chosen = laneEnds.enumerated().min(by: { $0.element < $1.element })?.offset ?? 0
+            }
+            assign(a, chosen!)
+        }
+    }
+    
+    private func effectiveEnd(_ a: Activity, defaultDurationMinutes: Int) -> Date {
+        a.endAt ?? Calendar.current.date(byAdding: .minute, value: defaultDurationMinutes, to: a.startAt)!
+    }
+
+    private func overlaps(_ a: Activity, _ b: Activity, defaultDurationMinutes: Int) -> Bool {
+        a.startAt < effectiveEnd(b, defaultDurationMinutes: defaultDurationMinutes)
+        && b.startAt < effectiveEnd(a, defaultDurationMinutes: defaultDurationMinutes)
+    }
+
+    private func commitLaneChange(
+        moved: Activity,
+        oldLane: Int,
+        newLane: Int,
+        all: [Activity],
+        laneByID: [PersistentIdentifier: Int],
+        maxLanes: Int,
+        defaultDurationMinutes: Int
+    ) {
+        let lanes = max(1, maxLanes)
+        func clampLane(_ x: Int) -> Int { min(max(x, 0), lanes - 1) }
+
+        let oldL = clampLane(oldLane)
+        let newL = clampLane(newLane)
+
+        guard oldL != newL else {
+            moved.laneHint = newL
+            return
+        }
+
+        // Build the overlap group for moved
+        let group = all.filter { overlaps($0, moved, defaultDurationMinutes: defaultDurationMinutes) }
+
+        // Determine who is CURRENTLY DISPLAYED in the target lane and overlaps moved
+        let conflictsInTargetLane = group.filter { a in
+            a.persistentModelID != moved.persistentModelID
+            && (laneByID[a.persistentModelID] ?? a.laneHint) == newL
+        }
+
+        // ✅ Swap only when there is exactly ONE conflict (A ↔ B), and it is safe
+        if conflictsInTargetLane.count == 1 {
+            let other = conflictsInTargetLane[0]
+
+            // Is old lane currently free of overlapping blocks for `other`?
+            let oldLaneBlockedForOther = group.contains { a in
+                a.persistentModelID != moved.persistentModelID
+                && a.persistentModelID != other.persistentModelID
+                && overlaps(a, other, defaultDurationMinutes: defaultDurationMinutes)
+                && (laneByID[a.persistentModelID] ?? a.laneHint) == oldL
+            }
+
+            if !oldLaneBlockedForOther {
+                // Do the swap
+                moved.laneHint = newL
+                other.laneHint = oldL
+                return
+            }
+        }
+
+        // Fallback: just pin moved in the new lane and re-pack the overlap group
+        moved.laneHint = newL
+        resolveLaneHintsAfterDrop(
+            moved: moved,
+            pinnedLane: newL,
+            all: all,
+            maxLanes: lanes,
+            defaultDurationMinutes: defaultDurationMinutes
+        )
+    }
+
 }
 
 // MARK: - Grid
@@ -204,6 +358,8 @@ private struct TimelineInteractionLayer: View {
     let laneGap: CGFloat
     let lanesX0: CGFloat
 
+    @Binding var isSelecting: Bool
+
     let onTap: (Int, Int) -> Void
     let onDragRange: (Int, Int, Int) -> Void
 
@@ -218,44 +374,45 @@ private struct TimelineInteractionLayer: View {
                 .contentShape(Rectangle())
 
             if selecting {
+                // ✅ highlight the hovered lane (full height)
+                LaneHighlight(
+                    x: lanesX0 + CGFloat(selectedLane) * (laneWidth + laneGap),
+                    width: max(44, laneWidth),
+                    height: totalHeight
+                )
+
                 selectionRect
             }
         }
-        .simultaneousGesture(
-            SpatialTapGesture().onEnded { value in
-                let y = clampY(value.location.y)
-                let m = minutes(forY: y)
-                let lane = laneForX(value.location.x)
-                onTap(m, lane)
-            }
-        )
-        .gesture(
-            LongPressGesture(minimumDuration: 0.2)
-                .sequenced(before: DragGesture(minimumDistance: 0))
-                .onChanged { value in
-                    switch value {
-                    case .first(true):
-                        break
-                    case .second(true, let drag?):
-                        if !selecting {
-                            selecting = true
-                            startY = clampY(drag.startLocation.y)
-                            currentY = clampY(drag.startLocation.y)
-                            selectedLane = laneForX(drag.startLocation.x)
-                        }
-                        currentY = clampY(drag.location.y)
-                        selectedLane = laneForX(drag.location.x) // ✅ horizontal lane select
-                    default:
-                        break
+        .overlay {
+            GestureCaptureView(
+                onTap: { pt in
+                    let y = clampY(pt.y)
+                    let m = minutes(forY: y)
+                    let lane = laneForX(pt.x)
+                    onTap(m, lane)
+                },
+                onLongPressBegan: { pt in
+                    selecting = true
+                    isSelecting = true
+
+                    startY = clampY(pt.y)
+                    currentY = clampY(pt.y)
+                    selectedLane = laneForX(pt.x)
+                },
+                onLongPressChanged: { pt in
+                    guard selecting else { return }
+                    currentY = clampY(pt.y)
+                    selectedLane = laneForX(pt.x)
+                },
+                onLongPressEnded: { startPt, endPt in
+                    defer {
+                        selecting = false
+                        isSelecting = false
                     }
-                }
-                .onEnded { value in
-                    defer { selecting = false }
 
-                    guard case .second(true, let drag?) = value else { return }
-
-                    let y1 = clampY(drag.startLocation.y)
-                    let y2 = clampY(drag.location.y)
+                    let y1 = clampY(startPt.y)
+                    let y2 = clampY(endPt.y)
 
                     let a = minutes(forY: min(y1, y2))
                     let b = minutes(forY: max(y1, y2))
@@ -263,9 +420,11 @@ private struct TimelineInteractionLayer: View {
                     let startMin = a
                     let endMin = max(b, startMin + minDurationMinutes)
 
-                    onDragRange(startMin, min(endMin, 24 * 60), selectedLane)
+                    let lane = laneForX(endPt.x)
+                    onDragRange(startMin, min(endMin, 24 * 60), lane)
                 }
-        )
+            )
+        }
     }
 
     private var selectionRect: some View {
@@ -314,6 +473,81 @@ private struct TimelineInteractionLayer: View {
     }
 }
 
+private struct GestureCaptureView: UIViewRepresentable {
+    let onTap: (CGPoint) -> Void
+    let onLongPressBegan: (CGPoint) -> Void
+    let onLongPressChanged: (CGPoint) -> Void
+    let onLongPressEnded: (CGPoint, CGPoint) -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeUIView(context: Context) -> UIView {
+        let v = UIView(frame: .zero)
+        v.backgroundColor = .clear
+        v.isUserInteractionEnabled = true
+
+        // Tap
+        let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
+        tap.cancelsTouchesInView = false
+
+        // Long press (acts as press+drag selection)
+        let lp = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleLongPress(_:)))
+        lp.minimumPressDuration = 0.3
+        lp.allowableMovement = 12
+        lp.cancelsTouchesInView = false
+
+        // Prevent tap firing after a long press selection
+        tap.require(toFail: lp)
+
+        v.addGestureRecognizer(tap)
+        v.addGestureRecognizer(lp)
+
+        context.coordinator.view = v
+        return v
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {}
+
+    final class Coordinator: NSObject {
+        let parent: GestureCaptureView
+        weak var view: UIView?
+
+        private var startPoint: CGPoint?
+
+        init(_ parent: GestureCaptureView) {
+            self.parent = parent
+        }
+
+        @objc func handleTap(_ gr: UITapGestureRecognizer) {
+            guard let v = view else { return }
+            let pt = gr.location(in: v)
+            parent.onTap(pt)
+        }
+
+        @objc func handleLongPress(_ gr: UILongPressGestureRecognizer) {
+            guard let v = view else { return }
+            let pt = gr.location(in: v)
+
+            switch gr.state {
+            case .began:
+                startPoint = pt
+                parent.onLongPressBegan(pt)
+
+            case .changed:
+                parent.onLongPressChanged(pt)
+
+            case .ended, .cancelled, .failed:
+                let start = startPoint ?? pt
+                parent.onLongPressEnded(start, pt)
+                startPoint = nil
+
+            default:
+                break
+            }
+        }
+    }
+}
+
 // MARK: - Interactive Activity Block (move + resize + clip markers)
 
 private struct InteractiveActivityBlockView: View {
@@ -325,10 +559,25 @@ private struct InteractiveActivityBlockView: View {
 
     let hourHeight: CGFloat
     let defaultDurationMinutes: Int
-    let onEdit: () -> Void
 
+    // ✅ new: lane dragging inputs
+    let currentLane: Int
+    let laneCount: Int
+    let laneWidth: CGFloat
+    let laneGap: CGFloat
+
+    let onEdit: () -> Void
+    //let onCommitLane: (Int) -> Void
+    let onCommitLaneChange: (Int, Int) -> Void
+    
+    let onHoverLane: (Int) -> Void
+    let onEndHoverLane: () -> Void
+
+
+    // Drag preview state
     @State private var isDragging = false
     @State private var dragDeltaMinutes: Int = 0
+    @State private var dragDeltaLane: Int = 0
 
     @State private var isResizing = false
     @State private var resizeDeltaMinutes: Int = 0
@@ -341,8 +590,13 @@ private struct InteractiveActivityBlockView: View {
         let baseStart = rawStartMinute()
         let baseEnd = rawEndMinute()
 
+        // Preview times while moving/resizing
         let previewStart = baseStart + dragDeltaMinutes
         let previewEnd = baseEnd + dragDeltaMinutes + resizeDeltaMinutes
+
+        // Preview lane while dragging horizontally
+        let laneSpan = laneWidth + laneGap
+        let previewLane = clamp(currentLane + dragDeltaLane, 0, max(0, laneCount - 1))
 
         let previewClippedStart = previewStart < 0
         let previewClippedEnd = previewEnd > 24 * 60
@@ -366,7 +620,7 @@ private struct InteractiveActivityBlockView: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(.tint.opacity(0.35), lineWidth: 1))
         .overlay(alignment: .topTrailing) {
             if isDragging || isResizing {
-                Text(isDragging ? "Move" : "Resize")
+                Text(isResizing ? "Resize" : "Move")
                     .font(.caption2)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -380,6 +634,9 @@ private struct InteractiveActivityBlockView: View {
         .overlay(alignment: .bottomLeading) {
             if clippedEnd || previewClippedEnd { ClipMarker(systemName: "chevron.down") }
         }
+        // ✅ Move the view visually while lane-dragging
+        .offset(x: CGFloat(previewLane - currentLane) * laneSpan)
+        // Resize handle
         .overlay(alignment: .bottomTrailing) {
             resizeHandle
                 .padding(8)
@@ -392,25 +649,60 @@ private struct InteractiveActivityBlockView: View {
         }
     }
 
+    // MARK: - Gestures
+
     private var moveGesture: some Gesture {
         DragGesture(minimumDistance: 6)
             .onChanged { value in
-                guard canMoveInThisDay() else { return }
                 isDragging = true
-                dragDeltaMinutes = snap(minutesFromTranslation(value.translation.height))
-            }
-            .onEnded { value in
-                guard canMoveInThisDay() else {
-                    isDragging = false
+
+                // Vertical -> time move (only if event starts on this day; same rule you had)
+                if canMoveInThisDay() {
+                    dragDeltaMinutes = snap(minutesFromTranslation(value.translation.height))
+                } else {
                     dragDeltaMinutes = 0
-                    return
                 }
 
-                let delta = snap(minutesFromTranslation(value.translation.height))
-                commitMove(deltaMinutes: delta)
+                // Horizontal -> lane change preview
+                let laneSpan = laneWidth + laneGap
+                if laneSpan > 0 {
+                    dragDeltaLane = Int((value.translation.width / laneSpan).rounded())
+                } else {
+                    dragDeltaLane = 0
+                }
+                //let laneSpan = laneWidth + laneGap
+                let previewLane = clamp(currentLane + dragDeltaLane, 0, max(0, laneCount - 1))
+                onHoverLane(previewLane)
 
+            }
+            .onEnded { value in
+                // Compute final deltas
+                let finalMinutes = canMoveInThisDay()
+                    ? snap(minutesFromTranslation(value.translation.height))
+                    : 0
+
+                let laneSpan = laneWidth + laneGap
+                let finalLaneDelta = (laneSpan > 0)
+                    ? Int((value.translation.width / laneSpan).rounded())
+                    : 0
+
+                // Commit time move (if allowed)
+                if finalMinutes != 0 {
+                    commitMove(deltaMinutes: finalMinutes)
+                }
+
+                // Commit lane change (always allowed)
+                if finalLaneDelta != 0 {
+                    let newLane = clamp(currentLane + finalLaneDelta, 0, max(0, laneCount - 1))
+                    onCommitLaneChange(currentLane, newLane)
+                }
+                
+                onEndHoverLane()
+
+                // Reset UI state
                 isDragging = false
                 dragDeltaMinutes = 0
+                dragDeltaLane = 0
             }
     }
 
@@ -428,6 +720,8 @@ private struct InteractiveActivityBlockView: View {
                 resizeDeltaMinutes = 0
             }
     }
+
+    // MARK: - Commits
 
     private func commitMove(deltaMinutes: Int) {
         let duration = normalizedDurationMinutes()
@@ -452,6 +746,8 @@ private struct InteractiveActivityBlockView: View {
             activity.endAt = dateFromMinutes(baseStart + minDurationMinutes)
         }
     }
+
+    // MARK: - Helpers
 
     private func canMoveInThisDay() -> Bool {
         let s = rawStartMinute()
@@ -512,6 +808,7 @@ private struct InteractiveActivityBlockView: View {
     }
 }
 
+
 private struct ClipMarker: View {
     let systemName: String
     var body: some View {
@@ -522,6 +819,24 @@ private struct ClipMarker: View {
             .padding(.vertical, 6)
             .background(.thinMaterial, in: Capsule())
             .padding(6)
+    }
+}
+
+private struct LaneHighlight: View {
+    let x: CGFloat
+    let width: CGFloat
+    let height: CGFloat
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 14)
+            .fill(.tint.opacity(0.06))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(.tint.opacity(0.10), lineWidth: 1)
+            )
+            .frame(width: width, height: height)
+            .offset(x: x, y: 0)
+            .allowsHitTesting(false)
     }
 }
 

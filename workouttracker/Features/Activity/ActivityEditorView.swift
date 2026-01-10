@@ -12,10 +12,15 @@ struct ActivityEditorView: View {
     private let initialEnd: Date?
     private let initialLaneHint: Int?
 
+    // Opinionated: keep it small for now
+    private let laneOptions: [Int] = [0, 1, 2]   // stored as 0-based
+    private let laneLabels: [String] = ["Lane 1", "Lane 2", "Lane 3"]
+
     @State private var title: String
     @State private var startAt: Date
     @State private var hasEnd: Bool
     @State private var endAt: Date
+    @State private var laneHint: Int
 
     init(day: Date, activity: Activity?, initialStart: Date?, initialEnd: Date?, initialLaneHint: Int?) {
         self.day = day
@@ -35,13 +40,19 @@ struct ActivityEditorView: View {
 
         let end = max(proposedEnd, minEnd)
 
+        let initialLane =
+            activity?.laneHint
+            ?? initialLaneHint
+            ?? 0
+
         _title = State(initialValue: activity?.title ?? "")
         _startAt = State(initialValue: start)
 
-        // ✅ New activities default to having an end time
+        // New activities default to end time
         _hasEnd = State(initialValue: activity == nil ? true : (activity?.endAt != nil))
 
         _endAt = State(initialValue: end)
+        _laneHint = State(initialValue: max(0, min(initialLane, 2))) // clamp to 0..2 for now
     }
 
     var body: some View {
@@ -65,6 +76,19 @@ struct ActivityEditorView: View {
                     if hasEnd {
                         DatePicker("End", selection: $endAt, in: minEndRange..., displayedComponents: [.date, .hourAndMinute])
                     }
+                }
+
+                Section("Lane") {
+                    Picker("Lane", selection: $laneHint) {
+                        ForEach(Array(zip(laneOptions, laneLabels)), id: \.0) { value, label in
+                            Text(label).tag(value)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    Text("Lane affects which column the block prefers when activities overlap.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
             .navigationTitle(activity == nil ? "New Activity" : "Edit Activity")
@@ -93,10 +117,9 @@ struct ActivityEditorView: View {
             activity.title = t
             activity.startAt = startAt
             activity.endAt = finalEnd
-            // keep existing laneHint unless you later add UI to change it
+            activity.laneHint = laneHint
         } else {
-            let lane = max(0, initialLaneHint ?? 0)
-            let new = Activity(title: t, startAt: startAt, endAt: finalEnd, laneHint: lane)
+            let new = Activity(title: t, startAt: startAt, endAt: finalEnd, laneHint: laneHint)
             modelContext.insert(new)
         }
 
