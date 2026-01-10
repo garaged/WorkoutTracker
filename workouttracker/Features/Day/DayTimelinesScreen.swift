@@ -6,6 +6,8 @@ struct DayTimelineScreen: View {
     @Query private var activities: [Activity]
     @State private var isSelectingRange: Bool = false
     @State private var hoveredLaneWhileDraggingBlock: Int? = nil
+    @StateObject private var autoScroll = AutoScrollController()
+    @State private var viewportHeight: CGFloat = 0
 
     private let day: Date
     private let onEdit: (Activity) -> Void
@@ -44,18 +46,28 @@ struct DayTimelineScreen: View {
     }
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView(.vertical) {
-                timeline(proxy: proxy)
-                    .padding(.horizontal, 8)
-                    .padding(.bottom, 24)
-            }
-            .scrollDisabled(isSelectingRange)
-            .onAppear {
-                guard Calendar.current.isDateInToday(day) else { return }
-                let hour = Calendar.current.component(.hour, from: Date())
-                DispatchQueue.main.async {
-                    proxy.scrollTo(hour, anchor: .top)
+        GeometryReader { vp in
+            ScrollViewReader { proxy in
+                ScrollView(.vertical) {
+                    timeline(proxy: proxy)
+                        .padding(.horizontal, 8)
+                        .padding(.bottom, 24)
+                        .background(ScrollViewIntrospector { sv in
+                            autoScroll.attach(sv)
+                        })
+                }
+                .coordinateSpace(name: "timelineViewport")
+                .onAppear { viewportHeight = vp.size.height }
+                .onChange(of: vp.size.height) { _, newValue in
+                    viewportHeight = newValue
+                }
+                .scrollDisabled(isSelectingRange)
+                .onAppear {
+                    guard Calendar.current.isDateInToday(day) else { return }
+                    let hour = Calendar.current.component(.hour, from: Date())
+                    DispatchQueue.main.async {
+                        proxy.scrollTo(hour, anchor: .top)
+                    }
                 }
             }
         }
@@ -77,7 +89,7 @@ struct DayTimelineScreen: View {
 
         return GeometryReader { geo in
             let availableWidth = max(0, geo.size.width - gutterWidth - sidePadding * 2)
-            let laneCount = max(3, laidOut.laneCount)
+            let laneCount = max(1, laidOut.laneCount)
             let laneWidth = (availableWidth - laneGap * CGFloat(laneCount - 1)) / CGFloat(laneCount)
 
             let lanesX0 = gutterWidth + sidePadding
@@ -99,6 +111,8 @@ struct DayTimelineScreen: View {
                     laneGap: laneGap,
                     lanesX0: lanesX0,
                     isSelecting: $isSelectingRange,
+                    autoScroll: autoScroll,
+                    viewportHeight: viewportHeight,
                     onTap: { minute, lane in
                         let start = dateFromMinutes(minute, dayStart: dayStart)
                         onCreateAt(start, lane)
@@ -146,6 +160,8 @@ struct DayTimelineScreen: View {
                         laneCount: laneCount,
                         laneWidth: laneWidth,
                         laneGap: laneGap,
+                        autoScroll: autoScroll,
+                        viewportHeight: viewportHeight,
                         onEdit: { onEdit(item.activity) },
                         onCommitLaneChange: { oldLane, newLane in
                             commitLaneChange(
@@ -158,23 +174,20 @@ struct DayTimelineScreen: View {
                                 defaultDurationMinutes: defaultDurationMinutes
                             )
                         },
-                        onHoverLane: { lane in
-                            hoveredLaneWhileDraggingBlock = lane
+                        onCommitTimeChange: {
+                            commitTimeChange(
+                                moved: item.activity,
+                                all: activities,
+                                defaultDurationMinutes: defaultDurationMinutes
+                            )
                         },
-                        onEndHoverLane: {
-                            hoveredLaneWhileDraggingBlock = nil
-                        }
+                        onHoverLane: { lane in hoveredLaneWhileDraggingBlock = lane },
+                        onEndHoverLane: { hoveredLaneWhileDraggingBlock = nil }
                     )
                     .frame(width: max(60, laneWidth), height: h, alignment: .topLeading)
                     .offset(x: x, y: y)
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            modelContext.delete(item.activity)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
                 }
+
             }
             .frame(height: totalHeight)
         }
@@ -314,7 +327,85 @@ struct DayTimelineScreen: View {
             defaultDurationMinutes: defaultDurationMinutes
         )
     }
+    
+    private func commitTimeChange(
+        moved: Activity,
+        all: [Activity],
+        defaultDurationMinutes: Int
+    ) {
+        // Build the connected overlap cluster containing `moved`
+        let cluster = overlapCluster(
+            containing: moved,
+            all: all,
+            defaultDurationMinutes: defaultDurationMinutes
+        )
 
+        guard cluster.count > 1 else {
+            // If it's alone, normalize back to lane 0
+            moved.laneHint = 0
+            return
+        }
+
+        // Minimal-lane interval partitioning (ignores laneHint on purpose)
+        let sorted = cluster.sorted {
+            if $0.startAt != $1.startAt { return $0.startAt < $1.startAt }
+            return effectiveEnd($0, defaultDurationMinutes: defaultDurationMinutes)
+                < effectiveEnd($1, defaultDurationMinutes: defaultDurationMinutes)
+        }
+
+        var laneEnds: [Date] = []
+        var assigned: [PersistentIdentifier: Int] = [:]
+        assigned.reserveCapacity(sorted.count)
+
+        for a in sorted {
+            let s = a.startAt
+            let e = effectiveEnd(a, defaultDurationMinutes: defaultDurationMinutes)
+
+            var lane: Int? = nil
+            for i in 0..<laneEnds.count {
+                if laneEnds[i] <= s {
+                    lane = i
+                    break
+                }
+            }
+            if lane == nil {
+                lane = laneEnds.count
+                laneEnds.append(e)
+            } else {
+                laneEnds[lane!] = e
+            }
+
+            assigned[a.persistentModelID] = lane!
+        }
+
+        // Persist lane hints so the order actually updates for everyone
+        for a in cluster {
+            a.laneHint = assigned[a.persistentModelID] ?? 0
+        }
+    }
+
+    private func overlapCluster(
+        containing moved: Activity,
+        all: [Activity],
+        defaultDurationMinutes: Int
+    ) -> [Activity] {
+        var seen: Set<PersistentIdentifier> = []
+        var queue: [Activity] = [moved]
+        seen.insert(moved.persistentModelID)
+
+        while let cur = queue.popLast() {
+            for a in all {
+                let id = a.persistentModelID
+                if seen.contains(id) { continue }
+                if overlaps(a, cur, defaultDurationMinutes: defaultDurationMinutes) {
+                    seen.insert(id)
+                    queue.append(a)
+                }
+            }
+        }
+
+        return all.filter { seen.contains($0.persistentModelID) }
+    }
 }
 
 // MARK: - Grid
@@ -359,6 +450,9 @@ private struct TimelineInteractionLayer: View {
     let lanesX0: CGFloat
 
     @Binding var isSelecting: Bool
+    
+    @ObservedObject var autoScroll: AutoScrollController
+    let viewportHeight: CGFloat
 
     let onTap: (Int, Int) -> Void
     let onDragRange: (Int, Int, Int) -> Void
@@ -396,12 +490,20 @@ private struct TimelineInteractionLayer: View {
                     selecting = true
                     isSelecting = true
 
+                    // pt.y is CONTENT coordinates; convert to viewport Y for edge detection
+                    let yViewport = pt.y - autoScroll.offsetY
+                    autoScroll.updateDrag(yInViewport: yViewport, viewportHeight: viewportHeight)
+
                     startY = clampY(pt.y)
                     currentY = clampY(pt.y)
                     selectedLane = laneForX(pt.x)
                 },
                 onLongPressChanged: { pt in
                     guard selecting else { return }
+
+                    let yViewport = pt.y - autoScroll.offsetY
+                    autoScroll.updateDrag(yInViewport: yViewport, viewportHeight: viewportHeight)
+
                     currentY = clampY(pt.y)
                     selectedLane = laneForX(pt.x)
                 },
@@ -409,6 +511,7 @@ private struct TimelineInteractionLayer: View {
                     defer {
                         selecting = false
                         isSelecting = false
+                        autoScroll.stop()
                     }
 
                     let y1 = clampY(startPt.y)
@@ -565,10 +668,14 @@ private struct InteractiveActivityBlockView: View {
     let laneCount: Int
     let laneWidth: CGFloat
     let laneGap: CGFloat
+    
+    @ObservedObject var autoScroll: AutoScrollController
+    let viewportHeight: CGFloat
 
     let onEdit: () -> Void
     //let onCommitLane: (Int) -> Void
     let onCommitLaneChange: (Int, Int) -> Void
+    let onCommitTimeChange: () -> Void
     
     let onHoverLane: (Int) -> Void
     let onEndHoverLane: () -> Void
@@ -579,6 +686,9 @@ private struct InteractiveActivityBlockView: View {
     @State private var dragDeltaMinutes: Int = 0
     @State private var dragDeltaLane: Int = 0
 
+    @State private var dragStartContentY: CGFloat? = nil
+    @State private var resizeStartContentY: CGFloat? = nil
+    
     @State private var isResizing = false
     @State private var resizeDeltaMinutes: Int = 0
 
@@ -643,7 +753,7 @@ private struct InteractiveActivityBlockView: View {
                 .highPriorityGesture(resizeGesture)
         }
         .contentShape(RoundedRectangle(cornerRadius: 14))
-        .gesture(moveGesture)
+        .gesture(moveGesture) // highPriorityGesture if drag doesn't start
         .onTapGesture {
             if !isDragging && !isResizing { onEdit() }
         }
@@ -652,33 +762,43 @@ private struct InteractiveActivityBlockView: View {
     // MARK: - Gestures
 
     private var moveGesture: some Gesture {
-        DragGesture(minimumDistance: 6)
+        DragGesture(minimumDistance: 6, coordinateSpace: .named("timelineViewport"))
             .onChanged { value in
                 isDragging = true
 
-                // Vertical -> time move (only if event starts on this day; same rule you had)
+                // auto-scroll based on viewport position
+                autoScroll.updateDrag(yInViewport: value.location.y, viewportHeight: viewportHeight)
+
+                // content Y = scroll offset + finger Y in viewport
+                let contentY = autoScroll.offsetY + value.location.y
+                if dragStartContentY == nil { dragStartContentY = contentY }
+
+                let dy = contentY - (dragStartContentY ?? contentY)
+
                 if canMoveInThisDay() {
-                    dragDeltaMinutes = snap(minutesFromTranslation(value.translation.height))
+                    dragDeltaMinutes = snap(minutesFromTranslation(dy))
                 } else {
                     dragDeltaMinutes = 0
                 }
 
-                // Horizontal -> lane change preview
                 let laneSpan = laneWidth + laneGap
                 if laneSpan > 0 {
                     dragDeltaLane = Int((value.translation.width / laneSpan).rounded())
                 } else {
                     dragDeltaLane = 0
                 }
-                //let laneSpan = laneWidth + laneGap
+
                 let previewLane = clamp(currentLane + dragDeltaLane, 0, max(0, laneCount - 1))
                 onHoverLane(previewLane)
-
             }
             .onEnded { value in
-                // Compute final deltas
+                // final content delta
+                let endContentY = autoScroll.offsetY + value.location.y
+                let startContentY = dragStartContentY ?? endContentY
+                let dy = endContentY - startContentY
+
                 let finalMinutes = canMoveInThisDay()
-                    ? snap(minutesFromTranslation(value.translation.height))
+                    ? snap(minutesFromTranslation(dy))
                     : 0
 
                 let laneSpan = laneWidth + laneGap
@@ -686,40 +806,57 @@ private struct InteractiveActivityBlockView: View {
                     ? Int((value.translation.width / laneSpan).rounded())
                     : 0
 
-                // Commit time move (if allowed)
                 if finalMinutes != 0 {
                     commitMove(deltaMinutes: finalMinutes)
                 }
 
-                // Commit lane change (always allowed)
                 if finalLaneDelta != 0 {
                     let newLane = clamp(currentLane + finalLaneDelta, 0, max(0, laneCount - 1))
                     onCommitLaneChange(currentLane, newLane)
+                } else if finalMinutes != 0 {
+                    onCommitTimeChange()
                 }
-                
-                onEndHoverLane()
 
-                // Reset UI state
+                onEndHoverLane()
+                autoScroll.stop()
+
                 isDragging = false
                 dragDeltaMinutes = 0
                 dragDeltaLane = 0
+                dragStartContentY = nil
             }
     }
 
     private var resizeGesture: some Gesture {
-        DragGesture(minimumDistance: 4)
+        DragGesture(minimumDistance: 4, coordinateSpace: .named("timelineViewport"))
             .onChanged { value in
                 isResizing = true
-                resizeDeltaMinutes = snap(minutesFromTranslation(value.translation.height))
+
+                autoScroll.updateDrag(yInViewport: value.location.y, viewportHeight: viewportHeight)
+
+                let contentY = autoScroll.offsetY + value.location.y
+                if resizeStartContentY == nil { resizeStartContentY = contentY }
+
+                let dy = contentY - (resizeStartContentY ?? contentY)
+                resizeDeltaMinutes = snap(minutesFromTranslation(dy))
             }
             .onEnded { value in
-                let delta = snap(minutesFromTranslation(value.translation.height))
+                let endContentY = autoScroll.offsetY + value.location.y
+                let startContentY = resizeStartContentY ?? endContentY
+                let dy = endContentY - startContentY
+
+                let delta = snap(minutesFromTranslation(dy))
                 commitResize(deltaMinutes: delta)
+                onCommitTimeChange()
+
+                autoScroll.stop()
 
                 isResizing = false
                 resizeDeltaMinutes = 0
+                resizeStartContentY = nil
             }
     }
+
 
     // MARK: - Commits
 
@@ -895,42 +1032,58 @@ private enum TimelineLayout {
             return $0.end < $1.end
         }
 
-        // laneEnds[i] = end minute of last item in lane i
-        var laneEnds: [Int] = []
+        // 1) Compute max concurrency (how many lanes we truly need)
+        // Process end events before start events at the same minute so [end==start] doesn't overlap.
+        var events: [(t: Int, delta: Int)] = []
+        events.reserveCapacity(segments.count * 2)
+
+        for s in segments {
+            events.append((s.start, +1))
+            events.append((s.end, -1))
+        }
+
+        events.sort {
+            if $0.t != $1.t { return $0.t < $1.t }
+            return $0.delta < $1.delta // -1 before +1
+        }
+
+        var cur = 0
+        var maxConcurrent = 0
+        for e in events {
+            cur += e.delta
+            if cur > maxConcurrent { maxConcurrent = cur }
+        }
+
+        let laneCount = max(1, maxConcurrent)
+
+        // 2) Pre-create lanes so lane 1/2 exists even for earliest item (needed for “swap order”)
+        var laneEnds = Array(repeating: 0, count: laneCount)
+
         var out: [Item] = []
         out.reserveCapacity(segments.count)
 
+        // 3) Greedy assignment honoring laneHint (but never creating extra lanes beyond concurrency)
         for s in segments {
-            let preferred = max(0, s.activity.laneHint)
+            let preferred = min(max(0, s.activity.laneHint), laneCount - 1)
 
-            // Ensure laneEnds has at least preferred+1 lanes (empty lanes end at 0 => free)
-            if laneEnds.count <= preferred {
-                laneEnds.append(contentsOf: Array(repeating: 0, count: preferred - laneEnds.count + 1))
-            }
+            var chosen: Int? = nil
 
-            var lane: Int? = nil
-
-            // Try preferred lane first
+            // try preferred first
             if laneEnds[preferred] <= s.start {
-                lane = preferred
+                chosen = preferred
             } else {
-                // Otherwise find any free lane
-                for i in 0..<laneEnds.count {
+                // else first free lane
+                for i in 0..<laneCount {
                     if laneEnds[i] <= s.start {
-                        lane = i
+                        chosen = i
                         break
                     }
                 }
             }
 
-            // If none free, append a new lane
-            if lane == nil {
-                lane = laneEnds.count
-                laneEnds.append(0)
-            }
-
-            let chosen = lane!
-            laneEnds[chosen] = s.end
+            // With correct maxConcurrent, a lane should always exist; this is just a safety fallback.
+            let lane = chosen ?? 0
+            laneEnds[lane] = s.end
 
             out.append(
                 Item(
@@ -938,15 +1091,16 @@ private enum TimelineLayout {
                     displayStartMinute: s.start,
                     displayEndMinute: s.end,
                     displayDurationMinutes: s.end - s.start,
-                    lane: chosen,
+                    lane: lane,
                     clippedStart: s.clippedStart,
                     clippedEnd: s.clippedEnd
                 )
             )
         }
 
-        return Result(items: out, laneCount: max(1, laneEnds.count))
+        return Result(items: out, laneCount: laneCount)
     }
+
 
     private static func clamp(_ m: Int) -> Int {
         min(max(m, 0), 24 * 60)
