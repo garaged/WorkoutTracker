@@ -4,26 +4,23 @@ import SwiftData
 @main
 struct workouttrackerApp: App {
     var sharedModelContainer: ModelContainer = {
-        // 1) Define which @Model types belong to this store
         let schema = Schema([
             Activity.self,
+            // Item.self, // include ONLY if you still have it
         ])
 
-        // 2) Build a stable on-disk location (Application Support/default.store)
         let fm = FileManager.default
         let appSupport = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-
         do {
             try fm.createDirectory(at: appSupport, withIntermediateDirectories: true)
         } catch {
             fatalError("Could not create Application Support directory: \(error)")
         }
 
+        // Stable store location so we can delete it if needed
         let storeURL = appSupport.appendingPathComponent("default.store")
 
-        // 3) Create a configuration using the correct initializer for a custom URL
-        //    NOTE: This initializer does NOT take isStoredInMemoryOnly.
-        let modelConfiguration = ModelConfiguration(
+        let config = ModelConfiguration(
             "default",
             schema: schema,
             url: storeURL,
@@ -31,11 +28,27 @@ struct workouttrackerApp: App {
             cloudKitDatabase: .none
         )
 
-        // 4) Create the container (the “database engine” SwiftData uses)
+        func nukeStoreFiles() {
+            // SwiftData/CoreData may create sidecar files too
+            try? fm.removeItem(at: storeURL)
+            try? fm.removeItem(at: URL(fileURLWithPath: storeURL.path + "-shm"))
+            try? fm.removeItem(at: URL(fileURLWithPath: storeURL.path + "-wal"))
+        }
+
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            return try ModelContainer(for: schema, configurations: [config])
         } catch {
+            #if DEBUG
+            // Dev-only: schema changed, old store is incompatible -> wipe and retry once
+            nukeStoreFiles()
+            do {
+                return try ModelContainer(for: schema, configurations: [config])
+            } catch {
+                fatalError("Could not create ModelContainer after wiping store: \(error)")
+            }
+            #else
             fatalError("Could not create ModelContainer: \(error)")
+            #endif
         }
     }()
 
