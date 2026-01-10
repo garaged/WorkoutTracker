@@ -7,8 +7,8 @@ struct DayTimelineScreen: View {
 
     private let day: Date
     private let onEdit: (Activity) -> Void
-    private let onCreateAt: (Date) -> Void
-    private let onCreateRange: (Date, Date) -> Void
+    private let onCreateAt: (Date, Int) -> Void
+    private let onCreateRange: (Date, Date, Int) -> Void
 
     // Layout knobs
     private let hourHeight: CGFloat = 80
@@ -21,8 +21,8 @@ struct DayTimelineScreen: View {
     init(
         day: Date,
         onEdit: @escaping (Activity) -> Void,
-        onCreateAt: @escaping (Date) -> Void,
-        onCreateRange: @escaping (Date, Date) -> Void
+        onCreateAt: @escaping (Date, Int) -> Void,
+        onCreateRange: @escaping (Date, Date, Int) -> Void
     ) {
         self.day = day
         self.onEdit = onEdit
@@ -32,7 +32,7 @@ struct DayTimelineScreen: View {
         let start = Calendar.current.startOfDay(for: day)
         let end = Calendar.current.date(byAdding: .day, value: 1, to: start)!
 
-        // ✅ Overlap predicate (no forced unwrap)
+        // Overlap predicate (no forced unwrap)
         _activities = Query(
             filter: #Predicate<Activity> { a in
                 a.startAt < end && ((a.endAt ?? a.startAt) > start)
@@ -73,25 +73,32 @@ struct DayTimelineScreen: View {
             let laneCount = max(1, laidOut.laneCount)
             let laneWidth = (availableWidth - laneGap * CGFloat(laneCount - 1)) / CGFloat(laneCount)
 
+            let lanesX0 = gutterWidth + sidePadding
+            let laneSpan = laneWidth + laneGap
+
             ZStack(alignment: .topLeading) {
 
                 TimelineGrid(hourHeight: hourHeight, gutterWidth: gutterWidth)
                     .frame(height: totalHeight)
 
-                // ✅ Tap to create + press(0.2s)+drag to create a range
+                // Tap + press-drag selection (lane chosen by x coordinate)
                 TimelineInteractionLayer(
                     totalHeight: totalHeight,
                     hourHeight: hourHeight,
                     snapMinutes: 5,
                     minDurationMinutes: 15,
-                    onTapMinute: { minutes in
-                        let start = dateFromMinutes(minutes, dayStart: dayStart)
-                        onCreateAt(start)
+                    laneCount: laneCount,
+                    laneWidth: laneWidth,
+                    laneGap: laneGap,
+                    lanesX0: lanesX0,
+                    onTap: { minute, lane in
+                        let start = dateFromMinutes(minute, dayStart: dayStart)
+                        onCreateAt(start, lane)
                     },
-                    onDragMinutesRange: { startMin, endMin in
+                    onDragRange: { startMin, endMin, lane in
                         let start = dateFromMinutes(startMin, dayStart: dayStart)
                         let end = dateFromMinutes(endMin, dayStart: dayStart)
-                        onCreateRange(start, end)
+                        onCreateRange(start, end, lane)
                     }
                 )
                 .frame(height: totalHeight)
@@ -108,15 +115,13 @@ struct DayTimelineScreen: View {
 
                 // Activity blocks
                 ForEach(laidOut.items, id: \.activity.persistentModelID) { item in
-                    let x = gutterWidth + sidePadding + CGFloat(item.lane) * (laneWidth + laneGap)
+                    let x = lanesX0 + CGFloat(item.lane) * laneSpan
                     let y = yFromMinutes(item.displayStartMinute)
                     let h = max(28, heightFromMinutes(item.displayDurationMinutes))
 
                     InteractiveActivityBlockView(
                         activity: item.activity,
                         dayStart: dayStart,
-                        displayStartMinute: item.displayStartMinute,
-                        displayEndMinute: item.displayEndMinute,
                         clippedStart: item.clippedStart,
                         clippedEnd: item.clippedEnd,
                         hourHeight: hourHeight,
@@ -186,7 +191,7 @@ private struct TimelineGrid: View {
     }
 }
 
-// MARK: - Interaction Layer (tap + press-drag range selection)
+// MARK: - Interaction Layer (tap + press-drag range + horizontal lane select)
 
 private struct TimelineInteractionLayer: View {
     let totalHeight: CGFloat
@@ -194,12 +199,18 @@ private struct TimelineInteractionLayer: View {
     let snapMinutes: Int
     let minDurationMinutes: Int
 
-    let onTapMinute: (Int) -> Void
-    let onDragMinutesRange: (Int, Int) -> Void
+    let laneCount: Int
+    let laneWidth: CGFloat
+    let laneGap: CGFloat
+    let lanesX0: CGFloat
+
+    let onTap: (Int, Int) -> Void
+    let onDragRange: (Int, Int, Int) -> Void
 
     @State private var selecting = false
     @State private var startY: CGFloat = 0
     @State private var currentY: CGFloat = 0
+    @State private var selectedLane: Int = 0
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -210,30 +221,30 @@ private struct TimelineInteractionLayer: View {
                 selectionRect
             }
         }
-        // tap-to-create
         .simultaneousGesture(
             SpatialTapGesture().onEnded { value in
                 let y = clampY(value.location.y)
                 let m = minutes(forY: y)
-                onTapMinute(m)
+                let lane = laneForX(value.location.x)
+                onTap(m, lane)
             }
         )
-        // press+drag to create range (prevents fighting ScrollView scroll)
         .gesture(
             LongPressGesture(minimumDuration: 0.2)
                 .sequenced(before: DragGesture(minimumDistance: 0))
                 .onChanged { value in
                     switch value {
                     case .first(true):
-                        // waiting for drag
                         break
                     case .second(true, let drag?):
                         if !selecting {
                             selecting = true
                             startY = clampY(drag.startLocation.y)
                             currentY = clampY(drag.startLocation.y)
+                            selectedLane = laneForX(drag.startLocation.x)
                         }
                         currentY = clampY(drag.location.y)
+                        selectedLane = laneForX(drag.location.x) // ✅ horizontal lane select
                     default:
                         break
                     }
@@ -252,8 +263,7 @@ private struct TimelineInteractionLayer: View {
                     let startMin = a
                     let endMin = max(b, startMin + minDurationMinutes)
 
-                    // Allow end at 1440 (midnight next day)
-                    onDragMinutesRange(startMin, min(endMin, 24 * 60))
+                    onDragRange(startMin, min(endMin, 24 * 60), selectedLane)
                 }
         )
     }
@@ -263,15 +273,24 @@ private struct TimelineInteractionLayer: View {
         let bottom = max(startY, currentY)
         let h = max(6, bottom - top)
 
+        let x = lanesX0 + CGFloat(selectedLane) * (laneWidth + laneGap)
+
         return RoundedRectangle(cornerRadius: 12)
             .fill(.tint.opacity(0.12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(.tint.opacity(0.35), lineWidth: 1)
             )
-            .frame(height: h)
-            .offset(x: 58, y: top) // push right past the hour gutter (matches DayTimeline layout)
-            .padding(.trailing, 12)
+            .frame(width: max(44, laneWidth), height: h)
+            .offset(x: x, y: top)
+            .overlay(alignment: .topTrailing) {
+                Text("Lane \(selectedLane + 1)")
+                    .font(.caption2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.thinMaterial, in: Capsule())
+                    .padding(6)
+            }
             .allowsHitTesting(false)
     }
 
@@ -284,6 +303,15 @@ private struct TimelineInteractionLayer: View {
         let snapped = Int((Double(raw) / Double(snapMinutes)).rounded()) * snapMinutes
         return min(max(snapped, 0), 24 * 60)
     }
+
+    private func laneForX(_ x: CGFloat) -> Int {
+        let span = laneWidth + laneGap
+        guard span > 0 else { return 0 }
+
+        let rel = x - lanesX0
+        let idx = Int(floor(rel / span))
+        return min(max(idx, 0), max(0, laneCount - 1))
+    }
 }
 
 // MARK: - Interactive Activity Block (move + resize + clip markers)
@@ -292,8 +320,6 @@ private struct InteractiveActivityBlockView: View {
     let activity: Activity
     let dayStart: Date
 
-    let displayStartMinute: Int
-    let displayEndMinute: Int
     let clippedStart: Bool
     let clippedEnd: Bool
 
@@ -499,7 +525,7 @@ private struct ClipMarker: View {
     }
 }
 
-// MARK: - Layout (clamp to day window + lane packing)
+// MARK: - Layout (lane assignment respects activity.laneHint)
 
 private enum TimelineLayout {
     struct Result {
@@ -554,27 +580,42 @@ private enum TimelineLayout {
             return $0.end < $1.end
         }
 
+        // laneEnds[i] = end minute of last item in lane i
         var laneEnds: [Int] = []
         var out: [Item] = []
         out.reserveCapacity(segments.count)
 
         for s in segments {
-            var lane = 0
-            var placed = false
+            let preferred = max(0, s.activity.laneHint)
 
-            for i in 0..<laneEnds.count {
-                if s.start >= laneEnds[i] {
-                    lane = i
-                    laneEnds[i] = s.end
-                    placed = true
-                    break
+            // Ensure laneEnds has at least preferred+1 lanes (empty lanes end at 0 => free)
+            if laneEnds.count <= preferred {
+                laneEnds.append(contentsOf: Array(repeating: 0, count: preferred - laneEnds.count + 1))
+            }
+
+            var lane: Int? = nil
+
+            // Try preferred lane first
+            if laneEnds[preferred] <= s.start {
+                lane = preferred
+            } else {
+                // Otherwise find any free lane
+                for i in 0..<laneEnds.count {
+                    if laneEnds[i] <= s.start {
+                        lane = i
+                        break
+                    }
                 }
             }
 
-            if !placed {
+            // If none free, append a new lane
+            if lane == nil {
                 lane = laneEnds.count
-                laneEnds.append(s.end)
+                laneEnds.append(0)
             }
+
+            let chosen = lane!
+            laneEnds[chosen] = s.end
 
             out.append(
                 Item(
@@ -582,7 +623,7 @@ private enum TimelineLayout {
                     displayStartMinute: s.start,
                     displayEndMinute: s.end,
                     displayDurationMinutes: s.end - s.start,
-                    lane: lane,
+                    lane: chosen,
                     clippedStart: s.clippedStart,
                     clippedEnd: s.clippedEnd
                 )

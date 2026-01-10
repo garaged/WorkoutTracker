@@ -10,17 +10,19 @@ struct ActivityEditorView: View {
     private let day: Date
     private let initialStart: Date?
     private let initialEnd: Date?
+    private let initialLaneHint: Int?
 
     @State private var title: String
     @State private var startAt: Date
     @State private var hasEnd: Bool
     @State private var endAt: Date
 
-    init(day: Date, activity: Activity?, initialStart: Date?, initialEnd: Date?) {
+    init(day: Date, activity: Activity?, initialStart: Date?, initialEnd: Date?, initialLaneHint: Int?) {
         self.day = day
         self.activity = activity
         self.initialStart = initialStart
         self.initialEnd = initialEnd
+        self.initialLaneHint = initialLaneHint
 
         let fallbackStart = ActivityEditorView.defaultStart(for: day)
         let start = activity?.startAt ?? (initialStart ?? fallbackStart)
@@ -36,7 +38,7 @@ struct ActivityEditorView: View {
         _title = State(initialValue: activity?.title ?? "")
         _startAt = State(initialValue: start)
 
-        // ✅ Opinionated: new activities default to having an end time
+        // ✅ New activities default to having an end time
         _hasEnd = State(initialValue: activity == nil ? true : (activity?.endAt != nil))
 
         _endAt = State(initialValue: end)
@@ -91,8 +93,10 @@ struct ActivityEditorView: View {
             activity.title = t
             activity.startAt = startAt
             activity.endAt = finalEnd
+            // keep existing laneHint unless you later add UI to change it
         } else {
-            let new = Activity(title: t, startAt: startAt, endAt: finalEnd)
+            let lane = max(0, initialLaneHint ?? 0)
+            let new = Activity(title: t, startAt: startAt, endAt: finalEnd, laneHint: lane)
             modelContext.insert(new)
         }
 
