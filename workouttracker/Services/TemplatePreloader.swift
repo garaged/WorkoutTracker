@@ -38,6 +38,9 @@ enum TemplatePreloader {
             a.dayKey = dayKey
             a.generatedKey = key
 
+            // ✅ workout propagation (Template → Activity)
+            applyWorkoutFields(from: t, to: a)
+
             a.plannedTitle = t.title
             a.plannedStartAt = start
             a.plannedEndAt = end
@@ -130,7 +133,13 @@ enum TemplatePreloader {
                 a.templateId = t.id
                 a.dayKey = dayKey
                 a.generatedKey = key
-
+                
+                // ✅ keep workout linkage synced, but never rewrite started sessions
+                let safeToSyncWorkout = overwriteActual || (a.status == .planned && a.workoutSessionId == nil)
+                if safeToSyncWorkout {
+                    applyWorkoutFields(from: t, to: a)
+                }
+                
                 try context.save()
                 return
             }
@@ -140,12 +149,13 @@ enum TemplatePreloader {
             a.templateId = t.id
             a.dayKey = dayKey
             a.generatedKey = key
+            applyWorkoutFields(from: t, to: a)
 
             a.plannedTitle = t.title
             a.plannedStartAt = newStart
             a.plannedEndAt = newEnd
             a.status = .planned
-
+            
             context.insert(a)
             try context.save()
         }
@@ -204,7 +214,12 @@ enum TemplatePreloader {
                 let plannedTitle: String?
                 let plannedStartAt: Date?
                 let plannedEndAt: Date?
+
+                let kindRaw: String
+                let workoutRoutineId: UUID?
+                let workoutSessionId: UUID?
             }
+
 
             func snap(_ a: Activity) -> ActivitySnapshot {
                 ActivitySnapshot(
@@ -216,7 +231,11 @@ enum TemplatePreloader {
                     generatedKey: a.generatedKey,
                     plannedTitle: a.plannedTitle,
                     plannedStartAt: a.plannedStartAt,
-                    plannedEndAt: a.plannedEndAt
+                    plannedEndAt: a.plannedEndAt,
+
+                    kindRaw: a.kindRaw,
+                    workoutRoutineId: a.workoutRoutineId,
+                    workoutSessionId: a.workoutSessionId
                 )
             }
 
@@ -231,6 +250,10 @@ enum TemplatePreloader {
                     a.plannedTitle = nil
                     a.plannedStartAt = nil
                     a.plannedEndAt = nil
+                    if a.status == .planned && a.workoutSessionId == nil {
+                        a.kind = .generic
+                        a.workoutRoutineId = nil
+                    }
                 } else {
                     continue
                 }
@@ -251,6 +274,11 @@ enum TemplatePreloader {
                 a.plannedTitle = t.title
                 a.plannedStartAt = newStart
                 a.plannedEndAt = newEnd
+                
+                let safeToSyncWorkout = (a.status == .planned && a.workoutSessionId == nil)
+                if safeToSyncWorkout {
+                    applyWorkoutFields(from: t, to: a)
+                }
 
                 // Only update actual if user didn't diverge
                 if a.title == oldPlannedTitle { a.title = t.title }
@@ -277,4 +305,10 @@ enum TemplatePreloader {
 
         return affectedCount
     }
+    
+    private static func applyWorkoutFields(from template: TemplateActivity, to activity: Activity) {
+        activity.kind = template.kind
+        activity.workoutRoutineId = (template.kind == .workout) ? template.workoutRoutineId : nil
+    }
+
 }
