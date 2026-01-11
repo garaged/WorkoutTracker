@@ -157,7 +157,7 @@ enum TemplatePreloader {
         context: ModelContext,
         calendar: Calendar = .current,
         detachIfNoLongerMatches: Bool = true
-    ) throws {
+    ) throws -> Int {
         let fromStart = calendar.startOfDay(for: day)
         let end = calendar.date(byAdding: .day, value: daysAhead, to: fromStart) ?? fromStart
 
@@ -165,7 +165,7 @@ enum TemplatePreloader {
         let templates = try context.fetch(FetchDescriptor<TemplateActivity>(
             predicate: #Predicate { $0.id == templateId }
         ))
-        guard let t = templates.first else { return }
+        guard let t = templates.first else { return 0 }
 
         // Fetch activities linked to this template in the horizon
         let tid: UUID? = templateId
@@ -175,7 +175,8 @@ enum TemplatePreloader {
             }
         ))
 
-        var changed = false
+        var anyChanged = false
+        var affectedCount = 0
 
         for a in acts {
             if a.status == .skipped { continue }
@@ -190,7 +191,38 @@ enum TemplatePreloader {
             ))
             if !overrides.isEmpty { continue }
 
-            // If template no longer applies, optionally detach old instances to stop future surprises
+            // Snapshot before (for accurate counting)
+            struct ActivitySnapshot: Equatable {
+                let title: String
+                let startAt: Date
+                let endAt: Date?
+
+                let templateId: UUID?
+                let dayKey: String?
+                let generatedKey: String?
+
+                let plannedTitle: String?
+                let plannedStartAt: Date?
+                let plannedEndAt: Date?
+            }
+
+            func snap(_ a: Activity) -> ActivitySnapshot {
+                ActivitySnapshot(
+                    title: a.title,
+                    startAt: a.startAt,
+                    endAt: a.endAt,
+                    templateId: a.templateId,
+                    dayKey: a.dayKey,
+                    generatedKey: a.generatedKey,
+                    plannedTitle: a.plannedTitle,
+                    plannedStartAt: a.plannedStartAt,
+                    plannedEndAt: a.plannedEndAt
+                )
+            }
+
+            let before = snap(a)
+
+            // If template no longer applies, optionally detach old instances
             if (!t.isEnabled || !t.recurrence.matches(day: instanceDayStart, calendar: calendar)) {
                 if detachIfNoLongerMatches {
                     a.templateId = nil
@@ -199,43 +231,50 @@ enum TemplatePreloader {
                     a.plannedTitle = nil
                     a.plannedStartAt = nil
                     a.plannedEndAt = nil
-                    changed = true
+                } else {
+                    continue
                 }
-                continue
-            }
-
-            let newStart = calendar.date(byAdding: .minute, value: t.defaultStartMinute, to: instanceDayStart) ?? instanceDayStart
-            let newEnd = calendar.date(byAdding: .minute, value: t.defaultDurationMinutes, to: newStart)
-
-            // Repair keys for older rows
-            a.dayKey = instanceDayKey
-            a.generatedKey = key
-
-            // NIL fallback makes older instances update consistently
-            let oldPlannedTitle = a.plannedTitle ?? a.title
-            let oldPlannedStart = a.plannedStartAt ?? a.startAt
-            let oldPlannedEnd = a.plannedEndAt ?? a.endAt
-
-            // Always update planned fields
-            a.plannedTitle = t.title
-            a.plannedStartAt = newStart
-            a.plannedEndAt = newEnd
-
-            // Only update actual if user didn't diverge
-            if a.title == oldPlannedTitle { a.title = t.title }
-            if a.startAt == oldPlannedStart { a.startAt = newStart }
-
-            if let oldPlannedEnd {
-                if a.endAt == oldPlannedEnd { a.endAt = newEnd }
             } else {
-                if a.endAt == nil { a.endAt = newEnd }
+                let newStart = calendar.date(byAdding: .minute, value: t.defaultStartMinute, to: instanceDayStart) ?? instanceDayStart
+                let newEnd = calendar.date(byAdding: .minute, value: t.defaultDurationMinutes, to: newStart)
+
+                // Repair keys for older rows
+                a.dayKey = instanceDayKey
+                a.generatedKey = key
+
+                // NIL fallback makes older instances update consistently
+                let oldPlannedTitle = a.plannedTitle ?? a.title
+                let oldPlannedStart = a.plannedStartAt ?? a.startAt
+                let oldPlannedEnd = a.plannedEndAt ?? a.endAt
+
+                // Always update planned fields
+                a.plannedTitle = t.title
+                a.plannedStartAt = newStart
+                a.plannedEndAt = newEnd
+
+                // Only update actual if user didn't diverge
+                if a.title == oldPlannedTitle { a.title = t.title }
+                if a.startAt == oldPlannedStart { a.startAt = newStart }
+
+                if let oldPlannedEnd {
+                    if a.endAt == oldPlannedEnd { a.endAt = newEnd }
+                } else {
+                    if a.endAt == nil { a.endAt = newEnd }
+                }
             }
 
-            changed = true
+            let after = snap(a)
+
+            if before != after {
+                affectedCount += 1
+                anyChanged = true
+            }
         }
 
-        if changed {
+        if anyChanged {
             try context.save()
         }
+
+        return affectedCount
     }
 }
