@@ -240,20 +240,26 @@ struct TemplateEditorView: View {
             let tomorrow = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: applyDay)) ?? applyDay
 
             do {
-                try TemplatePreloader.updateExistingUpcomingInstances(
+                let count = try TemplatePreloader.updateExistingUpcomingInstances(
                     templateId: template.id,
                     from: tomorrow,
                     daysAhead: 120,
                     context: modelContext
                 )
-                upcomingUpdateStatus = "Updated existing upcoming instances for the next 120 days."
+
+                if count == 0 {
+                    upcomingUpdateStatus = "No existing upcoming instances needed updates (next 120 days)."
+                } else if count == 1 {
+                    upcomingUpdateStatus = "Updated 1 existing upcoming instance for the next 120 days."
+                } else {
+                    upcomingUpdateStatus = "Updated \(count) existing upcoming instances for the next 120 days."
+                }
             } catch {
                 upcomingUpdateStatus = "Couldn’t update upcoming instances: \(error.localizedDescription)"
                 print("Bulk update upcoming instances failed: \(error)")
             }
 
             showApplyToDayAlert = true
-
         }
     }
     

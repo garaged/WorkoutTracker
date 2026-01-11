@@ -102,38 +102,3 @@ private struct NewActivityDraft: Identifiable {
     let initialEnd: Date?
     let laneHint: Int
 }
-
-@MainActor
-func seedTemplatesIfNeeded(_ context: ModelContext) throws {
-    let existing = try context.fetch(FetchDescriptor<TemplateActivity>())
-    guard existing.isEmpty else { return }
-
-    let cal = Calendar.current
-    let now = Date()
-    let startOfToday = cal.startOfDay(for: now)
-
-    // Example: daily template at 08:00 for 45m
-    let t1 = TemplateActivity(
-        title: "Walk the dog",
-        defaultStartMinute: 8 * 60,
-        defaultDurationMinutes: 45,
-        recurrence: RecurrenceRule(kind: .daily, startDate: startOfToday)
-    )
-
-    // Example: weekly M/W/F at 18:00 for 60m
-    let t2 = TemplateActivity(
-        title: "Workout",
-        defaultStartMinute: 18 * 60,
-        defaultDurationMinutes: 60,
-        recurrence: RecurrenceRule(
-            kind: .weekly,
-            startDate: startOfToday,
-            interval: 1,
-            weekdays: [.monday, .wednesday, .friday]
-        )
-    )
-
-    context.insert(t1)
-    context.insert(t2)
-    try context.save()
-}

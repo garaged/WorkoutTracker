@@ -15,10 +15,19 @@ struct DayTimelineScreen: View {
     private let onCreateRange: (Date, Date, Int) -> Void
 
     // Layout knobs
-    private let hourHeight: CGFloat = 80
+    @AppStorage("timeline.hourHeight") private var hourHeightStored: Double = 80.0
+    @State private var pinchBaseHourHeight: CGFloat? = nil
+
+    private let minHourHeight: CGFloat = 48
+    private let maxHourHeight: CGFloat = 180
+    private let snapMinutes: Int = 5
+
+    private var hourHeight: CGFloat { CGFloat(hourHeightStored) }
+
     private let gutterWidth: CGFloat = 58
     private let sidePadding: CGFloat = 12
     private let laneGap: CGFloat = 6
+
 
     private let defaultDurationMinutes: Int = 30
 
@@ -46,10 +55,24 @@ struct DayTimelineScreen: View {
     }
 
     var body: some View {
-        GeometryReader { vp in
+        let dayStart = Calendar.current.startOfDay(for: day)
+
+        VStack(spacing: 0) {
+
+            // ✅ New: fixed header above the scrollable grid
+            DayHeaderActivitiesView(
+                dayStart: dayStart,
+                activities: activities,
+                defaultDurationMinutes: defaultDurationMinutes,
+                onSelect: { onEdit($0) }
+            )
+            .padding(.horizontal, 8)
+
+            Divider()
+
             ScrollViewReader { proxy in
                 ScrollView(.vertical) {
-                    timeline(proxy: proxy)
+                    timeline()
                         .padding(.horizontal, 8)
                         .padding(.bottom, 24)
                         .background(
@@ -58,11 +81,21 @@ struct DayTimelineScreen: View {
                             }
                         )
                 }
+                .simultaneousGesture(magnifyToZoomGesture)   // ✅ pinch zoom
                 .coordinateSpace(name: "timelineViewport")
-                .onAppear { viewportHeight = vp.size.height }
-                .onChange(of: vp.size.height) { _, newValue in
-                    viewportHeight = newValue
-                }
+
+
+                // ✅ IMPORTANT: measure the actual scroll viewport (not the full screen)
+                .background(
+                    GeometryReader { svp in
+                        Color.clear
+                            .onAppear { viewportHeight = svp.size.height }
+                            .onChange(of: svp.size.height) { _, newValue in
+                                viewportHeight = newValue
+                            }
+                    }
+                )
+
                 .scrollDisabled(isSelectingRange)
                 .onAppear {
                     guard Calendar.current.isDateInToday(day) else { return }
@@ -83,15 +116,22 @@ struct DayTimelineScreen: View {
                 print("Preload failed: \(error)")
             }
         }
-
     }
 
-    private func timeline(proxy: ScrollViewProxy) -> some View {
+
+    private func timeline() -> some View {
         let dayStart = Calendar.current.startOfDay(for: day)
         let totalHeight = hourHeight * 24
 
-        let laidOut = TimelineLayout.layout(
+        let buckets = DayActivityBucketer.bucket(
             activities: activities,
+            dayStart: dayStart,
+            defaultDurationMinutes: defaultDurationMinutes
+        )
+        let timedActivities = buckets.timed
+
+        let laidOut = TimelineLayout.layout(
+            activities: timedActivities,   // ✅ only timed go into the grid
             dayStart: dayStart,
             defaultDurationMinutes: defaultDurationMinutes
         )
@@ -116,7 +156,16 @@ struct DayTimelineScreen: View {
             let laneSpan = laneWidth + laneGap
 
             ZStack(alignment: .topLeading) {
+                // ✅ snap tick lines (only over the lanes area, not the gutter)
+                TimelineTicksView(
+                    totalMinutes: 24 * 60,
+                    hourHeight: hourHeight,
+                    snapMinutes: snapMinutes
+                )
+                .frame(width: max(0, geo.size.width - lanesX0), height: totalHeight)
+                .offset(x: lanesX0, y: 0)
 
+                
                 TimelineGrid(hourHeight: hourHeight, gutterWidth: gutterWidth)
                     .frame(height: totalHeight)
 
@@ -124,7 +173,7 @@ struct DayTimelineScreen: View {
                 TimelineInteractionLayer(
                     totalHeight: totalHeight,
                     hourHeight: hourHeight,
-                    snapMinutes: 5,
+                    snapMinutes: snapMinutes,
                     minDurationMinutes: 15,
                     laneCount: laneCount,
                     laneWidth: laneWidth,
@@ -169,93 +218,16 @@ struct DayTimelineScreen: View {
                 }
 
                 // Activity blocks
-                ForEach(laidOut.items, id: \.activity.persistentModelID) {
-                    item in
-                    let x = lanesX0 + CGFloat(item.lane) * laneSpan
-                    let y = yFromMinutes(item.displayStartMinute)
-                    let h = max(
-                        28,
-                        heightFromMinutes(item.displayDurationMinutes)
-                    )
-
-                    InteractiveActivityBlockView(
-                        activity: item.activity,
-                        dayStart: dayStart,
-                        clippedStart: item.clippedStart,
-                        clippedEnd: item.clippedEnd,
-                        hourHeight: hourHeight,
-                        defaultDurationMinutes: defaultDurationMinutes,
-                        currentLane: item.lane,
-                        laneCount: laneCount,
-                        laneWidth: laneWidth,
-                        laneGap: laneGap,
-                        autoScroll: autoScroll,
-                        viewportHeight: viewportHeight,
-                        onEdit: { onEdit(item.activity) },
-                        onCommitLaneChange: { oldLane, newLane in
-                            commitLaneChange(
-                                moved: item.activity,
-                                oldLane: oldLane,
-                                newLane: newLane,
-                                all: activities,
-                                laneByID: laneByID,
-                                maxLanes: laneCount,
-                                defaultDurationMinutes: defaultDurationMinutes
-                            )
-                        },
-                        onCommitTimeChange: {
-                            commitTimeChange(
-                                moved: item.activity,
-                                all: activities,
-                                defaultDurationMinutes: defaultDurationMinutes
-                            )
-                        },
-                        onHoverLane: { lane in
-                            hoveredLaneWhileDraggingBlock = lane
-                        },
-                        onEndHoverLane: { hoveredLaneWhileDraggingBlock = nil }
-                    )
-                    .contextMenu {
-                        Button {
-                            onEdit(item.activity)
-                        } label: {
-                            Label("Edit", systemImage: "pencil")
-                        }
-
-                        Button {
-                            toggleDone(item.activity)
-                        } label: {
-                            Label(
-                                item.activity.isDone
-                                    ? "Mark as not done" : "Mark as done",
-                                systemImage: item.activity.isDone
-                                    ? "arrow.uturn.left" : "checkmark"
-                            )
-                        }
-
-                        if item.activity.templateId != nil {
-                            Button {
-                                skipToday(item.activity)
-                            } label: {
-                                Label("Skip today", systemImage: "forward.end")
-                            }
-                        }
-
-                        Divider()
-
-                        Button(role: .destructive) {
-                            deleteActivity(item.activity)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .frame(
-                        width: max(60, laneWidth),
-                        height: h,
-                        alignment: .topLeading
-                    )
-                    .offset(x: x, y: y)
-                }
+                timelineContent(
+                    laidOut: laidOut,
+                    dayStart: dayStart,
+                    timedActivities: timedActivities,
+                    laneByID: laneByID,
+                    laneCount: laneCount,
+                    laneWidth: laneWidth,
+                    lanesX0: lanesX0,
+                    laneSpan: laneSpan
+                )
 
             }
             .frame(height: totalHeight)
@@ -274,6 +246,10 @@ struct DayTimelineScreen: View {
         (CGFloat(minutes) / 60.0) * hourHeight
     }
 
+    private func clamp(_ v: CGFloat, _ lo: CGFloat, _ hi: CGFloat) -> CGFloat {
+        min(max(v, lo), hi)
+    }
+    
     private func clampMinutes(_ m: Int) -> Int {
         min(max(m, 0), 24 * 60 - 1)
     }
@@ -560,6 +536,112 @@ struct DayTimelineScreen: View {
         }
         try? modelContext.save()
     }
+    
+    @ViewBuilder
+    private func timelineContent(
+        laidOut: TimelineLayout.Result,
+        dayStart: Date,
+        timedActivities: [Activity],
+        laneByID: [PersistentIdentifier: Int],
+        laneCount: Int,
+        laneWidth: CGFloat,
+        lanesX0: CGFloat,
+        laneSpan: CGFloat
+    ) -> some View {
+        ForEach(laidOut.items, id: \.activity.persistentModelID) { item in
+            let x = lanesX0 + CGFloat(item.lane) * laneSpan
+            let y = yFromMinutes(item.displayStartMinute)
+            let h = max(28, heightFromMinutes(item.displayDurationMinutes))
+
+            InteractiveActivityBlockView(
+                activity: item.activity,
+                dayStart: dayStart,
+                clippedStart: item.clippedStart,
+                clippedEnd: item.clippedEnd,
+                hourHeight: hourHeight,
+                defaultDurationMinutes: defaultDurationMinutes,
+                currentLane: item.lane,
+                laneCount: laneCount,
+                laneWidth: laneWidth,
+                laneGap: laneGap,
+                autoScroll: autoScroll,
+                viewportHeight: viewportHeight,
+                onEdit: { onEdit(item.activity) },
+                onCommitLaneChange: { oldLane, newLane in
+                    commitLaneChange(
+                        moved: item.activity,
+                        oldLane: oldLane,
+                        newLane: newLane,
+                        all: timedActivities,
+                        laneByID: laneByID,
+                        maxLanes: laneCount,
+                        defaultDurationMinutes: defaultDurationMinutes
+                    )
+                },
+                onCommitTimeChange: {
+                    commitTimeChange(
+                        moved: item.activity,
+                        all: timedActivities,
+                        defaultDurationMinutes: defaultDurationMinutes
+                    )
+                },
+                onHoverLane: { lane in
+                    hoveredLaneWhileDraggingBlock = lane
+                },
+                onEndHoverLane: {
+                    hoveredLaneWhileDraggingBlock = nil
+                }
+            )
+            .contextMenu {
+                Button {
+                    onEdit(item.activity)
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+
+                Button {
+                    toggleDone(item.activity)
+                } label: {
+                    Label(
+                        item.activity.isDone ? "Mark as not done" : "Mark as done",
+                        systemImage: item.activity.isDone ? "arrow.uturn.left" : "checkmark"
+                    )
+                }
+
+                if item.activity.templateId != nil {
+                    Button {
+                        skipToday(item.activity)
+                    } label: {
+                        Label("Skip today", systemImage: "forward.end")
+                    }
+                }
+
+                Divider()
+
+                Button(role: .destructive) {
+                    deleteActivity(item.activity)
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+            .frame(width: max(60, laneWidth), height: h, alignment: .topLeading)
+            .offset(x: x, y: y)
+        }
+    }
+    private var magnifyToZoomGesture: some Gesture {
+        MagnificationGesture()
+            .onChanged { value in
+                if pinchBaseHourHeight == nil { pinchBaseHourHeight = hourHeight }
+
+                let base = pinchBaseHourHeight ?? hourHeight
+                let scaled = clamp(base * value, minHourHeight, maxHourHeight)
+
+                hourHeightStored = Double(scaled)
+            }
+            .onEnded { _ in
+                pinchBaseHourHeight = nil
+            }
+    }
 }
 
 // MARK: - Grid
@@ -819,361 +901,6 @@ private struct GestureCaptureView: UIViewRepresentable {
 }
 
 // MARK: - Interactive Activity Block (move + resize + clip markers)
-
-private struct InteractiveActivityBlockView: View {
-    let activity: Activity
-    let dayStart: Date
-
-    let clippedStart: Bool
-    let clippedEnd: Bool
-
-    let hourHeight: CGFloat
-    let defaultDurationMinutes: Int
-
-    // ✅ new: lane dragging inputs
-    let currentLane: Int
-    let laneCount: Int
-    let laneWidth: CGFloat
-    let laneGap: CGFloat
-
-    @ObservedObject var autoScroll: AutoScrollController
-    let viewportHeight: CGFloat
-
-    let onEdit: () -> Void
-    //let onCommitLane: (Int) -> Void
-    let onCommitLaneChange: (Int, Int) -> Void
-    let onCommitTimeChange: () -> Void
-
-    let onHoverLane: (Int) -> Void
-    let onEndHoverLane: () -> Void
-
-    // Drag preview state
-    @State private var isDragging = false
-    @State private var dragDeltaMinutes: Int = 0
-    @State private var dragDeltaLane: Int = 0
-
-    @State private var dragStartContentY: CGFloat? = nil
-    @State private var resizeStartContentY: CGFloat? = nil
-
-    @State private var isResizing = false
-    @State private var resizeDeltaMinutes: Int = 0
-
-    private let snapMinutes: Int = 5
-    private let minDurationMinutes: Int = 15
-    private let maxSpanDays: Int = 7
-
-    var body: some View {
-        let baseStart = rawStartMinute()
-        let baseEnd = rawEndMinute()
-
-        // Preview times while moving/resizing
-        let previewStart = baseStart + dragDeltaMinutes
-        let previewEnd = baseEnd + dragDeltaMinutes + resizeDeltaMinutes
-
-        // Preview lane while dragging horizontally
-        let laneSpan = laneWidth + laneGap
-        let previewLane = clamp(
-            currentLane + dragDeltaLane,
-            0,
-            max(0, laneCount - 1)
-        )
-
-        let previewClippedStart = previewStart < 0
-        let previewClippedEnd = previewEnd > 24 * 60
-
-        let timeLabel =
-            "\(formatTime(previewStart)) – \(formatTime(previewEnd))"
-
-        VStack(alignment: .leading, spacing: 6) {
-            Text(activity.title.isEmpty ? "Untitled" : activity.title)
-                .font(.headline)
-                .lineLimit(2)
-
-            Text(timeLabel)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Spacer(minLength: 0)
-        }
-        .padding(10)
-        .frame(
-            maxWidth: .infinity,
-            maxHeight: .infinity,
-            alignment: .topLeading
-        )
-        .background(
-            RoundedRectangle(cornerRadius: 14).fill(.tint.opacity(0.18))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 14).stroke(
-                .tint.opacity(0.35),
-                lineWidth: 1
-            )
-        )
-        .overlay(alignment: .topTrailing) {
-            if isDragging || isResizing {
-                Text(isResizing ? "Resize" : "Move")
-                    .font(.caption2)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(.thinMaterial, in: Capsule())
-                    .padding(8)
-            }
-        }
-        .overlay(alignment: .topLeading) {
-            if clippedStart || previewClippedStart {
-                ClipMarker(systemName: "chevron.up")
-            }
-        }
-        .overlay(alignment: .bottomLeading) {
-            if clippedEnd || previewClippedEnd {
-                ClipMarker(systemName: "chevron.down")
-            }
-        }
-        // ✅ Move the view visually while lane-dragging
-        .offset(x: CGFloat(previewLane - currentLane) * laneSpan)
-        // Resize handle
-        .overlay(alignment: .bottomTrailing) {
-            resizeHandle
-                .padding(8)
-                .highPriorityGesture(resizeGesture)
-        }
-        .contentShape(RoundedRectangle(cornerRadius: 14))
-        .gesture(moveGesture)  // highPriorityGesture if drag doesn't start
-        .onTapGesture {
-            if !isDragging && !isResizing { onEdit() }
-        }
-    }
-
-    // MARK: - Gestures
-
-    private var moveGesture: some Gesture {
-        DragGesture(
-            minimumDistance: 6,
-            coordinateSpace: .named("timelineViewport")
-        )
-        .onChanged { value in
-            isDragging = true
-
-            // auto-scroll based on viewport position
-            autoScroll.updateDrag(
-                yInViewport: value.location.y,
-                viewportHeight: viewportHeight
-            )
-
-            // content Y = scroll offset + finger Y in viewport
-            let contentY = autoScroll.offsetY + value.location.y
-            if dragStartContentY == nil { dragStartContentY = contentY }
-
-            let dy = contentY - (dragStartContentY ?? contentY)
-
-            if canMoveInThisDay() {
-                dragDeltaMinutes = snap(minutesFromTranslation(dy))
-            } else {
-                dragDeltaMinutes = 0
-            }
-
-            let laneSpan = laneWidth + laneGap
-            if laneSpan > 0 {
-                dragDeltaLane = Int(
-                    (value.translation.width / laneSpan).rounded()
-                )
-            } else {
-                dragDeltaLane = 0
-            }
-
-            let previewLane = clamp(
-                currentLane + dragDeltaLane,
-                0,
-                max(0, laneCount - 1)
-            )
-            onHoverLane(previewLane)
-        }
-        .onEnded { value in
-            // final content delta
-            let endContentY = autoScroll.offsetY + value.location.y
-            let startContentY = dragStartContentY ?? endContentY
-            let dy = endContentY - startContentY
-
-            let finalMinutes =
-                canMoveInThisDay()
-                ? snap(minutesFromTranslation(dy))
-                : 0
-
-            let laneSpan = laneWidth + laneGap
-            let finalLaneDelta =
-                (laneSpan > 0)
-                ? Int((value.translation.width / laneSpan).rounded())
-                : 0
-
-            if finalMinutes != 0 {
-                commitMove(deltaMinutes: finalMinutes)
-            }
-
-            if finalLaneDelta != 0 {
-                let newLane = clamp(
-                    currentLane + finalLaneDelta,
-                    0,
-                    max(0, laneCount - 1)
-                )
-                onCommitLaneChange(currentLane, newLane)
-            } else if finalMinutes != 0 {
-                onCommitTimeChange()
-            }
-
-            onEndHoverLane()
-            autoScroll.stop()
-
-            isDragging = false
-            dragDeltaMinutes = 0
-            dragDeltaLane = 0
-            dragStartContentY = nil
-        }
-    }
-
-    private var resizeGesture: some Gesture {
-        DragGesture(
-            minimumDistance: 4,
-            coordinateSpace: .named("timelineViewport")
-        )
-        .onChanged { value in
-            isResizing = true
-
-            autoScroll.updateDrag(
-                yInViewport: value.location.y,
-                viewportHeight: viewportHeight
-            )
-
-            let contentY = autoScroll.offsetY + value.location.y
-            if resizeStartContentY == nil { resizeStartContentY = contentY }
-
-            let dy = contentY - (resizeStartContentY ?? contentY)
-            resizeDeltaMinutes = snap(minutesFromTranslation(dy))
-        }
-        .onEnded { value in
-            let endContentY = autoScroll.offsetY + value.location.y
-            let startContentY = resizeStartContentY ?? endContentY
-            let dy = endContentY - startContentY
-
-            let delta = snap(minutesFromTranslation(dy))
-            commitResize(deltaMinutes: delta)
-            onCommitTimeChange()
-
-            autoScroll.stop()
-
-            isResizing = false
-            resizeDeltaMinutes = 0
-            resizeStartContentY = nil
-        }
-
-    }
-
-    // MARK: - Commits
-
-    private func commitMove(deltaMinutes: Int) {
-        let duration = normalizedDurationMinutes()
-        let newStart = clamp(rawStartMinute() + deltaMinutes, 0, 24 * 60 - 1)
-
-        activity.startAt = dateFromMinutes(newStart)
-        activity.endAt = dateFromMinutes(newStart + duration)
-    }
-
-    private func commitResize(deltaMinutes: Int) {
-        let baseStart = rawStartMinute()
-        let baseEnd = rawEndMinute()
-
-        let minEnd = baseStart + minDurationMinutes
-        let maxEnd = baseStart + maxSpanDays * 24 * 60
-
-        let desiredEnd = baseEnd + deltaMinutes
-        let newEnd = clamp(desiredEnd, minEnd, maxEnd)
-
-        activity.endAt = dateFromMinutes(newEnd)
-        if let end = activity.endAt, end <= activity.startAt {
-            activity.endAt = dateFromMinutes(baseStart + minDurationMinutes)
-        }
-    }
-
-    // MARK: - Helpers
-
-    private func canMoveInThisDay() -> Bool {
-        let s = rawStartMinute()
-        return (0 <= s && s < 24 * 60)
-    }
-
-    private func rawStartMinute() -> Int {
-        Int(activity.startAt.timeIntervalSince(dayStart) / 60)
-    }
-
-    private func rawEndMinute() -> Int {
-        let endDate =
-            activity.endAt
-            ?? Calendar.current.date(
-                byAdding: .minute,
-                value: defaultDurationMinutes,
-                to: activity.startAt
-            )!
-        return Int(endDate.timeIntervalSince(dayStart) / 60)
-    }
-
-    private func normalizedDurationMinutes() -> Int {
-        max(minDurationMinutes, rawEndMinute() - rawStartMinute())
-    }
-
-    private var resizeHandle: some View {
-        Image(systemName: "line.3.horizontal")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .padding(6)
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
-            .accessibilityLabel("Resize")
-    }
-
-    private func minutesFromTranslation(_ dy: CGFloat) -> Int {
-        Int((dy / hourHeight) * 60.0)
-    }
-
-    private func snap(_ minutes: Int) -> Int {
-        Int((Double(minutes) / Double(snapMinutes)).rounded()) * snapMinutes
-    }
-
-    private func clamp(_ v: Int, _ lo: Int, _ hi: Int) -> Int {
-        min(max(v, lo), hi)
-    }
-
-    private func dateFromMinutes(_ minutes: Int) -> Date {
-        Calendar.current.date(byAdding: .minute, value: minutes, to: dayStart)
-            ?? dayStart
-    }
-
-    private func formatTime(_ minutes: Int) -> String {
-        let day = 24 * 60
-        let dayOffset = Int(floor(Double(minutes) / Double(day)))
-        var mod = minutes % day
-        if mod < 0 { mod += day }
-
-        let h = mod / 60
-        let m = mod % 60
-        let base = String(format: "%02d:%02d", h, m)
-
-        if dayOffset == 0 { return base }
-        return base + (dayOffset > 0 ? " (+\(dayOffset)d)" : " (\(dayOffset)d)")
-    }
-}
-
-private struct ClipMarker: View {
-    let systemName: String
-    var body: some View {
-        Image(systemName: systemName)
-            .font(.caption2.weight(.semibold))
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(.thinMaterial, in: Capsule())
-            .padding(6)
-    }
-}
-
 private struct LaneHighlight: View {
     let x: CGFloat
     let width: CGFloat

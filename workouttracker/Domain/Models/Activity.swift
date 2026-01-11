@@ -12,6 +12,7 @@ final class Activity {
     var title: String
     var startAt: Date
     var endAt: Date?
+    var isAllDay: Bool = false
 
     // ✅ Persisted “preferred lane/column” for timeline layout
     var laneHint: Int

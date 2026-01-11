@@ -14,10 +14,10 @@
             filePath = "workouttracker/Features/Day/DayTimelinesScreen.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "441"
-            endingLineNumber = "441"
-            landmarkName = "TimelineInteractionLayer"
-            landmarkType = "14">
+            startingLineNumber = "387"
+            endingLineNumber = "387"
+            landmarkName = "commitLaneChange(moved:oldLane:newLane:all:laneByID:maxLanes:defaultDurationMinutes:)"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
