@@ -32,6 +32,8 @@ struct TemplateEditorView: View {
     @State private var showApplyToDayAlert = false
     @State private var lastSavedTemplateId: UUID?
     @State private var upcomingUpdateStatus: String?
+    @State private var isWorkout: Bool = false
+    @State private var selectedWorkoutRoutineId: UUID? = nil
 
     
     private let applyDay: Date
@@ -203,15 +205,22 @@ struct TemplateEditorView: View {
         
         switch mode {
         case .create:
+            // Decide kind + routine linkage from your editor state
+            let resolvedKind: ActivityKind = isWorkout ? .workout : .generic
+            let resolvedRoutineId: UUID? = (resolvedKind == .workout) ? selectedWorkoutRoutineId : nil
+
             let t = TemplateActivity(
                 title: cleanTitle,
                 defaultStartMinute: startMinute,
                 defaultDurationMinutes: durationMinutes,
                 isEnabled: isEnabled,
-                recurrence: rule
+                recurrence: rule,
+                kind: resolvedKind,
+                workoutRoutineId: resolvedRoutineId
             )
             modelContext.insert(t)
             template = t
+
             
         case .edit(let t):
             t.title = cleanTitle

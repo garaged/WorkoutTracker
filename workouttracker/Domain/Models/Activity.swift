@@ -31,12 +31,28 @@ final class Activity {
     var plannedEndAt: Date?
     var plannedTitle: String?
 
+    // --- Kind / workout linkage ---
+    /// Stored as raw string for stability/migrations (same pattern as statusRaw).
+    var kindRaw: String = ActivityKind.generic.rawValue
+
+    /// If kind == .workout, links to a reusable routine definition (created later).
+    var workoutRoutineId: UUID?
+
+    /// If kind == .workout, links to a performed session instance (created later).
+    var workoutSessionId: UUID?
 
     // --- Completion / state ---
     var statusRaw: String
     var completedAt: Date?
 
-    init(title: String, startAt: Date, endAt: Date? = nil, laneHint: Int = 0) {
+    init(
+        title: String,
+        startAt: Date,
+        endAt: Date? = nil,
+        laneHint: Int = 0,
+        kind: ActivityKind = .generic,
+        workoutRoutineId: UUID? = nil
+    ) {
         self.title = title
         self.startAt = startAt
         self.endAt = endAt
@@ -50,6 +66,9 @@ final class Activity {
         self.plannedEndAt = nil
         self.plannedTitle = nil
 
+        self.kindRaw = kind.rawValue
+        self.workoutRoutineId = workoutRoutineId
+        self.workoutSessionId = nil
 
         self.statusRaw = ActivityStatus.planned.rawValue
         self.completedAt = nil
@@ -60,6 +79,12 @@ final class Activity {
         set { statusRaw = newValue.rawValue }
     }
 
-    var isDone: Bool { status == .done }
-}
+    var kind: ActivityKind {
+        get { ActivityKind(rawValue: kindRaw) ?? .generic }
+        set { kindRaw = newValue.rawValue }
+    }
 
+    var isDone: Bool { status == .done }
+
+    var isWorkout: Bool { kind == .workout }
+}
