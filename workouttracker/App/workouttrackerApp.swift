@@ -5,10 +5,16 @@ import SwiftData
 struct workouttrackerApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
+            // Scheduling
             Activity.self,
             TemplateActivity.self,
             TemplateInstanceOverride.self,
-            // Item.self, // include ONLY if you still have it
+
+            // Workouts / sessions
+            WorkoutRoutine.self,
+            WorkoutSession.self,
+            WorkoutSessionExercise.self,
+            WorkoutSetLog.self,
         ])
         let fm = FileManager.default
         let appSupport = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!

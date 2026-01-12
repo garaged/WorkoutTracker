@@ -12,6 +12,9 @@ struct TodayRootView: View {
     @State private var newDraft: NewActivityDraft?
     @State private var editingActivity: Activity?
     @State private var showTemplates = false
+    @State private var showLog = false
+    @State private var showProgress = false
+    @State private var showRoutines = false
 
     var body: some View {
         NavigationStack {
@@ -48,8 +51,36 @@ struct TodayRootView: View {
                 }
 
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button { showTemplates = true } label: {
-                        Image(systemName: "wand.and.stars")
+                    Menu {
+                        Button {
+                            showLog = true
+                        } label: {
+                            Label("Workout Log", systemImage: "calendar")
+                        }
+
+                        Button {
+                            showProgress = true
+                        } label: {
+                            Label("Progress", systemImage: "chart.bar")
+                        }
+
+                        Divider()
+
+                        Button {
+                            showRoutines = true
+                        } label: {
+                            Label("Routines", systemImage: "list.bullet.rectangle")
+                        }
+
+                        Divider()
+
+                        Button {
+                            showTemplates = true
+                        } label: {
+                            Label("Templates", systemImage: "wand.and.stars")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
 
                     Button {
@@ -88,6 +119,18 @@ struct TodayRootView: View {
         .sheet(isPresented: $showTemplates) {
             TemplatesScreen(applyDay: selectedDay)
         }
+        .sheet(isPresented: $showLog) {
+            WorkoutLogScreen()
+        }
+
+        .sheet(isPresented: $showProgress) {
+            WeekProgressScreen()
+        }
+
+        .sheet(isPresented: $showRoutines) {
+            NavigationStack { RoutineEditorScreen() }
+        }
+
 
     }
 

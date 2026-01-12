@@ -8,6 +8,10 @@ struct DayTimelineScreen: View {
     @State private var hoveredLaneWhileDraggingBlock: Int? = nil
     @StateObject private var autoScroll = AutoScrollController()
     @State private var viewportHeight: CGFloat = 0
+    @State private var workoutActionActivity: Activity? = nil
+    @State private var showWorkoutDialog: Bool = false
+    @State private var presentedSession: WorkoutSession? = nil
+    @State private var workoutLaunchState: WorkoutLaunchState = .none
 
     private let day: Date
     private let onEdit: (Activity) -> Void
@@ -64,7 +68,7 @@ struct DayTimelineScreen: View {
                 dayStart: dayStart,
                 activities: activities,
                 defaultDurationMinutes: defaultDurationMinutes,
-                onSelect: { onEdit($0) }
+                onSelect: { onTapActivity($0) }
             )
             .padding(.horizontal, 8)
 
@@ -116,6 +120,47 @@ struct DayTimelineScreen: View {
                 print("Preload failed: \(error)")
             }
         }
+        .confirmationDialog(
+            "Workout",
+            isPresented: $showWorkoutDialog,
+            titleVisibility: .visible
+        ) {
+            if let a = workoutActionActivity {
+                switch workoutLaunchState {
+                case .none:
+                    if a.workoutRoutineId == nil {
+                        Button("Quick Start") { startQuickWorkout(from: a) }
+                        Button("Attach Routine") { onEdit(a) }
+                    } else {
+                        Button("Start") { startWorkout(from: a) }
+                    }
+                case .inProgress(let s):
+                    Button("Resume") { presentedSession = s }
+                    Button("Restart", role: .destructive) { startSession(for: a) }
+
+                case .completed(let s):
+                    Button("View Summary") { presentedSession = s }
+                    Button("Start Again") { startSession(for: a) }
+                case .abandoned(let s):
+                    Button("View Summary") { presentedSession = s }
+                    Button("Start Again") { startSession(for: a) }
+                }
+
+                Button("Edit Details") {
+                    onEdit(a)
+                    workoutActionActivity = nil
+                }            }
+
+            Button("Cancel", role: .cancel) {
+                workoutActionActivity = nil
+            }
+        } message: {
+            Text("Start / Resume / View Summary")
+        }
+        .sheet(item: $presentedSession) { session in
+            NavigationStack { WorkoutSessionScreen(session: session) }
+        }
+
     }
 
 
@@ -237,7 +282,19 @@ struct DayTimelineScreen: View {
     }
 
     // MARK: - Mapping
+    private func onTapActivity(_ activity: Activity) {
+        if activity.kind == .workout {
+            workoutActionActivity = activity
+            workoutLaunchState = workoutSessionState(forLinkedActivityId: activity.id)
+            showWorkoutDialog = true
+            return
+        }
 
+        // non-workout: keep existing behavior
+        onEdit(activity)
+    }
+
+    
     private func yFromMinutes(_ minutes: Int) -> CGFloat {
         (CGFloat(minutes) / 60.0) * hourHeight
     }
@@ -566,7 +623,7 @@ struct DayTimelineScreen: View {
                 laneGap: laneGap,
                 autoScroll: autoScroll,
                 viewportHeight: viewportHeight,
-                onEdit: { onEdit(item.activity) },
+                onEdit: { onTapActivity(item.activity) },
                 onCommitLaneChange: { oldLane, newLane in
                     commitLaneChange(
                         moved: item.activity,
@@ -641,6 +698,90 @@ struct DayTimelineScreen: View {
             .onEnded { _ in
                 pinchBaseHourHeight = nil
             }
+    }
+    
+    // MARK: - Workout session lookup / creation
+
+    private enum WorkoutLaunchState {
+        case none
+        case inProgress(WorkoutSession)
+        case completed(WorkoutSession)
+        case abandoned(WorkoutSession)
+    }
+
+    private func workoutSessionState(forLinkedActivityId activityId: UUID) -> WorkoutLaunchState {
+        do {
+            let desc = FetchDescriptor<WorkoutSession>(
+                predicate: #Predicate { s in
+                    s.linkedActivityId == activityId
+                },
+                sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
+            )
+
+            let sessions = try modelContext.fetch(desc)
+            guard let latest = sessions.first else { return .none }
+
+            switch latest.status {
+            case .inProgress: return .inProgress(latest)
+            case .completed: return .completed(latest)
+            case .abandoned: return .abandoned(latest)
+            }
+        } catch {
+            assertionFailure("Failed to fetch sessions: \(error)")
+            return .none
+        }
+    }
+
+    private func startWorkout(from activity: Activity) {
+        // TODO: map your WorkoutRoutine -> [WorkoutSessionFactory.ExerciseTemplate]
+        let templates: [WorkoutSessionFactory.ExerciseTemplate] = []
+
+        let session = WorkoutSessionFactory.makeSession(
+            linkedActivityId: activity.id,
+            sourceRoutineId: activity.workoutRoutineId,               // keep if you have it
+            sourceRoutineNameSnapshot: activity.title,               // or routine name if available
+            exercises: templates,
+            prefillActualsFromTargets: true
+        )
+
+        modelContext.insert(session)
+        do {
+            try modelContext.save()
+            presentedSession = session
+            workoutLaunchState = .inProgress(session)
+            workoutActionActivity = nil
+        } catch {
+            assertionFailure("Failed to save new session: \(error)")
+        }
+    }
+    
+    private func startQuickWorkout(from activity: Activity) {
+        let session = WorkoutSessionFactory.makeSession(
+            linkedActivityId: activity.id,
+            sourceRoutineId: nil,
+            sourceRoutineNameSnapshot: nil,
+            exercises: [],
+            prefillActualsFromTargets: true
+        )
+
+        modelContext.insert(session)
+
+        do {
+            try modelContext.save()
+            presentedSession = session
+            workoutLaunchState = .inProgress(session)
+            workoutActionActivity = nil
+        } catch {
+            assertionFailure("Failed to save quick session: \(error)")
+        }
+    }
+    
+    private func startSession(for activity: Activity) {
+        if activity.workoutRoutineId == nil {
+            startQuickWorkout(from: activity)
+        } else {
+            startWorkout(from: activity)
+        }
     }
 }
 
