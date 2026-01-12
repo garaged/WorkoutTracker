@@ -1,3 +1,4 @@
+// File: Domain/Models/Activity.swift
 import Foundation
 import SwiftData
 
@@ -9,6 +10,9 @@ enum ActivityStatus: String, Codable {
 
 @Model
 final class Activity {
+    // ✅ Stable identifier for cross-domain linking (workouts <-> scheduling)
+    @Attribute(.unique) var id: UUID
+
     var title: String
     var startAt: Date
     var endAt: Date?
@@ -51,8 +55,11 @@ final class Activity {
         endAt: Date? = nil,
         laneHint: Int = 0,
         kind: ActivityKind = .generic,
-        workoutRoutineId: UUID? = nil
+        workoutRoutineId: UUID? = nil,
+        id: UUID = UUID()
     ) {
+        self.id = id
+
         self.title = title
         self.startAt = startAt
         self.endAt = endAt
@@ -85,6 +92,5 @@ final class Activity {
     }
 
     var isDone: Bool { status == .done }
-
     var isWorkout: Bool { kind == .workout }
 }

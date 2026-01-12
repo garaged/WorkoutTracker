@@ -548,7 +548,7 @@ struct DayTimelineScreen: View {
         lanesX0: CGFloat,
         laneSpan: CGFloat
     ) -> some View {
-        ForEach(laidOut.items, id: \.activity.persistentModelID) { item in
+        ForEach(laidOut.items) { item in
             let x = lanesX0 + CGFloat(item.lane) * laneSpan
             let y = yFromMinutes(item.displayStartMinute)
             let h = max(28, heightFromMinutes(item.displayDurationMinutes))
@@ -1057,4 +1057,9 @@ private enum TimelineLayout {
     private static func clamp(_ m: Int) -> Int {
         min(max(m, 0), 24 * 60)
     }
+}
+
+// ✅ Put this below TimelineLayout (same file)
+extension TimelineLayout.Item: Identifiable {
+    var id: UUID { activity.id }
 }
