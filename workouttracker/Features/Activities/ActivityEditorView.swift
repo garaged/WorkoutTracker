@@ -5,6 +5,9 @@ struct ActivityEditorView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
+    @Query(sort: [SortDescriptor(\WorkoutRoutine.name, order: .forward)])
+    private var routines: [WorkoutRoutine]
+
     private let cal = Calendar.current
     private let activity: Activity?
     private let day: Date
@@ -23,9 +26,19 @@ struct ActivityEditorView: View {
     @State private var laneHint: Int
     @State private var isAllDay: Bool = false
 
+    // ✅ Missing before: these must be initialized from the model (edit) or defaults (create)
+    @State private var kind: ActivityKind
+    @State private var workoutRoutineId: UUID?
+
     private var dayStart: Date { cal.startOfDay(for: startAt) }
     private var endDayStart: Date { cal.startOfDay(for: endAt) } // endAt used even for all-day
 
+    private var canSave: Bool {
+        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if t.isEmpty { return false }
+        if kind == .workout && workoutRoutineId == nil { return false }
+        return true
+    }
 
     init(
         day: Date,
@@ -43,7 +56,7 @@ struct ActivityEditorView: View {
         let fallbackStart = ActivityEditorView.defaultStart(for: day)
         let rawStart = activity?.startAt ?? (initialStart ?? fallbackStart)
 
-        // ✅ NEW: all-day flag comes from model when editing, otherwise defaults false.
+        // ✅ all-day flag comes from model when editing, otherwise defaults false.
         let initialIsAllDay = activity?.isAllDay ?? false
 
         // Compute end candidates the same way you already do.
@@ -92,8 +105,11 @@ struct ActivityEditorView: View {
             activity?.laneHint
             ?? initialLaneHint
             ?? 0
-
         _laneHint = State(initialValue: max(0, min(initialLane, 2))) // clamp to 0..2 for now
+
+        // ✅ Critical: seed workout metadata from the model (edit) or defaults (create)
+        _kind = State(initialValue: activity?.kind ?? .generic)
+        _workoutRoutineId = State(initialValue: activity?.workoutRoutineId)
     }
 
     var body: some View {
@@ -101,7 +117,37 @@ struct ActivityEditorView: View {
             Form {
                 Section("Activity") {
                     TextField("Title", text: $title)
-                    
+                }
+
+                Section("Type") {
+                    Picker("Kind", selection: $kind) {
+                        Text("Generic").tag(ActivityKind.generic)
+                        Text("Workout").tag(ActivityKind.workout)
+                    }
+                    .pickerStyle(.segmented)
+
+                    if kind == .workout && routines.isEmpty {
+                        Text("Create a routine first to use Workout activities.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if kind == .workout {
+                    Section("Workout") {
+                        Picker("Routine", selection: $workoutRoutineId) {
+                            Text("Choose…").tag(UUID?.none)
+                            ForEach(routines) { r in
+                                Text(r.name).tag(Optional(r.id))
+                            }
+                        }
+
+                        if workoutRoutineId == nil {
+                            Text("Pick a routine so tapping this block can Start/Resume a session.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
 
                 Section("Time") {
@@ -186,7 +232,6 @@ struct ActivityEditorView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-
             }
             .navigationTitle(activity == nil ? "New Activity" : "Edit Activity")
             .navigationBarTitleDisplayMode(.inline)
@@ -199,15 +244,61 @@ struct ActivityEditorView: View {
                         .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
+            // ✅ Guardrails for workout selection
+            .onChange(of: kind) { _, newKind in
+                if newKind == .generic {
+                    workoutRoutineId = nil
+                } else {
+                    // If user switches to Workout and nothing selected yet, pick first routine automatically.
+                    if workoutRoutineId == nil, let first = routines.first {
+                        workoutRoutineId = first.id
+                    }
+                    // If there are no routines, force back to generic (prevents dead-end state)
+                    if routines.isEmpty {
+                        kind = .generic
+                        workoutRoutineId = nil
+                    }
+                }
+            }
+            .onChange(of: routines.count) { _, _ in
+                // If routines list changes and we're in workout mode but no routine selected, auto-pick.
+                if kind == .workout, workoutRoutineId == nil, let first = routines.first {
+                    workoutRoutineId = first.id
+                }
+            }
+            .onChange(of: kind) { _, newKind in
+                if newKind == .generic {
+                    workoutRoutineId = nil
+                } else {
+                    // If user switches to workout and there are routines, auto-pick the first.
+                    if workoutRoutineId == nil, let first = routines.first {
+                        workoutRoutineId = first.id
+                    }
+                }
+            }
         }
     }
 
+
+    
     private var minEndRange: Date {
         cal.date(byAdding: .minute, value: 15, to: startAt) ?? startAt
     }
 
     private func save() {
         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Normalize fields we always persist
+        func applyCommonFields(to a: Activity) {
+            a.title = t
+            a.laneHint = laneHint
+            a.kind = kind
+            if kind == .workout {
+                a.workoutRoutineId = workoutRoutineId
+            } else {
+                a.workoutRoutineId = nil
+            }
+        }
 
         if isAllDay {
             // All-day uses date boundaries and always stores an end (end-exclusive)
@@ -221,19 +312,23 @@ struct ActivityEditorView: View {
             }
 
             if let activity {
-                activity.title = t
+                applyCommonFields(to: activity)
                 activity.isAllDay = true
                 activity.startAt = startDay
                 activity.endAt = endDayExclusive
-                activity.laneHint = laneHint
             } else {
                 let new = Activity(
                     title: t,
                     startAt: startDay,
                     endAt: endDayExclusive,
-                    laneHint: laneHint
+                    laneHint: laneHint,
+                    kind: kind,
+                    workoutRoutineId: (kind == .workout) ? workoutRoutineId : nil
                 )
                 new.isAllDay = true
+                new.kind = kind
+                new.workoutRoutineId = (kind == .workout) ? workoutRoutineId : nil
+                applyCommonFields(to: new) // ✅ missing before: kind + routine on NEW activity
                 modelContext.insert(new)
             }
         } else {
@@ -242,21 +337,31 @@ struct ActivityEditorView: View {
             let finalEnd: Date? = hasEnd ? max(endAt, minEnd) : nil
 
             if let activity {
-                activity.title = t
+                applyCommonFields(to: activity)
                 activity.isAllDay = false
                 activity.startAt = startAt
                 activity.endAt = finalEnd
-                activity.laneHint = laneHint
             } else {
                 let new = Activity(
                     title: t,
                     startAt: startAt,
                     endAt: finalEnd,
-                    laneHint: laneHint
+                    laneHint: laneHint,
+                    kind: kind,
+                    workoutRoutineId: (kind == .workout) ? workoutRoutineId : nil
                 )
                 new.isAllDay = false
+                new.kind = kind
+                new.workoutRoutineId = (kind == .workout) ? workoutRoutineId : nil
+                applyCommonFields(to: new) // ✅ missing before: kind + routine on NEW activity
                 modelContext.insert(new)
             }
+        }
+
+        do {
+            try modelContext.save()
+        } catch {
+            assertionFailure("Failed to save Activity: \(error)")
         }
 
         dismiss()
