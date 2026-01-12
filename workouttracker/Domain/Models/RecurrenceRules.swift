@@ -1,12 +1,12 @@
 import Foundation
 
-enum Weekday: Int, Codable, CaseIterable, Hashable {
+nonisolated enum Weekday: Int, Codable, CaseIterable, Hashable, Sendable {
     // Calendar weekday: 1 = Sunday ... 7 = Saturday
     case sunday = 1, monday, tuesday, wednesday, thursday, friday, saturday
 }
 
-struct RecurrenceRule: Codable, Equatable {
-    enum Kind: String, Codable { case none, daily, weekly }
+nonisolated struct RecurrenceRule: Codable, Equatable, Sendable {
+    enum Kind: String, Codable, Sendable { case none, daily, weekly }
 
     var kind: Kind
     var startDate: Date = .distantPast

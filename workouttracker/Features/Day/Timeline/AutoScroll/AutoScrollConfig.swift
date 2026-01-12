@@ -1,9 +1,16 @@
+import Foundation
 import CoreGraphics
 
 struct AutoScrollConfig: Sendable {
-    var edgeThreshold: CGFloat = 80     // pts from top/bottom to start scrolling
-    var maxSpeed: CGFloat = 900         // pts/sec at the edge
-    var hysteresis: CGFloat = 12        // pts to avoid flicker
+    let edgeThreshold: CGFloat
+    let maxSpeed: CGFloat
+    let hysteresis: CGFloat
+    let tickHz: Double
 
-    static let `default` = AutoScrollConfig()
+    static let `default` = AutoScrollConfig(
+        edgeThreshold: 56,
+        maxSpeed: 900,
+        hysteresis: 12,
+        tickHz: 60
+    )
 }
