@@ -36,14 +36,16 @@ struct TodayRootView: View {
                 }
             }
             .navigationTitle(dayTitle(selectedDay))
-            .navigationBarTitleDisplayMode(.inline)
+            .toolbarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
                     Button {
                         selectedDay = cal.date(byAdding: .day, value: -1, to: selectedDay) ?? selectedDay
                     } label: { Image(systemName: "chevron.left") }
 
-                    Button("Today") { selectedDay = Date() }
+                    TodayJumpButton(isToday: cal.isDateInToday(selectedDay)) {
+                        selectedDay = Date()
+                    }
 
                     Button {
                         selectedDay = cal.date(byAdding: .day, value: 1, to: selectedDay) ?? selectedDay
@@ -84,7 +86,9 @@ struct TodayRootView: View {
                     }
 
                     Button {
-                        newDraft = NewActivityDraft(initialStart: nil, initialEnd: nil, laneHint: 0)
+                        let dayStart = cal.startOfDay(for: selectedDay)
+                        let defaultStart = cal.date(bySettingHour: 9, minute: 0, second: 0, of: dayStart) ?? dayStart
+                        newDraft = NewActivityDraft(initialStart: defaultStart, initialEnd: nil, laneHint: 0)
                     } label: {
                         Image(systemName: "plus")
                     }
@@ -134,8 +138,8 @@ struct TodayRootView: View {
 
     }
 
-    private func dayTitle(_ d: Date) -> String {
-        cal.isDateInToday(d) ? "Today" : d.formatted(.dateTime.weekday(.wide).month(.abbreviated).day())
+    private func dayTitle(_ day: Date) -> String {
+        day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
     }
 }
 

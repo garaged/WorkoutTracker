@@ -21,6 +21,10 @@ final class Exercise {
     var isArchived: Bool
     var createdAt: Date
     var updatedAt: Date
+    
+    // ✅ Minimal equipment tagging (Phase D)
+    // Stored as comma-separated tags: "dumbbell,barbell,bench"
+    var equipmentTagsRaw: String
 
     init(
         id: UUID = UUID(),
@@ -31,6 +35,7 @@ final class Exercise {
         mediaKind: ExerciseMediaKind = .none,
         mediaAssetName: String? = nil,
         mediaURLString: String? = nil,
+        equipmentTagsRaw: String = "",              // ✅ NEW
         isArchived: Bool = false
     ) {
         self.id = id
@@ -42,6 +47,8 @@ final class Exercise {
         self.mediaKindRaw = mediaKind.rawValue
         self.mediaAssetName = mediaAssetName
         self.mediaURLString = mediaURLString
+        
+        self.equipmentTagsRaw = equipmentTagsRaw    // ✅ NEW
 
         self.isArchived = isArchived
         self.createdAt = Date()
@@ -56,5 +63,19 @@ final class Exercise {
     var mediaKind: ExerciseMediaKind {
         get { ExerciseMediaKind(rawValue: mediaKindRaw) ?? .none }
         set { mediaKindRaw = newValue.rawValue }
+    }
+    
+    var equipmentTags: [String] {
+        equipmentTagsRaw
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            .filter { !$0.isEmpty }
+    }
+
+    func setEquipmentTags(_ tags: [String]) {
+        equipmentTagsRaw = tags
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            .filter { !$0.isEmpty }
+            .joined(separator: ",")
     }
 }

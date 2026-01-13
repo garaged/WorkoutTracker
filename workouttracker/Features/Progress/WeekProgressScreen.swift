@@ -17,8 +17,8 @@ struct WeekProgressScreen: View {
                     List {
                         Section {
                             HStack {
-                                StatChip(label: "Current streak", value: "\(summary.currentStreakDays)d")
-                                StatChip(label: "Longest streak", value: "\(summary.longestStreakDays)d")
+                                StatChip(title: "Current streak", value: "\(summary.currentStreakDays)d")
+                                StatChip(title: "Longest streak", value: "\(summary.longestStreakDays)d")
                             }
                             .padding(.vertical, 4)
                         }
@@ -83,9 +83,9 @@ private struct WeekRow: View {
             }
 
             HStack(spacing: 14) {
-                StatChip(label: "Sets", value: "\(w.totalSetsCompleted)")
-                StatChip(label: "Volume", value: formatVolume(w.totalVolume))
-                StatChip(label: "Time", value: formatDuration(w.timeTrainedSeconds))
+                StatChip(title: "Sets", value: "\(w.totalSetsCompleted)")
+                StatChip(title: "Volume", value: formatVolume(w.totalVolume))
+                StatChip(title: "Time", value: formatDuration(w.timeTrainedSeconds))
             }
         }
         .padding(.vertical, 6)

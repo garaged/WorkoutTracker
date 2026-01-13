@@ -10,12 +10,11 @@ struct workouttrackerApp: App {
             TemplateActivity.self,
             TemplateInstanceOverride.self,
 
-            // Workouts / sessions
+            // Workouts domain
+            Exercise.self,
             WorkoutRoutine.self,
             WorkoutRoutineItem.self,
             WorkoutSetPlan.self,
-            Exercise.self,
-            
             WorkoutSession.self,
             WorkoutSessionExercise.self,
             WorkoutSetLog.self,
