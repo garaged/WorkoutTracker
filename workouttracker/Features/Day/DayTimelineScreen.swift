@@ -14,6 +14,9 @@ struct DayTimelineScreen: View {
     @State private var workoutLaunchState: WorkoutLaunchState = .none
 
     private let day: Date
+    private let cal = Calendar.current
+    private var dayStart: Date { cal.startOfDay(for: day) }   // ✅ must use `day`, not Date()
+
     private let onEdit: (Activity) -> Void
     private let onCreateAt: (Date, Int) -> Void
     private let onCreateRange: (Date, Date, Int) -> Void
@@ -232,11 +235,12 @@ struct DayTimelineScreen: View {
                         onCreateAt(start, lane)
                     },
                     onDragRange: { startMin, endMin, lane in
-                        let start = dateFromMinutes(
-                            startMin,
-                            dayStart: dayStart
-                        )
-                        let end = dateFromMinutes(endMin, dayStart: dayStart)
+                        let lo = min(startMin, endMin)
+                        let hi = max(startMin, endMin)
+
+                        let start = dateFromMinutes(lo, dayStart: dayStart)
+                        let end   = dateFromMinutes(hi, dayStart: dayStart)
+
                         onCreateRange(start, end, lane)
                     }
                 )
@@ -311,9 +315,8 @@ struct DayTimelineScreen: View {
         min(max(m, 0), 24 * 60 - 1)
     }
 
-    private func dateFromMinutes(_ minutes: Int, dayStart: Date) -> Date {
-        Calendar.current.date(byAdding: .minute, value: minutes, to: dayStart)
-            ?? dayStart
+    private func dateFromMinutes(_ minute: Int, dayStart: Date) -> Date {
+        cal.date(byAdding: .minute, value: minute, to: dayStart) ?? dayStart
     }
 
     private func resolveLaneHintsAfterDrop(
@@ -982,21 +985,21 @@ private struct GestureCaptureView: UIViewRepresentable {
     let onLongPressBegan: (CGPoint) -> Void
     let onLongPressChanged: (CGPoint) -> Void
     let onLongPressEnded: (CGPoint, CGPoint) -> Void
-
+    
     func makeCoordinator() -> Coordinator { Coordinator(self) }
-
+    
     func makeUIView(context: Context) -> UIView {
         let v = UIView(frame: .zero)
         v.backgroundColor = .clear
         v.isUserInteractionEnabled = true
-
+        
         // Tap
         let tap = UITapGestureRecognizer(
             target: context.coordinator,
             action: #selector(Coordinator.handleTap(_:))
         )
         tap.cancelsTouchesInView = false
-
+        
         // Long press (acts as press+drag selection)
         let lp = UILongPressGestureRecognizer(
             target: context.coordinator,
@@ -1005,52 +1008,55 @@ private struct GestureCaptureView: UIViewRepresentable {
         lp.minimumPressDuration = 0.3
         lp.allowableMovement = 12
         lp.cancelsTouchesInView = false
-
+        
         // Prevent tap firing after a long press selection
         tap.require(toFail: lp)
-
+        
         v.addGestureRecognizer(tap)
         v.addGestureRecognizer(lp)
-
+        
         context.coordinator.view = v
         return v
     }
-
-    func updateUIView(_ uiView: UIView, context: Context) {}
-
+    
+    func updateUIView(_ uiView: UIView, context: Context) {
+        // ✅ Refresh closures when SwiftUI updates this representable
+        context.coordinator.parent = self
+    }
+    
     final class Coordinator: NSObject {
-        let parent: GestureCaptureView
+        var parent: GestureCaptureView   // ✅ must be mutable so it can refresh closures
         weak var view: UIView?
-
+        
         private var startPoint: CGPoint?
-
+        
         init(_ parent: GestureCaptureView) {
             self.parent = parent
         }
-
+        
         @objc func handleTap(_ gr: UITapGestureRecognizer) {
             guard let v = view else { return }
             let pt = gr.location(in: v)
             parent.onTap(pt)
         }
-
+        
         @objc func handleLongPress(_ gr: UILongPressGestureRecognizer) {
             guard let v = view else { return }
             let pt = gr.location(in: v)
-
+            
             switch gr.state {
             case .began:
                 startPoint = pt
                 parent.onLongPressBegan(pt)
-
+                
             case .changed:
                 parent.onLongPressChanged(pt)
-
+                
             case .ended, .cancelled, .failed:
                 let start = startPoint ?? pt
                 parent.onLongPressEnded(start, pt)
                 startPoint = nil
-
+                
             default:
                 break
             }
@@ -1217,7 +1223,6 @@ private enum TimelineLayout {
     }
 }
 
-// ✅ Put this below TimelineLayout (same file)
 extension TimelineLayout.Item: Identifiable {
     var id: UUID { activity.id }
 }

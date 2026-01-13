@@ -148,9 +148,9 @@ struct WorkoutLogScreen: View {
             }
 
             HStack(spacing: 14) {
-                StatChip(label: "Workouts", value: "\(completed)/\(total)")
-                StatChip(label: "Volume", value: formatVolume(volume))
-                StatChip(label: "Time", value: formatDuration(seconds))
+                StatChip(title: "Workouts", value: "\(completed)/\(total)")
+                StatChip(title: "Volume", value: formatVolume(volume))
+                StatChip(title: "Time", value: formatDuration(seconds))
             }
         }
         .padding(.horizontal, 2)

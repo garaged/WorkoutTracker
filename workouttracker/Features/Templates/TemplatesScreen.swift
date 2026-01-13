@@ -47,18 +47,6 @@ struct TemplatesScreen: View {
             }
             .navigationTitle("Templates")
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showNew = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-            .toolbar {
                 ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } }
 
                 ToolbarItemGroup(placement: .topBarTrailing) {
