@@ -12,6 +12,10 @@ struct workouttrackerApp: App {
 
             // Workouts / sessions
             WorkoutRoutine.self,
+            WorkoutRoutineItem.self,
+            WorkoutSetPlan.self,
+            Exercise.self,
+            
             WorkoutSession.self,
             WorkoutSessionExercise.self,
             WorkoutSetLog.self,

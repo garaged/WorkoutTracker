@@ -733,25 +733,42 @@ struct DayTimelineScreen: View {
     }
 
     private func startWorkout(from activity: Activity) {
-        // TODO: map your WorkoutRoutine -> [WorkoutSessionFactory.ExerciseTemplate]
-        let templates: [WorkoutSessionFactory.ExerciseTemplate] = []
+        guard let routineId = activity.workoutRoutineId else {
+            startQuickWorkout(from: activity)
+            return
+        }
 
-        let session = WorkoutSessionFactory.makeSession(
-            linkedActivityId: activity.id,
-            sourceRoutineId: activity.workoutRoutineId,               // keep if you have it
-            sourceRoutineNameSnapshot: activity.title,               // or routine name if available
-            exercises: templates,
-            prefillActualsFromTargets: true
-        )
-
-        modelContext.insert(session)
         do {
+            let desc = FetchDescriptor<WorkoutRoutine>(
+                predicate: #Predicate { r in r.id == routineId }
+            )
+            guard let routine = try modelContext.fetch(desc).first else {
+                assertionFailure("WorkoutRoutine not found for id=\(routineId)")
+                startQuickWorkout(from: activity)
+                return
+            }
+
+            let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
+
+            let session = WorkoutSessionFactory.makeSession(
+                linkedActivityId: activity.id,
+                sourceRoutineId: routine.id,
+                sourceRoutineNameSnapshot: routine.name,
+                exercises: templates,
+                prefillActualsFromTargets: true
+            )
+
+            modelContext.insert(session)
+            activity.workoutSessionId = session.id
+
             try modelContext.save()
             presentedSession = session
             workoutLaunchState = .inProgress(session)
             workoutActionActivity = nil
+
         } catch {
-            assertionFailure("Failed to save new session: \(error)")
+            assertionFailure("Failed to start workout: \(error)")
+            startQuickWorkout(from: activity)
         }
     }
     

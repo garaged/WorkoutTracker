@@ -58,6 +58,19 @@ struct TemplatesScreen: View {
                     }
                 }
             }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } }
+
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    NavigationLink {
+                        RoutinesScreen()
+                    } label: {
+                        Image(systemName: "list.bullet.rectangle")
+                    }
+
+                    Button { showNew = true } label: { Image(systemName: "plus") }
+                }
+            }
             .sheet(isPresented: $showNew) {
                 NavigationStack {
                     TemplateEditorView(mode: .create, applyDay: applyDay)
