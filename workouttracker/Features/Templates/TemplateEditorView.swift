@@ -10,6 +10,8 @@ struct TemplateEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
+    @Bindable var template: TemplateActivity
+    
     private let mode: Mode
     
     // Form state (kept local so we can edit recurrence cleanly)
@@ -32,15 +34,30 @@ struct TemplateEditorView: View {
     @State private var showApplyToDayAlert = false
     @State private var lastSavedTemplateId: UUID?
     @State private var upcomingUpdateStatus: String?
-    @State private var isWorkout: Bool = false
-    @State private var selectedWorkoutRoutineId: UUID? = nil
 
-    
     private let applyDay: Date
     
     init(mode: Mode, applyDay: Date) {
         self.mode = mode
         self.applyDay = applyDay
+
+        switch mode {
+        case .create:
+            // Draft object only used to drive the form bindings.
+            // We do NOT insert it unless user taps Save.
+            self.template = TemplateActivity(
+                title: "",
+                defaultStartMinute: 8 * 60,
+                defaultDurationMinutes: 45,
+                isEnabled: true,
+                recurrence: RecurrenceRule(kind: .daily),
+                kind: .generic,
+                workoutRoutineId: nil
+            )
+
+        case .edit(let t):
+            self.template = t
+        }
     }
     
     var body: some View {
@@ -60,7 +77,22 @@ struct TemplateEditorView: View {
                     }
                 }
             }
-            
+            Section("Type") {
+                Picker("Kind", selection: $template.kind) {
+                    Text("General").tag(ActivityKind.generic)
+                    Text("Workout").tag(ActivityKind.workout)
+                }
+                .pickerStyle(.segmented)
+            }
+            if template.kind == .workout {
+                Section("Workout") {
+                    RoutinePickerField(routineId: $template.workoutRoutineId)
+
+                    Text("This routine will be attached to every generated workout activity from this template.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
             Section("Recurrence") {
                 Picker("Repeats", selection: $recurrenceKind) {
                     Text("One-time").tag(RecurrenceRule.Kind.none)
@@ -129,6 +161,12 @@ struct TemplateEditorView: View {
                 Text("Apply updates today's generated instance (and can bring it back if deleted).")
             }
         }
+        .onChange(of: template.kind) { _, newKind in
+            if newKind != .workout {
+                template.workoutRoutineId = nil
+            }
+        }
+
     }
     
     private var modeTitle: String {
@@ -177,21 +215,22 @@ struct TemplateEditorView: View {
             hasEndDate = false
             ruleEndDate = Date()
         }
+        template.kind = t.kind
+        template.workoutRoutineId = t.workoutRoutineId
     }
     
     private func save() {
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else { return }
-        
+
         let startMinute = minutesFromDate(startTime)
-        
+
         var rule = RecurrenceRule(kind: recurrenceKind)
         rule.interval = max(1, interval)
         rule.startDate = ruleStartDate
         rule.endDate = hasEndDate ? ruleEndDate : nil
-        
+
         if recurrenceKind == .weekly {
-            // If user didn’t pick weekdays, default to startDate’s weekday
             if weekdays.isEmpty {
                 let wdInt = Calendar.current.component(.weekday, from: ruleStartDate)
                 if let wd = Weekday(rawValue: wdInt) { weekdays = [wd] }
@@ -200,43 +239,47 @@ struct TemplateEditorView: View {
         } else {
             rule.weekdays = []
         }
-        
-        let template: TemplateActivity
-        
+
+        // ✅ Avoid shadowing `@Bindable var template`
+        let savedTemplate: TemplateActivity
+
+        // ✅ Use the UI binding as the source of truth
+        let selectedKind = self.template.kind
+        let selectedRoutineId: UUID? = (selectedKind == .workout) ? self.template.workoutRoutineId : nil
+
         switch mode {
         case .create:
-            // Decide kind + routine linkage from your editor state
-            let resolvedKind: ActivityKind = isWorkout ? .workout : .generic
-            let resolvedRoutineId: UUID? = (resolvedKind == .workout) ? selectedWorkoutRoutineId : nil
-
             let t = TemplateActivity(
                 title: cleanTitle,
                 defaultStartMinute: startMinute,
                 defaultDurationMinutes: durationMinutes,
                 isEnabled: isEnabled,
                 recurrence: rule,
-                kind: resolvedKind,
-                workoutRoutineId: resolvedRoutineId
+                kind: selectedKind,
+                workoutRoutineId: selectedRoutineId
             )
             modelContext.insert(t)
-            template = t
+            savedTemplate = t
 
-            
         case .edit(let t):
             t.title = cleanTitle
             t.isEnabled = isEnabled
             t.defaultStartMinute = startMinute
             t.defaultDurationMinutes = durationMinutes
             t.recurrence = rule
-            template = t
+
+            // ✅ Persist kind + routine linkage
+            t.kind = selectedKind
+            t.workoutRoutineId = selectedRoutineId
+
+            savedTemplate = t
         }
-        
-        lastSavedTemplateId = template.id
+
+        lastSavedTemplateId = savedTemplate.id
         try? modelContext.save()
 
         switch mode {
         case .create:
-            // Create should feel instant: generate for the current day immediately.
             do {
                 try TemplatePreloader.ensureDayIsPreloaded(for: applyDay, context: modelContext)
             } catch {
@@ -250,7 +293,7 @@ struct TemplateEditorView: View {
 
             do {
                 let count = try TemplatePreloader.updateExistingUpcomingInstances(
-                    templateId: template.id,
+                    templateId: savedTemplate.id,
                     from: tomorrow,
                     daysAhead: 120,
                     context: modelContext

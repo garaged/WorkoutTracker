@@ -2,82 +2,42 @@ import SwiftUI
 import SwiftData
 
 struct RoutineEditorScreen: View {
-    @Environment(\.modelContext) private var modelContext
+    enum Mode {
+        case create
+        case edit(WorkoutRoutine)
+    }
 
-    @Query(sort: [SortDescriptor(\WorkoutRoutine.name, order: .forward)])
-    private var routines: [WorkoutRoutine]
+    private let mode: Mode
 
-    @State private var seedResultText: String? = nil
+    // ✅ Default mode fixes “Missing argument for parameter 'mode'”
+    init(mode: Mode = .create) {
+        self.mode = mode
+    }
 
     var body: some View {
         NavigationStack {
-            Group {
-                if routines.isEmpty {
-                    ContentUnavailableView(
-                        "No routines yet",
-                        systemImage: "list.bullet.rectangle",
-                        description: Text("Create one later in Phase C. For now, seed demo routines to unblock workout sessions.")
-                    )
-                    .padding(.bottom, 12)
-
-                    #if DEBUG
-                    Button {
-                        seed()
-                    } label: {
-                        Label("Seed Demo Routines", systemImage: "wand.and.stars")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    #endif
-
-                } else {
-                    List {
-                        Section("Routines") {
-                            ForEach(routines) { r in
-                                HStack {
-                                    Text(r.name)
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-
-                        #if DEBUG
-                        Section {
-                            Button {
-                                seed()
-                            } label: {
-                                Label("Seed Demo Routines (only if empty)", systemImage: "wand.and.stars")
-                            }
-                        }
-                        #endif
-                    }
-                }
-            }
-            .navigationTitle("Routines")
-            .alert("Seed Result", isPresented: Binding(
-                get: { seedResultText != nil },
-                set: { if !$0 { seedResultText = nil } }
-            )) {
-                Button("OK", role: .cancel) { seedResultText = nil }
-            } message: {
-                Text(seedResultText ?? "")
-            }
+            ContentUnavailableView(
+                "Routine Editor",
+                systemImage: "list.bullet.rectangle",
+                description: Text(modeDescription)
+            )
+            .navigationTitle(title)
         }
     }
 
-    @MainActor
-    private func seed() {
-        do {
-            let created = try RoutineSeeder.seedDemoRoutinesIfEmpty(context: modelContext)
-            if created.isEmpty {
-                seedResultText = "You already have routines — nothing was added."
-            } else {
-                seedResultText = "Created \(created.count) demo routine(s). You can now attach one to a Workout activity."
-            }
-        } catch {
-            seedResultText = "Seeding failed: \(error)"
-            assertionFailure("Seeding failed: \(error)")
+    private var title: String {
+        switch mode {
+        case .create: return "New Routine"
+        case .edit:   return "Edit Routine"
+        }
+    }
+
+    private var modeDescription: String {
+        switch mode {
+        case .create:
+            return "Next: create/edit routine + reorder exercises."
+        case .edit(let r):
+            return "Editing: \(r.name)"
         }
     }
 }
