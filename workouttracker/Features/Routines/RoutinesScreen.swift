@@ -1,76 +1,54 @@
+// File: Features/Routines/RoutinesScreen.swift
 import SwiftUI
 import SwiftData
 
-// File: Features/Routines/RoutinesScreen.swift
 struct RoutinesScreen: View {
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
 
-    @Query(sort: [SortDescriptor(\WorkoutRoutine.name, order: .forward)])
+    @Query(sort: [SortDescriptor(\WorkoutRoutine.updatedAt, order: .reverse)])
     private var routines: [WorkoutRoutine]
 
-    @State private var showNew = false
-    @State private var showArchived = false
-
-    private var filtered: [WorkoutRoutine] {
-        routines
-            .filter { showArchived ? true : !$0.isArchived }
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-    }
-
     var body: some View {
-        NavigationStack {
-            List {
-                if filtered.isEmpty {
-                    ContentUnavailableView(
-                        "No routines",
-                        systemImage: "list.bullet.rectangle",
-                        description: Text("Create a routine, then attach it to a Workout activity or template.")
-                    )
-                } else {
-                    ForEach(filtered) { r in
-                        NavigationLink {
-                            RoutineEditorScreen(mode: .edit(r))
-                        } label: {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(r.name).font(.headline)
-                                if let notes = r.notes, !notes.isEmpty {
-                                    Text(notes).font(.subheadline).foregroundStyle(.secondary)
-                                }
-                                Text("\(r.items.count) exercises")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.vertical, 4)
+        List {
+            if routines.isEmpty {
+                ContentUnavailableView(
+                    "No routines",
+                    systemImage: "list.bullet.rectangle",
+                    description: Text("Create a routine so workouts can attach to it.")
+                )
+            } else {
+                ForEach(routines) { r in
+                    NavigationLink {
+                        RoutineEditorScreen(mode: .edit(r))
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(r.name).font(.headline)
+                            Text("\(r.items.count) items")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
+                        .padding(.vertical, 2)
                     }
                 }
+                .onDelete(perform: delete)
             }
-            .navigationTitle("Routines")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack {
-                        Button {
-                            showArchived.toggle()
-                        } label: {
-                            Image(systemName: showArchived ? "archivebox.fill" : "archivebox")
-                        }
-
-                        Button {
-                            showNew = true
-                        } label: {
-                            Image(systemName: "plus")
-                        }
-                    }
-                }
-            }
-            .sheet(isPresented: $showNew) {
-                NavigationStack {
+        }
+        .navigationTitle("Routines")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
                     RoutineEditorScreen(mode: .create)
+                } label: {
+                    Image(systemName: "plus")
                 }
             }
         }
+    }
+
+    private func delete(_ indexSet: IndexSet) {
+        for i in indexSet {
+            modelContext.delete(routines[i])
+        }
+        try? modelContext.save()
     }
 }

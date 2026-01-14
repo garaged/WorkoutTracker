@@ -11,49 +11,47 @@ struct WeekProgressScreen: View {
     @State private var loadError: String? = nil
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if let summary {
-                    List {
-                        Section {
-                            HStack {
-                                StatChip(title: "Current streak", value: "\(summary.currentStreakDays)d")
-                                StatChip(title: "Longest streak", value: "\(summary.longestStreakDays)d")
-                            }
-                            .padding(.vertical, 4)
+        Group {
+            if let summary {
+                List {
+                    Section {
+                        HStack {
+                            StatChip(title: "Current streak", value: "\(summary.currentStreakDays)d")
+                            StatChip(title: "Longest streak", value: "\(summary.longestStreakDays)d")
                         }
+                        .padding(.vertical, 4)
+                    }
 
-                        Section {
-                            Picker("Window", selection: $weeksBack) {
-                                Text("4w").tag(4)
-                                Text("12w").tag(12)
-                                Text("24w").tag(24)
-                            }
-                            .pickerStyle(.segmented)
+                    Section {
+                        Picker("Window", selection: $weeksBack) {
+                            Text("4w").tag(4)
+                            Text("12w").tag(12)
+                            Text("24w").tag(24)
                         }
+                        .pickerStyle(.segmented)
+                    }
 
-                        Section("Weeks") {
-                            ForEach(summary.weeks) { w in
-                                WeekRow(w: w)
-                            }
+                    Section("Weeks") {
+                        ForEach(summary.weeks) { w in
+                            WeekRow(w: w)
                         }
                     }
-                    .listStyle(.insetGrouped)
-                } else if let loadError {
-                    ContentUnavailableView(
-                        "Couldn’t load progress",
-                        systemImage: "exclamationmark.triangle",
-                        description: Text(loadError)
-                    )
-                } else {
-                    ProgressView("Loading…")
                 }
+                .listStyle(.insetGrouped)
+            } else if let loadError {
+                ContentUnavailableView(
+                    "Couldn’t load progress",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text(loadError)
+                )
+            } else {
+                ProgressView("Loading…")
             }
-            .navigationTitle("Progress")
-            .navigationBarTitleDisplayMode(.inline)
-            .task(id: weeksBack) { reload() }
-            .refreshable { reload() }
         }
+        .navigationTitle("Progress")
+        .navigationBarTitleDisplayMode(.inline)
+        .task(id: weeksBack) { reload() }
+        .refreshable {reload()}
     }
 
     @MainActor
