@@ -19,89 +19,12 @@ struct WorkoutSessionScreen: View {
         List {
             headerSection
             summarySectionIfReadOnly
-
-            ForEach(sortedExercises) { ex in
-                Section {
-                    ForEach(sortedSets(for: ex)) { set in
-                        WorkoutSetEditorRow(
-                            set: set,
-                            setNumber: set.order + 1,
-                            isReadOnly: isReadOnly
-                        ) { suggestedRest in
-                            guard session.status == .inProgress, !session.isPaused else { return }
-                            restSecondsToStart = max(1, suggestedRest ?? 90)
-                            withAnimation { showRestTimer = true }
-                        }
-                    }
-
-                    if !isReadOnly {
-                        Button {
-                            addSet(to: ex)
-                        } label: {
-                            Label("Add set", systemImage: "plus")
-                        }
-                    }
-                } header: {
-                    Text(ex.exerciseNameSnapshot)
-                }
-            }
+            exercisesSection
         }
         .navigationTitle(session.sourceRoutineNameSnapshot ?? "Workout")
         .navigationBarTitleDisplayMode(.inline)
-        .safeAreaInset(edge: .bottom) {
-            if showRestTimer && session.status == .inProgress && !session.isPaused {
-                RestTimerView(initialSeconds: restSecondsToStart) {
-                    withAnimation { showRestTimer = false }
-                }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 10)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                if session.status == .inProgress {
-                    Button { withAnimation { showRestTimer.toggle() } } label: {
-                        Image(systemName: "timer")
-                    }
-                }
-            }
-
-            ToolbarItem(placement: .topBarTrailing) {
-                if session.status == .inProgress {
-                    Menu {
-                        Button("Finish", systemImage: "checkmark.circle") {
-                            showFinishConfirm = true
-                        }
-                        Button("Abandon", systemImage: "xmark.circle", role: .destructive) {
-                            showAbandonConfirm = true
-                        }
-                    } label: {
-                        Text("Done").fontWeight(.semibold)
-                    }
-                } else {
-                    Button("Close") { dismiss() }
-                        .fontWeight(.semibold)
-                }
-            }
-
-            ToolbarItem(placement: .bottomBar) {
-                if session.status == .inProgress {
-                    Button {
-                        if session.isPaused {
-                            session.resume()
-                        } else {
-                            session.pause()
-                            withAnimation { showRestTimer = false }
-                        }
-                        saveOrAssert("pause/resume")
-                    } label: {
-                        Label(session.isPaused ? "Resume" : "Pause",
-                              systemImage: session.isPaused ? "play.fill" : "pause.fill")
-                    }
-                }
-            }
-        }
+        .safeAreaInset(edge: .bottom) { restTimerInset }
+        .toolbar { toolbarContent }
         .confirmationDialog("Finish workout?",
                             isPresented: $showFinishConfirm,
                             titleVisibility: .visible) {
@@ -118,17 +41,8 @@ struct WorkoutSessionScreen: View {
         } message: {
             Text("This will mark the session as abandoned (not completed).")
         }
-        
-        if session.exercises.isEmpty {
-            Section {
-                ContentUnavailableView(
-                    "No exercises yet",
-                    systemImage: "dumbbell",
-                    description: Text("Create routines later. For now you can Quick Start and finish the session.")
-                )
-            }
-        }
     }
+
 
     // MARK: Sections
 
@@ -230,7 +144,7 @@ struct WorkoutSessionScreen: View {
         let nextOrder = (ex.setLogs.map(\.order).max() ?? -1) + 1
         let newSet = WorkoutSetLog(
             order: nextOrder,
-            origin: .planned, // safe default; adjust if you have a better “manual” origin
+            origin: .added, // safe default; adjust if you have a better “manual” origin
             reps: ex.setLogs.last?.targetReps,
             weight: ex.setLogs.last?.targetWeight,
             weightUnit: ex.setLogs.last?.targetWeightUnit ?? .kg,
@@ -274,6 +188,108 @@ struct WorkoutSessionScreen: View {
         let r = s % 60
         return String(format: "%d:%02d", m, r)
     }
+    
+    private var isInProgress: Bool { session.status == .inProgress }
+
+    @ViewBuilder
+    private var exercisesSection: some View {
+        if sortedExercises.isEmpty {
+            Section {
+                ContentUnavailableView(
+                    "No exercises yet",
+                    systemImage: "dumbbell",
+                    description: Text("Create routines later. For now you can Quick Start and finish the session.")
+                )
+            }
+        } else {
+            ForEach(sortedExercises) { ex in
+                Section {
+                    ForEach(sortedSets(for: ex)) { set in
+                        WorkoutSetEditorRow(
+                            set: set,
+                            setNumber: set.order + 1,
+                            isReadOnly: isReadOnly,
+                            onCompleted: handleSetCompleted(_:),
+                            onPersist: { saveOrAssert("set edit") }
+                        )
+                    }
+
+                    if !isReadOnly {
+                        Button { addSet(to: ex) } label: {
+                            Label("Add set", systemImage: "plus")
+                        }
+                    }
+                } header: {
+                    Text(ex.exerciseNameSnapshot)
+                }
+            }
+        }
+    }
+
+    private func handleSetCompleted(_ suggestedRest: Int?) {
+        guard isInProgress, !session.isPaused else { return }
+        restSecondsToStart = max(1, suggestedRest ?? 90)
+        withAnimation { showRestTimer = true }
+    }
+
+    @ViewBuilder
+    private var restTimerInset: some View {
+        if showRestTimer && isInProgress && !session.isPaused {
+            RestTimerView(initialSeconds: restSecondsToStart) {
+                withAnimation { showRestTimer = false }
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 10)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            if isInProgress {
+                Button { withAnimation { showRestTimer.toggle() } } label: {
+                    Image(systemName: "timer")
+                }
+            }
+        }
+
+        ToolbarItem(placement: .topBarTrailing) {
+            if isInProgress {
+                Menu {
+                    Button("Finish", systemImage: "checkmark.circle") {
+                        showFinishConfirm = true
+                    }
+                    Button("Abandon", systemImage: "xmark.circle", role: .destructive) {
+                        showAbandonConfirm = true
+                    }
+                } label: {
+                    Text("Done").fontWeight(.semibold)
+                }
+            } else {
+                Button("Close") { dismiss() }
+                    .fontWeight(.semibold)
+            }
+        }
+
+        ToolbarItem(placement: .bottomBar) {
+            if isInProgress {
+                Button {
+                    if session.isPaused {
+                        session.resume()
+                    } else {
+                        session.pause()
+                        withAnimation { showRestTimer = false }
+                    }
+                    saveOrAssert("pause/resume")
+                } label: {
+                    Label(session.isPaused ? "Resume" : "Pause",
+                          systemImage: session.isPaused ? "play.fill" : "pause.fill")
+                }
+            }
+        }
+    }
+
 }
 
 // Makes `.sheet(item:)` happy in other screens

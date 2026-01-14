@@ -11,13 +11,19 @@ struct TodayRootView: View {
 
     @State private var newDraft: NewActivityDraft?
     @State private var editingActivity: Activity?
-    @State private var showTemplates = false
-    @State private var showLog = false
-    @State private var showProgress = false
-    @State private var showRoutines = false
+
+    // ✅ Push routing
+    enum Route: Hashable {
+        case log
+        case progress
+        case routines
+        case templates(applyDayKey: String) // keep Hashable stable
+    }
+
+    @State private var path: [Route] = []
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             DayTimelineScreen(
                 day: selectedDay,
                 onEdit: { editingActivity = $0 },
@@ -36,49 +42,37 @@ struct TodayRootView: View {
                 }
             }
             .navigationTitle(dayTitle(selectedDay))
-            .toolbarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .topBarLeading) {
-                    Button {
-                        selectedDay = cal.date(byAdding: .day, value: -1, to: selectedDay) ?? selectedDay
-                    } label: { Image(systemName: "chevron.left") }
+                    Button { selectedDay = cal.date(byAdding: .day, value: -1, to: selectedDay) ?? selectedDay }
+                    label: { Image(systemName: "chevron.left") }
 
-                    TodayJumpButton(isToday: cal.isDateInToday(selectedDay)) {
-                        selectedDay = Date()
-                    }
+                    Button("Today") { selectedDay = Date() }
 
-                    Button {
-                        selectedDay = cal.date(byAdding: .day, value: 1, to: selectedDay) ?? selectedDay
-                    } label: { Image(systemName: "chevron.right") }
+                    Button { selectedDay = cal.date(byAdding: .day, value: 1, to: selectedDay) ?? selectedDay }
+                    label: { Image(systemName: "chevron.right") }
                 }
 
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Menu {
-                        Button {
-                            showLog = true
-                        } label: {
+                        Button { path.append(.log) } label: {
                             Label("Workout Log", systemImage: "calendar")
                         }
 
-                        Button {
-                            showProgress = true
-                        } label: {
+                        Button { path.append(.progress) } label: {
                             Label("Progress", systemImage: "chart.bar")
                         }
 
                         Divider()
 
-                        Button {
-                            showRoutines = true
-                        } label: {
+                        Button { path.append(.routines) } label: {
                             Label("Routines", systemImage: "list.bullet.rectangle")
                         }
 
                         Divider()
 
-                        Button {
-                            showTemplates = true
-                        } label: {
+                        Button { path.append(.templates(applyDayKey: selectedDay.dayKey())) } label: {
                             Label("Templates", systemImage: "wand.and.stars")
                         }
                     } label: {
@@ -86,22 +80,34 @@ struct TodayRootView: View {
                     }
 
                     Button {
-                        let dayStart = cal.startOfDay(for: selectedDay)
-                        let defaultStart = cal.date(bySettingHour: 9, minute: 0, second: 0, of: dayStart) ?? dayStart
-                        newDraft = NewActivityDraft(initialStart: defaultStart, initialEnd: nil, laneHint: 0)
+                        newDraft = NewActivityDraft(initialStart: nil, initialEnd: nil, laneHint: 0)
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
             }
+            .navigationDestination(for: Route.self) { route in
+                switch route {
+                case .log:
+                    WorkoutLogScreen() // ✅ pushed
 
+                case .progress:
+                    WeekProgressScreen() // ✅ pushed
+
+                case .routines:
+                    RoutineEditorScreen() // or RoutinesScreen() if you have it
+
+                case .templates(let applyDayKey):
+                    // reconstruct Date from key if you want, or just pass selectedDay
+                    TemplatesScreen(applyDay: selectedDay) // simplest; it’s still correct UX
+                }
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
-            if !cal.isDateInToday(selectedDay) {
-                selectedDay = Date()
-            }
+            if !cal.isDateInToday(selectedDay) { selectedDay = Date() }
         }
+        // ✅ Keep only editor sheets
         .sheet(item: $newDraft) { draft in
             ActivityEditorView(
                 day: selectedDay,
@@ -120,26 +126,10 @@ struct TodayRootView: View {
                 initialLaneHint: nil
             )
         }
-        .sheet(isPresented: $showTemplates) {
-            TemplatesScreen(applyDay: selectedDay)
-        }
-        .sheet(isPresented: $showLog) {
-            WorkoutLogScreen()
-        }
-
-        .sheet(isPresented: $showProgress) {
-            WeekProgressScreen()
-        }
-
-        .sheet(isPresented: $showRoutines) {
-            NavigationStack { RoutineEditorScreen() }
-        }
-
-
     }
 
-    private func dayTitle(_ day: Date) -> String {
-        day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+    private func dayTitle(_ d: Date) -> String {
+        cal.isDateInToday(d) ? "Today" : d.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
     }
 }
 

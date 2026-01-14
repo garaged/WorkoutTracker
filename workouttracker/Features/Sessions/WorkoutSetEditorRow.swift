@@ -9,6 +9,7 @@ struct WorkoutSetEditorRow: View {
     let setNumber: Int
     let isReadOnly: Bool
     var onCompleted: ((Int?) -> Void)? = nil   // rest seconds
+    var onPersist: (() -> Void)? = nil   // ✅ new
 
     private var repsBinding: Binding<String> {
         Binding<String>(
@@ -94,6 +95,8 @@ struct WorkoutSetEditorRow: View {
                 set.completed.toggle()
                 set.completedAt = set.completed ? Date() : nil
 
+                onPersist?()
+                
                 if !wasCompleted && set.completed {
                     onCompleted?(set.targetRestSeconds)
                 }

@@ -13,50 +13,48 @@ struct WorkoutLogScreen: View {
     @State private var presentedSession: WorkoutSession? = nil
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 12) {
-                monthHeader
+        VStack(spacing: 12) {
+            monthHeader
 
-                monthGrid
+            monthGrid
 
-                Divider()
+            Divider()
 
-                daySummaryHeader
+            daySummaryHeader
 
-                List {
-                    if sessionsForSelectedDay.isEmpty {
-                        ContentUnavailableView(
-                            "No workouts",
-                            systemImage: "calendar.badge.minus",
-                            description: Text("No sessions logged for this day.")
-                        )
-                        .listRowSeparator(.hidden)
-                    } else {
-                        ForEach(sessionsForSelectedDay) { s in
-                            Button {
-                                presentedSession = s
-                            } label: {
-                                WorkoutSessionRow(session: s)
-                            }
-                            .buttonStyle(.plain)
+            List {
+                if sessionsForSelectedDay.isEmpty {
+                    ContentUnavailableView(
+                        "No workouts",
+                        systemImage: "calendar.badge.minus",
+                        description: Text("No sessions logged for this day.")
+                    )
+                    .listRowSeparator(.hidden)
+                } else {
+                    ForEach(sessionsForSelectedDay) { s in
+                        Button {
+                            presentedSession = s
+                        } label: {
+                            WorkoutSessionRow(session: s)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
-                .listStyle(.plain)
             }
-            .padding(.horizontal, 12)
-            .navigationTitle("Log")
-            .navigationBarTitleDisplayMode(.inline)
-            .onChange(of: month) { _, newMonth in
-                // Keep selection inside the visible month
-                let start = startOfMonth(newMonth)
-                if !cal.isDate(selectedDay, equalTo: newMonth, toGranularity: .month) {
-                    selectedDay = start
-                }
+            .listStyle(.plain)
+        }
+        .padding(.horizontal, 12)
+        .navigationTitle("Log")
+        .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: month) { _, newMonth in
+            // Keep selection inside the visible month
+            let start = startOfMonth(newMonth)
+            if !cal.isDate(selectedDay, equalTo: newMonth, toGranularity: .month) {
+                selectedDay = start
             }
-            .sheet(item: $presentedSession) { session in
-                NavigationStack { WorkoutSessionScreen(session: session) }
-            }
+        }
+        .sheet(item: $presentedSession) { session in
+            NavigationStack { WorkoutSessionScreen(session: session) }
         }
     }
 

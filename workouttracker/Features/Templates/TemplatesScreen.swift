@@ -2,66 +2,56 @@ import SwiftUI
 import SwiftData
 
 struct TemplatesScreen: View {
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
-    @Query(sort: [
-        SortDescriptor(\TemplateActivity.title, order: .forward),
-    ])
+    @Query(sort: [SortDescriptor(\TemplateActivity.title, order: .forward)])
     private var templates: [TemplateActivity]
 
     private var orderedTemplates: [TemplateActivity] {
         templates.sorted { a, b in
-            if a.isEnabled != b.isEnabled { return a.isEnabled && !b.isEnabled } // enabled first
+            if a.isEnabled != b.isEnabled { return a.isEnabled && !b.isEnabled }
             return a.title.localizedStandardCompare(b.title) == .orderedAscending
         }
     }
-    
+
     private let applyDay: Date
 
     init(applyDay: Date) {
         self.applyDay = applyDay
     }
-    
-    @State private var showNew = false
 
     var body: some View {
-        NavigationStack {
-            List {
-                if templates.isEmpty {
-                    ContentUnavailableView(
-                        "No templates",
-                        systemImage: "wand.and.stars",
-                        description: Text("Create templates so Today is preloaded automatically.")
-                    )
-                } else {
-                    ForEach(orderedTemplates) { t in
-                        NavigationLink {
-                            TemplateEditorView(mode: .edit(t), applyDay: applyDay)
-                        } label: {
-                            TemplateRow(template: t)
-                        }
-                    }
-                    .onDelete(perform: deleteTemplates)
-                }
-            }
-            .navigationTitle("Templates")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } }
-
-                ToolbarItemGroup(placement: .topBarTrailing) {
+        List {
+            if templates.isEmpty {
+                ContentUnavailableView(
+                    "No templates",
+                    systemImage: "wand.and.stars",
+                    description: Text("Create templates so Today is preloaded automatically.")
+                )
+            } else {
+                ForEach(orderedTemplates) { t in
                     NavigationLink {
-                        RoutinesScreen()
+                        TemplateEditorView(mode: .edit(t), applyDay: applyDay)
                     } label: {
-                        Image(systemName: "list.bullet.rectangle")
+                        TemplateRow(template: t)
                     }
-
-                    Button { showNew = true } label: { Image(systemName: "plus") }
                 }
+                .onDelete(perform: deleteTemplates)
             }
-            .sheet(isPresented: $showNew) {
-                NavigationStack {
+        }
+        .navigationTitle("Templates")
+        .toolbar {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                NavigationLink {
+                    RoutinesScreen()
+                } label: {
+                    Image(systemName: "list.bullet.rectangle")
+                }
+
+                NavigationLink {
                     TemplateEditorView(mode: .create, applyDay: applyDay)
+                } label: {
+                    Image(systemName: "plus")
                 }
             }
         }
@@ -82,11 +72,8 @@ private struct TemplateRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 10) {
-                Text(template.title)
-                    .font(.headline)
-
+                Text(template.title).font(.headline)
                 Spacer()
-
                 Toggle("", isOn: Binding(
                     get: { template.isEnabled },
                     set: { newValue in
@@ -118,15 +105,10 @@ private struct TemplateRow: View {
 
     private func recurrenceSummary(_ r: RecurrenceRule) -> String {
         switch r.kind {
-        case .none:
-            return "one-time"
-        case .daily:
-            return r.interval <= 1 ? "daily" : "every \(r.interval) days"
+        case .none: return "one-time"
+        case .daily: return r.interval <= 1 ? "daily" : "every \(r.interval) days"
         case .weekly:
-            let days = r.weekdays
-                .sorted { $0.rawValue < $1.rawValue }
-                .map { wdAbbrev($0) }
-                .joined(separator: ",")
+            let days = r.weekdays.sorted { $0.rawValue < $1.rawValue }.map(wdAbbrev).joined(separator: ",")
             let base = r.interval <= 1 ? "weekly" : "every \(r.interval) weeks"
             return days.isEmpty ? base : "\(base) (\(days))"
         }

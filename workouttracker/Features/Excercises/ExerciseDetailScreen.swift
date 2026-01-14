@@ -1,14 +1,224 @@
-//import SwiftUI
-//
-//struct ExerciseDetailScreen: View {
-//    var body: some View {
-//        NavigationStack {
-//            ContentUnavailableView(
-//                "Exercise Details",
-//                systemImage: "figure.strengthtraining.traditional",
-//                description: Text("Next: instructions + history chart via ExerciseHistoryService.")
-//            )
-//            .navigationTitle("Exercise")
-//        }
-//    }
-//}
+import SwiftUI
+import SwiftData
+import Charts
+
+struct ExerciseDetailScreen: View {
+    @Environment(\.modelContext) private var modelContext
+    @Bindable var exercise: Exercise
+
+    @State private var history: [WorkoutSetLog] = []
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                header
+
+                if let instructions = exercise.instructions, !instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    sectionTitle("Instructions")
+                    Text(instructions)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                if let notes = exercise.notes, !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    sectionTitle("Notes")
+                    Text(notes)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .foregroundStyle(.secondary)
+                }
+
+                historySection
+            }
+            .padding()
+        }
+        .navigationTitle(exercise.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .task(id: exercise.id) {
+            await loadHistory()
+        }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(exercise.name)
+                    .font(.title2.weight(.bold))
+                Spacer()
+                Text(exercise.modality.rawValue.capitalized)
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.thinMaterial, in: Capsule())
+            }
+
+            mediaPreview
+        }
+    }
+
+    @ViewBuilder
+    private var mediaPreview: some View {
+        switch exercise.mediaKind {
+        case .none:
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.secondary.opacity(0.08))
+                .frame(height: 180)
+                .overlay {
+                    ContentUnavailableView(
+                        "No media",
+                        systemImage: "photo",
+                        description: Text("Add an asset name later (Phase D+).")
+                    )
+                }
+
+        case .bundledAsset:
+            if let name = exercise.mediaAssetName, !name.isEmpty {
+                Image(name)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(height: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+            } else {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.secondary.opacity(0.08))
+                    .frame(height: 180)
+            }
+
+        case .remoteURL:
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.secondary.opacity(0.08))
+                .frame(height: 180)
+                .overlay {
+                    ContentUnavailableView(
+                        "Remote media",
+                        systemImage: "link",
+                        description: Text("We’ll support loading remote video/GIF later.")
+                    )
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var historySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle("History")
+
+            if history.isEmpty {
+                ContentUnavailableView(
+                    "No logged sets yet",
+                    systemImage: "clock",
+                    description: Text("Complete sets in a workout session to see history here.")
+                )
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+            } else {
+                let points = chartPoints(from: history)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    statsRow(history)
+
+                    Chart(points) { p in
+                        LineMark(
+                            x: .value("Date", p.date),
+                            y: .value("Value", p.value)
+                        )
+                        PointMark(
+                            x: .value("Date", p.date),
+                            y: .value("Value", p.value)
+                        )
+                    }
+                    .frame(height: 180)
+
+                    Text(pointsCaption(points))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private func sectionTitle(_ s: String) -> some View {
+        Text(s)
+            .font(.headline)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func statsRow(_ sets: [WorkoutSetLog]) -> some View {
+        let completedCount = sets.count
+        let last = sets.compactMap(\.completedAt).max()
+        return HStack(spacing: 10) {
+            statPill(title: "Sets", value: "\(completedCount)")
+            if let last {
+                statPill(title: "Last", value: last.formatted(.dateTime.month(.abbreviated).day()))
+            }
+            Spacer()
+        }
+    }
+
+    private func statPill(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(value).font(.subheadline.weight(.semibold))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    // MARK: - History loading
+
+    @MainActor
+    private func loadHistory() async {
+        // ✅ capture plain value outside the predicate macro
+        let exId: UUID? = exercise.id
+
+        do {
+            let desc = FetchDescriptor<WorkoutSetLog>(
+                predicate: #Predicate<WorkoutSetLog> { s in
+                    s.completed == true &&
+                    s.sessionExercise?.exerciseId == exId
+                },
+                sortBy: [SortDescriptor(\WorkoutSetLog.completedAt, order: .forward)]
+            )
+            history = try modelContext.fetch(desc).filter { $0.completedAt != nil }
+        } catch {
+            history = []
+        }
+    }
+
+    // MARK: - Chart mapping
+
+    private struct Point: Identifiable {
+        let id = UUID()
+        let date: Date
+        let value: Double
+        let unit: String?
+    }
+
+    private func chartPoints(from sets: [WorkoutSetLog]) -> [Point] {
+        // pick a “value” that makes sense by modality.
+        // strength -> weight (fallback 0)
+        // timed/cardio/mobility -> reps (treated as “value”)
+        return sets.compactMap { s in
+            guard let d = s.completedAt else { return nil }
+            switch exercise.modality {
+            case .strength:
+                return Point(date: d, value: s.weight ?? 0, unit: s.weightUnit.rawValue)
+            case .timed, .cardio, .mobility:
+                return Point(date: d, value: Double(s.reps ?? 0), unit: nil)
+            }
+        }
+    }
+
+    private func pointsCaption(_ points: [Point]) -> String {
+        switch exercise.modality {
+        case .strength:
+            let unit = points.last?.unit ?? ""
+            return "Weight over time \(unit.isEmpty ? "" : "(\(unit))")"
+        case .timed:
+            return "Seconds over time"
+        case .cardio:
+            return "Effort over time"
+        case .mobility:
+            return "Reps/seconds over time"
+        }
+    }
+}
