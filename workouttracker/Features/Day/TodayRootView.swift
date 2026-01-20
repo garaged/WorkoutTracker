@@ -20,7 +20,9 @@ struct TodayRootView: View {
         case templates(applyDayKey: String) // keep Hashable stable
     }
 
-    @State private var path: [Route] = []
+    @State private var path = NavigationPath()
+
+    private var isToday: Bool { cal.isDateInToday(selectedDay) }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -44,35 +46,35 @@ struct TodayRootView: View {
             .navigationTitle(dayTitle(selectedDay))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItemGroup(placement: .topBarLeading) {
-                    Button { selectedDay = cal.date(byAdding: .day, value: -1, to: selectedDay) ?? selectedDay }
-                    label: { Image(systemName: "chevron.left") }
-
-                    Button("Today") { selectedDay = Date() }
-
-                    Button { selectedDay = cal.date(byAdding: .day, value: 1, to: selectedDay) ?? selectedDay }
-                    label: { Image(systemName: "chevron.right") }
+                // ✅ Compact date stepper: < [calendar/today] >
+                ToolbarItem(placement: .topBarLeading) {
+                    DayStepperControl(
+                        isToday: isToday,
+                        goPrev: { shiftDay(-1) },
+                        goToday: { selectedDay = Date() },
+                        goNext: { shiftDay(1) }
+                    )
                 }
 
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Menu {
-                        Button { path.append(.log) } label: {
+                        Button { path.append(Route.log) } label: {
                             Label("Workout Log", systemImage: "calendar")
                         }
 
-                        Button { path.append(.progress) } label: {
+                        Button { path.append(Route.progress) } label: {
                             Label("Progress", systemImage: "chart.bar")
                         }
 
                         Divider()
 
-                        Button { path.append(.routines) } label: {
+                        Button { path.append(Route.routines) } label: {
                             Label("Routines", systemImage: "list.bullet.rectangle")
                         }
 
                         Divider()
 
-                        Button { path.append(.templates(applyDayKey: selectedDay.dayKey())) } label: {
+                        Button { path.append(Route.templates(applyDayKey: selectedDay.dayKey())) } label: {
                             Label("Templates", systemImage: "wand.and.stars")
                         }
                     } label: {
@@ -82,24 +84,25 @@ struct TodayRootView: View {
                     Button {
                         newDraft = NewActivityDraft(initialStart: nil, initialEnd: nil, laneHint: 0)
                     } label: {
-                        Image(systemName: "plus")
+                        Image(systemName: "plus.circle.fill")
                     }
                 }
             }
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .log:
-                    WorkoutLogScreen() // ✅ pushed
+                    WorkoutLogScreen()
 
                 case .progress:
-                    WeekProgressScreen() // ✅ pushed
+                    WeekProgressScreen()
 
                 case .routines:
-                    RoutineEditorScreen() // or RoutinesScreen() if you have it
+                    // ✅ list screen (pushable), not the editor placeholder
+                    RoutinesScreen()
 
                 case .templates(let applyDayKey):
-                    // reconstruct Date from key if you want, or just pass selectedDay
-                    TemplatesScreen(applyDay: selectedDay) // simplest; it’s still correct UX
+                    // ✅ use captured dayKey, not current selectedDay
+                    TemplatesScreen(applyDay: dateFromDayKey(applyDayKey) ?? selectedDay)
                 }
             }
         }
@@ -107,7 +110,6 @@ struct TodayRootView: View {
             guard phase == .active else { return }
             if !cal.isDateInToday(selectedDay) { selectedDay = Date() }
         }
-        // ✅ Keep only editor sheets
         .sheet(item: $newDraft) { draft in
             ActivityEditorView(
                 day: selectedDay,
@@ -128,8 +130,75 @@ struct TodayRootView: View {
         }
     }
 
+    private func shiftDay(_ delta: Int) {
+        selectedDay = cal.date(byAdding: .day, value: delta, to: selectedDay) ?? selectedDay
+    }
+
     private func dayTitle(_ d: Date) -> String {
-        cal.isDateInToday(d) ? "Today" : d.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+        if cal.isDateInToday(d) { return "Today" }
+
+        let f = DateFormatter()
+        f.calendar = cal
+        f.locale = .current
+        f.timeZone = .current
+        f.dateFormat = "MMM-dd-yy"
+        return f.string(from: d)
+    }
+
+    // ✅ helper for stable routing
+    private func dateFromDayKey(_ key: String) -> Date? {
+        // key is "YYYY-MM-DD"
+        let parts = key.split(separator: "-").map { Int($0) }
+        guard parts.count == 3,
+              let y = parts[0], let m = parts[1], let d = parts[2] else { return nil }
+
+        var comps = DateComponents()
+        comps.calendar = cal
+        comps.timeZone = cal.timeZone
+        comps.year = y
+        comps.month = m
+        comps.day = d
+
+        // start-of-day in the same calendar/timezone
+        return cal.date(from: comps).map { cal.startOfDay(for: $0) }
+    }
+}
+
+private struct DayStepperControl: View {
+    let isToday: Bool
+    let goPrev: () -> Void
+    let goToday: () -> Void
+    let goNext: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Button(action: goPrev) {
+                Image(systemName: "chevron.left")
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 4)
+            }
+            .accessibilityLabel("Previous day")
+
+            Button(action: goToday) {
+                Image(systemName: isToday ? "calendar" : "calendar.badge.clock")
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 4)
+                    .foregroundStyle(isToday ? .secondary : .primary)
+            }
+            .accessibilityLabel("Go to Today")
+            .disabled(isToday)
+            .tint(.accentColor)
+
+            Button(action: goNext) {
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 4)
+            }
+            .accessibilityLabel("Next day")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.thinMaterial, in: Capsule())
     }
 }
 

@@ -124,48 +124,58 @@ struct DayTimelineScreen: View {
             }
         }
         .confirmationDialog(
-            "Workout",
+            workoutActionActivity?.title ?? "Workout",
             isPresented: $showWorkoutDialog,
             titleVisibility: .visible
         ) {
             if let a = workoutActionActivity {
+
                 switch workoutLaunchState {
                 case .none:
                     if a.workoutRoutineId == nil {
-                        Button("Quick Start") { startQuickWorkout(from: a) }
-                        Button("Attach Routine") { onEdit(a) }
+                        Button("Quick Start") { startQuickWorkout(from: a); closeWorkoutDialog() }
+                        Button("Attach Routine") { onEdit(a); closeWorkoutDialog() }
                     } else {
-                        Button("Start") { startWorkout(from: a) }
+                        Button("Start") { startWorkout(from: a); closeWorkoutDialog() }
                     }
-                case .inProgress(let s):
-                    Button("Resume") { presentedSession = s }
-                    Button("Restart", role: .destructive) { startSession(for: a) }
+                    Button("Edit Details") { onEdit(a); closeWorkoutDialog() }
 
-                case .completed(let s):
-                    Button("View Summary") { presentedSession = s }
-                    Button("Start Again") { startSession(for: a) }
-                case .abandoned(let s):
-                    Button("View Summary") { presentedSession = s }
-                    Button("Start Again") { startSession(for: a) }
+                case .inProgress(let s):
+                    Button("Resume") { presentedSession = s; closeWorkoutDialog() }
+                    Button("Restart", role: .destructive) { startSession(for: a); closeWorkoutDialog() }
+                    Button("Edit Details") { onEdit(a); closeWorkoutDialog() }
+
+                case .completed(let s), .abandoned(let s):
+                    Button("View Summary") { presentedSession = s; closeWorkoutDialog() }
+                    Button("Start Again") { startSession(for: a); closeWorkoutDialog() }
+                    Button("Edit Details") { onEdit(a); closeWorkoutDialog() }
                 }
 
-                Button("Edit Details") {
-                    onEdit(a)
-                    workoutActionActivity = nil
-                }            }
-
-            Button("Cancel", role: .cancel) {
-                workoutActionActivity = nil
+                Button("Delete", role: .destructive) { deleteActivity(a); closeWorkoutDialog() }
             }
+
+            Button("Cancel", role: .cancel) { closeWorkoutDialog() }
+
         } message: {
-            Text("Start / Resume / View Summary")
-        }
-        .sheet(item: $presentedSession) { session in
-            NavigationStack { WorkoutSessionScreen(session: session) }
+            if let a = workoutActionActivity {
+                switch workoutLaunchState {
+                case .none:
+                    Text(a.workoutRoutineId == nil
+                         ? "No routine attached. Quick start or attach a routine."
+                         : "Ready to start this routine.")
+                case .inProgress(let s):
+                    Text("In progress since \(s.startedAt.formatted(.dateTime.hour().minute())).")
+                case .completed:
+                    Text("Completed workout. View summary or start again.")
+                case .abandoned:
+                    Text("Abandoned workout. View summary or start again.")
+                }
+            } else {
+                Text("")
+            }
         }
 
     }
-
 
     private func timeline() -> some View {
         let dayStart = Calendar.current.startOfDay(for: day)
@@ -288,16 +298,34 @@ struct DayTimelineScreen: View {
     // MARK: - Mapping
     private func onTapActivity(_ activity: Activity) {
         if activity.kind == .workout {
-            workoutActionActivity = activity
-            workoutLaunchState = workoutSessionState(forLinkedActivityId: activity.id)
-            showWorkoutDialog = true
+            handleWorkoutTap(activity)   // ✅ tap does the default action
             return
         }
-
-        // non-workout: keep existing behavior
         onEdit(activity)
     }
 
+    // Tap = do the default thing (NO dialog)
+    private func handleWorkoutTap(_ activity: Activity) {
+        let state = workoutSessionState(for: activity)
+
+        switch state {
+        case .inProgress(let s),
+             .completed(let s),
+             .abandoned(let s):
+            presentedSession = s
+
+        case .none:
+            // default action
+            startSession(for: activity)   // chooses quick vs routine
+        }
+    }
+
+    // Long-press = show dialog
+    private func showWorkoutActions(for activity: Activity) {
+        workoutActionActivity = activity
+        workoutLaunchState = workoutSessionState(for: activity)
+        showWorkoutDialog = true
+    }
     
     private func yFromMinutes(_ minutes: Int) -> CGFloat {
         (CGFloat(minutes) / 60.0) * hourHeight
@@ -612,8 +640,8 @@ struct DayTimelineScreen: View {
             let x = lanesX0 + CGFloat(item.lane) * laneSpan
             let y = yFromMinutes(item.displayStartMinute)
             let h = max(28, heightFromMinutes(item.displayDurationMinutes))
-
-            InteractiveActivityBlockView(
+            
+            let base = InteractiveActivityBlockView(
                 activity: item.activity,
                 dayStart: dayStart,
                 clippedStart: item.clippedStart,
@@ -626,7 +654,13 @@ struct DayTimelineScreen: View {
                 laneGap: laneGap,
                 autoScroll: autoScroll,
                 viewportHeight: viewportHeight,
-                onEdit: { onTapActivity(item.activity) },
+                onEdit: {
+                    if item.activity.kind == .workout {
+                        handleWorkoutTap(item.activity)   // ✅ tap = push (no dialog)
+                    } else {
+                        onEdit(item.activity)
+                    }
+                },
                 onCommitLaneChange: { oldLane, newLane in
                     commitLaneChange(
                         moved: item.activity,
@@ -645,47 +679,45 @@ struct DayTimelineScreen: View {
                         defaultDurationMinutes: defaultDurationMinutes
                     )
                 },
-                onHoverLane: { lane in
-                    hoveredLaneWhileDraggingBlock = lane
-                },
-                onEndHoverLane: {
-                    hoveredLaneWhileDraggingBlock = nil
-                }
+                onHoverLane: { lane in hoveredLaneWhileDraggingBlock = lane },
+                onEndHoverLane: { hoveredLaneWhileDraggingBlock = nil }
             )
-            .contextMenu {
-                Button {
-                    onEdit(item.activity)
-                } label: {
-                    Label("Edit", systemImage: "pencil")
-                }
-
-                Button {
-                    toggleDone(item.activity)
-                } label: {
-                    Label(
-                        item.activity.isDone ? "Mark as not done" : "Mark as done",
-                        systemImage: item.activity.isDone ? "arrow.uturn.left" : "checkmark"
-                    )
-                }
-
-                if item.activity.templateId != nil {
-                    Button {
-                        skipToday(item.activity)
-                    } label: {
-                        Label("Skip today", systemImage: "forward.end")
-                    }
-                }
-
-                Divider()
-
-                Button(role: .destructive) {
-                    deleteActivity(item.activity)
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
             .frame(width: max(60, laneWidth), height: h, alignment: .topLeading)
             .offset(x: x, y: y)
+            
+            if item.activity.kind == .workout {
+                base
+                    .highPriorityGesture(
+                                LongPressGesture(minimumDuration: 0.5)
+                                    .onEnded { _ in showWorkoutActions(for: item.activity) }
+                            )
+            } else {
+                base
+                    .contextMenu {
+                        Button { onEdit(item.activity) } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+
+                        Button { toggleDone(item.activity) } label: {
+                            Label(
+                                item.activity.isDone ? "Mark as not done" : "Mark as done",
+                                systemImage: item.activity.isDone ? "arrow.uturn.left" : "checkmark"
+                            )
+                        }
+
+                        if item.activity.templateId != nil {
+                            Button { skipToday(item.activity) } label: {
+                                Label("Skip today", systemImage: "forward.end")
+                            }
+                        }
+
+                        Divider()
+
+                        Button(role: .destructive) { deleteActivity(item.activity) } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+            }
         }
     }
     private var magnifyToZoomGesture: some Gesture {
@@ -712,27 +744,48 @@ struct DayTimelineScreen: View {
         case abandoned(WorkoutSession)
     }
 
-    private func workoutSessionState(forLinkedActivityId activityId: UUID) -> WorkoutLaunchState {
+    private func workoutSessionState(for activity: Activity) -> WorkoutLaunchState {
         do {
-            let desc = FetchDescriptor<WorkoutSession>(
-                predicate: #Predicate { s in
-                    s.linkedActivityId == activityId
+            // Prefer direct link if present
+            if let sid = activity.workoutSessionId {
+                let d = FetchDescriptor<WorkoutSession>(
+                    predicate: #Predicate { s in s.id == sid }
+                )
+                if let s = try modelContext.fetch(d).first {
+                    return mapSessionToState(s)
+                }
+            }
+
+            // Fallback: look up by linkedActivityId (optional-to-optional ✅)
+            let aid: UUID? = activity.id
+            let d = FetchDescriptor<WorkoutSession>(
+                predicate: #Predicate<WorkoutSession> { s in
+                    s.linkedActivityId == aid
                 },
                 sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
             )
 
-            let sessions = try modelContext.fetch(desc)
-            guard let latest = sessions.first else { return .none }
-
-            switch latest.status {
-            case .inProgress: return .inProgress(latest)
-            case .completed: return .completed(latest)
-            case .abandoned: return .abandoned(latest)
+            if let s = try modelContext.fetch(d).first {
+                return mapSessionToState(s)
             }
+            return .none
         } catch {
             assertionFailure("Failed to fetch sessions: \(error)")
             return .none
         }
+    }
+
+    private func mapSessionToState(_ s: WorkoutSession) -> WorkoutLaunchState {
+        switch s.status {
+        case .inProgress: return .inProgress(s)
+        case .completed:  return .completed(s)
+        case .abandoned:  return .abandoned(s)
+        }
+    }
+
+    private func closeWorkoutDialog() {
+        showWorkoutDialog = false
+        workoutActionActivity = nil
     }
 
     private func startWorkout(from activity: Activity) {
@@ -762,13 +815,16 @@ struct DayTimelineScreen: View {
             )
 
             modelContext.insert(session)
+
+            // ✅ make sure the activity becomes “workout” and is linked
+            activity.kind = .workout
             activity.workoutSessionId = session.id
 
             try modelContext.save()
-            presentedSession = session
+
+            presentedSession = session      // ✅ now triggers push
             workoutLaunchState = .inProgress(session)
             workoutActionActivity = nil
-
         } catch {
             assertionFailure("Failed to start workout: \(error)")
             startQuickWorkout(from: activity)
@@ -785,6 +841,7 @@ struct DayTimelineScreen: View {
         )
 
         modelContext.insert(session)
+        activity.workoutSessionId = session.id   // ✅ important
 
         do {
             try modelContext.save()
@@ -795,7 +852,8 @@ struct DayTimelineScreen: View {
             assertionFailure("Failed to save quick session: \(error)")
         }
     }
-    
+
+
     private func startSession(for activity: Activity) {
         if activity.workoutRoutineId == nil {
             startQuickWorkout(from: activity)
@@ -803,6 +861,41 @@ struct DayTimelineScreen: View {
             startWorkout(from: activity)
         }
     }
+    
+    private var workoutDialogTitle: String {
+        workoutActionActivity?.title ?? "Workout"
+    }
+
+    private var workoutDialogMessage: String {
+        guard let a = workoutActionActivity else { return "" }
+
+        switch workoutLaunchState {
+        case .none:
+            if a.workoutRoutineId == nil {
+                return "No routine attached. Quick Start now, or attach a routine."
+            } else {
+                return "Ready to start this workout."
+            }
+
+        case .inProgress(let s):
+            let started = s.startedAt.formatted(.dateTime.hour().minute())
+            return "In progress since \(started). Resume, restart, or edit details."
+
+        case .completed(let s):
+            let ended = (s.endedAt ?? s.startedAt).formatted(.dateTime.month(.abbreviated).day().hour().minute())
+            return "Completed (\(ended)). View summary or start again."
+
+        case .abandoned(let s):
+            let ended = (s.endedAt ?? s.startedAt).formatted(.dateTime.month(.abbreviated).day().hour().minute())
+            return "Abandoned (\(ended)). View summary or start again."
+        }
+    }
+
+    private func clearWorkoutDialogState() {
+        showWorkoutDialog = false
+        workoutActionActivity = nil
+    }
+
 }
 
 // MARK: - Grid

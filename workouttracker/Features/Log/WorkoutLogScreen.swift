@@ -53,8 +53,8 @@ struct WorkoutLogScreen: View {
                 selectedDay = start
             }
         }
-        .sheet(item: $presentedSession) { session in
-            NavigationStack { WorkoutSessionScreen(session: session) }
+        .navigationDestination(item: $presentedSession) { session in
+            WorkoutSessionScreen(session: session)
         }
     }
 
@@ -361,18 +361,3 @@ private struct WorkoutSessionRow: View {
         return start
     }
 }
-
-//private struct StatChip: View {
-//    let label: String
-//    let value: String
-//
-//    var body: some View {
-//        VStack(alignment: .leading, spacing: 2) {
-//            Text(label).font(.caption2).foregroundStyle(.secondary)
-//            Text(value).font(.caption).fontWeight(.semibold)
-//        }
-//        .padding(.horizontal, 10)
-//        .padding(.vertical, 6)
-//        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
-//    }
-//}
