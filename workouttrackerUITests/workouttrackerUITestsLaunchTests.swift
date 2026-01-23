@@ -20,6 +20,8 @@ final class workouttrackerUITestsLaunchTests: XCTestCase {
     @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
+        app.launchEnvironment["UITESTS"] = "1"
+        app.launchEnvironment["UITESTS_SEED"] = "1"
         app.launch()
 
         // Insert steps here to perform after app launch but before taking a screenshot,
