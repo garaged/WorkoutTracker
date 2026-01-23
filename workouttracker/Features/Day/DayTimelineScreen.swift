@@ -4,6 +4,8 @@ import SwiftUI
 struct DayTimelineScreen: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var activities: [Activity]
+    @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
+    private var sessions: [WorkoutSession]
     @State private var isSelectingRange: Bool = false
     @State private var hoveredLaneWhileDraggingBlock: Int? = nil
     @StateObject private var autoScroll = AutoScrollController()
@@ -12,6 +14,8 @@ struct DayTimelineScreen: View {
     @State private var showWorkoutDialog: Bool = false
     @State private var presentedSession: WorkoutSession? = nil
     @State private var workoutLaunchState: WorkoutLaunchState = .none
+    @State private var latestSessionByActivityIdCache: [UUID: WorkoutSession] = [:]
+
 
     private let day: Date
     private let cal = Calendar.current
@@ -58,6 +62,16 @@ struct DayTimelineScreen: View {
                 a.startAt < end && ((a.endAt ?? a.startAt) > start)
             },
             sort: [SortDescriptor(\Activity.startAt, order: .forward)]
+        )
+        
+        let sStart = Calendar.current.startOfDay(for: day)
+        let sEnd = Calendar.current.date(byAdding: .day, value: 1, to: sStart)!
+
+        _sessions = Query(
+            filter: #Predicate<WorkoutSession> { s in
+                s.startedAt >= sStart && s.startedAt < sEnd && s.linkedActivityId != nil
+            },
+            sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)]
         )
     }
 
@@ -122,6 +136,7 @@ struct DayTimelineScreen: View {
             } catch {
                 print("Preload failed: \(error)")
             }
+            refreshWorkoutSessionCache()
         }
         .confirmationDialog(
             workoutActionActivity?.title ?? "Workout",
@@ -304,19 +319,93 @@ struct DayTimelineScreen: View {
         onEdit(activity)
     }
 
+    // MARK: - Workout state + badge
+
+    private func workoutSessionState(for activity: Activity) -> WorkoutLaunchState {
+        guard let s = latestSessionByActivityIdCache[activity.id] else { return .none }
+        switch s.status {
+        case .inProgress: return .inProgress(s)
+        case .completed:  return .completed(s)
+        case .abandoned:  return .abandoned(s)
+        }
+    }
+
+    @MainActor
+    private func refreshWorkoutSessionCache() {
+        // Only care about visible workout activities
+        let workoutIds = Set(activities.filter { $0.kind == .workout }.map(\.id))
+        guard !workoutIds.isEmpty else {
+            latestSessionByActivityIdCache = [:]
+            return
+        }
+
+        do {
+            // Fetch linked sessions once, then filter in memory
+            let desc = FetchDescriptor<WorkoutSession>(
+                predicate: #Predicate { s in s.linkedActivityId != nil },
+                sortBy: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)]
+            )
+            let fetched = try modelContext.fetch(desc)
+
+            var map: [UUID: WorkoutSession] = [:]
+            for s in fetched {
+                guard let aid = s.linkedActivityId, workoutIds.contains(aid) else { continue }
+                if map[aid] == nil { map[aid] = s } // first wins (sorted desc)
+            }
+            latestSessionByActivityIdCache = map
+        } catch {
+            latestSessionByActivityIdCache = [:]
+        }
+    }
+
+    private struct WorkoutStateBadge: View {
+        let state: WorkoutLaunchState
+
+        var body: some View {
+            let (text, icon) = badgeSpec(state)
+
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption.weight(.semibold))
+                Text(text)
+                    .font(.caption.weight(.semibold))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(.thinMaterial, in: Capsule())
+            .foregroundStyle(foregroundStyle(state))
+            .allowsHitTesting(false)
+        }
+
+        private func badgeSpec(_ state: WorkoutLaunchState) -> (String, String) {
+            switch state {
+            case .none:              return ("Start", "play.circle")
+            case .inProgress:        return ("Resume", "play.circle.fill")
+            case .completed:         return ("Done", "checkmark.circle.fill")
+            case .abandoned:         return ("Abandoned", "xmark.circle.fill")
+            }
+        }
+
+        private func foregroundStyle(_ state: WorkoutLaunchState) -> some ShapeStyle {
+            switch state {
+            case .inProgress: return AnyShapeStyle(.tint)
+            default:          return AnyShapeStyle(.secondary)
+            }
+        }
+    }
+    
     // Tap = do the default thing (NO dialog)
     private func handleWorkoutTap(_ activity: Activity) {
         let state = workoutSessionState(for: activity)
 
         switch state {
-        case .inProgress(let s),
-             .completed(let s),
-             .abandoned(let s):
-            presentedSession = s
+        case .inProgress(let s), .completed(let s), .abandoned(let s):
+            // ✅ ensure sheet re-presents even if same object/id as last time
+            presentedSession = nil
+            DispatchQueue.main.async { presentedSession = s }
 
         case .none:
-            // default action
-            startSession(for: activity)   // chooses quick vs routine
+            startSession(for: activity)
         }
     }
 
@@ -637,12 +726,16 @@ struct DayTimelineScreen: View {
         laneSpan: CGFloat
     ) -> some View {
         ForEach(laidOut.items) { item in
+            let a = item.activity
+            let workout = isWorkout(a)
+
             let x = lanesX0 + CGFloat(item.lane) * laneSpan
             let y = yFromMinutes(item.displayStartMinute)
             let h = max(28, heightFromMinutes(item.displayDurationMinutes))
-            
+
+            // Base block
             let base = InteractiveActivityBlockView(
-                activity: item.activity,
+                activity: a,
                 dayStart: dayStart,
                 clippedStart: item.clippedStart,
                 clippedEnd: item.clippedEnd,
@@ -655,15 +748,15 @@ struct DayTimelineScreen: View {
                 autoScroll: autoScroll,
                 viewportHeight: viewportHeight,
                 onEdit: {
-                    if item.activity.kind == .workout {
-                        handleWorkoutTap(item.activity)   // ✅ tap = push (no dialog)
+                    if workout {
+                        handleWorkoutTap(a)   // tap = push
                     } else {
-                        onEdit(item.activity)
+                        onEdit(a)
                     }
                 },
                 onCommitLaneChange: { oldLane, newLane in
                     commitLaneChange(
-                        moved: item.activity,
+                        moved: a,
                         oldLane: oldLane,
                         newLane: newLane,
                         all: timedActivities,
@@ -674,7 +767,7 @@ struct DayTimelineScreen: View {
                 },
                 onCommitTimeChange: {
                     commitTimeChange(
-                        moved: item.activity,
+                        moved: a,
                         all: timedActivities,
                         defaultDurationMinutes: defaultDurationMinutes
                     )
@@ -682,44 +775,58 @@ struct DayTimelineScreen: View {
                 onHoverLane: { lane in hoveredLaneWhileDraggingBlock = lane },
                 onEndHoverLane: { hoveredLaneWhileDraggingBlock = nil }
             )
-            .frame(width: max(60, laneWidth), height: h, alignment: .topLeading)
-            .offset(x: x, y: y)
-            
-            if item.activity.kind == .workout {
-                base
-                    .highPriorityGesture(
-                                LongPressGesture(minimumDuration: 0.5)
-                                    .onEnded { _ in showWorkoutActions(for: item.activity) }
-                            )
-            } else {
-                base
-                    .contextMenu {
-                        Button { onEdit(item.activity) } label: {
-                            Label("Edit", systemImage: "pencil")
-                        }
 
-                        Button { toggleDone(item.activity) } label: {
-                            Label(
-                                item.activity.isDone ? "Mark as not done" : "Mark as done",
-                                systemImage: item.activity.isDone ? "arrow.uturn.left" : "checkmark"
-                            )
-                        }
+            // Decorate with badge (badge func can return nil for non-workouts)
+            let decorated = base
+                .overlay(alignment: .topTrailing) {
+                    if let b = workoutBadge(for: a) {
+                        WorkoutBadgeView(badge: b).padding(6)
+                    }
+                }
 
-                        if item.activity.templateId != nil {
-                            Button { skipToday(item.activity) } label: {
-                                Label("Skip today", systemImage: "forward.end")
+            // Important: apply gestures/menus in the conditional,
+            // THEN apply frame/offset ONCE to the result.
+            Group {
+                if workout {
+                    decorated
+                        .simultaneousGesture(
+                            LongPressGesture(minimumDuration: 0.5)
+                                .onEnded { _ in showWorkoutActions(for: a) }
+                        )
+                } else {
+                    decorated
+                        .contextMenu {
+                            Button { onEdit(a) } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+
+                            Button { toggleDone(a) } label: {
+                                Label(
+                                    a.isDone ? "Mark as not done" : "Mark as done",
+                                    systemImage: a.isDone ? "arrow.uturn.left" : "checkmark"
+                                )
+                            }
+
+                            if a.templateId != nil {
+                                Button { skipToday(a) } label: {
+                                    Label("Skip today", systemImage: "forward.end")
+                                }
+                            }
+
+                            Divider()
+
+                            Button(role: .destructive) { deleteActivity(a) } label: {
+                                Label("Delete", systemImage: "trash")
                             }
                         }
-
-                        Divider()
-
-                        Button(role: .destructive) { deleteActivity(item.activity) } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
+                }
             }
+            .frame(width: max(60, laneWidth), height: h, alignment: .topLeading)
+            .offset(x: x, y: y)
         }
     }
+
+    
     private var magnifyToZoomGesture: some Gesture {
         MagnificationGesture()
             .onChanged { value in
@@ -742,37 +849,6 @@ struct DayTimelineScreen: View {
         case inProgress(WorkoutSession)
         case completed(WorkoutSession)
         case abandoned(WorkoutSession)
-    }
-
-    private func workoutSessionState(for activity: Activity) -> WorkoutLaunchState {
-        do {
-            // Prefer direct link if present
-            if let sid = activity.workoutSessionId {
-                let d = FetchDescriptor<WorkoutSession>(
-                    predicate: #Predicate { s in s.id == sid }
-                )
-                if let s = try modelContext.fetch(d).first {
-                    return mapSessionToState(s)
-                }
-            }
-
-            // Fallback: look up by linkedActivityId (optional-to-optional ✅)
-            let aid: UUID? = activity.id
-            let d = FetchDescriptor<WorkoutSession>(
-                predicate: #Predicate<WorkoutSession> { s in
-                    s.linkedActivityId == aid
-                },
-                sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
-            )
-
-            if let s = try modelContext.fetch(d).first {
-                return mapSessionToState(s)
-            }
-            return .none
-        } catch {
-            assertionFailure("Failed to fetch sessions: \(error)")
-            return .none
-        }
     }
 
     private func mapSessionToState(_ s: WorkoutSession) -> WorkoutLaunchState {
@@ -813,6 +889,7 @@ struct DayTimelineScreen: View {
                 exercises: templates,
                 prefillActualsFromTargets: true
             )
+            latestSessionByActivityIdCache[activity.id] = session
 
             modelContext.insert(session)
 
@@ -841,7 +918,10 @@ struct DayTimelineScreen: View {
         )
 
         modelContext.insert(session)
-        activity.workoutSessionId = session.id   // ✅ important
+
+        // ✅ make it a workout
+        activity.kind = .workout
+        activity.workoutSessionId = session.id
 
         do {
             try modelContext.save()
@@ -852,6 +932,8 @@ struct DayTimelineScreen: View {
             assertionFailure("Failed to save quick session: \(error)")
         }
     }
+
+
 
 
     private func startSession(for activity: Activity) {
@@ -896,6 +978,58 @@ struct DayTimelineScreen: View {
         workoutActionActivity = nil
     }
 
+    private enum WorkoutBadge {
+        case start
+        case resume
+        case summary
+    }
+
+    private func workoutBadge(for a: Activity) -> WorkoutBadge? {
+        guard isWorkout(a) else { return nil }
+
+        guard let s = latestSessionByActivityIdCache[a.id] else {
+            return .start
+        }
+        switch s.status {
+        case .inProgress: return .resume
+        case .completed, .abandoned: return .summary
+        }
+    }
+    
+    private func isWorkout(_ a: Activity) -> Bool {
+        a.kind == .workout || a.workoutRoutineId != nil || a.workoutSessionId != nil
+    }
+
+    private struct WorkoutBadgeView: View {
+        let badge: WorkoutBadge
+
+        var body: some View {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                Text(text)
+            }
+            .font(.caption2.weight(.semibold))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(.ultraThinMaterial, in: Capsule())
+        }
+
+        private var icon: String {
+            switch badge {
+            case .start:   return "play.circle"
+            case .resume:  return "play.circle.fill"
+            case .summary: return "checkmark.circle"
+            }
+        }
+
+        private var text: String {
+            switch badge {
+            case .start:   return "Start"
+            case .resume:  return "Resume"
+            case .summary: return "Summary"
+            }
+        }
+    }
 }
 
 // MARK: - Grid

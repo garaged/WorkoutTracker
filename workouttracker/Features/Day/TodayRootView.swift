@@ -101,8 +101,8 @@ struct TodayRootView: View {
                     RoutinesScreen()
 
                 case .templates(let applyDayKey):
-                    // ✅ use captured dayKey, not current selectedDay
-                    TemplatesScreen(applyDay: dateFromDayKey(applyDayKey) ?? selectedDay)
+                    let applyDay = Date(dayKey: applyDayKey) ?? selectedDay
+                    TemplatesScreen(applyDay: applyDay)
                 }
             }
         }
