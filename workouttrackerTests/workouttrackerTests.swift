@@ -5,6 +5,20 @@ import SwiftData
 // MARK: - Test Support
 
 private enum TestSupport {
+
+    /// Small wrapper that keeps a `ModelContainer` alive for the whole test.
+    ///
+    /// Why this exists:
+    /// In practice, a `ModelContext` does **not** reliably retain its container
+    /// strongly. If a helper returns only a `ModelContext` built from a local
+    /// `ModelContainer`, the container can be deallocated as soon as the helper
+    /// returns, and the first `context.insert(...)` will crash.
+    struct InMemoryStore {
+        let container: ModelContainer
+
+        @MainActor
+        var context: ModelContext { container.mainContext }
+    }
     static var utcCalendar: Calendar {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = TimeZone(secondsFromGMT: 0)!
@@ -26,7 +40,7 @@ private enum TestSupport {
     }
 
     @MainActor
-    static func makeInMemoryContext() throws -> ModelContext {
+    static func makeInMemoryStore() throws -> InMemoryStore {
         let schema = Schema([
             // Scheduling
             Activity.self,
@@ -45,7 +59,7 @@ private enum TestSupport {
 
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: [config])
-        return container.mainContext
+        return InMemoryStore(container: container)
     }
 
     @MainActor
@@ -263,7 +277,8 @@ final class WorkoutSessionStarterIntegrationTests: XCTestCase {
 
     func test_startOrResumeSession_createsSessionFromRoutineAndLinksActivity() throws {
         let cal = TestSupport.utcCalendar
-        let context = try TestSupport.makeInMemoryContext()
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
 
         let routine = try TestSupport.insertRoutine(context: context)
 
@@ -291,7 +306,8 @@ final class WorkoutSessionStarterIntegrationTests: XCTestCase {
 
     func test_startOrResumeSession_resumesExistingLinkedSession() throws {
         let cal = TestSupport.utcCalendar
-        let context = try TestSupport.makeInMemoryContext()
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
 
         let start = TestSupport.date(2026, 1, 10, 9, 0, calendar: cal)
         let a = Activity(title: "Workout", startAt: start, endAt: nil, laneHint: 0, kind: .workout)
@@ -312,7 +328,8 @@ final class TemplatePreloaderIntegrationTests: XCTestCase {
 
     func test_ensureDayIsPreloaded_createsInstanceFromDailyTemplate() throws {
         let cal = TestSupport.utcCalendar
-        let context = try TestSupport.makeInMemoryContext()
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
 
         let day = TestSupport.date(2026, 1, 10, calendar: cal)
         let recurrence = RecurrenceRule(kind: .daily, startDate: day, endDate: nil, interval: 1, weekdays: [])
@@ -335,7 +352,8 @@ final class TemplatePreloaderIntegrationTests: XCTestCase {
 
     func test_updateExistingUpcomingInstances_backfillsNilPlannedFieldsAndRespectsDivergence() throws {
         let cal = TestSupport.utcCalendar
-        let context = try TestSupport.makeInMemoryContext()
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
 
         let fromDay = TestSupport.date(2026, 1, 10, calendar: cal)
 
@@ -403,7 +421,8 @@ final class ProgressSummaryServiceIntegrationTests: XCTestCase {
 
     func test_summarizeAggregatesWeeksAndComputesStreaks() throws {
         let cal = TestSupport.utcCalendar
-        let context = try TestSupport.makeInMemoryContext()
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
 
         // Create 3 consecutive daily completed sessions (Jan 5, 6, 7) and one older session (Jan 1)
         func insertCompletedSession(on day: Date, completedSets: Int) {
