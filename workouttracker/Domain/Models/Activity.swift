@@ -92,5 +92,5 @@ final class Activity {
     }
 
     var isDone: Bool { status == .done }
-    var isWorkout: Bool { kind == .workout }
+    //var isWorkout: Bool { kind == .workout }
 }

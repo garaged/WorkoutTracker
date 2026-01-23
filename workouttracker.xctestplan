@@ -1,0 +1,43 @@
+{
+  "configurations" : [
+    {
+      "id" : "02F5A34A-4254-431D-8C9B-D925432070B1",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "commandLineArgumentEntries" : [
+      {
+        "argument" : "-com.apple.CoreData.SQLDebug 1"
+      }
+    ],
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:workouttracker.xcodeproj",
+      "identifier" : "35BA2D432F11D33200EEE02C",
+      "name" : "workouttracker"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:workouttracker.xcodeproj",
+        "identifier" : "35BA2D522F11D33300EEE02C",
+        "name" : "workouttrackerTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:workouttracker.xcodeproj",
+        "identifier" : "35BA2D5C2F11D33300EEE02C",
+        "name" : "workouttrackerUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
