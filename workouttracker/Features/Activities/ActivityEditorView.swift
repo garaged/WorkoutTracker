@@ -117,6 +117,7 @@ struct ActivityEditorView: View {
             Form {
                 Section("Activity") {
                     TextField("Title", text: $title)
+                        .accessibilityIdentifier("activityEditor.title")
                 }
 
                 Section("Type") {
@@ -238,9 +239,11 @@ struct ActivityEditorView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("activityEditor.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }
+                        .accessibilityIdentifier("activityEditor.save")
                         .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }

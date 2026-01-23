@@ -12,9 +12,10 @@ struct DayTimelineScreen: View {
     @State private var viewportHeight: CGFloat = 0
     @State private var workoutActionActivity: Activity? = nil
     @State private var showWorkoutDialog: Bool = false
-    @State private var presentedSession: WorkoutSession? = nil
+    @Binding var presentedSession: WorkoutSession?
     @State private var workoutLaunchState: WorkoutLaunchState = .none
     @State private var latestSessionByActivityIdCache: [UUID: WorkoutSession] = [:]
+    @State private var suppressWorkoutTap = false
 
 
     private let day: Date
@@ -44,11 +45,13 @@ struct DayTimelineScreen: View {
 
     init(
         day: Date,
+        presentedSession: Binding<WorkoutSession?>,
         onEdit: @escaping (Activity) -> Void,
         onCreateAt: @escaping (Date, Int) -> Void,
         onCreateRange: @escaping (Date, Date, Int) -> Void
     ) {
         self.day = day
+        self._presentedSession = presentedSession
         self.onEdit = onEdit
         self.onCreateAt = onCreateAt
         self.onCreateRange = onCreateRange
@@ -156,12 +159,23 @@ struct DayTimelineScreen: View {
                     Button("Edit Details") { onEdit(a); closeWorkoutDialog() }
 
                 case .inProgress(let s):
-                    Button("Resume") { presentedSession = s; closeWorkoutDialog() }
-                    Button("Restart", role: .destructive) { startSession(for: a); closeWorkoutDialog() }
+                    Button("Open") { openSession(s); closeWorkoutDialog() }
+                    Button(s.isPaused ? "Resume" : "Pause") {
+                        togglePause(s)
+                        closeWorkoutDialog()
+                    }
+                    Button("Finish") {
+                        finishSession(s)
+                        closeWorkoutDialog()
+                    }
+                    Button("Stop", role: .destructive) {
+                        stopSession(s)
+                        closeWorkoutDialog()
+                    }
                     Button("Edit Details") { onEdit(a); closeWorkoutDialog() }
 
                 case .completed(let s), .abandoned(let s):
-                    Button("View Summary") { presentedSession = s; closeWorkoutDialog() }
+                    Button("View Summary") { openSession(s); closeWorkoutDialog() }
                     Button("Start Again") { startSession(for: a); closeWorkoutDialog() }
                     Button("Edit Details") { onEdit(a); closeWorkoutDialog() }
                 }
@@ -329,6 +343,22 @@ struct DayTimelineScreen: View {
         case .abandoned:  return .abandoned(s)
         }
     }
+    
+    @MainActor
+    private func openSession(_ s: WorkoutSession) {
+        // Use SwiftData's stable identity (safer than comparing `id` if your model changes)
+        let same = presentedSession?.persistentModelID == s.persistentModelID
+
+        if same {
+            // Force SwiftUI to treat it as a "new" navigation by bouncing through nil
+            presentedSession = nil
+            Task { @MainActor in
+                presentedSession = s
+            }
+        } else {
+            presentedSession = s
+        }
+    }
 
     @MainActor
     private func refreshWorkoutSessionCache() {
@@ -357,7 +387,57 @@ struct DayTimelineScreen: View {
             latestSessionByActivityIdCache = [:]
         }
     }
+    
+    @MainActor
+    private func finishSessionFromTimeline(_ s: WorkoutSession, activity: Activity) {
+        if s.isPaused { s.resume() }
+        s.endedAt = Date()
+        s.status = .completed
 
+        // keep cache consistent for badges
+        latestSessionByActivityIdCache[activity.id] = s
+
+        do { try modelContext.save() }
+        catch { assertionFailure("Failed to finish session: \(error)") }
+
+        refreshWorkoutSessionCache()
+    }
+    
+    @MainActor
+    private func finishSession(_ s: WorkoutSession) {
+        if s.isPaused { s.resume() }        // optional: avoid finishing while paused
+        s.endedAt = Date()
+        s.status = .completed
+
+        do { try modelContext.save() }
+        catch { assertionFailure("Failed to finish: \(error)") }
+
+        refreshWorkoutSessionCache()
+    }
+
+    @MainActor
+    private func abandonSessionFromTimeline(_ s: WorkoutSession, activity: Activity) {
+        if s.isPaused { s.resume() }
+        s.endedAt = Date()
+        s.status = .abandoned
+
+        latestSessionByActivityIdCache[activity.id] = s
+
+        do { try modelContext.save() }
+        catch { assertionFailure("Failed to abandon session: \(error)") }
+
+        refreshWorkoutSessionCache()
+    }
+    
+    @MainActor
+    private func suppressWorkoutTapBriefly() {
+        suppressWorkoutTap = true
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 350_000_000) // 0.35s is enough to swallow the "tap on release"
+            suppressWorkoutTap = false
+        }
+    }
+    
     private struct WorkoutStateBadge: View {
         let state: WorkoutLaunchState
 
@@ -396,14 +476,12 @@ struct DayTimelineScreen: View {
     
     // Tap = do the default thing (NO dialog)
     private func handleWorkoutTap(_ activity: Activity) {
-        let state = workoutSessionState(for: activity)
+        guard !suppressWorkoutTap else { return }   // ✅ prevents “tap on release” after long press
 
+        let state = workoutSessionState(for: activity)
         switch state {
         case .inProgress(let s), .completed(let s), .abandoned(let s):
-            // ✅ ensure sheet re-presents even if same object/id as last time
-            presentedSession = nil
-            DispatchQueue.main.async { presentedSession = s }
-
+            openSession(s) // or presentedSession = s (but openSession is better for re-nav)
         case .none:
             startSession(for: activity)
         }
@@ -411,6 +489,7 @@ struct DayTimelineScreen: View {
 
     // Long-press = show dialog
     private func showWorkoutActions(for activity: Activity) {
+        suppressWorkoutTapBriefly()
         workoutActionActivity = activity
         workoutLaunchState = workoutSessionState(for: activity)
         showWorkoutDialog = true
@@ -714,6 +793,11 @@ struct DayTimelineScreen: View {
         try? modelContext.save()
     }
     
+    // Put this helper somewhere inside DayTimelineScreen
+    private func isWorkout(_ a: Activity) -> Bool {
+        a.kind == .workout || a.workoutRoutineId != nil || a.workoutSessionId != nil
+    }
+    
     @ViewBuilder
     private func timelineContent(
         laidOut: TimelineLayout.Result,
@@ -779,8 +863,9 @@ struct DayTimelineScreen: View {
             // Decorate with badge (badge func can return nil for non-workouts)
             let decorated = base
                 .overlay(alignment: .topTrailing) {
-                    if let b = workoutBadge(for: a) {
-                        WorkoutBadgeView(badge: b).padding(6)
+                    if item.activity.kind == .workout {
+                        workoutOverlayControls(for: item.activity)
+                            .padding(6)
                     }
                 }
 
@@ -789,10 +874,9 @@ struct DayTimelineScreen: View {
             Group {
                 if workout {
                     decorated
-                        .simultaneousGesture(
-                            LongPressGesture(minimumDuration: 0.5)
-                                .onEnded { _ in showWorkoutActions(for: a) }
-                        )
+                        .onLongPressGesture(minimumDuration: 0.5) {
+                            showWorkoutActions(for: item.activity)
+                        }
                 } else {
                     decorated
                         .contextMenu {
@@ -825,7 +909,80 @@ struct DayTimelineScreen: View {
             .offset(x: x, y: y)
         }
     }
+    
+    private func latestSession(for a: Activity) -> WorkoutSession? {
+        latestSessionByActivityIdCache[a.id]
+    }
+    
+    @ViewBuilder
+    private func workoutOverlayControls(for a: Activity) -> some View {
+        if let s = latestSession(for: a) {
+            switch s.status {
+            case .inProgress:
+                HStack(spacing: 10) {
+                    Button {
+                        togglePause(s)
+                    } label: {
+                        Image(systemName: s.isPaused ? "play.fill" : "pause.fill")
+                    }
+                    .accessibilityLabel(s.isPaused ? "Resume workout" : "Pause workout")
 
+                    Button(role: .destructive) {
+                        stopSession(s)
+                    } label: {
+                        Image(systemName: "stop.fill")
+                    }
+                    .accessibilityLabel("Stop workout")
+                }
+                .font(.caption2.weight(.semibold))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial, in: Capsule())
+                .buttonStyle(.plain)
+
+            case .completed, .abandoned:
+                Button {
+                    openSession(s)
+                } label: {
+                    Label("Summary", systemImage: "checkmark.circle")
+                        .font(.caption2.weight(.semibold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.ultraThinMaterial, in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        } else {
+            Button {
+                startSession(for: a)
+            } label: {
+                Label("Start", systemImage: "play.fill")
+                    .font(.caption2.weight(.semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.ultraThinMaterial, in: Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    @MainActor
+    private func togglePause(_ s: WorkoutSession) {
+        if s.isPaused { s.resume() } else { s.pause() }
+        try? modelContext.save()
+        if let aid = s.linkedActivityId { latestSessionByActivityIdCache[aid] = s }
+    }
+
+    @MainActor
+    private func stopSession(_ s: WorkoutSession) {
+        // Treat "Stop" as "Finish" (Completed). Keep "Abandon" in your long-press menu.
+        if s.isPaused { s.resume() }
+        s.endedAt = Date()
+        s.status = .completed
+        try? modelContext.save()
+        if let aid = s.linkedActivityId { latestSessionByActivityIdCache[aid] = s }
+        openSession(s)
+    }
     
     private var magnifyToZoomGesture: some Gesture {
         MagnificationGesture()
@@ -917,22 +1074,21 @@ struct DayTimelineScreen: View {
             prefillActualsFromTargets: true
         )
 
+        latestSessionByActivityIdCache[activity.id] = session
         modelContext.insert(session)
 
-        // ✅ make it a workout
         activity.kind = .workout
         activity.workoutSessionId = session.id
 
         do {
             try modelContext.save()
-            presentedSession = session
+            openSession(session)
             workoutLaunchState = .inProgress(session)
             workoutActionActivity = nil
         } catch {
             assertionFailure("Failed to save quick session: \(error)")
         }
     }
-
 
 
 
@@ -978,26 +1134,20 @@ struct DayTimelineScreen: View {
         workoutActionActivity = nil
     }
 
-    private enum WorkoutBadge {
-        case start
-        case resume
-        case summary
-    }
+    private enum WorkoutBadge { case start, resume, paused, summary }
 
     private func workoutBadge(for a: Activity) -> WorkoutBadge? {
-        guard isWorkout(a) else { return nil }
-
+        guard a.kind == .workout else { return nil }
+        
         guard let s = latestSessionByActivityIdCache[a.id] else {
             return .start
         }
         switch s.status {
-        case .inProgress: return .resume
-        case .completed, .abandoned: return .summary
+        case .inProgress:
+            return s.isPaused ? .paused : .resume
+        case .completed, .abandoned:
+            return .summary
         }
-    }
-    
-    private func isWorkout(_ a: Activity) -> Bool {
-        a.kind == .workout || a.workoutRoutineId != nil || a.workoutSessionId != nil
     }
 
     private struct WorkoutBadgeView: View {
@@ -1019,6 +1169,7 @@ struct DayTimelineScreen: View {
             case .start:   return "play.circle"
             case .resume:  return "play.circle.fill"
             case .summary: return "checkmark.circle"
+            case .paused: return "pause.circle.fill"
             }
         }
 
@@ -1027,6 +1178,7 @@ struct DayTimelineScreen: View {
             case .start:   return "Start"
             case .resume:  return "Resume"
             case .summary: return "Summary"
+            case .paused: return "Paused"
             }
         }
     }

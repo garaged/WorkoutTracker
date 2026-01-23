@@ -11,6 +11,8 @@ struct TodayRootView: View {
 
     @State private var newDraft: NewActivityDraft?
     @State private var editingActivity: Activity?
+    @State private var presentedSession: WorkoutSession? = nil
+
 
     // ✅ Push routing
     enum Route: Hashable {
@@ -28,6 +30,7 @@ struct TodayRootView: View {
         NavigationStack(path: $path) {
             DayTimelineScreen(
                 day: selectedDay,
+                presentedSession: $presentedSession,
                 onEdit: { editingActivity = $0 },
                 onCreateAt: { start, lane in
                     newDraft = NewActivityDraft(initialStart: start, initialEnd: nil, laneHint: lane)
@@ -80,12 +83,14 @@ struct TodayRootView: View {
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
+                    .accessibilityIdentifier("nav.moreMenu")
 
                     Button {
                         newDraft = NewActivityDraft(initialStart: nil, initialEnd: nil, laneHint: 0)
                     } label: {
                         Image(systemName: "plus.circle.fill")
                     }
+                    .accessibilityIdentifier("nav.addActivity")
                 }
             }
             .navigationDestination(for: Route.self) { route in
@@ -104,6 +109,10 @@ struct TodayRootView: View {
                     let applyDay = Date(dayKey: applyDayKey) ?? selectedDay
                     TemplatesScreen(applyDay: applyDay)
                 }
+            }
+            .navigationDestination(item: $presentedSession) { session in
+                WorkoutSessionScreen(session: session)
+                    .onDisappear { presentedSession = nil }
             }
         }
         .onChange(of: scenePhase) { _, phase in
@@ -178,6 +187,7 @@ private struct DayStepperControl: View {
                     .padding(.horizontal, 4)
             }
             .accessibilityLabel("Previous day")
+            .accessibilityIdentifier("dayStepper.prev")
 
             Button(action: goToday) {
                 Image(systemName: isToday ? "calendar" : "calendar.badge.clock")
@@ -186,6 +196,7 @@ private struct DayStepperControl: View {
                     .foregroundStyle(isToday ? .secondary : .primary)
             }
             .accessibilityLabel("Go to Today")
+            .accessibilityIdentifier("dayStepper.today")
             .disabled(isToday)
             .tint(.accentColor)
 
@@ -195,6 +206,7 @@ private struct DayStepperControl: View {
                     .padding(.horizontal, 4)
             }
             .accessibilityLabel("Next day")
+            .accessibilityIdentifier("dayStepper.next")
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
