@@ -4,7 +4,7 @@ import SwiftData
 
 // MARK: - Test Support
 
-private enum TestSupport {
+enum TestSupport {
 
     /// Small wrapper that keeps a `ModelContainer` alive for the whole test.
     ///

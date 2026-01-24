@@ -9,6 +9,10 @@ struct SetRowActionsBar: View {
     var onAdd: (() -> Void)?
     var onDelete: (() -> Void)?
 
+    /// Optional prefix to make UI test selectors unambiguous when multiple rows exist.
+    /// Example: "WorkoutSetEditorRow.<setUUID>.Actions"
+    var idPrefix: String = "SetRowActionsBar"
+
     var body: some View {
         HStack(spacing: 14) {
             Button {
@@ -17,6 +21,7 @@ struct SetRowActionsBar: View {
                 Image(systemName: "doc.on.doc")
             }
             .accessibilityLabel("Copy set")
+            .accessibilityIdentifier("\(idPrefix).CopyButton")
 
             Button {
                 onAdd?()
@@ -24,6 +29,7 @@ struct SetRowActionsBar: View {
                 Image(systemName: "plus.circle")
             }
             .accessibilityLabel("Add set")
+            .accessibilityIdentifier("\(idPrefix).AddButton")
 
             Button(role: .destructive) {
                 onDelete?()
@@ -31,6 +37,7 @@ struct SetRowActionsBar: View {
                 Image(systemName: "trash")
             }
             .accessibilityLabel("Delete set")
+            .accessibilityIdentifier("\(idPrefix).DeleteButton")
         }
         .font(.caption)
         .foregroundStyle(.secondary)

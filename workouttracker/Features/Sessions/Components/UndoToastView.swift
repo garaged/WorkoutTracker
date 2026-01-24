@@ -21,6 +21,7 @@ struct UndoToastView: View {
 
             Button("Undo") { onUndo() }
                 .font(.subheadline.weight(.semibold))
+                .accessibilityIdentifier("UndoToastView.UndoButton")
 
             Button {
                 onDismiss()
@@ -31,7 +32,9 @@ struct UndoToastView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Dismiss undo")
+            .accessibilityIdentifier("UndoToastView.DismissButton")
         }
+        .accessibilityIdentifier("UndoToastView.Container")
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))

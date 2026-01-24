@@ -23,7 +23,6 @@ final class WorkoutSetLog {
     var targetRPE: Double?
     var targetRestSeconds: Int?
 
-    /// Belongs-to
     var sessionExercise: WorkoutSessionExercise?
 
     init(

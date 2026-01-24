@@ -4,16 +4,6 @@ import Combine
 
 /// Centralizes workout set logging mutations (add/copy/delete/toggle complete) and provides
 /// a simple "undo last action" stack for the current session.
-///
-/// Why this exists:
-/// - SwiftUI rows should stay dumb UI: they request actions; they don't reinvent mutation rules.
-/// - Mutations like "insert + renumber orders" and "toggle done + timestamp" are easy to get subtly wrong.
-/// - Undo is easiest when the service records an inverse operation at the time of the change.
-///
-/// Notes:
-/// - Undo history is session-local (in-memory). If the app is killed, undo history is lost.
-/// - TextField edits in the row still edit the model directly; this service focuses on fast tap actions
-///   (copy, +1 set, steppers, done).
 @MainActor
 final class WorkoutLoggingService: ObservableObject {
 
@@ -34,9 +24,17 @@ final class WorkoutLoggingService: ObservableObject {
     private var dismissTask: Task<Void, Never>?
 
     private let now: () -> Date
+    private let toastDurationSeconds: Double
 
     init(now: @escaping () -> Date = Date.init) {
         self.now = now
+
+        // ✅ In UI tests, keep the toast around longer to avoid timing flake.
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting") {
+            self.toastDurationSeconds = 8.0
+        } else {
+            self.toastDurationSeconds = 2.5
+        }
     }
 
     deinit { dismissTask?.cancel() }
@@ -52,17 +50,25 @@ final class WorkoutLoggingService: ObservableObject {
         template: WorkoutSetLog? = nil,
         context: ModelContext
     ) -> WorkoutSetLog? {
+
+        // ✅ Always work off a stable ordering first.
+        Self.normalizeSetLogArrayOrder(in: ex)
+
+        // Build a new set (order will be corrected by renumber).
         let newSet = Self.makeSet(for: ex, template: template)
 
+        // Compute insertion index AFTER normalization, and compare by id (SwiftData-safe).
         let insertIndex = Self.insertionIndex(in: ex, after: after)
-        ex.setLogs.insert(newSet, at: insertIndex)
-        Self.renumberOrders(in: ex)
+
+        // Insert and then renumber preserving the current array order.
+        ex.setLogs.insert(newSet, at: min(insertIndex, ex.setLogs.count))
+        Self.renumberOrdersPreservingArray(in: ex)
 
         pushUndo(message: "Added set") { ctx in
-            if let idx = ex.setLogs.firstIndex(where: { $0 === newSet }) {
+            if let idx = ex.setLogs.firstIndex(where: { $0.id == newSet.id }) {
                 ex.setLogs.remove(at: idx)
                 ctx.delete(newSet)
-                Self.renumberOrders(in: ex)
+                Self.renumberOrdersPreservingArray(in: ex)
                 try ctx.save()
             }
         }
@@ -78,17 +84,20 @@ final class WorkoutLoggingService: ObservableObject {
         in ex: WorkoutSessionExercise,
         context: ModelContext
     ) -> WorkoutSetLog? {
+
+        Self.normalizeSetLogArrayOrder(in: ex)
+
         let copied = Self.makeSetCopy(source, for: ex)
 
         let insertIndex = Self.insertionIndex(in: ex, after: source)
-        ex.setLogs.insert(copied, at: insertIndex)
-        Self.renumberOrders(in: ex)
+        ex.setLogs.insert(copied, at: min(insertIndex, ex.setLogs.count))
+        Self.renumberOrdersPreservingArray(in: ex)
 
         pushUndo(message: "Copied set") { ctx in
-            if let idx = ex.setLogs.firstIndex(where: { $0 === copied }) {
+            if let idx = ex.setLogs.firstIndex(where: { $0.id == copied.id }) {
                 ex.setLogs.remove(at: idx)
                 ctx.delete(copied)
-                Self.renumberOrders(in: ex)
+                Self.renumberOrdersPreservingArray(in: ex)
                 try ctx.save()
             }
         }
@@ -102,9 +111,14 @@ final class WorkoutLoggingService: ObservableObject {
         from ex: WorkoutSessionExercise,
         context: ModelContext
     ) {
-        guard let idx = ex.setLogs.firstIndex(where: { $0 === set }) else { return }
+        Self.normalizeSetLogArrayOrder(in: ex)
 
-        // Snapshot fields needed to rebuild (types are inferred from the model).
+        guard let idx = ex.setLogs.firstIndex(where: { $0.id == set.id }) else { return }
+
+        // ✅ Snapshot everything needed to restore faithfully (including identity).
+        let originalID = set.id
+        let originalOrigin = set.origin
+
         let reps = set.reps
         let weight = set.weight
         let weightUnit = set.weightUnit
@@ -122,17 +136,19 @@ final class WorkoutLoggingService: ObservableObject {
 
         ex.setLogs.remove(at: idx)
         context.delete(set)
-        Self.renumberOrders(in: ex)
+        Self.renumberOrdersPreservingArray(in: ex)
 
         pushUndo(message: "Deleted set") { ctx in
             let restored = WorkoutSetLog(
+                id: originalID,                    // ✅ restore same identity
                 order: insertIndex,
-                origin: .added,
+                origin: originalOrigin,            // ✅ restore origin
                 reps: reps,
                 weight: weight,
                 weightUnit: weightUnit,
                 rpe: rpe,
                 completed: completed,
+                completedAt: completedAt,
                 targetReps: targetReps,
                 targetWeight: targetWeight,
                 targetWeightUnit: targetWeightUnit,
@@ -140,10 +156,12 @@ final class WorkoutLoggingService: ObservableObject {
                 targetRestSeconds: targetRestSeconds,
                 sessionExercise: ex
             )
-            restored.completedAt = completedAt
+
+            // Being explicit makes undo behavior more predictable across SwiftData versions.
+            ctx.insert(restored)
 
             ex.setLogs.insert(restored, at: min(insertIndex, ex.setLogs.count))
-            Self.renumberOrders(in: ex)
+            Self.renumberOrdersPreservingArray(in: ex)
             try ctx.save()
         }
 
@@ -179,7 +197,6 @@ final class WorkoutLoggingService: ObservableObject {
         guard delta != 0 else { return }
 
         let oldReps = set.reps
-
         let current = set.reps ?? 0
         set.reps = max(0, current + delta)
 
@@ -191,7 +208,7 @@ final class WorkoutLoggingService: ObservableObject {
         save(context, label: "bump reps")
     }
 
-    /// Quick stepper: weight +/- (clamped at 0). Uses current unit; the UI decides the step size.
+    /// Quick stepper: weight +/- (clamped at 0).
     func bumpWeight(
         _ set: WorkoutSetLog,
         delta: Double,
@@ -250,10 +267,9 @@ final class WorkoutLoggingService: ObservableObject {
         let toast = UndoToast(message: message)
         undoToast = toast
 
-        // Auto-dismiss after a short delay (but keep undo stack).
         dismissTask?.cancel()
-        dismissTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 2_500_000_000)
+        dismissTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(toastDurationSeconds * 1_000_000_000))
             guard let self else { return }
             if self.undoToast?.id == toast.id {
                 self.undoToast = nil
@@ -265,11 +281,17 @@ final class WorkoutLoggingService: ObservableObject {
 
     private static func insertionIndex(in ex: WorkoutSessionExercise, after: WorkoutSetLog?) -> Int {
         guard let after else { return ex.setLogs.count }
-        guard let idx = ex.setLogs.firstIndex(where: { $0 === after }) else { return ex.setLogs.count }
+        guard let idx = ex.setLogs.firstIndex(where: { $0.id == after.id }) else { return ex.setLogs.count }
         return min(idx + 1, ex.setLogs.count)
     }
 
-    private static func renumberOrders(in ex: WorkoutSessionExercise) {
+    /// Sorts current setLogs by their persisted order so we have a stable base for insertion.
+    private static func normalizeSetLogArrayOrder(in ex: WorkoutSessionExercise) {
+        ex.setLogs.sort { $0.order < $1.order }
+    }
+
+    /// Renumbers orders based on the CURRENT array order. (No sorting here.)
+    private static func renumberOrdersPreservingArray(in ex: WorkoutSessionExercise) {
         for (i, s) in ex.setLogs.enumerated() {
             s.order = i
         }

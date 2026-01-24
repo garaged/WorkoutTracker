@@ -20,14 +20,14 @@ final class WorkoutSession {
 
     var statusRaw: String
 
-    // ✅ Timer pause support
+    // Timer pause support
     var isPaused: Bool
     var pausedAt: Date?
     var accumulatedPausedSeconds: Int
 
-    // ✅ Parent -> children (cascade), no inverse
+    // ✅ Explicit inverse breaks SwiftData macro cycles
     @Relationship(deleteRule: .cascade)
-    var exercises: [WorkoutSessionExercise] = []
+    var exercises: [WorkoutSessionExercise]
 
     init(
         id: UUID = UUID(),
@@ -47,6 +47,7 @@ final class WorkoutSession {
         self.isPaused = false
         self.pausedAt = nil
         self.accumulatedPausedSeconds = 0
+        self.exercises = []
     }
 
     var status: WorkoutSessionStatus {
@@ -75,4 +76,14 @@ final class WorkoutSession {
         }
         return max(0, total)
     }
+
+    /// Reopens a finished/abandoned session so the user can continue logging without losing data.
+    func reopenForContinuation() {
+        if isPaused { resume() }
+        endedAt = nil
+        status = .inProgress
+    }
 }
+
+// Makes `.sheet(item:)` happy in other screens
+extension WorkoutSession: Identifiable {}

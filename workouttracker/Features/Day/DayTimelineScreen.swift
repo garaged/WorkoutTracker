@@ -16,6 +16,8 @@ struct DayTimelineScreen: View {
     @State private var workoutLaunchState: WorkoutLaunchState = .none
     @State private var latestSessionByActivityIdCache: [UUID: WorkoutSession] = [:]
     @State private var suppressWorkoutTap = false
+    @State private var didSeedUITestData = false
+
 
 
     private let day: Date
@@ -130,14 +132,26 @@ struct DayTimelineScreen: View {
                 }
             }
         }
-        .task(id: day.dayKey()) {
+        .task(id: day.dayKey()) { @MainActor in
+            if ProcessInfo.processInfo.arguments.contains("-uiTesting") {
+                guard !didSeedUITestData else { return }
+                didSeedUITestData = true
+
+                do {
+                    let seededSession = try UITestDataSeeder.resetAndSeed(day: day, context: modelContext)
+                    refreshWorkoutSessionCache()
+                    openSession(seededSession)   // ✅ deterministic: UI test starts inside the session
+                } catch {
+                    assertionFailure("UI test seeding failed: \(error)")
+                }
+                return
+            }
+
+            // Normal (non-test) behavior:
             do {
-                try TemplatePreloader.ensureDayIsPreloaded(
-                    for: day,
-                    context: modelContext
-                )
+                try TemplatePreloader.ensureDayIsPreloaded(for: day, context: modelContext)
             } catch {
-                print("Preload failed: \(error)")
+                assertionFailure("Failed to preload day: \(error)")
             }
             refreshWorkoutSessionCache()
         }
@@ -176,7 +190,19 @@ struct DayTimelineScreen: View {
 
                 case .completed(let s), .abandoned(let s):
                     Button("View Summary") { openSession(s); closeWorkoutDialog() }
-                    Button("Start Again") { startSession(for: a); closeWorkoutDialog() }
+
+                    Button("Reopen") {
+                        closeWorkoutDialog()
+                        s.reopenForContinuation()
+                        try? modelContext.save()
+                        presentedSession = s
+                    }
+
+                    Button("Start new session") {
+                        closeWorkoutDialog()
+                        startNewSessionNow(from: a)
+                    }
+
                     Button("Edit Details") { onEdit(a); closeWorkoutDialog() }
                 }
 
@@ -195,9 +221,9 @@ struct DayTimelineScreen: View {
                 case .inProgress(let s):
                     Text("In progress since \(s.startedAt.formatted(.dateTime.hour().minute())).")
                 case .completed:
-                    Text("Completed workout. View summary or start again.")
+                    Text("Completed workout. View summary, start again (clone) or reopen.")
                 case .abandoned:
-                    Text("Abandoned workout. View summary or start again.")
+                    Text("Abandoned workout. View summary, start again (clone) or reopen.")
                 }
             } else {
                 Text("")
@@ -205,6 +231,78 @@ struct DayTimelineScreen: View {
         }
 
     }
+    
+    private func fetchLatestSession(for activity: Activity) -> WorkoutSession? {
+        // 1) Prefer the explicit session link on the activity (fast + unambiguous)
+        if let sid = activity.workoutSessionId {
+            let byId = FetchDescriptor<WorkoutSession>(
+                predicate: #Predicate { s in
+                    s.id == sid
+                }
+            )
+            if let s = try? modelContext.fetch(byId).first { return s }
+        }
+
+        // 2) Fallback: find most recent session linked to this activity id
+        // Capture the value OUTSIDE the predicate to avoid keypath-vs-keypath comparisons.
+        let aid: UUID? = activity.id
+
+        let byActivity = FetchDescriptor<WorkoutSession>(
+            predicate: #Predicate { s in
+                s.linkedActivityId == aid
+            },
+            sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
+        )
+        return try? modelContext.fetch(byActivity).first
+    }
+    
+    private func startNewSessionNow(from activity: Activity) {
+        let now = Date()
+
+        // Preserve original duration if possible; otherwise default to 60 minutes.
+        let durationMinutes: Int = {
+            guard let end = activity.endAt else { return 60 }
+            let mins = Int(end.timeIntervalSince(activity.startAt) / 60)
+            return max(15, mins)
+        }()
+
+        let newStart = now
+        let newEnd = Calendar.current.date(byAdding: .minute, value: durationMinutes, to: newStart)
+
+        // ✅ Brand-new Activity occurrence (new id), same routine
+        let newActivity = Activity(
+            title: activity.title,
+            startAt: newStart,
+            endAt: newEnd,
+            laneHint: activity.laneHint,
+            kind: .workout,
+            workoutRoutineId: activity.workoutRoutineId
+        )
+
+        // ✅ Critical: do NOT carry over "completed" or session linkage
+        newActivity.workoutSessionId = nil
+        newActivity.status = .planned
+        newActivity.completedAt = nil
+
+        // ✅ Critical: avoid template-generated uniqueness collisions
+        newActivity.templateId = nil
+        newActivity.generatedKey = nil
+
+        // Helps your “fetch today cheaply” path if you rely on dayKey
+        newActivity.dayKey = dayKey(for: newStart)
+
+        modelContext.insert(newActivity)
+        try? modelContext.save()
+
+        // Now create a fresh WorkoutSession linked to the *new* activity
+        startSession(for: newActivity)
+    }
+
+    private func dayKey(for date: Date) -> String {
+        let c = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
+    }
+
 
     private func timeline() -> some View {
         let dayStart = Calendar.current.startOfDay(for: day)
@@ -926,6 +1024,7 @@ struct DayTimelineScreen: View {
                         Image(systemName: s.isPaused ? "play.fill" : "pause.fill")
                     }
                     .accessibilityLabel(s.isPaused ? "Resume workout" : "Pause workout")
+                    .accessibilityIdentifier("DayTimeline.WorkoutOverlay.PauseResume")
 
                     Button(role: .destructive) {
                         stopSession(s)
@@ -933,6 +1032,7 @@ struct DayTimelineScreen: View {
                         Image(systemName: "stop.fill")
                     }
                     .accessibilityLabel("Stop workout")
+                    .accessibilityIdentifier("DayTimeline.WorkoutOverlay.Stop")
                 }
                 .font(.caption2.weight(.semibold))
                 .padding(.horizontal, 10)
@@ -951,6 +1051,7 @@ struct DayTimelineScreen: View {
                         .background(.ultraThinMaterial, in: Capsule())
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("DayTimeline.WorkoutOverlay.Summary")
             }
         } else {
             Button {
@@ -963,6 +1064,7 @@ struct DayTimelineScreen: View {
                     .background(.ultraThinMaterial, in: Capsule())
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("DayTimeline.WorkoutOverlay.Start")
         }
     }
 
@@ -1090,16 +1192,32 @@ struct DayTimelineScreen: View {
         }
     }
 
-
-
     private func startSession(for activity: Activity) {
+        // ✅ If we already have a session for this Activity, never throw away its logs.
+        if let s = fetchLatestSession(for: activity) {
+            switch s.status {
+            case .inProgress:
+                // Just continue
+                presentedSession = s
+
+            case .completed, .abandoned:
+                // Reopen same session (keeps sets/logs)
+                s.reopenForContinuation()
+                try? modelContext.save()
+                presentedSession = s
+            }
+            return
+        }
+
+        // No existing session found -> start a new one (first time)
         if activity.workoutRoutineId == nil {
             startQuickWorkout(from: activity)
         } else {
             startWorkout(from: activity)
         }
     }
-    
+
+
     private var workoutDialogTitle: String {
         workoutActionActivity?.title ?? "Workout"
     }

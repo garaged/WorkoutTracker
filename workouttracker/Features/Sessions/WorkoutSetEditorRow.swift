@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 import UIKit
 
 /// Fast inline editing for reps/weight + done toggle.
@@ -11,6 +10,7 @@ import UIKit
 /// - clearer "done" state
 struct WorkoutSetEditorRow: View {
     @Bindable var set: WorkoutSetLog
+    
 
     let setNumber: Int
     let isReadOnly: Bool
@@ -33,6 +33,10 @@ struct WorkoutSetEditorRow: View {
     var weightStep: Double = 2.5
 
     @State private var persistDebounceTask: Task<Void, Never>?
+
+    /// Used to make accessibility identifiers unique per row.
+    /// This keeps UI tests deterministic even when multiple sets are on screen.
+    private var a11yPrefix: String { "WorkoutSetEditorRow.\(set.id.uuidString)" }
 
     private var repsBinding: Binding<String> {
         Binding<String>(
@@ -98,7 +102,8 @@ struct WorkoutSetEditorRow: View {
                         keyboard: .numberPad,
                         width: 62,
                         minus: { bumpReps(-1) },
-                        plus: { bumpReps(+1) }
+                        plus: { bumpReps(+1) },
+                        idBase: "\(a11yPrefix).Reps"
                     )
 
                     valueEditor(
@@ -112,7 +117,8 @@ struct WorkoutSetEditorRow: View {
                             Text(set.weightUnit.rawValue)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                        )
+                        ),
+                        idBase: "\(a11yPrefix).Weight"
                     )
                 }
 
@@ -127,7 +133,8 @@ struct WorkoutSetEditorRow: View {
                     isReadOnly: isReadOnly,
                     onCopy: onCopySet,
                     onAdd: onAddSet,
-                    onDelete: onDeleteSet
+                    onDelete: onDeleteSet,
+                    idPrefix: "\(a11yPrefix).Actions"
                 )
             }
 
@@ -143,10 +150,18 @@ struct WorkoutSetEditorRow: View {
             .buttonStyle(.plain)
             .disabled(isReadOnly)
             .accessibilityLabel(set.completed ? "Mark set not completed" : "Mark set completed")
+            .accessibilityIdentifier("\(a11yPrefix).DoneToggle")
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("\(a11yPrefix).Row")
         .padding(.vertical, 6)
         .opacity(set.completed ? 0.92 : 1.0)
-        .onDisappear { persistDebounceTask?.cancel() }
+        .onDisappear {
+            // Don’t drop the last typed values if the row/screen disappears.
+            persistDebounceTask?.cancel()
+            persistDebounceTask = nil
+            onPersist?() // flush immediately
+        }
     }
 
     // MARK: - Actions
@@ -156,17 +171,26 @@ struct WorkoutSetEditorRow: View {
 
         if let onToggleComplete {
             onToggleComplete()
-        } else {
-            set.completed.toggle()
-            set.completedAt = set.completed ? Date() : nil
-            onPersist?()
+
+            // Defer the completion check so SwiftUI/SwiftData have applied the mutation.
+            DispatchQueue.main.async {
+                if !wasCompleted && set.completed {
+                    onCompleted?(set.targetRestSeconds)
+                }
+            }
+            return
         }
 
-        // If we transitioned false -> true, trigger rest suggestion.
+        // Fallback path (no service)
+        set.completed.toggle()
+        set.completedAt = set.completed ? Date() : nil
+        onPersist?()
+
         if !wasCompleted && set.completed {
             onCompleted?(set.targetRestSeconds)
         }
     }
+
 
     private func bumpReps(_ delta: Int) {
         guard !isReadOnly else { return }
@@ -212,7 +236,8 @@ struct WorkoutSetEditorRow: View {
         width: CGFloat,
         minus: @escaping () -> Void,
         plus: @escaping () -> Void,
-        trailing: AnyView? = nil
+        trailing: AnyView? = nil,
+        idBase: String
     ) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
@@ -220,7 +245,11 @@ struct WorkoutSetEditorRow: View {
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 6) {
-                StepIconButton(systemName: "minus.circle", action: minus)
+                StepIconButton(
+                    systemName: "minus.circle",
+                    action: minus,
+                    accessibilityID: "\(idBase).Minus"
+                )
                     .disabled(isReadOnly)
 
                 TextField("—", text: text)
@@ -229,8 +258,13 @@ struct WorkoutSetEditorRow: View {
                     .frame(width: width)
                     .textFieldStyle(.roundedBorder)
                     .disabled(isReadOnly)
+                    .accessibilityIdentifier("\(idBase).Field")
 
-                StepIconButton(systemName: "plus.circle", action: plus)
+                StepIconButton(
+                    systemName: "plus.circle",
+                    action: plus,
+                    accessibilityID: "\(idBase).Plus"
+                )
                     .disabled(isReadOnly)
 
                 if let trailing { trailing }
@@ -241,6 +275,7 @@ struct WorkoutSetEditorRow: View {
     private struct StepIconButton: View {
         let systemName: String
         let action: () -> Void
+        let accessibilityID: String
 
         var body: some View {
             Button(action: action) {
@@ -249,6 +284,7 @@ struct WorkoutSetEditorRow: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier(accessibilityID)
         }
     }
 
