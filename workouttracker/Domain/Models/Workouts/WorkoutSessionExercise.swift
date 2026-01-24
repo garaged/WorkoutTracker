@@ -10,12 +10,17 @@ final class WorkoutSessionExercise {
     var exerciseNameSnapshot: String
     var notes: String?
 
-    /// Belongs-to
     var session: WorkoutSession?
 
-    // ✅ Parent -> children (cascade), no inverse
+    // Persisted relationship (different name => avoids macro accessor collision on `setLogs`)
     @Relationship(deleteRule: .cascade)
-    var setLogs: [WorkoutSetLog] = []
+    var setLogsStorage: [WorkoutSetLog]
+
+    // Public API the rest of the app keeps using
+    var setLogs: [WorkoutSetLog] {
+        get { setLogsStorage }
+        set { setLogsStorage = newValue }
+    }
 
     init(
         id: UUID = UUID(),
@@ -31,5 +36,7 @@ final class WorkoutSessionExercise {
         self.exerciseNameSnapshot = exerciseNameSnapshot
         self.notes = notes
         self.session = session
+
+        self.setLogsStorage = []
     }
 }

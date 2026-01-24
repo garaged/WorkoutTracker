@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import UIKit
 
 @MainActor
 struct WorkoutSessionScreen: View {
@@ -17,7 +16,6 @@ struct WorkoutSessionScreen: View {
     @State private var restSecondsToStart = 90
     @State private var activeExerciseID: UUID? = nil
     @State private var activeSetID: UUID? = nil
-
 
     private var isReadOnly: Bool { session.status != .inProgress }
     private var isInProgress: Bool { session.status == .inProgress }
@@ -159,81 +157,10 @@ struct WorkoutSessionScreen: View {
             saveOrAssert("resume")
         }
 
-        let exercises = sortedExercises
-        guard !exercises.isEmpty else { return }
+        let targetID = allSets.first(where: { !$0.completed })?.id ?? allSets.last?.id
+        guard let targetID else { return }
 
-        // Find the active exercise (last interacted), else default to first.
-        let activeIndex = activeExerciseID.flatMap { id in
-            exercises.firstIndex(where: { $0.id == id })
-        } ?? 0
-
-        func nextIncompleteSetID(in ex: WorkoutSessionExercise, after setID: UUID?) -> UUID? {
-            let sets = ex.setLogs.sorted(by: { $0.order < $1.order })
-            guard !sets.isEmpty else { return nil }
-
-            let startIndex = setID.flatMap { sid in sets.firstIndex(where: { $0.id == sid }) }
-
-            // Prefer the next incomplete strictly AFTER the cursor.
-            if let startIndex, startIndex + 1 < sets.count {
-                if let found = sets[(startIndex + 1)...].first(where: { !$0.completed }) {
-                    return found.id
-                }
-            }
-
-            // Otherwise wrap to the first incomplete in this exercise.
-            return sets.first(where: { !$0.completed })?.id
-        }
-
-        // Track both: which exercise we picked and which set inside it.
-        var targetExercise: WorkoutSessionExercise? = nil
-        var targetSetID: UUID? = nil
-
-        // 1) Prefer next incomplete in the active exercise (relative to activeSetID).
-        if let id = nextIncompleteSetID(in: exercises[activeIndex], after: activeSetID) {
-            targetExercise = exercises[activeIndex]
-            targetSetID = id
-        }
-
-        // 2) If none in active exercise, advance forward to the next exercise that has incomplete sets.
-        if targetSetID == nil, activeIndex + 1 < exercises.count {
-            for i in (activeIndex + 1)..<exercises.count {
-                if let id = nextIncompleteSetID(in: exercises[i], after: nil) {
-                    targetExercise = exercises[i]
-                    targetSetID = id
-                    break
-                }
-            }
-        }
-
-        // 3) If still none, fall back to first incomplete anywhere.
-        if targetSetID == nil {
-            for ex in exercises {
-                if let id = nextIncompleteSetID(in: ex, after: nil) {
-                    targetExercise = ex
-                    targetSetID = id
-                    break
-                }
-            }
-        }
-
-        // Final fallback: last set (end of list).
-        if targetSetID == nil {
-            targetSetID = allSets.last?.id
-            targetExercise = exercises.first(where: { ex in
-                ex.setLogs.contains(where: { $0.id == targetSetID })
-            })
-        }
-
-        guard let targetID = targetSetID else { return }
-
-        // ✅ Critical: update cursor so repeated "Continue" taps keep advancing.
-        if let targetExercise {
-            activeExerciseID = targetExercise.id
-        }
-        activeSetID = targetID
-        
-        dismissKeyboard()
-
+        // Ensure the list has laid out before scrolling (helps after insert/delete).
         DispatchQueue.main.async {
             withAnimation(.snappy) {
                 proxy.scrollTo(targetID, anchor: .center)
@@ -252,112 +179,62 @@ struct WorkoutSessionScreen: View {
     @ViewBuilder
     private func exercisesSection(proxy: ScrollViewProxy) -> some View {
         if sortedExercises.isEmpty {
-            Section {
-                ContentUnavailableView(
-                    "No exercises yet",
-                    systemImage: "dumbbell",
-                    description: Text("Create routines later. For now you can Quick Start and finish the session.")
-                )
-            }
+            emptyExercisesSection
         } else {
-            ForEach(sortedExercises) { ex in
-                Section {
-                    let sets = sortedSets(for: ex)
-
-                    ForEach(Array(sets.enumerated()), id: \.element.id) { _, set in
-                        WorkoutSetEditorRow(
-                            set: set,
-                            setNumber: set.order + 1,
-                            isReadOnly: isReadOnly,
-                            onCompleted: handleSetCompleted(_:),
-                            onPersist: {
-                                activeExerciseID = ex.id
-                                activeSetID = set.id
-                                saveOrAssert("set edit")
-                            },
-
-                            // Fast tap actions back to the service.
-                            onToggleComplete: {
-                                activeExerciseID = ex.id
-                                activeSetID = set.id
-                                logging.toggleCompleted(set, context: modelContext)
-                            },
-                            onCopySet: {
-                                activeExerciseID = ex.id
-                                activeSetID = set.id
-                                guard !isReadOnly else { return }
-                                if let newSet = logging.copySet(set, in: ex, context: modelContext) {
-                                    activeSetID = newSet.id
-                                    dismissKeyboard()
-                                    DispatchQueue.main.async {
-                                        withAnimation(.snappy) { proxy.scrollTo(newSet.id, anchor: .center) }
-                                    }
-                                }
-                            },
-                            onAddSet: {
-                                activeExerciseID = ex.id
-                                activeSetID = set.id
-                                guard !isReadOnly else { return }
-                                if let newSet = logging.addSet(to: ex, after: set, template: set, context: modelContext) {
-                                    activeSetID = newSet.id
-                                    dismissKeyboard()
-                                    DispatchQueue.main.async {
-                                        withAnimation(.snappy) { proxy.scrollTo(newSet.id, anchor: .center) }
-                                    }
-                                }
-                            },
-                            onDeleteSet: {
-                                activeExerciseID = ex.id
-                                activeSetID = set.id
-                                guard !isReadOnly else { return }
-                                logging.deleteSet(set, from: ex, context: modelContext)
-                            },
-
-                            onBumpReps: { delta in
-                                activeExerciseID = ex.id
-                                activeSetID = set.id
-                                guard !isReadOnly else { return }
-                                logging.bumpReps(set, delta: delta, context: modelContext)
-                            },
-
-                            onBumpWeight: { delta in
-                                activeExerciseID = ex.id
-                                activeSetID = set.id
-                                guard !isReadOnly else { return }
-                                logging.bumpWeight(set, delta: delta, context: modelContext)
-                            },
-                            weightStep: 1.0
-                        )
-                        .id(set.id)
-                    }
-
-                    if !isReadOnly {
-                        Button {
-                            activeExerciseID = ex.id
-                            if let newSet = logging.addSet(to: ex, template: sets.last, context: modelContext) {
-                                activeSetID = newSet.id
-                                DispatchQueue.main.async {
-                                    withAnimation(.snappy) { proxy.scrollTo(newSet.id, anchor: .center) }
-                                }
-                            }
-                        } label: {
-                            Label("Add set", systemImage: "plus")
-                        }
-                    }
-                } header: {
-                    Text(ex.exerciseNameSnapshot)
-                }
+            ForEach(sortedExercises, id: \.id) { ex in
+                exerciseSection(ex, proxy: proxy)
             }
         }
     }
 
-    private func dismissKeyboard() {
-    #if canImport(UIKit)
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
-                                        to: nil, from: nil, for: nil)
-    #endif
+    private var emptyExercisesSection: some View {
+        Section {
+            ContentUnavailableView(
+                "No exercises yet",
+                systemImage: "dumbbell",
+                description: Text("Create routines later. For now you can Quick Start and finish the session.")
+            )
+        }
     }
-    
+
+    private func exerciseSection(_ ex: WorkoutSessionExercise, proxy: ScrollViewProxy) -> some View {
+        Section {
+            setsList(for: ex, proxy: proxy)
+            addSetButton(for: ex, proxy: proxy)
+        } header: {
+            Text(ex.exerciseNameSnapshot)
+        }
+    }
+
+    @ViewBuilder
+    private func setsList(for ex: WorkoutSessionExercise, proxy: ScrollViewProxy) -> some View {
+        let sets = sortedSets(for: ex)
+
+        ForEach(sets, id: \.id) { set in
+            setRow(ex: ex, set: set, proxy: proxy)
+                .id(set.id)
+        }
+    }
+
+    @ViewBuilder
+    private func addSetButton(for ex: WorkoutSessionExercise, proxy: ScrollViewProxy) -> some View {
+        if !isReadOnly {
+            let sets = sortedSets(for: ex)
+
+            Button {
+                markActive(exerciseID: ex.id, setID: nil)
+                if let newSet = logging.addSet(to: ex, template: sets.last, context: modelContext) {
+                    markActive(exerciseID: ex.id, setID: newSet.id)
+                    scrollToSet(newSet.id, proxy: proxy)
+                }
+            } label: {
+                Label("Add set", systemImage: "plus")
+            }
+        }
+    }
+
+
+
     @ViewBuilder
     private func bottomInset(proxy: ScrollViewProxy) -> some View {
         VStack(spacing: 10) {
@@ -474,9 +351,82 @@ struct WorkoutSessionScreen: View {
         let r = s % 60
         return String(format: "%d:%02d", m, r)
     }
-}
+    
+    private func markActive(exerciseID: UUID, setID: UUID?) {
+        activeExerciseID = exerciseID
+        activeSetID = setID
+    }
+    
+    @ViewBuilder
+    private func setRow(ex: WorkoutSessionExercise, set: WorkoutSetLog, proxy: ScrollViewProxy) -> some View {
+        WorkoutSetEditorRow(
+            set: set,
+            setNumber: set.order + 1,
+            isReadOnly: isReadOnly,
+            onCompleted: handleSetCompleted(_:),
+            onPersist: {
+                markActive(exerciseID: ex.id, setID: set.id)
+                saveOrAssert("set edit")
+            },
 
-// Makes `.sheet(item:)` happy in other screens
-extension WorkoutSession: Identifiable {}
-extension WorkoutSessionExercise: Identifiable {}
-extension WorkoutSetLog: Identifiable {}
+            onToggleComplete: {
+                markActive(exerciseID: ex.id, setID: set.id)
+                logging.toggleCompleted(set, context: modelContext)
+            },
+
+            // ✅ order matters: onCopySet BEFORE onAddSet
+            onCopySet: {
+                markActive(exerciseID: ex.id, setID: set.id)
+                if !isReadOnly, let newSet = logging.copySet(set, in: ex, context: modelContext) {
+                    markActive(exerciseID: ex.id, setID: newSet.id)
+                    scrollToSet(newSet.id, proxy: proxy)
+                }
+            },
+            onAddSet: {
+                markActive(exerciseID: ex.id, setID: set.id)
+                if !isReadOnly, let newSet = logging.addSet(to: ex, after: set, template: set, context: modelContext) {
+                    markActive(exerciseID: ex.id, setID: newSet.id)
+                    scrollToSet(newSet.id, proxy: proxy)
+                }
+            },
+
+            onDeleteSet: {
+                markActive(exerciseID: ex.id, setID: set.id)
+                if !isReadOnly {
+                    logging.deleteSet(set, from: ex, context: modelContext)
+                    if activeSetID == set.id { activeSetID = nil }
+                }
+            },
+
+            onBumpReps: { delta in
+                markActive(exerciseID: ex.id, setID: set.id)
+                if !isReadOnly {
+                    logging.bumpReps(set, delta: delta, context: modelContext)
+                }
+            },
+
+            onBumpWeight: { delta in
+                markActive(exerciseID: ex.id, setID: set.id)
+                if !isReadOnly {
+                    logging.bumpWeight(set, delta: delta, context: modelContext)
+                }
+            },
+
+            weightStep: 2.5
+        )
+    }
+
+    private func dismissKeyboard() {
+    #if canImport(UIKit)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                        to: nil, from: nil, for: nil)
+    #endif
+    }
+    
+    private func scrollToSet(_ id: UUID, proxy: ScrollViewProxy) {
+        dismissKeyboard()
+        DispatchQueue.main.async {
+            withAnimation(.snappy) { proxy.scrollTo(id, anchor: .center) }
+        }
+    }
+}

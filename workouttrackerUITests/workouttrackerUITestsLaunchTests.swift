@@ -1,10 +1,3 @@
-//
-//  workouttrackerUITestsLaunchTests.swift
-//  workouttrackerUITests
-//
-//  Created by Max Valdez on 09/01/26.
-//
-
 import XCTest
 
 final class workouttrackerUITestsLaunchTests: XCTestCase {
