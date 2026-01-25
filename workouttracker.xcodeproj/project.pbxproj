@@ -25,6 +25,7 @@
 
 /* Begin PBXFileReference section */
 		350B85372F232D7900E7C785 /* workouttracker.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = workouttracker.xctestplan; sourceTree = "<group>"; };
+		350B861C2F25BE6B00E7C785 /* workouttrackerUITests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = workouttrackerUITests.xctestplan; sourceTree = "<group>"; };
 		35BA2D442F11D33200EEE02C /* workouttracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = workouttracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		35BA2D532F11D33300EEE02C /* workouttrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = workouttrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		35BA2D5D2F11D33300EEE02C /* workouttrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = workouttrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -76,6 +77,7 @@
 		35BA2D3B2F11D33200EEE02C = {
 			isa = PBXGroup;
 			children = (
+				350B861C2F25BE6B00E7C785 /* workouttrackerUITests.xctestplan */,
 				350B85372F232D7900E7C785 /* workouttracker.xctestplan */,
 				35BA2D462F11D33200EEE02C /* workouttracker */,
 				35BA2D562F11D33300EEE02C /* workouttrackerTests */,
@@ -399,6 +401,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				"INFOPLIST_KEY_CFBundleDisplayName[sdk=*]" = "Workout Tracker";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -430,6 +433,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				"INFOPLIST_KEY_CFBundleDisplayName[sdk=*]" = "Workout Tracker";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

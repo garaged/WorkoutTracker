@@ -39,7 +39,9 @@ struct WorkoutContinueNavigator {
             if let id = nextIncomplete(in: ex, after: nil) { return id }
         }
 
-        let allSets = orderedExercises.flatMap { $0.setLogs }.sorted { $0.order < $1.order }
-        return allSets.last?.id
+        if let lastEx = orderedExercises.last {
+            return lastEx.setLogs.sorted(by: { $0.order < $1.order }).last?.id
+        }
+        return nil
     }
 }

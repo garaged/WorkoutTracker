@@ -39,6 +39,16 @@ struct TodayRootView: View {
                     newDraft = NewActivityDraft(initialStart: start, initialEnd: end, laneHint: lane)
                 }
             )
+            .task {
+                guard ProcessInfo.processInfo.arguments.contains("-uiTesting") else { return }
+                guard presentedSession == nil else { return }
+
+                do {
+                    presentedSession = try UITestSeed.ensureInProgressSession(context: modelContext)
+                } catch {
+                    assertionFailure("UITest seed failed: \(error)")
+                }
+            }
             .task(id: selectedDay.dayKey()) {
                 do {
                     try TemplatePreloader.ensureDayIsPreloaded(for: selectedDay, context: modelContext)

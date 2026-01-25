@@ -16,42 +16,49 @@ struct WorkoutSessionScreen: View {
     @State private var restSecondsToStart = 90
     @State private var activeExerciseID: UUID? = nil
     @State private var activeSetID: UUID? = nil
+    
+    private let continueNav = WorkoutContinueNavigator()
 
     private var isReadOnly: Bool { session.status != .inProgress }
     private var isInProgress: Bool { session.status == .inProgress }
 
     var body: some View {
-        ScrollViewReader { proxy in
-            List {
-                headerSection
-                summarySectionIfReadOnly
-                exercisesSection(proxy: proxy)
-            }
-            .navigationTitle(session.sourceRoutineNameSnapshot ?? "Workout")
-            .navigationBarTitleDisplayMode(.inline)
-            .safeAreaInset(edge: .bottom) { bottomInset(proxy: proxy) }
-            .toolbar { toolbarContent }
-            .confirmationDialog(
-                "Finish workout?",
-                isPresented: $showFinishConfirm,
-                titleVisibility: .visible
-            ) {
-                Button("Finish & Save", role: .destructive) { finish() }
-                Button("Keep Logging", role: .cancel) { }
-            } message: {
-                Text("This will mark the session as completed.")
-            }
-            .confirmationDialog(
-                "Abandon session?",
-                isPresented: $showAbandonConfirm,
-                titleVisibility: .visible
-            ) {
-                Button("Abandon", role: .destructive) { abandon() }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("This will mark the session as abandoned (not completed).")
+        ZStack {
+            ScrollViewReader { proxy in
+                List {
+                    headerSection
+                    summarySectionIfReadOnly
+                    exercisesSection(proxy: proxy)
+                }
+                .accessibilityIdentifier("WorkoutSession.Screen")
+                .navigationTitle(session.sourceRoutineNameSnapshot ?? "Workout")
+                .navigationBarTitleDisplayMode(.inline)
+                .safeAreaInset(edge: .bottom) { bottomInset(proxy: proxy) }
+                .toolbar { toolbarContent }
+                .confirmationDialog(
+                    "Finish workout?",
+                    isPresented: $showFinishConfirm,
+                    titleVisibility: .visible
+                ) {
+                    Button("Finish & Save", role: .destructive) { finish() }
+                    Button("Keep Logging", role: .cancel) { }
+                } message: {
+                    Text("This will mark the session as completed.")
+                }
+                .confirmationDialog(
+                    "Abandon session?",
+                    isPresented: $showAbandonConfirm,
+                    titleVisibility: .visible
+                ) {
+                    Button("Abandon", role: .destructive) { abandon() }
+                    Button("Cancel", role: .cancel) { }
+                } message: {
+                    Text("This will mark the session as abandoned (not completed).")
+                }
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("WorkoutSession.Screen")
     }
 
     // MARK: Sections
@@ -157,16 +164,26 @@ struct WorkoutSessionScreen: View {
             saveOrAssert("resume")
         }
 
-        let targetID = allSets.first(where: { !$0.completed })?.id ?? allSets.last?.id
-        guard let targetID else { return }
+        let exercises = sortedExercises
+        guard !exercises.isEmpty else { return }
 
-        // Ensure the list has laid out before scrolling (helps after insert/delete).
-        DispatchQueue.main.async {
-            withAnimation(.snappy) {
-                proxy.scrollTo(targetID, anchor: .center)
-            }
+        guard let targetID = continueNav.nextTargetSetID(
+            exercises: exercises,
+            activeExerciseID: activeExerciseID,
+            activeSetID: activeSetID
+        ) else { return }
+
+        // Update cursor so repeated Continue advances predictably.
+        if let owningExercise = exercises.first(where: { ex in
+            ex.setLogs.contains(where: { $0.id == targetID })
+        }) {
+            activeExerciseID = owningExercise.id
         }
+        activeSetID = targetID
+
+        scrollToSet(targetID, proxy: proxy)
     }
+
 
     private func handleSetCompleted(_ suggestedRest: Int?) {
         guard isInProgress, !session.isPaused else { return }
@@ -262,6 +279,7 @@ struct WorkoutSessionScreen: View {
                         Label(session.isPaused ? "Resume" : "Continue",
                               systemImage: session.isPaused ? "play.fill" : "arrow.down.to.line")
                     }
+                    .accessibilityIdentifier("WorkoutSession.ContinueButton")
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
 
@@ -283,6 +301,7 @@ struct WorkoutSessionScreen: View {
                     } label: {
                         Label("Finish", systemImage: "checkmark.circle")
                     }
+                    .accessibilityIdentifier("WorkoutSession.FinishButton")
                     .buttonStyle(.bordered)
                     .controlSize(.large)
                 }
