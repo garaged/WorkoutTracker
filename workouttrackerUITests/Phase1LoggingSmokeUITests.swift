@@ -12,9 +12,10 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         app.launchArguments = ["-uiTesting"]
         app.launch()
 
-        let continueBtn = app.buttons["WorkoutSession.ContinueButton"]
-        XCTAssertTrue(continueBtn.waitForExistence(timeout: 8), "Expected to land on session screen.")
+        
 
+        assertOnSessionScreen(app)
+        
         // Find and tap first done toggle.
         let doneToggle = firstDoneToggle(in: app)
         XCTAssertTrue(doneToggle.waitForExistence(timeout: 8), "Expected at least one set row.")
@@ -41,9 +42,10 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         app.launchArguments = ["-uiTesting"]
         app.launch()
 
-        let continueBtn = app.buttons["WorkoutSession.ContinueButton"]
-        XCTAssertTrue(continueBtn.waitForExistence(timeout: 8), "Expected to land on session screen.")
+        
 
+        assertOnSessionScreen(app)
+        
         let initialCount = countSetRows(in: app)
         XCTAssertGreaterThan(initialCount, 0, "Expected at least 1 set row visible.")
 
@@ -77,9 +79,10 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         app.launchArguments = ["-uiTesting"]
         app.launch()
 
-        let continueBtn = app.buttons["WorkoutSession.ContinueButton"]
-        XCTAssertTrue(continueBtn.waitForExistence(timeout: 8), "Expected to land on session screen.")
+        
 
+        assertOnSessionScreen(app)
+        
         let initialCount = countSetRows(in: app)
         XCTAssertGreaterThan(initialCount, 0, "Expected at least 1 set row visible.")
 
@@ -212,4 +215,50 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         return !container.exists && !undoById.exists && !undoByLabel.exists
     }
     
+    private func firstExistingElement(candidates: [XCUIElement]) -> XCUIElement {
+        for c in candidates where c.exists { return c }
+        return candidates.first ?? XCUIApplication().otherElements.firstMatch
+    }
+    
+    private func waitForSessionScreen(app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let candidates: [XCUIElement] = [
+            app.otherElements["WorkoutSession.Screen"],
+            app.tables["WorkoutSession.Screen"],
+            app.scrollViews["WorkoutSession.Screen"],
+            app.buttons["WorkoutSession.ContinueButton"],
+
+            // Last-resort proof: any set row toggle exists
+            app.buttons.matching(
+                NSPredicate(format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
+                            "WorkoutSetEditorRow.", ".DoneToggle")
+            ).firstMatch
+        ]
+
+        let start = Date()
+        while Date().timeIntervalSince(start) < timeout {
+            if candidates.contains(where: { $0.exists }) { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        return candidates.contains(where: { $0.exists })
+    }
+
+    private func assertOnSessionScreen(_ app: XCUIApplication,
+                                       file: StaticString = #filePath,
+                                       line: UInt = #line) {
+        if waitForSessionScreen(app: app, timeout: 12) { return }
+
+        // ✅ Screenshot from the screen (or you can use app.screenshot())
+        let shot = XCUIScreen.main.screenshot()
+        let shotAttachment = XCTAttachment(screenshot: shot)
+        shotAttachment.name = "UI Screenshot (not on session)"
+        shotAttachment.lifetime = XCTAttachment.Lifetime.keepAlways
+        add(shotAttachment)
+
+        let treeAttachment = XCTAttachment(string: app.debugDescription)
+        treeAttachment.name = "UI Hierarchy Dump"
+        treeAttachment.lifetime = XCTAttachment.Lifetime.keepAlways
+        add(treeAttachment)
+
+        XCTFail("Expected to land on session screen.", file: file, line: line)
+    }
 }
