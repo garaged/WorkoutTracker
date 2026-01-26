@@ -3,30 +3,14 @@ import SwiftData
 
 @main
 struct workouttrackerApp: App {
+
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            // Scheduling
-            Activity.self,
-            TemplateActivity.self,
-            TemplateInstanceOverride.self,
-
-            // Workouts domain
-            Exercise.self,
-            WorkoutRoutine.self,
-            WorkoutRoutineItem.self,
-            WorkoutSetPlan.self,
-            WorkoutSession.self,
-            WorkoutSessionExercise.self,
-            WorkoutSetLog.self,
-        ])
-
         let env = ProcessInfo.processInfo.environment
 
         // ✅ UI tests: fast + deterministic
         if env["UITESTS"] == "1" {
             do {
-                let config = ModelConfiguration(isStoredInMemoryOnly: true)
-                let container = try ModelContainer(for: schema, configurations: [config])
+                let container = try ModelContainerFactory.makeInMemoryContainer()
 
                 if env["UITESTS_SEED"] == "1" {
                     let context = ModelContext(container)
@@ -51,14 +35,6 @@ struct workouttrackerApp: App {
         // Stable store location so we can delete it if needed
         let storeURL = appSupport.appendingPathComponent("default.store")
 
-        let config = ModelConfiguration(
-            "default",
-            schema: schema,
-            url: storeURL,
-            allowsSave: true,
-            cloudKitDatabase: .none
-        )
-
         func nukeStoreFiles() {
             // SwiftData/CoreData may create sidecar files too
             try? fm.removeItem(at: storeURL)
@@ -67,13 +43,13 @@ struct workouttrackerApp: App {
         }
 
         do {
-            return try ModelContainer(for: schema, configurations: [config])
+            return try ModelContainerFactory.makeOnDiskContainer(name: "default", storeURL: storeURL)
         } catch {
             #if DEBUG
             // Dev-only: schema changed, old store is incompatible -> wipe and retry once
             nukeStoreFiles()
             do {
-                return try ModelContainer(for: schema, configurations: [config])
+                return try ModelContainerFactory.makeOnDiskContainer(name: "default", storeURL: storeURL)
             } catch {
                 fatalError("Could not create ModelContainer after wiping store: \(error)")
             }

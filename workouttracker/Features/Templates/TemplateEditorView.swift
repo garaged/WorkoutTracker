@@ -6,37 +6,43 @@ struct TemplateEditorView: View {
         case create
         case edit(TemplateActivity)
     }
-    
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    
+
     @Bindable var template: TemplateActivity
-    
+
     private let mode: Mode
-    
+
     // Form state (kept local so we can edit recurrence cleanly)
     @State private var title: String = ""
     @State private var isEnabled: Bool = true
-    
+
     @State private var startTime: Date = Calendar.current.date(
         bySettingHour: 8, minute: 0, second: 0, of: Date()
     ) ?? Date()
-    
+
     @State private var durationMinutes: Int = 45
-    
+
     @State private var recurrenceKind: RecurrenceRule.Kind = .daily
     @State private var interval: Int = 1
     @State private var weekdays: Set<Weekday> = []
-    
+
     @State private var ruleStartDate: Date = Date()
     @State private var hasEndDate: Bool = false
     @State private var ruleEndDate: Date = Date()
-    @State private var showApplyToDayAlert = false
-    @State private var lastSavedTemplateId: UUID?
-    @State private var upcomingUpdateStatus: String?
+
+    // Phase 2: scope + preview
+    @State private var updateScope: UpdateScope = .thisAndFuture
+    @State private var overwriteActual: Bool = false
+    @State private var updatePreview: TemplateUpdatePreview = .init(affectedCount: 0, sampleStartDates: [])
+    @State private var previewError: String?
 
     private let applyDay: Date
-    
+
+    private let planner = TemplateUpdatePlanner()
+    private let applier = TemplateUpdateApplier()
+
     init(mode: Mode, applyDay: Date) {
         self.mode = mode
         self.applyDay = applyDay
@@ -59,16 +65,16 @@ struct TemplateEditorView: View {
             self.template = t
         }
     }
-    
+
     var body: some View {
         Form {
             Section("Template") {
                 TextField("Title", text: $title)
-                
+
                 Toggle("Enabled", isOn: $isEnabled)
-                
+
                 DatePicker("Default start time", selection: $startTime, displayedComponents: .hourAndMinute)
-                
+
                 Stepper(value: $durationMinutes, in: 5...360, step: 5) {
                     HStack {
                         Text("Duration")
@@ -77,6 +83,7 @@ struct TemplateEditorView: View {
                     }
                 }
             }
+
             Section("Type") {
                 Picker("Kind", selection: $template.kind) {
                     Text("General").tag(ActivityKind.generic)
@@ -84,6 +91,7 @@ struct TemplateEditorView: View {
                 }
                 .pickerStyle(.segmented)
             }
+
             if template.kind == .workout {
                 Section("Workout") {
                     RoutinePickerField(routineId: $template.workoutRoutineId)
@@ -93,13 +101,14 @@ struct TemplateEditorView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+
             Section("Recurrence") {
                 Picker("Repeats", selection: $recurrenceKind) {
                     Text("One-time").tag(RecurrenceRule.Kind.none)
                     Text("Daily").tag(RecurrenceRule.Kind.daily)
                     Text("Weekly").tag(RecurrenceRule.Kind.weekly)
                 }
-                
+
                 if recurrenceKind != .none {
                     Stepper(value: $interval, in: 1...30) {
                         HStack {
@@ -109,20 +118,49 @@ struct TemplateEditorView: View {
                         }
                     }
                 }
-                
+
                 if recurrenceKind == .weekly {
                     WeekdayPicker(weekdays: $weekdays)
                 }
-                
+
                 DatePicker("Start date", selection: $ruleStartDate, displayedComponents: .date)
-                
+
                 Toggle("End date", isOn: $hasEndDate)
                 if hasEndDate {
                     DatePicker(" ", selection: $ruleEndDate, displayedComponents: .date)
                 }
             }
-            
+
             if case .edit = mode {
+                Section("Apply scope") {
+                    Picker("Scope", selection: $updateScope) {
+                        ForEach(UpdateScope.allCases) { scope in
+                            Text(scope.rawValue).tag(scope)
+                        }
+                    }
+
+                    Toggle("Overwrite actual fields", isOn: $overwriteActual)
+
+                    if let previewError {
+                        Text(previewError)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text(previewSummaryText)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+
+                        if !updatePreview.sampleStartDates.isEmpty {
+                            Text("Next: " + updatePreview.sampleStartDates
+                                .map { $0.formatted(date: .abbreviated, time: .shortened) }
+                                .joined(separator: ", ")
+                            )
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
                 Section {
                     Button(role: .destructive) {
                         deleteTemplate()
@@ -143,39 +181,27 @@ struct TemplateEditorView: View {
                     .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
-        .onAppear { loadIfEditing() }
-        .alert("Apply changes to this day?", isPresented: $showApplyToDayAlert) {
-            Button("Apply (keep edits)") {
-                applyToDay(overwriteActual: false)
-            }
-            Button("Force apply", role: .destructive) {
-                applyToDay(overwriteActual: true)
-            }
-            Button("Not now", role: .cancel) {
-                dismiss()
-            }
-        } message: {
-            if let upcomingUpdateStatus {
-                Text("✅ \(upcomingUpdateStatus)\n\nApply updates today's generated instance (and can bring it back if deleted).")
-            } else {
-                Text("Apply updates today's generated instance (and can bring it back if deleted).")
-            }
+        .onAppear {
+            loadIfEditing()
+            refreshUpdatePreview()
+        }
+        .onChange(of: previewInputs) { _, _ in
+            refreshUpdatePreview()
         }
         .onChange(of: template.kind) { _, newKind in
             if newKind != .workout {
                 template.workoutRoutineId = nil
             }
         }
-
     }
-    
+
     private var modeTitle: String {
         switch mode {
         case .create: return "New Template"
         case .edit: return "Edit Template"
         }
     }
-    
+
     private var intervalLabel: String {
         switch recurrenceKind {
         case .daily:
@@ -186,7 +212,59 @@ struct TemplateEditorView: View {
             return ""
         }
     }
-    
+
+    private var previewSummaryText: String {
+        let c = updatePreview.affectedCount
+        let noun = (c == 1) ? "item" : "items"
+        switch updateScope {
+        case .thisInstance:
+            return "This will update \(c) \(noun) (apply day only)."
+        case .thisAndFuture:
+            return "This will update \(c) \(noun) (this & future; materialized rows only)."
+        case .allInstances:
+            return "This will update \(c) \(noun) (all materialized rows)."
+        }
+    }
+
+    private struct PreviewInputs: Hashable {
+        let title: String
+        let isEnabled: Bool
+        let startMinute: Int
+        let durationMinutes: Int
+
+        let recurrenceKind: RecurrenceRule.Kind
+        let interval: Int
+        let weekdays: [Weekday]
+        let ruleStartDate: Date
+        let hasEndDate: Bool
+        let ruleEndDate: Date
+
+        let kind: ActivityKind
+        let routineId: UUID?
+
+        let scope: UpdateScope
+        let overwriteActual: Bool
+    }
+
+    private var previewInputs: PreviewInputs {
+        PreviewInputs(
+            title: title,
+            isEnabled: isEnabled,
+            startMinute: minutesFromDate(startTime),
+            durationMinutes: durationMinutes,
+            recurrenceKind: recurrenceKind,
+            interval: interval,
+            weekdays: weekdays.sorted { $0.rawValue < $1.rawValue },
+            ruleStartDate: ruleStartDate,
+            hasEndDate: hasEndDate,
+            ruleEndDate: ruleEndDate,
+            kind: template.kind,
+            routineId: template.workoutRoutineId,
+            scope: updateScope,
+            overwriteActual: overwriteActual
+        )
+    }
+
     private func loadIfEditing() {
         guard case let .edit(t) = mode else {
             // defaults for create
@@ -194,14 +272,14 @@ struct TemplateEditorView: View {
             ruleEndDate = Date()
             return
         }
-        
+
         title = t.title
         isEnabled = t.isEnabled
         durationMinutes = t.defaultDurationMinutes
-        
+
         // start time -> Date
         startTime = dateFromMinutes(t.defaultStartMinute)
-        
+
         // recurrence
         let r = t.recurrence
         recurrenceKind = r.kind
@@ -215,10 +293,84 @@ struct TemplateEditorView: View {
             hasEndDate = false
             ruleEndDate = Date()
         }
+
         template.kind = t.kind
         template.workoutRoutineId = t.workoutRoutineId
     }
-    
+
+    private func refreshUpdatePreview() {
+        guard case .edit = mode else { return }
+
+        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanTitle.isEmpty else {
+            previewError = nil
+            updatePreview = .init(affectedCount: 0, sampleStartDates: [])
+            return
+        }
+
+        var rule = RecurrenceRule(kind: recurrenceKind)
+        rule.interval = max(1, interval)
+        rule.startDate = ruleStartDate
+        rule.endDate = hasEndDate ? ruleEndDate : nil
+
+        if recurrenceKind == .weekly {
+            var wds = weekdays
+            if wds.isEmpty {
+                let wdInt = Calendar.current.component(.weekday, from: ruleStartDate)
+                if let wd = Weekday(rawValue: wdInt) { wds = [wd] }
+            }
+            rule.weekdays = wds
+        } else {
+            rule.weekdays = []
+        }
+
+        let selectedKind = template.kind
+        let selectedRoutineId: UUID? = (selectedKind == .workout) ? template.workoutRoutineId : nil
+
+        // If we're in edit mode, template.id is valid
+        let draft = TemplateDraft(
+            id: template.id,
+            title: cleanTitle,
+            isEnabled: isEnabled,
+            defaultStartMinute: minutesFromDate(startTime),
+            defaultDurationMinutes: durationMinutes,
+            recurrence: rule,
+            kind: selectedKind,
+            workoutRoutineId: selectedRoutineId
+        )
+
+        do {
+            let plan = try planner.makePlan(
+                templateId: template.id,
+                draft: draft,
+                scope: updateScope,
+                applyDay: applyDay,
+                context: modelContext,
+                daysAhead: 120,
+                detachIfNoLongerMatches: true,
+                overwriteActual: overwriteActual,
+                includeApplyDayCreate: true,
+                resurrectOverridesOnApplyDay: true,
+                forceApplyDay: true
+            )
+            previewError = nil
+            updatePreview = plan.preview
+        } catch {
+            previewError = "Couldn’t compute preview: \(error.localizedDescription)"
+            updatePreview = .init(affectedCount: 0, sampleStartDates: [])
+        }
+    }
+
+    private struct TemplateSnapshot {
+        let title: String
+        let isEnabled: Bool
+        let defaultStartMinute: Int
+        let defaultDurationMinutes: Int
+        let recurrence: RecurrenceRule
+        let kind: ActivityKind
+        let workoutRoutineId: UUID?
+    }
+
     private func save() {
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else { return }
@@ -240,9 +392,6 @@ struct TemplateEditorView: View {
             rule.weekdays = []
         }
 
-        // ✅ Avoid shadowing `@Bindable var template`
-        let savedTemplate: TemplateActivity
-
         // ✅ Use the UI binding as the source of truth
         let selectedKind = self.template.kind
         let selectedRoutineId: UUID? = (selectedKind == .workout) ? self.template.workoutRoutineId : nil
@@ -259,27 +408,8 @@ struct TemplateEditorView: View {
                 workoutRoutineId: selectedRoutineId
             )
             modelContext.insert(t)
-            savedTemplate = t
+            try? modelContext.save()
 
-        case .edit(let t):
-            t.title = cleanTitle
-            t.isEnabled = isEnabled
-            t.defaultStartMinute = startMinute
-            t.defaultDurationMinutes = durationMinutes
-            t.recurrence = rule
-
-            // ✅ Persist kind + routine linkage
-            t.kind = selectedKind
-            t.workoutRoutineId = selectedRoutineId
-
-            savedTemplate = t
-        }
-
-        lastSavedTemplateId = savedTemplate.id
-        try? modelContext.save()
-
-        switch mode {
-        case .create:
             do {
                 try TemplatePreloader.ensureDayIsPreloaded(for: applyDay, context: modelContext)
             } catch {
@@ -287,43 +417,85 @@ struct TemplateEditorView: View {
             }
             dismiss()
 
-        case .edit:
-            let cal = Calendar.current
-            let tomorrow = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: applyDay)) ?? applyDay
+        case .edit(let t):
+            // Snapshot for rollback (no “acts weird” partial state)
+            let before = TemplateSnapshot(
+                title: t.title,
+                isEnabled: t.isEnabled,
+                defaultStartMinute: t.defaultStartMinute,
+                defaultDurationMinutes: t.defaultDurationMinutes,
+                recurrence: t.recurrence,
+                kind: t.kind,
+                workoutRoutineId: t.workoutRoutineId
+            )
+
+            // Apply edits to template (in-memory)
+            t.title = cleanTitle
+            t.isEnabled = isEnabled
+            t.defaultStartMinute = startMinute
+            t.defaultDurationMinutes = durationMinutes
+            t.recurrence = rule
+            t.kind = selectedKind
+            t.workoutRoutineId = selectedRoutineId
+
+            let draft = TemplateDraft(
+                id: t.id,
+                title: cleanTitle,
+                isEnabled: isEnabled,
+                defaultStartMinute: startMinute,
+                defaultDurationMinutes: durationMinutes,
+                recurrence: rule,
+                kind: selectedKind,
+                workoutRoutineId: selectedRoutineId
+            )
 
             do {
-                let count = try TemplatePreloader.updateExistingUpcomingInstances(
-                    templateId: savedTemplate.id,
-                    from: tomorrow,
+                let plan = try planner.makePlan(
+                    templateId: t.id,
+                    draft: draft,
+                    scope: updateScope,
+                    applyDay: applyDay,
+                    context: modelContext,
                     daysAhead: 120,
-                    context: modelContext
+                    detachIfNoLongerMatches: true,
+                    overwriteActual: overwriteActual,
+                    includeApplyDayCreate: true,
+                    resurrectOverridesOnApplyDay: true,
+                    forceApplyDay: true
                 )
 
-                if count == 0 {
-                    upcomingUpdateStatus = "No existing upcoming instances needed updates (next 120 days)."
-                } else if count == 1 {
-                    upcomingUpdateStatus = "Updated 1 existing upcoming instance for the next 120 days."
-                } else {
-                    upcomingUpdateStatus = "Updated \(count) existing upcoming instances for the next 120 days."
-                }
-            } catch {
-                upcomingUpdateStatus = "Couldn’t update upcoming instances: \(error.localizedDescription)"
-                print("Bulk update upcoming instances failed: \(error)")
-            }
+                try applier.apply(plan: plan, context: modelContext)
 
-            showApplyToDayAlert = true
+                // ✅ single save point
+                try modelContext.save()
+                dismiss()
+
+            } catch {
+                // Rollback activities + template fields
+                // (No save happened if we’re here)
+                t.title = before.title
+                t.isEnabled = before.isEnabled
+                t.defaultStartMinute = before.defaultStartMinute
+                t.defaultDurationMinutes = before.defaultDurationMinutes
+                t.recurrence = before.recurrence
+                t.kind = before.kind
+                t.workoutRoutineId = before.workoutRoutineId
+
+                // Best-effort rollback if a plan was partially applied (applier also rolls back on its own errors)
+                print("Template update failed: \(error)")
+            }
         }
     }
-    
+
     private func deleteTemplate() {
         guard case let .edit(t) = mode else { return }
         modelContext.delete(t)
         try? modelContext.save()
         dismiss()
     }
-    
+
     // MARK: - Time conversion
-    
+
     private func minutesFromDate(_ d: Date) -> Int {
         let cal = Calendar.current
         let c = cal.dateComponents([.hour, .minute], from: d)
@@ -331,28 +503,11 @@ struct TemplateEditorView: View {
         let m = c.minute ?? 0
         return (h * 60) + m
     }
-    
+
     private func dateFromMinutes(_ minutes: Int) -> Date {
         let cal = Calendar.current
         let base = cal.startOfDay(for: Date())
         return cal.date(byAdding: .minute, value: minutes, to: base) ?? Date()
-    }
-    
-    private func applyToDay(overwriteActual: Bool) {
-        guard let id = lastSavedTemplateId else { dismiss(); return }
-        do {
-            try TemplatePreloader.applyTemplateChange(
-                templateId: id,
-                for: applyDay,
-                context: modelContext,
-                forceForDay: true,
-                resurrectIfOverridden: true,
-                overwriteActual: overwriteActual
-            )
-        } catch {
-            print("Apply template change failed: \(error)")
-        }
-        dismiss()
     }
 }
 

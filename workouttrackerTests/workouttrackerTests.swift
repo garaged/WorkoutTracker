@@ -41,24 +41,7 @@ enum TestSupport {
 
     @MainActor
     static func makeInMemoryStore() throws -> InMemoryStore {
-        let schema = Schema([
-            // Scheduling
-            Activity.self,
-            TemplateActivity.self,
-            TemplateInstanceOverride.self,
-
-            // Workouts domain
-            Exercise.self,
-            WorkoutRoutine.self,
-            WorkoutRoutineItem.self,
-            WorkoutSetPlan.self,
-            WorkoutSession.self,
-            WorkoutSessionExercise.self,
-            WorkoutSetLog.self,
-        ])
-
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(for: schema, configurations: [config])
+        let container = try ModelContainerFactory.makeInMemoryContainer()
         return InMemoryStore(container: container)
     }
 

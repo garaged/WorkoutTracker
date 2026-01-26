@@ -76,7 +76,8 @@ enum TemplatePreloader {
         calendar: Calendar = .current,
         forceForDay: Bool = false,
         resurrectIfOverridden: Bool = false,
-        overwriteActual: Bool = false
+        overwriteActual: Bool = false,
+        saveChanges: Bool = true
     ) throws {
         let dayStart = calendar.startOfDay(for: day)
         let dayKey = day.dayKey(calendar: calendar)
@@ -154,7 +155,7 @@ enum TemplatePreloader {
                 normalizeWorkoutLinkageIfNeeded(activity: a)
             }
 
-            try context.save()
+            if saveChanges { try context.save() }
             return
         }
 
@@ -179,9 +180,10 @@ enum TemplatePreloader {
         normalizeWorkoutLinkageIfNeeded(activity: a)
 
         context.insert(a)
-        try context.save()
+        if saveChanges { try context.save() }
     }
 
+    /// Now a thin wrapper around Planner/Applier (keeps legacy call sites working).
     static func updateExistingUpcomingInstances(
         templateId: UUID,
         from day: Date,
@@ -191,7 +193,6 @@ enum TemplatePreloader {
         detachIfNoLongerMatches: Bool = true
     ) throws -> Int {
         let fromStart = calendar.startOfDay(for: day)
-        let end = calendar.date(byAdding: .day, value: daysAhead, to: fromStart) ?? fromStart
 
         // Load template once
         let templates = try context.fetch(FetchDescriptor<TemplateActivity>(
@@ -199,127 +200,39 @@ enum TemplatePreloader {
         ))
         guard let t = templates.first else { return 0 }
 
-        // Fetch activities linked to this template in the horizon
-        let tid: UUID? = templateId
-        let acts = try context.fetch(FetchDescriptor<Activity>(
-            predicate: #Predicate { a in
-                a.templateId == tid && a.startAt >= fromStart && a.startAt < end
-            }
-        ))
+        let draft = TemplateDraft(
+            id: t.id,
+            title: t.title,
+            isEnabled: t.isEnabled,
+            defaultStartMinute: t.defaultStartMinute,
+            defaultDurationMinutes: t.defaultDurationMinutes,
+            recurrence: t.recurrence,
+            kind: t.kind,
+            workoutRoutineId: t.workoutRoutineId
+        )
 
-        var anyChanged = false
-        var affectedCount = 0
+        let planner = TemplateUpdatePlanner(calendar: calendar)
+        let plan = try planner.makePlan(
+            templateId: templateId,
+            draft: draft,
+            scope: .thisAndFuture,
+            applyDay: fromStart,
+            context: context,
+            daysAhead: daysAhead,
+            detachIfNoLongerMatches: detachIfNoLongerMatches,
+            overwriteActual: false,
+            includeApplyDayCreate: false,            // legacy bulk updater did NOT create
+            resurrectOverridesOnApplyDay: false,     // legacy bulk updater never resurrected
+            forceApplyDay: false
+        )
 
-        // Snapshot before/after for accurate counting
-        struct ActivitySnapshot: Equatable {
-            let title: String
-            let startAt: Date
-            let endAt: Date?
+        if plan.affectedCount == 0 { return 0 }
 
-            let templateId: UUID?
-            let dayKey: String?
-            let generatedKey: String?
+        let applier = TemplateUpdateApplier()
+        try applier.apply(plan: plan, context: context)
+        try context.save()
 
-            let plannedTitle: String?
-            let plannedStartAt: Date?
-            let plannedEndAt: Date?
-
-            let kindRaw: String
-            let workoutRoutineId: UUID?
-            let workoutSessionId: UUID?
-        }
-
-        func snap(_ a: Activity) -> ActivitySnapshot {
-            ActivitySnapshot(
-                title: a.title,
-                startAt: a.startAt,
-                endAt: a.endAt,
-                templateId: a.templateId,
-                dayKey: a.dayKey,
-                generatedKey: a.generatedKey,
-                plannedTitle: a.plannedTitle,
-                plannedStartAt: a.plannedStartAt,
-                plannedEndAt: a.plannedEndAt,
-                kindRaw: a.kindRaw,
-                workoutRoutineId: a.workoutRoutineId,
-                workoutSessionId: a.workoutSessionId
-            )
-        }
-
-        for a in acts {
-            if a.status == .skipped { continue }
-
-            let instanceDayStart = calendar.startOfDay(for: a.startAt)
-            let instanceDayKey = instanceDayStart.dayKey(calendar: calendar)
-            let key = "\(templateId.uuidString)|\(instanceDayKey)"
-
-            // Respect overrides (skip/delete)
-            let overrides = try context.fetch(FetchDescriptor<TemplateInstanceOverride>(
-                predicate: #Predicate { $0.key == key }
-            ))
-            if !overrides.isEmpty { continue }
-
-            let before = snap(a)
-
-            // If template no longer applies, optionally detach old instances
-            if (!t.isEnabled || !t.recurrence.matches(day: instanceDayStart, calendar: calendar)) {
-                if detachIfNoLongerMatches {
-                    detachFromTemplate(activity: a, dayKey: instanceDayKey)
-
-                    // Only clear workout linkage if session hasn't started and it's still planned
-                    if a.status == .planned && a.workoutSessionId == nil {
-                        a.kind = .generic
-                        a.workoutRoutineId = nil
-                    }
-                } else {
-                    continue
-                }
-            } else {
-                let newStart = calendar.date(byAdding: .minute, value: t.defaultStartMinute, to: instanceDayStart) ?? instanceDayStart
-                let newEnd = calendar.date(byAdding: .minute, value: t.defaultDurationMinutes, to: newStart)
-
-                // Repair keys for older rows
-                a.dayKey = instanceDayKey
-                a.generatedKey = key
-
-                // NIL fallback makes older instances update consistently
-                let oldPlannedTitle = a.plannedTitle ?? a.title
-                let oldPlannedStart = a.plannedStartAt ?? a.startAt
-                let oldPlannedEnd = a.plannedEndAt ?? a.endAt
-
-                // Always update planned fields
-                a.plannedTitle = t.title
-                a.plannedStartAt = newStart
-                a.plannedEndAt = newEnd
-
-                // ✅ keep workout linkage synced, but never rewrite started sessions
-                let safeToSyncWorkout = (a.status == .planned && a.workoutSessionId == nil)
-                if safeToSyncWorkout {
-                    applyWorkoutFields(from: t, to: a)
-                } else {
-                    normalizeWorkoutLinkageIfNeeded(activity: a)
-                }
-
-                // Only update actual if user didn't diverge
-                if a.title == oldPlannedTitle { a.title = t.title }
-                if a.startAt == oldPlannedStart { a.startAt = newStart }
-
-                if let oldPlannedEnd {
-                    if a.endAt == oldPlannedEnd { a.endAt = newEnd }
-                } else {
-                    if a.endAt == nil { a.endAt = newEnd }
-                }
-            }
-
-            let after = snap(a)
-            if before != after {
-                affectedCount += 1
-                anyChanged = true
-            }
-        }
-
-        if anyChanged { try context.save() }
-        return affectedCount
+        return plan.affectedCount
     }
 
     // MARK: - Helpers
@@ -337,15 +250,5 @@ enum TemplatePreloader {
             activity.workoutRoutineId = nil
             // never force-clear workoutSessionId here (that represents history)
         }
-    }
-
-    private static func detachFromTemplate(activity: Activity, dayKey: String) {
-        activity.templateId = nil
-        activity.generatedKey = nil
-        activity.dayKey = dayKey
-
-        activity.plannedTitle = nil
-        activity.plannedStartAt = nil
-        activity.plannedEndAt = nil
     }
 }

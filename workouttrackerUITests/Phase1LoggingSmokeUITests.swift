@@ -9,11 +9,11 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
 
     func test_done_thenUndo_smoke() {
         let app = XCUIApplication()
-        app.launchArguments = ["-uiTesting"]
+        app.launchEnvironment["UITESTS"] = "1"
+        app.launchEnvironment["UITESTS_SEED"] = "1"
+        app.launchArguments = ["-uiTesting"]   // keep if you still use this elsewhere
         app.launch()
-
         
-
         assertOnSessionScreen(app)
         
         // Find and tap first done toggle.
@@ -39,10 +39,10 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
 
     func test_addSet_showsUndo_andUndoRestoresSetCount() {
         let app = XCUIApplication()
-        app.launchArguments = ["-uiTesting"]
+        app.launchEnvironment["UITESTS"] = "1"
+        app.launchEnvironment["UITESTS_SEED"] = "1"
+        app.launchArguments = ["-uiTesting"]   // keep if you still use this elsewhere
         app.launch()
-
-        
 
         assertOnSessionScreen(app)
         
@@ -76,10 +76,10 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
     
     func test_copySet_showsUndo_andUndoRestoresSetCount() {
         let app = XCUIApplication()
-        app.launchArguments = ["-uiTesting"]
+        app.launchEnvironment["UITESTS"] = "1"
+        app.launchEnvironment["UITESTS_SEED"] = "1"
+        app.launchArguments = ["-uiTesting"]   // keep if you still use this elsewhere
         app.launch()
-
-        
 
         assertOnSessionScreen(app)
         
