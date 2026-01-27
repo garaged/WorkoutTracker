@@ -20,6 +20,13 @@ struct WorkoutSessionScreen: View {
     @State private var activeSetID: UUID? = nil
     @State private var targetAppliedBanner: TargetAppliedBanner? = nil
     
+    @State private var coachPrompt: CoachPromptContext? = nil
+    @State private var nextTargets: [UUID: PinnedTarget] = [:]
+
+    private let coachService = CoachSuggestionService()
+    private let prService = PersonalRecordsService()
+
+    
     private let continueNav = WorkoutContinueNavigator()
 
     private var isReadOnly: Bool { session.status != .inProgress }
@@ -69,7 +76,8 @@ struct WorkoutSessionScreen: View {
                     Text("This will mark the session as abandoned (not completed).")
                 }
                 .task(id: session.id) {
-                    await applyGoalPrefillIfNeeded(proxy: proxy)
+                    await applyGoalPrefillIfNeeded()
+                    await reloadPinnedTargets()
                 }
             }
         }
@@ -201,9 +209,32 @@ struct WorkoutSessionScreen: View {
     }
 
 
-    private func handleSetCompleted(_ suggestedRest: Int?) {
+    private func handleSetCompleted(
+        ex: WorkoutSessionExercise,
+        set: WorkoutSetLog,
+        suggestedRest: Int?
+    ) {
         guard isInProgress, !session.isPaused else { return }
-        restSecondsToStart = max(1, suggestedRest ?? 90)
+
+        let prompt = coachService.makePrompt(
+            completedWeight: set.weight,
+            completedReps: set.reps,
+            weightUnitRaw: set.weightUnit.rawValue,
+            rpe: set.rpe,
+            plannedRestSeconds: set.targetRestSeconds,
+            defaultRestSeconds: suggestedRest ?? 90
+        )
+
+        coachPrompt = CoachPromptContext(
+            sessionExerciseModelId: ex.id,
+            exerciseId: ex.exerciseId,
+            completedSetId: set.id,
+            completedSetOrder: set.order,
+            prompt: prompt
+        )
+
+        // Start rest timer using coach suggestion
+        restSecondsToStart = max(1, prompt.suggestedRestSeconds)
         withAnimation { showRestTimer = true }
     }
 
@@ -235,7 +266,26 @@ struct WorkoutSessionScreen: View {
             setsList(for: ex, proxy: proxy)
             addSetButton(for: ex, proxy: proxy)
         } header: {
-            Text(ex.exerciseNameSnapshot)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(ex.exerciseNameSnapshot)
+
+                if isInProgress, let t = nextTargets[ex.exerciseId] {
+                    HStack(spacing: 8) {
+                        Text("Next: \(t.text)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+
+                        Spacer()
+
+                        Button("Apply") {
+                            applyPinnedTarget(for: ex)
+                        }
+                        .font(.caption.weight(.semibold))
+                        .buttonStyle(.bordered)
+                    }
+                }
+            }
         }
     }
 
@@ -272,6 +322,24 @@ struct WorkoutSessionScreen: View {
     private func bottomInset(proxy: ScrollViewProxy) -> some View {
         VStack(spacing: 10) {
             if showRestTimer && isInProgress && !session.isPaused {
+                if let ctx = coachPrompt, isInProgress && !session.isPaused {
+                    CoachPromptCardView(
+                        title: ctx.prompt.title,
+                        message: ctx.prompt.message,
+                        suggestedRestSeconds: ctx.prompt.suggestedRestSeconds,
+                        weightActionTitle: ctx.prompt.weightLabel.map { "\($0) next set" },
+                        repsActionTitle: ctx.prompt.repsLabel.map { "\($0) next set" },
+                        onApplyWeight: ctx.prompt.weightDelta == nil ? nil : { applyCoachWeight(ctx, proxy: proxy) },
+                        onApplyReps: ctx.prompt.repsDelta == nil ? nil : { applyCoachReps(ctx, proxy: proxy) },
+                        onStartRest: {
+                            restSecondsToStart = max(1, ctx.prompt.suggestedRestSeconds)
+                            withAnimation { showRestTimer = true }
+                        },
+                        onDismiss: { withAnimation { coachPrompt = nil } }
+                    )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+
                 RestTimerView(initialSeconds: restSecondsToStart) {
                     withAnimation { showRestTimer = false }
                 }
@@ -398,7 +466,9 @@ struct WorkoutSessionScreen: View {
             set: set,
             setNumber: set.order + 1,
             isReadOnly: isReadOnly,
-            onCompleted: handleSetCompleted(_:),
+            onCompleted: { suggestedRest in
+                handleSetCompleted(ex: ex, set: set, suggestedRest: suggestedRest)
+            },
             onPersist: {
                 markActive(exerciseID: ex.id, setID: set.id)
                 saveOrAssert("set edit")
@@ -582,4 +652,113 @@ struct WorkoutSessionScreen: View {
             withAnimation(.snappy) { proxy.scrollTo(id, anchor: .center) }
         }
     }
+    
+    private struct PinnedTarget: Hashable {
+        let text: String
+        let weight: Double?
+        let reps: Int?
+    }
+
+    private struct CoachPromptContext: Identifiable, Hashable {
+        let id = UUID()
+        let sessionExerciseModelId: UUID   // WorkoutSessionExercise.id
+        let exerciseId: UUID              // WorkoutSessionExercise.exerciseId
+        let completedSetId: UUID
+        let completedSetOrder: Int
+        let prompt: CoachSuggestionService.Prompt
+    }
+    
+    @MainActor
+    private func reloadPinnedTargets() async {
+        var out: [UUID: PinnedTarget] = [:]
+
+        for ex in sortedExercises {
+            do {
+                let rec = try prService.records(for: ex.exerciseId, context: modelContext)
+                if let t = try prService.nextTarget(for: ex.exerciseId, records: rec, context: modelContext) {
+                    out[ex.exerciseId] = PinnedTarget(text: t.text, weight: t.targetWeight, reps: t.targetReps)
+                }
+            } catch {
+                // ignore; keep UX smooth
+            }
+        }
+
+        nextTargets = out
+    }
+    @MainActor
+    private func applyPinnedTarget(for ex: WorkoutSessionExercise) {
+        guard let t = nextTargets[ex.exerciseId] else { return }
+
+        // Apply into the first incomplete set (by order); create one if none exist.
+        var sets = sortedSets(for: ex)
+        let targetSet: WorkoutSetLog
+
+        if let s = sets.first(where: { !$0.completed }) {
+            targetSet = s
+        } else {
+            // No available set: create a new one using your logging service
+            if let newSet = logging.addSet(to: ex, template: sets.last, context: modelContext) {
+                targetSet = newSet
+            } else {
+                return
+            }
+        }
+
+        // Don't overwrite user-entered values
+        if let w = t.weight, (targetSet.weight ?? 0) == 0 { targetSet.weight = w }
+        if let r = t.reps, (targetSet.reps ?? 0) == 0 { targetSet.reps = r }
+
+        saveOrAssert("apply next target")
+    }
+    
+    @MainActor
+    private func applyCoachWeight(_ ctx: CoachPromptContext, proxy: ScrollViewProxy) {
+        guard let delta = ctx.prompt.weightDelta else { return }
+        guard let ex = session.exercises.first(where: { $0.id == ctx.sessionExerciseModelId }) else { return }
+        guard let completed = sortedSets(for: ex).first(where: { $0.id == ctx.completedSetId }) else { return }
+
+        let next = nextEditableSet(after: completed, in: ex)
+        guard let next else { return }
+
+        let base = (next.weight ?? 0) > 0 ? (next.weight ?? 0) : (completed.weight ?? 0)
+        next.weight = base + delta
+
+        saveOrAssert("coach apply weight")
+        coachPrompt = nil
+        scrollToSet(next.id, proxy: proxy)
+    }
+
+    @MainActor
+    private func applyCoachReps(_ ctx: CoachPromptContext, proxy: ScrollViewProxy) {
+        guard let delta = ctx.prompt.repsDelta else { return }
+        guard let ex = session.exercises.first(where: { $0.id == ctx.sessionExerciseModelId }) else { return }
+        guard let completed = sortedSets(for: ex).first(where: { $0.id == ctx.completedSetId }) else { return }
+
+        let next = nextEditableSet(after: completed, in: ex)
+        guard let next else { return }
+
+        let base = (next.reps ?? 0) > 0 ? (next.reps ?? 0) : (completed.reps ?? 0)
+        next.reps = base + delta
+
+        saveOrAssert("coach apply reps")
+        coachPrompt = nil
+        scrollToSet(next.id, proxy: proxy)
+    }
+
+    @MainActor
+    private func nextEditableSet(after completed: WorkoutSetLog, in ex: WorkoutSessionExercise) -> WorkoutSetLog? {
+        let sets = sortedSets(for: ex)
+
+        if let existing = sets.first(where: { !$0.completed && $0.order > completed.order }) {
+            return existing
+        }
+
+        // No future set exists → create one after the completed set
+        if let newSet = logging.addSet(to: ex, after: completed, template: completed, context: modelContext) {
+            return newSet
+        }
+
+        return nil
+    }
+
 }
