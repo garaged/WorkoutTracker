@@ -4,28 +4,71 @@ import Charts
 
 struct ExerciseDetailScreen: View {
     @Environment(\.modelContext) private var modelContext
-    @Bindable var exercise: Exercise
+
+    let exercise: Exercise
+
+    /// Shortcut hook. Default keeps existing call sites unchanged.
+    let startWorkoutAction: ((Exercise) -> Void)?
 
     @State private var history: [WorkoutSetLog] = []
+    @State private var records: PersonalRecordsService.PersonalRecords?
+    @State private var trendPoints: [PersonalRecordsService.TrendPoint] = []
+    @State private var loadError: String?
+
+    private let prService = PersonalRecordsService()
+
+    init(exercise: Exercise, startWorkoutAction: ((Exercise) -> Void)? = nil) {
+        self.exercise = exercise
+        self.startWorkoutAction = startWorkoutAction
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 header
 
-                if let instructions = exercise.instructions, !instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if let instructions = exercise.instructions,
+                   !instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     sectionTitle("Instructions")
                     Text(instructions)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                if let notes = exercise.notes, !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if let notes = exercise.notes,
+                   !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     sectionTitle("Notes")
                     Text(notes)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .foregroundStyle(.secondary)
                 }
 
+                // ✅ “Sticky” CTA comes early
+                if let startWorkoutAction {
+                    Button {
+                        startWorkoutAction(exercise)
+                    } label: {
+                        Label("Start workout with this exercise", systemImage: "play.fill")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+
+                // ✅ PRs + trend are the “sticky” part (actionable at a glance)
+                if let records {
+                    ExercisePRSummaryView(records: records)
+                } else if loadError == nil {
+                    ProgressView().frame(maxWidth: .infinity)
+                }
+
+                ExerciseTrendChartView(points: trendPoints)
+
+                if let loadError {
+                    Text(loadError)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                // Raw history stays below
                 historySection
             }
             .padding()
@@ -33,7 +76,10 @@ struct ExerciseDetailScreen: View {
         .navigationTitle(exercise.name)
         .navigationBarTitleDisplayMode(.inline)
         .task(id: exercise.id) {
-            await loadHistory()
+            await loadAll()
+        }
+        .refreshable {
+            await loadAll()
         }
     }
 
@@ -99,7 +145,17 @@ struct ExerciseDetailScreen: View {
     @ViewBuilder
     private var historySection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            sectionTitle("History")
+            HStack {
+                Text("History")
+                    .font(.headline)
+                Spacer()
+                NavigationLink {
+                    WorkoutHistoryScreen(filter: .exercise(exerciseId: exercise.id, exerciseName: exercise.name))
+                } label: {
+                    Text("See all")
+                }
+                .font(.subheadline)
+            }
 
             if history.isEmpty {
                 ContentUnavailableView(
@@ -163,6 +219,25 @@ struct ExerciseDetailScreen: View {
         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
     }
 
+    @MainActor
+    private func loadAll() async {
+        await loadHistory()
+        await reloadPRsAndTrends()
+    }
+
+    @MainActor
+    private func reloadPRsAndTrends() async {
+        do {
+            loadError = nil
+            records = try prService.records(for: exercise.id, context: modelContext)
+            trendPoints = try prService.trend(for: exercise.id, limit: 24, context: modelContext)
+        } catch {
+            loadError = "Progress failed to load: \(error)"
+            records = nil
+            trendPoints = []
+        }
+    }
+
     // MARK: - History loading
 
     @MainActor
@@ -194,9 +269,6 @@ struct ExerciseDetailScreen: View {
     }
 
     private func chartPoints(from sets: [WorkoutSetLog]) -> [Point] {
-        // pick a “value” that makes sense by modality.
-        // strength -> weight (fallback 0)
-        // timed/cardio/mobility -> reps (treated as “value”)
         return sets.compactMap { s in
             guard let d = s.completedAt else { return nil }
             switch exercise.modality {
