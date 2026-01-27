@@ -6,20 +6,32 @@ final class WorkoutSessionExercise {
     @Attribute(.unique) var id: UUID
 
     var order: Int
+
+    // Snapshot identity (session stays stable even if Exercise changes later)
     var exerciseId: UUID
     var exerciseNameSnapshot: String
+
     var notes: String?
 
+    // Explicit relationship (no inverse to avoid macro circular-reference issues)
+    @Relationship(deleteRule: .nullify)
     var session: WorkoutSession?
 
     // Persisted relationship (different name => avoids macro accessor collision on `setLogs`)
     @Relationship(deleteRule: .cascade)
     var setLogsStorage: [WorkoutSetLog]
 
-    // Public API the rest of the app keeps using
+    // Public API the rest of the app keeps using (not persisted)
+    @Transient
     var setLogs: [WorkoutSetLog] {
         get { setLogsStorage }
-        set { setLogsStorage = newValue }
+        set {
+            setLogsStorage = newValue
+            // Keep backrefs consistent even without inverses
+            for log in setLogsStorage {
+                log.sessionExercise = self
+            }
+        }
     }
 
     init(
@@ -28,7 +40,8 @@ final class WorkoutSessionExercise {
         exerciseId: UUID,
         exerciseNameSnapshot: String,
         notes: String? = nil,
-        session: WorkoutSession? = nil
+        session: WorkoutSession? = nil,
+        setLogsStorage: [WorkoutSetLog] = []
     ) {
         self.id = id
         self.order = order
@@ -37,6 +50,11 @@ final class WorkoutSessionExercise {
         self.notes = notes
         self.session = session
 
-        self.setLogsStorage = []
+        self.setLogsStorage = setLogsStorage
+
+        // Keep backrefs consistent even without inverses
+        for log in self.setLogsStorage {
+            log.sessionExercise = self
+        }
     }
 }
