@@ -7,10 +7,26 @@ struct WorkoutLogScreen: View {
     private var sessions: [WorkoutSession]
 
     private let cal = Calendar.current
+    
+    // ✅ new: initial day to open with
+    let initialSelectedDay: Date
 
-    @State private var month: Date = Date()
-    @State private var selectedDay: Date = Calendar.current.startOfDay(for: Date())
+    // ✅ initialize State from initialSelectedDay
+    @State private var month: Date
+    @State private var selectedDay: Date
     @State private var presentedSession: WorkoutSession? = nil
+    
+    init(initialSelectedDay: Date = Date()) {
+        self.initialSelectedDay = initialSelectedDay
+
+        let cal = Calendar.current
+        let day = cal.startOfDay(for: initialSelectedDay)
+        let comps = cal.dateComponents([.year, .month], from: day)
+        let monthStart = cal.date(from: comps) ?? day
+
+        _selectedDay = State(initialValue: day)
+        _month = State(initialValue: monthStart)
+    }
 
     var body: some View {
         VStack(spacing: 12) {
@@ -21,6 +37,8 @@ struct WorkoutLogScreen: View {
             Divider()
 
             daySummaryHeader
+            
+            historyLinkRow
 
             List {
                 if sessionsForSelectedDay.isEmpty {
@@ -46,6 +64,28 @@ struct WorkoutLogScreen: View {
         .padding(.horizontal, 12)
         .navigationTitle("Log")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {          // ✅ add
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    WorkoutHistoryScreen(
+                        filter: .all,
+                        onOpenSession: { s in presentedSession = s }
+                    )
+                } label: {
+                    Image(systemName: "clock.arrow.circlepath")
+                }
+                .accessibilityLabel("History")
+            }
+        }
+        .task(id: cal.startOfDay(for: initialSelectedDay)) {
+            let targetDay = cal.startOfDay(for: initialSelectedDay)
+            if !cal.isDate(selectedDay, inSameDayAs: targetDay) {
+                selectedDay = targetDay
+            }
+            if !cal.isDate(month, equalTo: targetDay, toGranularity: .month) {
+                month = startOfMonth(targetDay)
+            }
+        }
         .onChange(of: month) { _, newMonth in
             // Keep selection inside the visible month
             let start = startOfMonth(newMonth)
@@ -154,6 +194,27 @@ struct WorkoutLogScreen: View {
         .padding(.horizontal, 2)
     }
 
+    private var historyLinkRow: some View {
+        HStack {
+            NavigationLink {
+                WorkoutHistoryScreen(
+                    filter: .day(selectedDay),
+                    onOpenSession: { s in presentedSession = s }
+                )
+            } label: {
+                Label("History for this day", systemImage: "clock")
+                    .font(.subheadline.weight(.semibold))
+            }
+
+            Spacer()
+
+            Text("See all")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 2)
+    }
+    
     // MARK: - Derived data
 
     private var sessionsInVisibleMonth: [WorkoutSession] {

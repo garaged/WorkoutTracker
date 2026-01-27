@@ -4,7 +4,9 @@ import SwiftData
 @MainActor
 struct WorkoutSessionScreen: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(GoalPrefillStore.self) private var goalPrefill
     @Environment(\.modelContext) private var modelContext
+
 
     @Bindable var session: WorkoutSession
 
@@ -54,6 +56,9 @@ struct WorkoutSessionScreen: View {
                     Button("Cancel", role: .cancel) { }
                 } message: {
                     Text("This will mark the session as abandoned (not completed).")
+                }
+                .task(id: session.id) {
+                    await applyGoalPrefillIfNeeded()
                 }
             }
         }
@@ -433,6 +438,22 @@ struct WorkoutSessionScreen: View {
 
             weightStep: 2.5
         )
+    }
+    
+    @MainActor
+    private func applyGoalPrefillIfNeeded() async {
+        guard session.status == .inProgress else { return }
+        guard let exId = goalPrefill.pendingExerciseId else { return }
+        guard let target = goalPrefill.consumeIfMatches(exerciseId: exId) else { return }
+
+        guard let ex = session.exercises.first(where: { $0.exerciseId == exId }) else { return }
+        guard let set = ex.setLogs.first(where: { !$0.completed }) else { return }
+
+        // Only prefill if user hasn't already typed something
+        if let w = target.weight, (set.weight ?? 0) == 0 { set.weight = w }
+        if let r = target.reps, (set.reps ?? 0) == 0 { set.reps = r }
+
+        try? modelContext.save()
     }
 
     private func dismissKeyboard() {

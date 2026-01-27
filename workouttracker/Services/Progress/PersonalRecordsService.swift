@@ -34,6 +34,12 @@ final class PersonalRecordsService {
         let bestEstimated1RM: Double
         let bestReps: Int
     }
+    
+    struct NextTarget: Hashable {
+        let text: String
+        let targetWeight: Double?
+        let targetReps: Int?
+    }
 
     enum TrendMetric: String, CaseIterable, Identifiable {
         case sessionVolume = "Volume"
@@ -132,7 +138,7 @@ final class PersonalRecordsService {
         out.reserveCapacity(min(64, sessions.count))
 
         for s in sessions {
-            guard s.endedAt != nil else { continue }
+            guard s.status == .completed else { continue }
 
             // Find this exercise within the session (some sessions may include it multiple times;
             // if yours allows duplicates, you may want to merge them).
@@ -197,5 +203,111 @@ final class PersonalRecordsService {
     private func pickMax(_ a: PRInt?, _ b: PRInt) -> PRInt {
         guard let a else { return b }
         return (b.value > a.value) ? b : a
+    }
+    
+    func nextTarget(
+        for exerciseID: UUID,
+        records: PersonalRecords,
+        context: ModelContext
+    ) throws -> NextTarget? {
+
+        if let bw = records.bestWeight {
+            let unit = try latestWeightUnit(for: exerciseID, context: context)
+            let inc = recommendedWeightIncrement(unit: unit)
+            let target = bw.value + inc
+
+            let incStr = formatNumber(inc)
+            let targetStr = formatNumber(target)
+
+            let text: String
+            if let unit, !unit.isEmpty {
+                text = "Next target: beat your top weight by +\(incStr) \(unit) (to \(targetStr) \(unit))"
+            } else {
+                text = "Next target: beat your top weight by +\(incStr) (to \(targetStr))"
+            }
+
+            return NextTarget(text: text, targetWeight: target, targetReps: nil)
+        }
+
+        if let br = records.bestReps {
+            let target = br.value + 1
+            return NextTarget(
+                text: "Next target: beat your top reps by +1 (to \(target))",
+                targetWeight: nil,
+                targetReps: target
+            )
+        }
+
+        return nil
+    }
+}
+
+// workouttracker/Services/Progress/PersonalRecordsService.swift
+
+extension PersonalRecordsService {
+
+    /// One-line “micro goal” that makes Progress feel actionable.
+    func nextTargetText(
+        for exerciseID: UUID,
+        records: PersonalRecords,
+        context: ModelContext
+    ) throws -> String? {
+        // Prefer weight target if we have it, otherwise reps.
+        if let bw = records.bestWeight {
+            let unit = try latestWeightUnit(for: exerciseID, context: context) // e.g. "kg" / "lb"
+            let inc = recommendedWeightIncrement(unit: unit)
+
+            let target = bw.value + inc
+
+            let incStr = formatNumber(inc)
+            let targetStr = formatNumber(target)
+
+            if let unit, !unit.isEmpty {
+                return "Next target: beat your top weight by +\(incStr) \(unit) (to \(targetStr) \(unit))"
+            } else {
+                return "Next target: beat your top weight by +\(incStr) (to \(targetStr))"
+            }
+        }
+
+        if let br = records.bestReps {
+            let target = br.value + 1
+            return "Next target: beat your top reps by +1 (to \(target))"
+        }
+
+        return nil
+    }
+
+    // MARK: - Helpers
+
+    private func latestWeightUnit(for exerciseID: UUID, context: ModelContext) throws -> String? {
+        // Capture for predicate macro (same pattern you used elsewhere).
+        let exId: UUID? = exerciseID
+
+        var fd = FetchDescriptor<WorkoutSetLog>(
+            predicate: #Predicate<WorkoutSetLog> { s in
+                s.completed == true &&
+                s.weight != nil &&
+                s.sessionExercise?.exerciseId == exId
+            },
+            sortBy: [SortDescriptor(\WorkoutSetLog.completedAt, order: .reverse)]
+        )
+        fd.fetchLimit = 1
+
+        let logs = try context.fetch(fd)
+        guard let first = logs.first else { return nil }
+
+        // Your code already uses `weightUnit.rawValue` elsewhere, so we mirror that.
+        return first.weightUnit.rawValue
+    }
+
+    private func recommendedWeightIncrement(unit: String?) -> Double {
+        let u = (unit ?? "").lowercased()
+        if u.contains("lb") { return 5.0 }
+        if u.contains("kg") { return 2.5 }
+        return 2.5
+    }
+
+    private func formatNumber(_ x: Double) -> String {
+        x.formatted(.number.precision(.fractionLength(0...1)))
     }
 }

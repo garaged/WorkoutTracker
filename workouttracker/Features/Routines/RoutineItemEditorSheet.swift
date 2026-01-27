@@ -1,4 +1,3 @@
-// File: Features/Routines/RoutineItemEditorScreen.swift
 import SwiftUI
 import SwiftData
 
@@ -18,7 +17,21 @@ struct RoutineItemEditorScreen: View {
                 ), axis: .vertical)
                 .lineLimit(2...6)
             }
-
+            Section("Insights") {
+                if let ex = item.exercise {
+                    ExerciseInsightsSectionView(
+                        exerciseId: ex.id,
+                        exerciseName: ex.name
+                    )
+                } else {
+                    ContentUnavailableView(
+                        "No exercise selected",
+                        systemImage: "dumbbell",
+                        description: Text("Pick an exercise to see PRs, trends, and history.")
+                    )
+                    .listRowSeparator(.hidden)
+                }
+            }
             Section("Set plans") {
                 if setPlansSorted.isEmpty {
                     ContentUnavailableView(

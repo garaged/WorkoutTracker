@@ -4,6 +4,7 @@ import Charts
 
 struct ExerciseDetailScreen: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(GoalPrefillStore.self) private var goalPrefill
 
     let exercise: Exercise
 
@@ -14,6 +15,9 @@ struct ExerciseDetailScreen: View {
     @State private var records: PersonalRecordsService.PersonalRecords?
     @State private var trendPoints: [PersonalRecordsService.TrendPoint] = []
     @State private var loadError: String?
+    @State private var nextTarget: PersonalRecordsService.NextTarget? = nil
+    @State private var showNextTargetActions: Bool = false
+
 
     private let prService = PersonalRecordsService()
 
@@ -55,7 +59,11 @@ struct ExerciseDetailScreen: View {
 
                 // ✅ PRs + trend are the “sticky” part (actionable at a glance)
                 if let records {
-                    ExercisePRSummaryView(records: records)
+                    ExercisePRSummaryView(
+                        records: records,
+                        nextTargetText: nextTarget?.text,
+                        onTapNextTarget: (nextTarget == nil) ? nil : { showNextTargetActions = true }
+                    )
                 } else if loadError == nil {
                     ProgressView().frame(maxWidth: .infinity)
                 }
@@ -80,6 +88,24 @@ struct ExerciseDetailScreen: View {
         }
         .refreshable {
             await loadAll()
+        }
+        .confirmationDialog(
+            "Next target",
+            isPresented: $showNextTargetActions,
+            titleVisibility: .visible
+        ) {
+            Button("Start workout and apply target") {
+                applyNextTargetPrefill()
+                startWorkoutAction?(exercise)
+            }
+            Button("Apply for next workout") {
+                applyNextTargetPrefill()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if let text = nextTarget?.text {
+                Text(text)
+            }
         }
     }
 
@@ -229,12 +255,19 @@ struct ExerciseDetailScreen: View {
     private func reloadPRsAndTrends() async {
         do {
             loadError = nil
-            records = try prService.records(for: exercise.id, context: modelContext)
+
+            let rec = try prService.records(for: exercise.id, context: modelContext)
+            records = rec
+
             trendPoints = try prService.trend(for: exercise.id, limit: 24, context: modelContext)
+
+            // Structured target (contains both display text + numeric goal)
+            nextTarget = try prService.nextTarget(for: exercise.id, records: rec, context: modelContext)
         } catch {
             loadError = "Progress failed to load: \(error)"
             records = nil
             trendPoints = []
+            nextTarget = nil
         }
     }
 
@@ -292,5 +325,15 @@ struct ExerciseDetailScreen: View {
         case .mobility:
             return "Reps/seconds over time"
         }
+    }
+    
+    @MainActor
+    private func applyNextTargetPrefill() {
+        guard let t = nextTarget else { return }
+        goalPrefill.set(.init(
+            exerciseId: exercise.id,
+            weight: t.targetWeight,
+            reps: t.targetReps
+        ))
     }
 }
