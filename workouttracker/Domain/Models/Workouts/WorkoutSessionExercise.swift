@@ -57,4 +57,9 @@ final class WorkoutSessionExercise {
             log.sessionExercise = self
         }
     }
+    
+    @Transient
+    var orderedSetLogs: [WorkoutSetLog] {
+        setLogsStorage.sorted { $0.order < $1.order }
+    }
 }

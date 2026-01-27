@@ -18,6 +18,7 @@ struct WorkoutSessionScreen: View {
     @State private var restSecondsToStart = 90
     @State private var activeExerciseID: UUID? = nil
     @State private var activeSetID: UUID? = nil
+    @State private var targetAppliedBanner: TargetAppliedBanner? = nil
     
     private let continueNav = WorkoutContinueNavigator()
 
@@ -36,6 +37,16 @@ struct WorkoutSessionScreen: View {
                 .navigationTitle(session.sourceRoutineNameSnapshot ?? "Workout")
                 .navigationBarTitleDisplayMode(.inline)
                 .safeAreaInset(edge: .bottom) { bottomInset(proxy: proxy) }
+                .safeAreaInset(edge: .top) {
+                    if let banner = targetAppliedBanner {
+                        TargetAppliedBannerView(text: banner.text) {
+                            withAnimation(.snappy) { targetAppliedBanner = nil }
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.top, 6)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                }
                 .toolbar { toolbarContent }
                 .confirmationDialog(
                     "Finish workout?",
@@ -58,7 +69,7 @@ struct WorkoutSessionScreen: View {
                     Text("This will mark the session as abandoned (not completed).")
                 }
                 .task(id: session.id) {
-                    await applyGoalPrefillIfNeeded()
+                    await applyGoalPrefillIfNeeded(proxy: proxy)
                 }
             }
         }
@@ -145,7 +156,7 @@ struct WorkoutSessionScreen: View {
     }
 
     private var allSets: [WorkoutSetLog] {
-        sortedExercises.flatMap { $0.setLogs }.sorted { $0.order < $1.order }
+        sortedExercises.flatMap { sortedSets(for: $0) }
     }
 
     private func sortedSets(for ex: WorkoutSessionExercise) -> [WorkoutSetLog] {
@@ -447,15 +458,117 @@ struct WorkoutSessionScreen: View {
         guard let target = goalPrefill.consumeIfMatches(exerciseId: exId) else { return }
 
         guard let ex = session.exercises.first(where: { $0.exerciseId == exId }) else { return }
-        guard let set = ex.setLogs.first(where: { !$0.completed }) else { return }
+        guard let set = ex.setLogs
+            .sorted(by: { $0.order < $1.order })
+            .first(where: { !$0.completed }) else { return }
+
+        var changed = false
 
         // Only prefill if user hasn't already typed something
-        if let w = target.weight, (set.weight ?? 0) == 0 { set.weight = w }
-        if let r = target.reps, (set.reps ?? 0) == 0 { set.reps = r }
+        if let w = target.weight, (set.weight ?? 0) == 0 {
+            set.weight = w
+            changed = true
+        }
+        if let r = target.reps, (set.reps ?? 0) == 0 {
+            set.reps = r
+            changed = true
+        }
 
-        try? modelContext.save()
+        if changed { try? modelContext.save() }
+
+        // ✅ Banner feedback (always, so user knows what happened)
+        let msg = changed
+            ? bannerMessageApplied(target: target, setNumber: set.order + 1, unit: set.weightUnit.rawValue)
+            : "Target already filled — nothing changed."
+
+        showTargetAppliedBanner(msg)
+    }
+    
+    private struct TargetAppliedBanner: Identifiable, Equatable {
+        let id = UUID()
+        let text: String
     }
 
+    @MainActor
+    private func showTargetAppliedBanner(_ text: String) {
+        let banner = TargetAppliedBanner(text: text)
+        withAnimation(.snappy) { targetAppliedBanner = banner }
+
+        Task { [id = banner.id] in
+            try? await Task.sleep(nanoseconds: 2_200_000_000) // ~2.2s
+            await MainActor.run {
+                guard targetAppliedBanner?.id == id else { return }
+                withAnimation(.snappy) { targetAppliedBanner = nil }
+            }
+        }
+    }
+
+    private func bannerMessageApplied(target: GoalPrefillStore.Target, setNumber: Int, unit: String) -> String {
+        var parts: [String] = []
+        if let w = target.weight { parts.append("\(formatWeight(w)) \(unit)") }
+        if let r = target.reps { parts.append("\(r) reps") }
+
+        if parts.isEmpty {
+            return "Target applied to Set \(setNumber)."
+        } else {
+            return "Target applied to Set \(setNumber): " + parts.joined(separator: " • ")
+        }
+    }
+
+    private func formatWeight(_ w: Double) -> String {
+        if w.rounded() == w { return String(Int(w)) }
+        return String(format: "%.1f", w)
+    }
+
+    private struct TargetAppliedBannerView: View {
+        let text: String
+        let onDismiss: () -> Void
+
+        var body: some View {
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+
+                Text(text)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+
+                Spacer()
+
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(.secondary.opacity(0.15), lineWidth: 1)
+            )
+            .onTapGesture { onDismiss() }
+        }
+    }
+
+    @MainActor
+    private func fetchFirstIncompleteSetLog(sessionExerciseId: UUID) -> WorkoutSetLog? {
+        let sid: UUID? = sessionExerciseId
+
+        var fd = FetchDescriptor<WorkoutSetLog>(
+            predicate: #Predicate<WorkoutSetLog> { s in
+                s.completed == false &&
+                s.sessionExercise?.id == sid
+            },
+            sortBy: [SortDescriptor(\WorkoutSetLog.order, order: .forward)]
+        )
+        fd.fetchLimit = 1
+        return try? modelContext.fetch(fd).first
+    }
+    
     private func dismissKeyboard() {
     #if canImport(UIKit)
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
