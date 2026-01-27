@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ExercisePRSummaryView: View {
     let records: PersonalRecordsService.PersonalRecords
+    let nextTargetText: String?
+    let onTapNextTarget: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -27,11 +29,38 @@ struct ExercisePRSummaryView: View {
                     Spacer()
                 }
             }
+
+            if let nextTargetText, !nextTargetText.isEmpty {
+                if let onTapNextTarget {
+                    Button(action: onTapNextTarget) {
+                        nextTargetRow(text: nextTargetText)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    nextTargetRow(text: nextTargetText)
+                }
+            }
         }
         .padding(12)
         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
-
+    
+    private func nextTargetRow(text: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "target")
+                .foregroundStyle(.secondary)
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.top, 2)
+        .contentShape(Rectangle())
+    }
+    
     private func tile(title: String, value: String, subtitle: String?) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)

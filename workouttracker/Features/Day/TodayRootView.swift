@@ -19,6 +19,7 @@ struct TodayRootView: View {
         case log
         case progress
         case routines
+        case exercises
         case templates(applyDayKey: String) // keep Hashable stable
     }
 
@@ -78,6 +79,10 @@ struct TodayRootView: View {
                         Button { path.append(Route.progress) } label: {
                             Label("Progress", systemImage: "chart.bar")
                         }
+                        
+                        Button { path.append(Route.exercises) } label: {
+                            Label("Exercises", systemImage: "dumbbell")
+                        }
 
                         Divider()
 
@@ -106,14 +111,16 @@ struct TodayRootView: View {
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .log:
-                    WorkoutLogScreen()
+                    WorkoutLogScreen(initialSelectedDay: selectedDay)
 
                 case .progress:
                     WeekProgressScreen()
 
                 case .routines:
-                    // ✅ list screen (pushable), not the editor placeholder
                     RoutinesScreen()
+
+                case .exercises:
+                    ExerciseLibraryScreen()
 
                 case .templates(let applyDayKey):
                     let applyDay = Date(dayKey: applyDayKey) ?? selectedDay

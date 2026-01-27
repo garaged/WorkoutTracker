@@ -3,6 +3,7 @@ import SwiftData
 
 @main
 struct workouttrackerApp: App {
+    @State private var goalPrefill = GoalPrefillStore()
 
     var sharedModelContainer: ModelContainer = {
         let env = ProcessInfo.processInfo.environment
@@ -62,6 +63,7 @@ struct workouttrackerApp: App {
     var body: some Scene {
         WindowGroup {
             TodayRootView()
+                .environment(goalPrefill)
         }
         .modelContainer(sharedModelContainer)
     }
