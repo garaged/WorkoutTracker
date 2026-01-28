@@ -11,6 +11,12 @@ import UIKit
 struct WorkoutSetEditorRow: View {
     @Bindable var set: WorkoutSetLog
     
+    @AppStorage(UnitPreferences.Keys.weightUnitRaw)
+    private var preferredUnitRaw: String = WeightUnit.kg.rawValue
+
+    private var preferredUnit: WeightUnit {
+        WeightUnit(rawValue: preferredUnitRaw) ?? .kg
+    }
 
     let setNumber: Int
     let isReadOnly: Bool
@@ -48,19 +54,44 @@ struct WorkoutSetEditorRow: View {
             }
         )
     }
-
+    
     private var weightBinding: Binding<String> {
-        Binding<String>(
+        preferredWeightBinding(for: set)
+    }
+
+
+//    private var weightBinding: Binding<String> {
+//        Binding<String>(
+//            get: {
+//                guard let w = set.weight else { return "" }
+//                if w.rounded() == w { return String(Int(w)) }
+//                return String(w)
+//            },
+//            set: { newValue in
+//                let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+//                if trimmed.isEmpty { set.weight = nil; schedulePersist(); return }
+//                let normalized = trimmed.replacingOccurrences(of: ",", with: ".")
+//                set.weight = Double(normalized)
+//                schedulePersist()
+//            }
+//        )
+//    }
+    private func preferredWeightBinding(for set: WorkoutSetLog) -> Binding<String> {
+        Binding(
             get: {
-                guard let w = set.weight else { return "" }
-                if w.rounded() == w { return String(Int(w)) }
-                return String(w)
+                guard let w = set.weight(in: preferredUnit) else { return "" }
+                return w.rounded() == w ? String(Int(w)) : String(format: "%.1f", w)
             },
-            set: { newValue in
-                let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                if trimmed.isEmpty { set.weight = nil; schedulePersist(); return }
-                let normalized = trimmed.replacingOccurrences(of: ",", with: ".")
-                set.weight = Double(normalized)
+            set: { txt in
+                let t = txt.trimmingCharacters(in: .whitespacesAndNewlines)
+                if t.isEmpty {
+                    set.setWeight(nil, preferredUnit: preferredUnit)
+                    schedulePersist()
+                    return
+                }
+
+                let v = Double(t.replacingOccurrences(of: ",", with: ".")) ?? 0
+                set.setWeight(v == 0 ? nil : v, preferredUnit: preferredUnit)
                 schedulePersist()
             }
         )
@@ -69,7 +100,9 @@ struct WorkoutSetEditorRow: View {
     private var targetHint: String? {
         var parts: [String] = []
         if let tr = set.targetReps { parts.append("\(tr) reps") }
-        if let tw = set.targetWeight { parts.append("@ \(formatWeight(tw)) \(set.targetWeightUnit.rawValue)") }
+        if let tw = set.targetWeight(in: preferredUnit) {
+            parts.append("@ \(formatWeight(tw)) \(preferredUnit.label)")
+        }
         if let r = set.targetRPE { parts.append("RPE \(formatRPE(r))") }
         guard !parts.isEmpty else { return nil }
         return "Target: " + parts.joined(separator: " ")
@@ -114,7 +147,7 @@ struct WorkoutSetEditorRow: View {
                         minus: { bumpWeight(-weightStep) },
                         plus: { bumpWeight(+weightStep) },
                         trailing: AnyView(
-                            Text(set.weightUnit.rawValue)
+                            Text(preferredUnit.label)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         ),
@@ -175,6 +208,7 @@ struct WorkoutSetEditorRow: View {
             // Defer the completion check so SwiftUI/SwiftData have applied the mutation.
             DispatchQueue.main.async {
                 if !wasCompleted && set.completed {
+                    fireCompletionHaptic()
                     onCompleted?(set.targetRestSeconds)
                 }
             }
@@ -187,6 +221,7 @@ struct WorkoutSetEditorRow: View {
         onPersist?()
 
         if !wasCompleted && set.completed {
+            fireCompletionHaptic()
             onCompleted?(set.targetRestSeconds)
         }
     }
@@ -208,9 +243,9 @@ struct WorkoutSetEditorRow: View {
         if let onBumpWeight {
             onBumpWeight(delta)
         } else {
-            let cur = set.weight ?? 0
-            let next = max(0, cur + delta)
-            set.weight = next == 0 ? nil : next
+            let curPreferred = set.weight(in: preferredUnit) ?? 0
+            let nextPreferred = max(0, curPreferred + delta)
+            set.setWeight(nextPreferred == 0 ? nil : nextPreferred, preferredUnit: preferredUnit)
             onPersist?()
         }
     }
@@ -298,5 +333,13 @@ struct WorkoutSetEditorRow: View {
     private func formatRPE(_ r: Double) -> String {
         if r.rounded() == r { return String(Int(r)) }
         return String(r)
+    }
+    
+    private func fireCompletionHaptic() {
+    #if canImport(UIKit)
+        let g = UIImpactFeedbackGenerator(style: .light)
+        g.prepare()
+        g.impactOccurred()
+    #endif
     }
 }
