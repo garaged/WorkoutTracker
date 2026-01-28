@@ -33,7 +33,7 @@ struct WorkoutSessionsScreen: View {
     }
 }
 
-private struct ActionRow: View {
+struct ActionRow: View {
     let title: String
     let subtitle: String
     let systemImage: String

@@ -8,7 +8,7 @@ struct HomeTile: Identifiable {
     let subtitle: String
     let systemImage: String
     let tint: Color
-    let destination: AnyView
+    let destination: () -> AnyView
 }
 
 struct HomeScreen: View {
@@ -39,7 +39,7 @@ struct HomeScreen: View {
                         LazyVGrid(columns: columns, spacing: 14) {
                             ForEach(tiles) { tile in
                                 NavigationLink {
-                                    tile.destination
+                                    tile.destination()
                                 } label: {
                                     HomeTileCard(tile: tile)
                                 }
