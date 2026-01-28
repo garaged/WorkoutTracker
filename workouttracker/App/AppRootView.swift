@@ -12,7 +12,7 @@ struct AppRootView: View {
                 subtitle: "Plan and log your day",
                 systemImage: "calendar",
                 tint: .accentColor,
-                destination: AnyView(TodayRootView())
+                destination: { AnyView(DayTimelineEntryScreen()) }   // ✅ timeline/day view
             ),
 
             HomeTile(
@@ -20,7 +20,7 @@ struct AppRootView: View {
                 subtitle: "Start sessions and review history",
                 systemImage: "dumbbell.fill",
                 tint: .orange,
-                destination: AnyView(WorkoutSessionsScreen())
+                destination: { AnyView(WorkoutSessionsScreen()) }
             ),
 
             HomeTile(
@@ -28,7 +28,7 @@ struct AppRootView: View {
                 subtitle: "Build plans and reuse them",
                 systemImage: "list.bullet.rectangle.portrait",
                 tint: .purple,
-                destination: AnyView(RoutinesScreen())
+                destination: { AnyView(RoutinesScreen()) }
             ),
 
             HomeTile(
@@ -36,7 +36,7 @@ struct AppRootView: View {
                 subtitle: "Browse and edit your library",
                 systemImage: "square.grid.2x2.fill",
                 tint: .mint,
-                destination: AnyView(ExerciseLibraryScreen())
+                destination: { AnyView(ExerciseLibraryScreen()) }
             ),
 
             HomeTile(
@@ -44,7 +44,7 @@ struct AppRootView: View {
                 subtitle: "Streaks, volume, trends",
                 systemImage: "chart.line.uptrend.xyaxis",
                 tint: .blue,
-                destination: AnyView(ProgressScreen())
+                destination: { AnyView(ProgressScreen()) }
             ),
 
             HomeTile(
@@ -52,7 +52,7 @@ struct AppRootView: View {
                 subtitle: "Measurements and tracking",
                 systemImage: "scalemass.fill",
                 tint: .green,
-                destination: AnyView(MeasurementsScreen())
+                destination: { AnyView(MeasurementsScreen()) }
             ),
 
             HomeTile(
@@ -60,7 +60,7 @@ struct AppRootView: View {
                 subtitle: "Preferences and app info",
                 systemImage: "gearshape.fill",
                 tint: .gray,
-                destination: AnyView(SettingsScreen())
+                destination: { AnyView(SettingsScreen()) }
             )
         ]
     }
