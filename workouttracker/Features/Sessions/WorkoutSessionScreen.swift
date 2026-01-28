@@ -1,5 +1,7 @@
 import SwiftUI
 import SwiftData
+import Charts
+import UIKit
 
 @MainActor
 struct WorkoutSessionScreen: View {
@@ -22,11 +24,37 @@ struct WorkoutSessionScreen: View {
     
     @State private var coachPrompt: CoachPromptContext? = nil
     @State private var nextTargets: [UUID: PinnedTarget] = [:]
+    
+    @State private var prToast: PRToast? = nil
+    @State private var prBadgesBySetId: [UUID: [CoachSuggestionService.PRAchievement]] = [:]
+    @State private var confettiToken: UUID? = nil
+    @State private var celebratedPRSetIDs: Set<UUID> = []
+    
+    @State private var prDetails: PRDetailsContext? = nil
+    
+    private struct PRDetailsContext: Identifiable, Hashable {
+        // Use setId as identity so it behaves nicely
+        var id: UUID { setId }
+
+        let setId: UUID
+        let exerciseName: String
+        let setNumber: Int
+        let achievements: [CoachSuggestionService.PRAchievement]
+
+        let weight: Double?
+        let reps: Int?
+        let unit: String
+    }
+
+    private struct PRToast: Identifiable, Equatable {
+        let id = UUID()
+        let title: String
+        let subtitle: String
+    }
 
     private let coachService = CoachSuggestionService()
     private let prService = PersonalRecordsService()
 
-    
     private let continueNav = WorkoutContinueNavigator()
 
     private var isReadOnly: Bool { session.status != .inProgress }
@@ -79,10 +107,91 @@ struct WorkoutSessionScreen: View {
                     await applyGoalPrefillIfNeeded()
                     await reloadPinnedTargets()
                 }
+                .safeAreaInset(edge: .top) {
+                    if let prToast {
+                        PRToastView(
+                            title: prToast.title,
+                            subtitle: prToast.subtitle,
+                            onDismiss: { withAnimation(.snappy) { self.prToast = nil } }
+                        )
+                        .padding(.horizontal, 12)
+                        .padding(.top, 6)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                }
             }
+            if let token = confettiToken {
+                ConfettiBurstView(token: token)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+            }
+        }
+        .sheet(item: $prDetails) { ctx in
+            PRDetailsSheetView(ctx: ctx)
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("WorkoutSession.Screen")
+    }
+
+    private func sessionList(proxy: ScrollViewProxy) -> some View {
+        List {
+            headerSection
+            summarySectionIfReadOnly
+            exercisesSection(proxy: proxy)
+        }
+        .accessibilityIdentifier("WorkoutSession.Screen.List")
+        .navigationTitle(session.sourceRoutineNameSnapshot ?? "Workout")
+        .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .top) { topInset }
+        .safeAreaInset(edge: .bottom) { bottomInset(proxy: proxy) }
+        .toolbar { toolbarContent }
+        .confirmationDialog(
+            "Finish workout?",
+            isPresented: $showFinishConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Finish & Save", role: .destructive) { finish() }
+            Button("Keep Logging", role: .cancel) { }
+        } message: {
+            Text("This will mark the session as completed.")
+        }
+        .confirmationDialog(
+            "Abandon session?",
+            isPresented: $showAbandonConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Abandon", role: .destructive) { abandon() }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This will mark the session as abandoned (not completed).")
+        }
+        .task(id: session.id) {
+            await applyGoalPrefillIfNeeded()
+            await reloadPinnedTargets()
+        }
+    }
+
+    @ViewBuilder
+    private var topInset: some View {
+        VStack(spacing: 8) {
+            if let prToast {
+                PRToastView(
+                    title: prToast.title,
+                    subtitle: prToast.subtitle,
+                    onDismiss: { withAnimation(.snappy) { self.prToast = nil } }
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
+            if let banner = targetAppliedBanner {
+                TargetAppliedBannerView(text: banner.text) {
+                    withAnimation(.snappy) { targetAppliedBanner = nil }
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 6)
     }
 
     // MARK: Sections
@@ -207,7 +316,6 @@ struct WorkoutSessionScreen: View {
 
         scrollToSet(targetID, proxy: proxy)
     }
-
 
     private func handleSetCompleted(
         ex: WorkoutSessionExercise,
@@ -473,13 +581,24 @@ struct WorkoutSessionScreen: View {
                 markActive(exerciseID: ex.id, setID: set.id)
                 saveOrAssert("set edit")
             },
-
             onToggleComplete: {
                 markActive(exerciseID: ex.id, setID: set.id)
-                logging.toggleCompleted(set, context: modelContext)
-            },
 
-            // ✅ order matters: onCopySet BEFORE onAddSet
+                let wasCompleted = set.completed
+                logging.toggleCompleted(set, context: modelContext)
+
+                // If user un-completes, clear PR markers so re-completing can celebrate again.
+                if wasCompleted && !set.completed {
+                    prBadgesBySetId[set.id] = nil
+                    celebratedPRSetIDs.remove(set.id)
+                    return
+                }
+
+                // Only trigger celebration on the transition to completed.
+                if !wasCompleted && set.completed {
+                    Task { await celebratePRIfNeeded(ex: ex, set: set) }
+                }
+            },
             onCopySet: {
                 markActive(exerciseID: ex.id, setID: set.id)
                 if !isReadOnly, let newSet = logging.copySet(set, in: ex, context: modelContext) {
@@ -494,7 +613,6 @@ struct WorkoutSessionScreen: View {
                     scrollToSet(newSet.id, proxy: proxy)
                 }
             },
-
             onDeleteSet: {
                 markActive(exerciseID: ex.id, setID: set.id)
                 if !isReadOnly {
@@ -502,24 +620,43 @@ struct WorkoutSessionScreen: View {
                     if activeSetID == set.id { activeSetID = nil }
                 }
             },
-
             onBumpReps: { delta in
                 markActive(exerciseID: ex.id, setID: set.id)
-                if !isReadOnly {
-                    logging.bumpReps(set, delta: delta, context: modelContext)
-                }
+                if !isReadOnly { logging.bumpReps(set, delta: delta, context: modelContext) }
             },
-
             onBumpWeight: { delta in
                 markActive(exerciseID: ex.id, setID: set.id)
-                if !isReadOnly {
-                    logging.bumpWeight(set, delta: delta, context: modelContext)
-                }
+                if !isReadOnly { logging.bumpWeight(set, delta: delta, context: modelContext) }
             },
-
             weightStep: 2.5
         )
+        .overlay(alignment: .topTrailing) {
+            if let ach = prBadgesBySetId[set.id], !ach.isEmpty {
+                Button {
+                    prDetails = PRDetailsContext(
+                        setId: set.id,
+                        exerciseName: ex.exerciseNameSnapshot,
+                        setNumber: set.order + 1,
+                        achievements: ach,
+                        weight: set.weight,
+                        reps: set.reps,
+                        unit: set.weightUnit.rawValue
+                    )
+                } label: {
+                    Text("PR")
+                        .font(.caption2.weight(.bold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.thinMaterial, in: Capsule())
+                        .overlay(Capsule().stroke(.yellow.opacity(0.35), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 6)
+                .accessibilityLabel("Show PR details")
+            }
+        }
     }
+
     
     @MainActor
     private func applyGoalPrefillIfNeeded() async {
@@ -760,5 +897,156 @@ struct WorkoutSessionScreen: View {
 
         return nil
     }
+    
+    @MainActor
+    private func celebratePRIfNeeded(ex: WorkoutSessionExercise, set: WorkoutSetLog) async {
+        // Only celebrate completed sets with a timestamp
+        guard !celebratedPRSetIDs.contains(set.id) else { return }
+        guard set.completed, set.completedAt != nil else { return }
 
+        // Fetch *previous history* for this exercise (excluding this set)
+        let previous = fetchCompletedSetsForExercise(exerciseId: ex.exerciseId)
+            .filter { $0.id != set.id }
+
+        let prev = previous.map {
+            CoachSuggestionService.CompletedSet(
+                weight: $0.weight,
+                reps: $0.reps,
+                weightUnitRaw: $0.weightUnit.rawValue,
+                rpe: $0.rpe
+            )
+        }
+
+        let cur = CoachSuggestionService.CompletedSet(
+            weight: set.weight,
+            reps: set.reps,
+            weightUnitRaw: set.weightUnit.rawValue,
+            rpe: set.rpe
+        )
+
+        let achievements = coachService.prAchievements(completed: cur, previous: prev)
+        guard !achievements.isEmpty else { return }
+        celebratedPRSetIDs.insert(set.id)
+        Haptics.success()
+
+        // 1) Mark badge for this set row
+        prBadgesBySetId[set.id] = achievements
+
+        // 2) Toast message
+        let headline = "PR!"
+        let subtitle = achievements
+            .map { "\($0.kind.rawValue): \($0.valueText)" }
+            .joined(separator: " • ")
+
+        withAnimation(.snappy) {
+            prToast = PRToast(title: headline, subtitle: subtitle)
+            confettiToken = UUID()
+        }
+
+        // auto-dismiss toast + confetti
+        Task {
+            try? await Task.sleep(nanoseconds: 2_200_000_000)
+            await MainActor.run {
+                withAnimation(.snappy) {
+                    prToast = nil
+                    confettiToken = nil
+                }
+            }
+        }
+    }
+
+    private struct PRDetailsSheetView: View {
+        let ctx: PRDetailsContext
+        @Environment(\.dismiss) private var dismiss
+
+        var body: some View {
+            NavigationStack {
+                List {
+                    Section {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(ctx.exerciseName)
+                                .font(.headline)
+
+                            HStack(spacing: 10) {
+                                Text("Set \(ctx.setNumber)")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+
+                                Spacer()
+
+                                if let w = ctx.weight {
+                                    Text("\(formatWeight(w)) \(ctx.unit)")
+                                        .font(.subheadline.weight(.semibold))
+                                }
+                                if let r = ctx.reps {
+                                    Text("\(r) reps")
+                                        .font(.subheadline.weight(.semibold))
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+
+                    Section("Personal Records") {
+                        ForEach(Array(ctx.achievements.enumerated()), id: \.offset) { _, a in
+                            HStack(spacing: 10) {
+                                Image(systemName: "trophy.fill")
+                                    .foregroundStyle(.yellow)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(a.kind.rawValue)
+                                        .font(.subheadline.weight(.semibold))
+                                    Text(a.valueText)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+                            }
+                            .padding(.vertical, 2)
+                        }
+                    }
+                }
+                .navigationTitle("PR")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") { dismiss() }
+                    }
+                }
+            }
+        }
+
+        private func formatWeight(_ w: Double) -> String {
+            w.rounded() == w ? String(Int(w)) : String(format: "%.1f", w)
+        }
+    }
+
+    @MainActor
+    private func fetchCompletedSetsForExercise(exerciseId: UUID) -> [WorkoutSetLog] {
+        let exId: UUID? = exerciseId
+
+        do {
+            let fd = FetchDescriptor<WorkoutSetLog>(
+                predicate: #Predicate<WorkoutSetLog> { s in
+                    s.completed == true &&
+                    s.sessionExercise?.exerciseId == exId
+                },
+                sortBy: [SortDescriptor(\WorkoutSetLog.completedAt, order: .forward)]
+            )
+            return try modelContext.fetch(fd)
+        } catch {
+            return []
+        }
+    }
+    
+    private enum Haptics {
+        static func success() {
+    #if canImport(UIKit)
+            let g = UINotificationFeedbackGenerator()
+            g.prepare()
+            g.notificationOccurred(.success)
+    #endif
+        }
+    }
 }

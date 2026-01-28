@@ -1,13 +1,14 @@
 import SwiftUI
 import SwiftData
 
+// File: workouttracker/Features/Log/WorkoutLogScreen.swift
 struct WorkoutLogScreen: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
     private var sessions: [WorkoutSession]
 
     private let cal = Calendar.current
-    
+
     // ✅ new: initial day to open with
     let initialSelectedDay: Date
 
@@ -15,7 +16,10 @@ struct WorkoutLogScreen: View {
     @State private var month: Date
     @State private var selectedDay: Date
     @State private var presentedSession: WorkoutSession? = nil
-    
+
+    /// Centralized display unit preference
+    private var preferredUnit: WeightUnit { UnitPreferences.weightUnit }
+
     init(initialSelectedDay: Date = Date()) {
         self.initialSelectedDay = initialSelectedDay
 
@@ -37,7 +41,7 @@ struct WorkoutLogScreen: View {
             Divider()
 
             daySummaryHeader
-            
+
             historyLinkRow
 
             List {
@@ -64,7 +68,7 @@ struct WorkoutLogScreen: View {
         .padding(.horizontal, 12)
         .navigationTitle("Log")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {          // ✅ add
+        .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
                     WorkoutHistoryScreen(
@@ -187,7 +191,7 @@ struct WorkoutLogScreen: View {
 
             HStack(spacing: 14) {
                 StatChip(title: "Workouts", value: "\(completed)/\(total)")
-                StatChip(title: "Volume", value: formatVolume(volume))
+                StatChip(title: "Volume (\(preferredUnit.label))", value: formatVolume(volume))
                 StatChip(title: "Time", value: formatDuration(seconds))
             }
         }
@@ -214,7 +218,7 @@ struct WorkoutLogScreen: View {
         }
         .padding(.horizontal, 2)
     }
-    
+
     // MARK: - Derived data
 
     private var sessionsInVisibleMonth: [WorkoutSession] {
@@ -242,17 +246,19 @@ struct WorkoutLogScreen: View {
         let total = ss.count
         let completed = ss.filter { $0.status == .completed }.count
 
+        let pref = preferredUnit
+
         var volume: Double = 0
         var seconds: Int = 0
 
         for s in ss {
             seconds += s.elapsedSeconds(at: s.endedAt ?? Date())
 
-            // Only count completed sets into volume
+            // Only count completed sets into volume (in preferred unit)
             for ex in s.exercises {
                 for set in ex.setLogs where set.completed {
                     let reps = Double(set.reps ?? 0)
-                    let w = set.weight ?? 0
+                    let w = set.weight(in: pref) ?? 0
                     volume += reps * w
                 }
             }
@@ -361,7 +367,6 @@ private struct DayCell: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(isToday ? Color.accentColor.opacity(0.35) : Color.clear, lineWidth: 1)
-
         )
     }
 

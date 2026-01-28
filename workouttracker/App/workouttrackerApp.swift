@@ -62,8 +62,7 @@ struct workouttrackerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            TodayRootView()
-                .environment(goalPrefill)
+            AppRootView()
         }
         .modelContainer(sharedModelContainer)
     }

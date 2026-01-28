@@ -21,6 +21,7 @@ struct TodayRootView: View {
         case routines
         case exercises
         case templates(applyDayKey: String) // keep Hashable stable
+        case settings
     }
 
     @State private var path = NavigationPath()
@@ -95,6 +96,11 @@ struct TodayRootView: View {
                         Button { path.append(Route.templates(applyDayKey: selectedDay.dayKey())) } label: {
                             Label("Templates", systemImage: "wand.and.stars")
                         }
+                        Divider()
+
+                        Button { path.append(Route.settings) } label: {
+                            Label("Settings", systemImage: "gearshape")
+                        }
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
@@ -125,6 +131,10 @@ struct TodayRootView: View {
                 case .templates(let applyDayKey):
                     let applyDay = Date(dayKey: applyDayKey) ?? selectedDay
                     TemplatesScreen(applyDay: applyDay)
+                
+                case .settings:
+                    PreferencesScreen()
+
                 }
             }
             .navigationDestination(item: $presentedSession) { session in
