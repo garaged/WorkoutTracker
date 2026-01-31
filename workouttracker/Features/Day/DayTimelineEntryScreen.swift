@@ -1,3 +1,11 @@
+// File: workouttracker/Features/Day/DayTimelineEntryScreen.swift
+//
+// This is the "Calendar entry" wrapper pushed from Home.
+// It owns navigation to WorkoutSessionScreen (so Summary works when launched from Home)
+// and provides a compact, consistent header:
+// - Back chevron stays on the left (system)
+// - Day navigation (prev / go-to-today / next) stays on the right
+
 import SwiftUI
 
 struct DayTimelineEntryScreen: View {
@@ -6,6 +14,8 @@ struct DayTimelineEntryScreen: View {
     @State private var day: Date = Date()
     @State private var presentedSession: WorkoutSession? = nil
 
+    // Placeholders so the callbacks are satisfied.
+    // Later: wire to your real activity editor / creator flows.
     @State private var showingEditPlaceholder = false
     @State private var showingCreatePlaceholder = false
 
@@ -20,10 +30,35 @@ struct DayTimelineEntryScreen: View {
             onCreateAt: { _, _ in showingCreatePlaceholder = true },
             onCreateRange: { _, _, _ in showingCreatePlaceholder = true }
         )
+        // ✅ Critical: without this, `openSession(...)` sets the binding but nothing navigates.
+        .navigationDestination(item: $presentedSession) { s in
+            WorkoutSessionScreen(session: s)
+        }
         .navigationBarTitleDisplayMode(.inline)
         // ✅ Do NOT hide the system back button. Keeps the chevron consistent across the app.
-        .toolbar {
-            // ✅ Keep the title compact so trailing buttons don’t get dropped
+        .toolbar { headerToolbar }
+        .sheet(isPresented: $showingEditPlaceholder) {
+            PlaceholderSheet(
+                title: "Edit Activity",
+                message: "This entry screen is wired. Next, connect onEdit to your real activity editor."
+            )
+        }
+        .sheet(isPresented: $showingCreatePlaceholder) {
+            PlaceholderSheet(
+                title: "Create Activity",
+                message: "This entry screen is wired. Next, connect onCreateAt/onCreateRange to your real create flow."
+            )
+        }
+    }
+
+    // Matches your prior “Tue 27 Jan” style
+    private var dayTitle: String {
+        day.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
+    }
+
+    private var headerToolbar: some ToolbarContent {
+        Group {
+            // Compact title in the center so trailing buttons don’t get dropped
             ToolbarItem(placement: .principal) {
                 Text(dayTitle)
                     .font(.headline)
@@ -31,12 +66,12 @@ struct DayTimelineEntryScreen: View {
                     .minimumScaleFactor(0.85)
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        // Optional: tap the date to jump to today
+                        // Optional: tap the date to jump to today (keeps the "go to today" feature alive)
                         day = Date()
                     }
             }
 
-            // ✅ Put all day navigation on the right so it doesn’t visually clash with the back chevron
+            // Keep all day navigation on the right to avoid visually clashing with the back chevron.
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button { shiftDay(-1) } label: {
                     Image(systemName: "chevron.left.circle")
@@ -44,7 +79,7 @@ struct DayTimelineEntryScreen: View {
                 .accessibilityLabel("Previous day")
 
                 Button { day = Date() } label: {
-                    Image(systemName: isToday ? "calendar.circle" : "calendar.circle.fill")
+                    Image(systemName: "calendar")
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(isToday ? Color.secondary : Color.accentColor)
                 }
@@ -57,23 +92,6 @@ struct DayTimelineEntryScreen: View {
                 .accessibilityLabel("Next day")
             }
         }
-        .sheet(isPresented: $showingEditPlaceholder) {
-            PlaceholderSheet(
-                title: "Edit Activity",
-                message: "Wire onEdit to your real activity editor."
-            )
-        }
-        .sheet(isPresented: $showingCreatePlaceholder) {
-            PlaceholderSheet(
-                title: "Create Activity",
-                message: "Wire onCreateAt/onCreateRange to your create flow."
-            )
-        }
-    }
-
-    private var dayTitle: String {
-        // Matches your prior “Tue 27 Jan” style
-        day.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
     }
 
     private func shiftDay(_ delta: Int) {
@@ -82,23 +100,25 @@ struct DayTimelineEntryScreen: View {
 }
 
 private struct PlaceholderSheet: View {
-    @Environment(\.dismiss) private var dismiss
     let title: String
     let message: String
 
+    @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(message).foregroundStyle(.secondary)
-                Spacer()
+            VStack(spacing: 16) {
+                Text(message)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                Button("OK") { dismiss() }
+                    .buttonStyle(.borderedProminent)
             }
-            .padding(16)
+            .padding()
             .navigationTitle(title)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

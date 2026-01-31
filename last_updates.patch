@@ -1,0 +1,2972 @@
+diff --git a/workouttracker/App/AppRootView.swift b/workouttracker/App/AppRootView.swift
+index ba020ca..9105798 100644
+--- a/workouttracker/App/AppRootView.swift
++++ b/workouttracker/App/AppRootView.swift
+@@ -11,8 +11,8 @@ struct AppRootView: View {
+                 title: "Calendar",
+                 subtitle: "Plan and log your day",
+                 systemImage: "calendar",
+-                tint: .accentColor,
+-                destination: { AnyView(DayTimelineEntryScreen()) }   // ✅ timeline/day view
++                tint: Color.accentColor,
++                destination: { AnyView(DayTimelineEntryScreen()) }   // ✅ timeline/day entry
+             ),
+ 
+             HomeTile(
+diff --git a/workouttracker/App/workouttrackerApp.swift b/workouttracker/App/workouttrackerApp.swift
+index e583701..f87b60e 100644
+--- a/workouttracker/App/workouttrackerApp.swift
++++ b/workouttracker/App/workouttrackerApp.swift
+@@ -3,7 +3,7 @@ import SwiftData
+ 
+ @main
+ struct workouttrackerApp: App {
+-    @State private var goalPrefill = GoalPrefillStore()
++    @StateObject private var goalPrefill = GoalPrefillStore()   // ✅ keep one instance alive
+ 
+     var sharedModelContainer: ModelContainer = {
+         let env = ProcessInfo.processInfo.environment
+@@ -63,38 +63,32 @@ struct workouttrackerApp: App {
+     var body: some Scene {
+         WindowGroup {
+             AppRootView()
++                .environmentObject(goalPrefill)                 // ✅ inject once at the top
+         }
+         .modelContainer(sharedModelContainer)
+     }
+ }
+ 
+ // MARK: - UI Test seed
+-
+ @MainActor
+ private func seedForUITestsIfNeeded(context: ModelContext, calendar: Calendar = .current) throws {
+-    // If we already seeded during this launch, or the store already has content, skip.
+     let existingActivities = try context.fetch(FetchDescriptor<Activity>())
+     if !existingActivities.isEmpty { return }
+ 
+-    // 1) Seed a demo routine (and exercises) so workout paths are available.
+     _ = try RoutineSeeder.seedDemoDataIfEmpty(context: context)
+ 
+-    // 2) Add two activities for "today" in local calendar.
+     let todayStart = calendar.startOfDay(for: Date())
+ 
+-    // Timed activity at 09:00 for visibility.
+     let nineAM = calendar.date(byAdding: .hour, value: 9, to: todayStart) ?? todayStart
+     let tenAM = calendar.date(byAdding: .hour, value: 10, to: todayStart) ?? nineAM
+     let timed = Activity(title: "UITest — Timed", startAt: nineAM, endAt: tenAM, laneHint: 0, kind: .generic)
+     context.insert(timed)
+ 
+-    // All-day activity.
+     let allDayEnd = calendar.date(byAdding: .day, value: 1, to: todayStart)
+     let allDay = Activity(title: "UITest — All-day", startAt: todayStart, endAt: allDayEnd, laneHint: 0, kind: .generic)
+     allDay.isAllDay = true
+     context.insert(allDay)
+ 
+-    // 3) A template that matches daily so TemplatePreloader has something to work with.
+     let recurrence = RecurrenceRule(kind: .daily, startDate: todayStart, endDate: nil, interval: 1, weekdays: [])
+     let template = TemplateActivity(
+         title: "UITest — Template",
+diff --git a/workouttracker/Domain/Models/Workouts/EquipmentCatalog.swift b/workouttracker/Domain/Models/Workouts/EquipmentCatalog.swift
+index e69de29..ac26274 100644
+--- a/workouttracker/Domain/Models/Workouts/EquipmentCatalog.swift
++++ b/workouttracker/Domain/Models/Workouts/EquipmentCatalog.swift
+@@ -0,0 +1,51 @@
++import Foundation
++
++enum EquipmentCatalog {
++
++    struct Item: Hashable, Identifiable {
++        let id: String        // canonical tag, e.g. "dumbbell"
++        let label: String     // e.g. "Dumbbells"
++        let symbol: String    // SF Symbol
++    }
++
++    // Canonical items (the tags you store in Exercise.equipmentTagsRaw)
++    static let common: [Item] = [
++        .init(id: "dumbbell",        label: "Dumbbells",        symbol: "dumbbell.fill"),
++        .init(id: "barbell",         label: "Barbell",          symbol: "figure.strengthtraining.traditional"),
++        .init(id: "kettlebell",      label: "Kettlebell",       symbol: "figure.strengthtraining.traditional"),
++        .init(id: "plates",          label: "Weight Plates",    symbol: "circle.grid.3x3.fill"),
++
++        .init(id: "bench",           label: "Bench",            symbol: "bed.double.fill"),
++        .init(id: "pullupbar",       label: "Pull-up Bar",      symbol: "figure.pullup"),
++        .init(id: "bands",           label: "Resistance Bands", symbol: "circle.dashed"),
++
++        .init(id: "cable",           label: "Cable Machine",    symbol: "cable.connector"),
++        .init(id: "smith",           label: "Smith Machine",    symbol: "square.split.2x2"),
++        .init(id: "legpress",        label: "Leg Press",        symbol: "figure.strengthtraining.traditional"),
++
++        .init(id: "treadmill",       label: "Treadmill",        symbol: "figure.run"),
++        .init(id: "bike",            label: "Stationary Bike",  symbol: "bicycle"),
++        .init(id: "rower",           label: "Rowing Machine",   symbol: "figure.rower")
++    ]
++
++    static func label(for tag: String) -> String {
++        if let match = common.first(where: { $0.id == tag }) { return match.label }
++        return tag   // fallback for custom tags
++    }
++
++    static func symbol(for tag: String) -> String {
++        if let match = common.first(where: { $0.id == tag }) { return match.symbol }
++        return "wrench.and.screwdriver"
++    }
++
++    /// Convert free-form text into a canonical tag.
++    /// "Pull-up Bar" -> "pullupbar"
++    static func slugify(_ raw: String) -> String {
++        let lower = raw
++            .trimmingCharacters(in: .whitespacesAndNewlines)
++            .lowercased()
++
++        let allowed = lower.filter { $0.isLetter || $0.isNumber }
++        return allowed
++    }
++}
+diff --git a/workouttracker/Domain/Models/Workouts/Exercise.swift b/workouttracker/Domain/Models/Workouts/Exercise.swift
+index 528d429..cdbe117 100644
+--- a/workouttracker/Domain/Models/Workouts/Exercise.swift
++++ b/workouttracker/Domain/Models/Workouts/Exercise.swift
+@@ -77,5 +77,16 @@ final class Exercise {
+             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+             .filter { !$0.isEmpty }
+             .joined(separator: ",")
++
++        updatedAt = Date()
++    }
++    
++    var equipmentTagSet: Set<String> {
++        Set(equipmentTags)
++    }
++
++    func matchesEquipmentFilter(_ selectedTags: Set<String>) -> Bool {
++        guard !selectedTags.isEmpty else { return true }
++        return !equipmentTagSet.isDisjoint(with: selectedTags)
+     }
+ }
+diff --git a/workouttracker/Features/Day/DayTimelineEntryScreen.swift b/workouttracker/Features/Day/DayTimelineEntryScreen.swift
+index bee7570..e5531ff 100644
+--- a/workouttracker/Features/Day/DayTimelineEntryScreen.swift
++++ b/workouttracker/Features/Day/DayTimelineEntryScreen.swift
+@@ -1,3 +1,10 @@
++// File: workouttracker/Features/Day/DayTimelineEntryScreen.swift
++//
++// Purpose of this screen:
++// - Provide a simple "Calendar/Timeline entry" that can be pushed from Home
++// - Own the navigation to WorkoutSessionScreen (so Summary works when launched from Home)
++// - Provide the day stepping + "go to today" toolbar
++
+ import SwiftUI
+ 
+ struct DayTimelineEntryScreen: View {
+@@ -6,74 +13,75 @@ struct DayTimelineEntryScreen: View {
+     @State private var day: Date = Date()
+     @State private var presentedSession: WorkoutSession? = nil
+ 
++    // Placeholders so the callbacks are satisfied.
++    // Later: wire to your real activity editor / creator flows.
+     @State private var showingEditPlaceholder = false
+     @State private var showingCreatePlaceholder = false
+ 
+-    private var dayStart: Date { cal.startOfDay(for: day) }
+-    private var isToday: Bool { cal.isDateInToday(day) }
+-
+     var body: some View {
+         DayTimelineScreen(
+-            day: dayStart,
++            day: cal.startOfDay(for: day),
+             presentedSession: $presentedSession,
+-            onEdit: { _ in showingEditPlaceholder = true },
+-            onCreateAt: { _, _ in showingCreatePlaceholder = true },
+-            onCreateRange: { _, _, _ in showingCreatePlaceholder = true }
+-        )
+-        .navigationBarTitleDisplayMode(.inline)
+-        // ✅ Do NOT hide the system back button. Keeps the chevron consistent across the app.
+-        .toolbar {
+-            // ✅ Keep the title compact so trailing buttons don’t get dropped
+-            ToolbarItem(placement: .principal) {
+-                Text(dayTitle)
+-                    .font(.headline)
+-                    .lineLimit(1)
+-                    .minimumScaleFactor(0.85)
+-                    .contentShape(Rectangle())
+-                    .onTapGesture {
+-                        // Optional: tap the date to jump to today
+-                        day = Date()
+-                    }
+-            }
+-
+-            // ✅ Put all day navigation on the right so it doesn’t visually clash with the back chevron
+-            ToolbarItemGroup(placement: .topBarTrailing) {
+-                Button { shiftDay(-1) } label: {
+-                    Image(systemName: "chevron.left.circle")
+-                }
+-                .accessibilityLabel("Previous day")
+-
+-                Button { day = Date() } label: {
+-                    Image(systemName: isToday ? "calendar.circle" : "calendar.circle.fill")
+-                        .symbolRenderingMode(.hierarchical)
+-                        .foregroundStyle(isToday ? Color.secondary : Color.accentColor)
+-                }
+-                .disabled(isToday)
+-                .accessibilityLabel("Go to today")
+-
+-                Button { shiftDay(1) } label: {
+-                    Image(systemName: "chevron.right.circle")
+-                }
+-                .accessibilityLabel("Next day")
++            onEdit: { _ in
++                showingEditPlaceholder = true
++            },
++            onCreateAt: { _, _ in
++                showingCreatePlaceholder = true
++            },
++            onCreateRange: { _, _, _ in
++                showingCreatePlaceholder = true
+             }
++        )
++        // ✅ This is the missing piece: without this, `openSession(...)` sets the binding
++        // but nothing navigates, so the Summary button appears to do nothing.
++        .navigationDestination(item: $presentedSession) { s in
++            WorkoutSessionScreen(session: s)
+         }
++        .navigationTitle(dayTitle)
++        .toolbar { toolbar }
+         .sheet(isPresented: $showingEditPlaceholder) {
+             PlaceholderSheet(
+                 title: "Edit Activity",
+-                message: "Wire onEdit to your real activity editor."
++                message: "This entry screen is wired. Next, connect onEdit to your real activity editor."
+             )
+         }
+         .sheet(isPresented: $showingCreatePlaceholder) {
+             PlaceholderSheet(
+                 title: "Create Activity",
+-                message: "Wire onCreateAt/onCreateRange to your create flow."
++                message: "This entry screen is wired. Next, connect onCreateAt/onCreateRange to your real create flow."
+             )
+         }
+     }
+ 
+     private var dayTitle: String {
+-        // Matches your prior “Tue 27 Jan” style
+-        day.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
++        day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
++    }
++
++    private var toolbar: some ToolbarContent {
++        let isToday = cal.isDateInToday(day)
++
++        return Group {
++            ToolbarItem(placement: .topBarLeading) {
++                Button { shiftDay(-1) } label: { Image(systemName: "chevron.left") }
++                    .accessibilityLabel("Previous day")
++            }
++
++            ToolbarItem(placement: .topBarTrailing) {
++                Button { shiftDay(1) } label: { Image(systemName: "chevron.right") }
++                    .accessibilityLabel("Next day")
++            }
++
++            ToolbarItem(placement: .topBarTrailing) {
++                Button { day = Date() } label: {
++                    Image(systemName: "calendar")
++                        .symbolRenderingMode(.hierarchical)
++                }
++                // “active” when you are NOT on today
++                .tint(isToday ? .gray : .accentColor)
++                .disabled(isToday)
++                .accessibilityLabel("Go to today")
++            }
++        }
+     }
+ 
+     private func shiftDay(_ delta: Int) {
+@@ -82,23 +90,25 @@ struct DayTimelineEntryScreen: View {
+ }
+ 
+ private struct PlaceholderSheet: View {
+-    @Environment(\.dismiss) private var dismiss
+     let title: String
+     let message: String
+ 
++    @Environment(\.dismiss) private var dismiss
++
+     var body: some View {
+         NavigationStack {
+-            VStack(alignment: .leading, spacing: 12) {
+-                Text(message).foregroundStyle(.secondary)
+-                Spacer()
++            VStack(spacing: 16) {
++                Text(message)
++                    .foregroundStyle(.secondary)
++                    .multilineTextAlignment(.center)
++                    .padding(.horizontal)
++
++                Button("OK") { dismiss() }
++                    .buttonStyle(.borderedProminent)
+             }
+-            .padding(16)
++            .padding()
+             .navigationTitle(title)
+-            .toolbar {
+-                ToolbarItem(placement: .topBarTrailing) {
+-                    Button("Done") { dismiss() }
+-                }
+-            }
++            .navigationBarTitleDisplayMode(.inline)
+         }
+     }
+ }
+diff --git a/workouttracker/Features/Day/DayTimelineScreen.swift b/workouttracker/Features/Day/DayTimelineScreen.swift
+index a25817c..4090578 100644
+--- a/workouttracker/Features/Day/DayTimelineScreen.swift
++++ b/workouttracker/Features/Day/DayTimelineScreen.swift
+@@ -17,8 +17,8 @@ struct DayTimelineScreen: View {
+     @State private var latestSessionByActivityIdCache: [UUID: WorkoutSession] = [:]
+     @State private var suppressWorkoutTap = false
+     @State private var didSeedUITestData = false
+-
+-
++    @State private var activityActionActivity: Activity? = nil
++    @State private var showActivityDialog: Bool = false
+ 
+     private let day: Date
+     private let cal = Calendar.current
+@@ -229,7 +229,47 @@ struct DayTimelineScreen: View {
+                 Text("")
+             }
+         }
++        .confirmationDialog(
++            (activityActionActivity?.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
++                ? (activityActionActivity?.title ?? "Activity")
++                : "Activity",
++            isPresented: $showActivityDialog,
++            titleVisibility: .visible
++        ) {
++            if let a = activityActionActivity {
++                Button("Edit") { onEdit(a); closeActivityActionDialog() }
++
++                Button(a.isDone ? "Mark as not done" : "Mark as done") {
++                    toggleDone(a)
++                    closeActivityActionDialog()
++                }
++
++                if a.templateId != nil {
++                    Button("Skip today") {
++                        skipToday(a)
++                        closeActivityActionDialog()
++                    }
++                }
++
++                Divider()
++
++                Button("Delete", role: .destructive) {
++                    deleteActivity(a)
++                    closeActivityActionDialog()
++                }
++            }
+ 
++            Button("Cancel", role: .cancel) { closeActivityActionDialog() }
++        } message: {
++            if let a = activityActionActivity {
++                Text(a.templateId != nil
++                     ? "Actions for this activity (template instance)."
++                     : "Actions for this activity.")
++            } else {
++                Text("")
++            }
++        }
++        
+     }
+     
+     private func fetchLatestSession(for activity: Activity) -> WorkoutSession? {
+@@ -907,7 +947,9 @@ struct DayTimelineScreen: View {
+         lanesX0: CGFloat,
+         laneSpan: CGFloat
+     ) -> some View {
+-        ForEach(laidOut.items) { item in
++        let items: [TimelineLayout.Item] = laidOut.items
++        SwiftUI.ForEach(items.indices, id: \.self) { (idx: Int) in
++            let item: TimelineLayout.Item = items[idx]
+             let a = item.activity
+             let workout = isWorkout(a)
+ 
+@@ -936,6 +978,13 @@ struct DayTimelineScreen: View {
+                         onEdit(a)
+                     }
+                 },
++                onMoreActions: {
++                    if workout {
++                        showWorkoutActions(for: a)   // same actions as long-press
++                    } else {
++                        showActivityActions(for: a)
++                    }
++                },
+                 onCommitLaneChange: { oldLane, newLane in
+                     commitLaneChange(
+                         moved: a,
+@@ -1122,6 +1171,20 @@ struct DayTimelineScreen: View {
+         showWorkoutDialog = false
+         workoutActionActivity = nil
+     }
++    
++    private func showActivityActions(for activity: Activity) {
++        activityActionActivity = activity
++        showActivityDialog = true
++    }
++
++    private func closeActivityDialog() {
++        showActivityDialog = false
++        activityActionActivity = nil
++    }
++
++    private func closeActivityActionDialog() {
++        closeActivityDialog()
++    }
+ 
+     private func startWorkout(from activity: Activity) {
+         guard let routineId = activity.workoutRoutineId else {
+@@ -1722,4 +1785,4 @@ private enum TimelineLayout {
+ 
+ extension TimelineLayout.Item: Identifiable {
+     var id: UUID { activity.id }
+-}
++}
+\ No newline at end of file
+diff --git a/workouttracker/Features/Day/InteractiveActivityBlockView.swift b/workouttracker/Features/Day/InteractiveActivityBlockView.swift
+index 7bd04b9..1930fc2 100644
+--- a/workouttracker/Features/Day/InteractiveActivityBlockView.swift
++++ b/workouttracker/Features/Day/InteractiveActivityBlockView.swift
+@@ -1,6 +1,19 @@
+ import SwiftData
+ import SwiftUI
+ 
++// File: workouttracker/Features/Day/InteractiveActivityBlockView.swift
++//
++// What this view is responsible for:
++// - Rendering one timeline "block" for an Activity
++// - Allowing vertical drag to move time, horizontal drag to change lane
++// - Allowing drag on the bottom-right handle to resize ONLY (end time)
++// - Delegating action menus to the parent via `onMoreActions`
++//
++// IMPORTANT DESIGN CHOICE:
++// We intentionally attach the move-drag gesture only to the main content layer,
++// and keep the resize handle as a separate sibling overlay.
++// This prevents the resize drag from also triggering the move drag (your current bug).
++
+ struct InteractiveActivityBlockView: View {
+     let activity: Activity
+     let dayStart: Date
+@@ -11,7 +24,7 @@ struct InteractiveActivityBlockView: View {
+     let hourHeight: CGFloat
+     let defaultDurationMinutes: Int
+ 
+-    // ✅ new: lane dragging inputs
++    // Lane dragging inputs
+     let currentLane: Int
+     let laneCount: Int
+     let laneWidth: CGFloat
+@@ -21,6 +34,7 @@ struct InteractiveActivityBlockView: View {
+     let viewportHeight: CGFloat
+ 
+     let onEdit: () -> Void
++    let onMoreActions: () -> Void
+     let onCommitLaneChange: (Int, Int) -> Void
+     let onCommitTimeChange: () -> Void
+ 
+@@ -38,15 +52,19 @@ struct InteractiveActivityBlockView: View {
+     @State private var isResizing = false
+     @State private var resizeDeltaMinutes: Int = 0
+ 
+-    // ✅ snap/haptics polish
+-    let snapMinutes: Int = 5
++    // Snap/haptics polish
++    private let snapMinutes: Int = 5
+     @State private var lastMoveSnappedDelta: Int? = nil
+     @State private var lastResizeSnappedDelta: Int? = nil
+ 
++    // Prevent the main tap from firing after tapping the handle.
++    @State private var ignoreNextEditTap = false
++
+     private let minDurationMinutes: Int = 15
+     private let maxSpanDays: Int = 7
+ 
+     var body: some View {
++        // Base times
+         let baseStart = rawStartMinute()
+         let baseEnd = rawEndMinute()
+ 
+@@ -65,9 +83,10 @@ struct InteractiveActivityBlockView: View {
+         let previewClippedStart = previewStart < 0
+         let previewClippedEnd = previewEnd > 24 * 60
+ 
+-        let timeLabel =
+-            "\(formatTime(previewStart)) – \(formatTime(previewEnd))"
++        let timeLabel = "\(formatTime(previewStart)) – \(formatTime(previewEnd))"
+ 
++        // Main visual content (this is what gets the MOVE gesture)
++        let content =
+         VStack(alignment: .leading, spacing: 6) {
+             Text(activity.title.isEmpty ? "Untitled" : activity.title)
+                 .font(.headline)
+@@ -80,19 +99,11 @@ struct InteractiveActivityBlockView: View {
+             Spacer(minLength: 0)
+         }
+         .padding(10)
+-        .frame(
+-            maxWidth: .infinity,
+-            maxHeight: .infinity,
+-            alignment: .topLeading
+-        )
+-        .background(
+-            RoundedRectangle(cornerRadius: 14).fill(.tint.opacity(0.18))
+-        )
++        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
++        .background(RoundedRectangle(cornerRadius: 14).fill(.tint.opacity(0.18)))
+         .overlay(
+-            RoundedRectangle(cornerRadius: 14).stroke(
+-                .tint.opacity(0.35),
+-                lineWidth: 1
+-            )
++            RoundedRectangle(cornerRadius: 14)
++                .stroke(.tint.opacity(0.35), lineWidth: 1)
+         )
+         .overlay(alignment: .topTrailing) {
+             if isDragging || isResizing {
+@@ -101,179 +112,198 @@ struct InteractiveActivityBlockView: View {
+                     .padding(.horizontal, 8)
+                     .padding(.vertical, 4)
+                     .background(.thinMaterial, in: Capsule())
++                    .allowsHitTesting(false)
+                     .padding(8)
+             }
+         }
+         .overlay(alignment: .topLeading) {
+             if clippedStart || previewClippedStart {
+                 ClipMarker(systemName: "chevron.up")
++                    .allowsHitTesting(false)
+             }
+         }
+         .overlay(alignment: .bottomLeading) {
+             if clippedEnd || previewClippedEnd {
+                 ClipMarker(systemName: "chevron.down")
++                    .allowsHitTesting(false)
+             }
+         }
+         .overlay(alignment: .topTrailing) {
+             if activity.templateId != nil {
+                 TemplateBadgeView()
+                     .padding(6)
++                    .allowsHitTesting(false)
+             }
+         }
+-        // ✅ Move the view visually while lane-dragging
++        // Move the view visually while lane-dragging
+         .offset(x: CGFloat(previewLane - currentLane) * laneSpan)
+-        // Resize handle
+-        .overlay(alignment: .bottomTrailing) {
+-            resizeHandle
+-                .padding(8)
+-                .highPriorityGesture(resizeGesture)
+-        }
+         .contentShape(RoundedRectangle(cornerRadius: 14))
+-        .gesture(moveGesture)
++        // ✅ IMPORTANT: Move gesture is applied ONLY to the content layer
++        .gesture(moveGesture, including: .gesture)
+         .onTapGesture {
++            if ignoreNextEditTap {
++                ignoreNextEditTap = false
++                return
++            }
+             if !isDragging && !isResizing { onEdit() }
+         }
++
++        // Compose: content + handle sibling
++        return ZStack(alignment: .bottomTrailing) {
++            content
++
++            // Bottom-right handle:
++            // - Drag: resize only
++            // - Tap: open parent action menu (workout menu OR activity menu)
++            moreHandle
++                .padding(8)
++                .contentShape(Rectangle())
++                .highPriorityGesture(resizeGesture) // drag = resize
++                .simultaneousGesture(
++                    TapGesture().onEnded {
++                        ignoreNextEditTap = true
++                        onMoreActions()
++                    }
++                )
++        }
++    }
++
++    private var moreHandle: some View {
++        Image(systemName: "line.3.horizontal")
++            .font(.caption)
++            .foregroundStyle(.secondary)
++            .padding(6)
++            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
++            .accessibilityLabel("Activity actions (drag to resize)")
+     }
+ 
+     // MARK: - Gestures
+ 
+     private var moveGesture: some Gesture {
+-        DragGesture(
+-            minimumDistance: 6,
+-            coordinateSpace: .named("timelineViewport")
+-        )
+-        .onChanged { value in
+-            isDragging = true
++        DragGesture(minimumDistance: 6, coordinateSpace: .named("timelineViewport"))
++            .onChanged { value in
++                // If resize is active, do nothing.
++                // (This is a secondary guard; the main prevention is the handle being a sibling.)
++                if isResizing { return }
+ 
+-            // auto-scroll based on viewport position
+-            autoScroll.updateDrag(
+-                yInViewport: value.location.y,
+-                viewportHeight: viewportHeight
+-            )
++                isDragging = true
+ 
+-            // content Y = scroll offset + finger Y in viewport
+-            let contentY = autoScroll.offsetY + value.location.y
+-            if dragStartContentY == nil { dragStartContentY = contentY }
+-
+-            let dy = contentY - (dragStartContentY ?? contentY)
+-
+-            if canMoveInThisDay() {
+-                let snapped = snap(minutesFromTranslation(dy))
++                autoScroll.updateDrag(
++                    yInViewport: value.location.y,
++                    viewportHeight: viewportHeight
++                )
+ 
+-                // ✅ haptic only when crossing a snap boundary
+-                if let last = lastMoveSnappedDelta, last != snapped {
+-                    Haptics.tickLight()
++                let contentY = autoScroll.offsetY + value.location.y
++                if dragStartContentY == nil { dragStartContentY = contentY }
++
++                let dy = contentY - (dragStartContentY ?? contentY)
++
++                if canMoveInThisDay() {
++                    let snapped = snap(minutesFromTranslation(dy))
++                    if let last = lastMoveSnappedDelta, last != snapped {
++                        Haptics.tickLight()
++                    }
++                    lastMoveSnappedDelta = snapped
++                    dragDeltaMinutes = snapped
++                } else {
++                    dragDeltaMinutes = 0
++                    lastMoveSnappedDelta = nil
+                 }
+-                lastMoveSnappedDelta = snapped
+-
+-                dragDeltaMinutes = snapped
+-            } else {
+-                dragDeltaMinutes = 0
+-                lastMoveSnappedDelta = nil
+-            }
+-
+-            let laneSpan = laneWidth + laneGap
+-            if laneSpan > 0 {
+-                dragDeltaLane = Int(
+-                    (value.translation.width / laneSpan).rounded()
+-                )
+-            } else {
+-                dragDeltaLane = 0
+-            }
+ 
+-            let previewLane = clamp(
+-                currentLane + dragDeltaLane,
+-                0,
+-                max(0, laneCount - 1)
+-            )
+-            onHoverLane(previewLane)
+-        }
+-        .onEnded { value in
+-            // final content delta
+-            let endContentY = autoScroll.offsetY + value.location.y
+-            let startContentY = dragStartContentY ?? endContentY
+-            let dy = endContentY - startContentY
+-
+-            let finalMinutes =
+-                canMoveInThisDay()
+-                ? snap(minutesFromTranslation(dy))
+-                : 0
+-
+-            let laneSpan = laneWidth + laneGap
+-            let finalLaneDelta =
+-                (laneSpan > 0)
+-                ? Int((value.translation.width / laneSpan).rounded())
+-                : 0
+-
+-            if finalMinutes != 0 {
+-                commitMove(deltaMinutes: finalMinutes)
+-            }
++                let laneSpan = laneWidth + laneGap
++                if laneSpan > 0 {
++                    dragDeltaLane = Int((value.translation.width / laneSpan).rounded())
++                } else {
++                    dragDeltaLane = 0
++                }
+ 
+-            if finalLaneDelta != 0 {
+-                let newLane = clamp(
+-                    currentLane + finalLaneDelta,
++                let previewLane = clamp(
++                    currentLane + dragDeltaLane,
+                     0,
+                     max(0, laneCount - 1)
+                 )
+-                onCommitLaneChange(currentLane, newLane)
+-            } else if finalMinutes != 0 {
+-                onCommitTimeChange()
++                onHoverLane(previewLane)
+             }
++            .onEnded { value in
++                let endContentY = autoScroll.offsetY + value.location.y
++                let startContentY = dragStartContentY ?? endContentY
++                let dy = endContentY - startContentY
++
++                let finalMinutes = canMoveInThisDay()
++                    ? snap(minutesFromTranslation(dy))
++                    : 0
++
++                let laneSpan = laneWidth + laneGap
++                let finalLaneDelta = (laneSpan > 0)
++                    ? Int((value.translation.width / laneSpan).rounded())
++                    : 0
++
++                if finalMinutes != 0 {
++                    commitMove(deltaMinutes: finalMinutes)
++                }
++
++                if finalLaneDelta != 0 {
++                    let newLane = clamp(
++                        currentLane + finalLaneDelta,
++                        0,
++                        max(0, laneCount - 1)
++                    )
++                    onCommitLaneChange(currentLane, newLane)
++                } else if finalMinutes != 0 {
++                    onCommitTimeChange()
++                }
+ 
+-            onEndHoverLane()
+-            autoScroll.stop()
++                onEndHoverLane()
++                autoScroll.stop()
+ 
+-            isDragging = false
+-            dragDeltaMinutes = 0
+-            dragDeltaLane = 0
+-            dragStartContentY = nil
+-            lastMoveSnappedDelta = nil // ✅ reset so next drag doesn't “inherit” state
+-        }
++                isDragging = false
++                dragDeltaMinutes = 0
++                dragDeltaLane = 0
++                dragStartContentY = nil
++                lastMoveSnappedDelta = nil
++            }
+     }
+ 
+     private var resizeGesture: some Gesture {
+-        DragGesture(
+-            minimumDistance: 4,
+-            coordinateSpace: .named("timelineViewport")
+-        )
+-        .onChanged { value in
+-            isResizing = true
++        DragGesture(minimumDistance: 4, coordinateSpace: .named("timelineViewport"))
++            .onChanged { value in
++                // When resizing starts, we mark isResizing so the move gesture ignores updates.
++                isResizing = true
++
++                autoScroll.updateDrag(
++                    yInViewport: value.location.y,
++                    viewportHeight: viewportHeight
++                )
+ 
+-            autoScroll.updateDrag(
+-                yInViewport: value.location.y,
+-                viewportHeight: viewportHeight
+-            )
++                let contentY = autoScroll.offsetY + value.location.y
++                if resizeStartContentY == nil { resizeStartContentY = contentY }
+ 
+-            let contentY = autoScroll.offsetY + value.location.y
+-            if resizeStartContentY == nil { resizeStartContentY = contentY }
++                let dy = contentY - (resizeStartContentY ?? contentY)
++                let snapped = snap(minutesFromTranslation(dy))
+ 
+-            let dy = contentY - (resizeStartContentY ?? contentY)
+-            let snapped = snap(minutesFromTranslation(dy))
++                if let last = lastResizeSnappedDelta, last != snapped {
++                    Haptics.tickLight()
++                }
++                lastResizeSnappedDelta = snapped
+ 
+-            // ✅ haptic only when crossing a snap boundary
+-            if let last = lastResizeSnappedDelta, last != snapped {
+-                Haptics.tickLight()
++                resizeDeltaMinutes = snapped
+             }
+-            lastResizeSnappedDelta = snapped
+-
+-            resizeDeltaMinutes = snapped
+-        }
+-        .onEnded { value in
+-            let endContentY = autoScroll.offsetY + value.location.y
+-            let startContentY = resizeStartContentY ?? endContentY
+-            let dy = endContentY - startContentY
++            .onEnded { value in
++                let endContentY = autoScroll.offsetY + value.location.y
++                let startContentY = resizeStartContentY ?? endContentY
++                let dy = endContentY - startContentY
+ 
+-            let delta = snap(minutesFromTranslation(dy))
+-            commitResize(deltaMinutes: delta)
+-            onCommitTimeChange()
++                let delta = snap(minutesFromTranslation(dy))
++                commitResize(deltaMinutes: delta)
++                onCommitTimeChange()
+ 
+-            autoScroll.stop()
++                autoScroll.stop()
+ 
+-            isResizing = false
+-            resizeDeltaMinutes = 0
+-            resizeStartContentY = nil
+-            lastResizeSnappedDelta = nil // ✅ reset
+-        }
++                isResizing = false
++                resizeDeltaMinutes = 0
++                resizeStartContentY = nil
++                lastResizeSnappedDelta = nil
++            }
+     }
+ 
+     // MARK: - Commits
+@@ -328,15 +358,6 @@ struct InteractiveActivityBlockView: View {
+         max(minDurationMinutes, rawEndMinute() - rawStartMinute())
+     }
+ 
+-    private var resizeHandle: some View {
+-        Image(systemName: "line.3.horizontal")
+-            .font(.caption)
+-            .foregroundStyle(.secondary)
+-            .padding(6)
+-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+-            .accessibilityLabel("Resize")
+-    }
+-
+     private func minutesFromTranslation(_ dy: CGFloat) -> Int {
+         Int((dy / hourHeight) * 60.0)
+     }
+@@ -350,8 +371,7 @@ struct InteractiveActivityBlockView: View {
+     }
+ 
+     private func dateFromMinutes(_ minutes: Int) -> Date {
+-        Calendar.current.date(byAdding: .minute, value: minutes, to: dayStart)
+-            ?? dayStart
++        Calendar.current.date(byAdding: .minute, value: minutes, to: dayStart) ?? dayStart
+     }
+ 
+     private func formatTime(_ minutes: Int) -> String {
+diff --git a/workouttracker/Features/Day/TodayRootView.swift b/workouttracker/Features/Day/TodayRootView.swift
+index 9119a69..17d2910 100644
+--- a/workouttracker/Features/Day/TodayRootView.swift
++++ b/workouttracker/Features/Day/TodayRootView.swift
+@@ -103,7 +103,11 @@ struct TodayRootView: View {
+                         }
+                     } label: {
+                         Image(systemName: "ellipsis.circle")
++                            .symbolRenderingMode(.hierarchical)
++                            .imageScale(.large)
++                            .contentShape(Rectangle())
+                     }
++                    .accessibilityLabel("More")
+                     .accessibilityIdentifier("nav.moreMenu")
+ 
+                     Button {
+diff --git a/workouttracker/Features/Exercises/ExerciseDetailScreen.swift b/workouttracker/Features/Exercises/ExerciseDetailScreen.swift
+index 1054a03..ed8d10c 100644
+--- a/workouttracker/Features/Exercises/ExerciseDetailScreen.swift
++++ b/workouttracker/Features/Exercises/ExerciseDetailScreen.swift
+@@ -4,8 +4,9 @@ import Charts
+ 
+ struct ExerciseDetailScreen: View {
+     @Environment(\.modelContext) private var modelContext
+-    @Environment(GoalPrefillStore.self) private var goalPrefill
+-
++    @EnvironmentObject private var goalPrefill: GoalPrefillStore
++    @AppStorage("profile.equipment.custom.v1") private var customEquipmentJSON: String = "[]"
++    
+     let exercise: Exercise
+ 
+     /// Shortcut hook. Default keeps existing call sites unchanged.
+@@ -17,7 +18,7 @@ struct ExerciseDetailScreen: View {
+     @State private var loadError: String?
+     @State private var nextTarget: PersonalRecordsService.NextTarget? = nil
+     @State private var showNextTargetActions: Bool = false
+-
++    @State private var showEquipmentEditor: Bool = false
+ 
+     private let prService = PersonalRecordsService()
+ 
+@@ -25,11 +26,24 @@ struct ExerciseDetailScreen: View {
+         self.exercise = exercise
+         self.startWorkoutAction = startWorkoutAction
+     }
+-
++    
++    private var customEquipmentLabels: [String] {
++        decode(customEquipmentJSON)
++    }
++    
++    private func decode<T: Decodable>(_ s: String) -> T {
++        guard let data = s.data(using: .utf8) else {
++            return (try! JSONDecoder().decode(T.self, from: Data("[]".utf8)))
++        }
++        do { return try JSONDecoder().decode(T.self, from: data) }
++        catch { return (try! JSONDecoder().decode(T.self, from: Data("[]".utf8))) }
++    }
++    
+     var body: some View {
+         ScrollView {
+             VStack(alignment: .leading, spacing: 16) {
+                 header
++                equipmentSection
+ 
+                 if let instructions = exercise.instructions,
+                    !instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+@@ -336,4 +350,323 @@ struct ExerciseDetailScreen: View {
+             reps: t.targetReps
+         ))
+     }
++    private var equipmentSection: some View {
++        VStack(alignment: .leading, spacing: 10) {
++            HStack {
++                Text("Equipment")
++                    .font(.headline)
++                Spacer()
++                Button {
++                    showEquipmentEditor = true
++                } label: {
++                    Label("Edit", systemImage: "tag")
++                }
++                .buttonStyle(.bordered)
++            }
++
++            if exercise.equipmentTags.isEmpty {
++                Text("No equipment tags yet.")
++                    .foregroundStyle(.secondary)
++            } else {
++                ScrollView(.horizontal, showsIndicators: false) {
++                    HStack(spacing: 8) {
++                        ForEach(exercise.equipmentTags, id: \.self) { tag in
++                            TagChip(
++                                label: EquipmentCatalog.label(for: tag),
++                                systemImage: EquipmentCatalog.symbol(for: tag)
++                            )
++                        }
++                    }
++                    .padding(.vertical, 2)
++                }
++            }
++        }
++        .sheet(isPresented: $showEquipmentEditor) {
++            EquipmentTagsEditorSheet(
++                title: exercise.name,
++                initialTags: Set(exercise.equipmentTags),
++                customLabels: customEquipmentLabels,
++                onSave: { tags in
++                    // Store canonical tags on the exercise
++                    exercise.setEquipmentTags(Array(tags).sorted())
++                    // SwiftData will persist changes automatically; no explicit save required here.
++                }
++            )
++        }
++    }
++
++    private struct TagChip: View {
++        let label: String
++        let systemImage: String
++
++        var body: some View {
++            HStack(spacing: 6) {
++                Image(systemName: systemImage)
++                    .font(.caption.weight(.semibold))
++                    .symbolRenderingMode(.hierarchical)
++                Text(label)
++                    .font(.caption)
++            }
++            .padding(.horizontal, 10)
++            .padding(.vertical, 6)
++            .background(.thinMaterial, in: Capsule())
++        }
++    }
++}
++
++private struct EquipmentTagsEditorSheet: View {
++    @Environment(\.dismiss) private var dismiss
++
++    let title: String
++    let initialTags: Set<String>
++    let customLabels: [String]
++    let onSave: (Set<String>) -> Void
++
++    @State private var selected: Set<String>
++    @State private var newTagLabel: String = ""
++
++    init(
++        title: String,
++        initialTags: Set<String>,
++        customLabels: [String],
++        onSave: @escaping (Set<String>) -> Void
++    ) {
++        self.title = title
++        self.initialTags = initialTags
++        self.customLabels = customLabels
++        self.onSave = onSave
++        _selected = State(initialValue: initialTags)
++    }
++
++    var body: some View {
++        NavigationStack {
++            List {
++                Section {
++                    Text("\(selected.count) selected")
++                        .foregroundStyle(.secondary)
++                }
++
++                Section("Common") {
++                    ForEach(EquipmentCatalog.common) { item in
++                        row(tag: item.id, label: item.label, symbol: item.symbol)
++                    }
++                }
++
++                if !customLabels.isEmpty {
++                    Section("Custom") {
++                        ForEach(customLabels.sorted(), id: \.self) { label in
++                            let tag = EquipmentCatalog.slugify(label)
++                            row(tag: tag, label: label, symbol: EquipmentCatalog.symbol(for: tag))
++                        }
++                    }
++                }
++
++                Section("Add tag") {
++                    HStack {
++                        TextField("e.g. Dip Station", text: $newTagLabel)
++                        Button("Add") {
++                            let tag = EquipmentCatalog.slugify(newTagLabel)
++                            guard !tag.isEmpty else { return }
++                            selected.insert(tag)
++                            newTagLabel = ""
++                        }
++                        .disabled(EquipmentCatalog.slugify(newTagLabel).isEmpty)
++                    }
++                    Text("Tags are stored as canonical keys (letters/numbers only).")
++                        .font(.caption)
++                        .foregroundStyle(.secondary)
++                }
++            }
++            .navigationTitle(title)
++            .navigationBarTitleDisplayMode(.inline)
++            .toolbar {
++                ToolbarItem(placement: .topBarLeading) {
++                    Button("Cancel") { dismiss() }
++                }
++
++                ToolbarItem(placement: .topBarTrailing) {
++                    Button("Save") {
++                        onSave(selected)
++                        dismiss()
++                    }
++                    .fontWeight(.semibold)
++                }
++            }
++        }
++    }
++
++    private func row(tag: String, label: String, symbol: String) -> some View {
++        let isOn = selected.contains(tag)
++
++        return Button {
++            if isOn { selected.remove(tag) } else { selected.insert(tag) }
++        } label: {
++            HStack(spacing: 12) {
++                Image(systemName: symbol)
++                    .symbolRenderingMode(.hierarchical)
++                    .foregroundStyle(.tint)
++                    .frame(width: 22)
++
++                Text(label)
++
++                Spacer()
++
++                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
++                    .symbolRenderingMode(.hierarchical)
++                    .foregroundStyle(isOn ? Color.accentColor : Color.secondary)
++            }
++            .padding(.vertical, 6)
++        }
++        .buttonStyle(.plain)
++    }
++    
++    private enum EquipmentTagCatalog {
++        struct Item: Identifiable, Hashable {
++            let id: String      // canonical tag (slug): "dumbbell"
++            let label: String   // display: "Dumbbells"
++            let symbol: String  // SF Symbol
++        }
++
++        static let common: [Item] = [
++            .init(id: "dumbbell",   label: "Dumbbells",        symbol: "dumbbell.fill"),
++            .init(id: "barbell",    label: "Barbell",          symbol: "figure.strengthtraining.traditional"),
++            .init(id: "kettlebell", label: "Kettlebell",       symbol: "figure.strengthtraining.traditional"),
++            .init(id: "plates",     label: "Weight Plates",    symbol: "circle.grid.3x3.fill"),
++
++            .init(id: "bench",      label: "Bench",            symbol: "bed.double.fill"),
++            .init(id: "pullupbar",  label: "Pull-up Bar",      symbol: "figure.pullup"),
++            .init(id: "bands",      label: "Resistance Bands", symbol: "circle.dashed"),
++
++            .init(id: "cable",      label: "Cable Machine",    symbol: "cable.connector"),
++            .init(id: "smith",      label: "Smith Machine",    symbol: "square.split.2x2"),
++            .init(id: "legpress",   label: "Leg Press",        symbol: "figure.strengthtraining.traditional"),
++
++            .init(id: "treadmill",  label: "Treadmill",        symbol: "figure.run"),
++            .init(id: "bike",       label: "Stationary Bike",  symbol: "bicycle"),
++            .init(id: "rower",      label: "Rowing Machine",   symbol: "figure.rower")
++        ]
++
++        static func label(for tag: String) -> String {
++            common.first(where: { $0.id == tag })?.label ?? tag
++        }
++
++        static func symbol(for tag: String) -> String {
++            common.first(where: { $0.id == tag })?.symbol ?? "wrench.and.screwdriver"
++        }
++
++        /// "Pull-up Bar" -> "pullupbar"
++        static func slugify(_ raw: String) -> String {
++            let lower = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
++            return String(lower.filter { $0.isLetter || $0.isNumber })
++        }
++    }
++
++    private struct EquipmentTagsEditorSheet: View {
++        @Environment(\.dismiss) private var dismiss
++
++        let title: String
++        let initialTags: Set<String>
++        let customLabels: [String]
++        let onSave: (Set<String>) -> Void
++
++        @State private var selected: Set<String>
++        @State private var newTagLabel: String = ""
++
++        init(
++            title: String,
++            initialTags: Set<String>,
++            customLabels: [String],
++            onSave: @escaping (Set<String>) -> Void
++        ) {
++            self.title = title
++            self.initialTags = initialTags
++            self.customLabels = customLabels
++            self.onSave = onSave
++            _selected = State(initialValue: initialTags)
++        }
++
++        var body: some View {
++            NavigationStack {
++                List {
++                    Section {
++                        Text("\(selected.count) selected")
++                            .foregroundStyle(.secondary)
++                    }
++
++                    Section("Common") {
++                        ForEach(EquipmentTagCatalog.common) { item in
++                            row(tag: item.id, label: item.label, symbol: item.symbol)
++                        }
++                    }
++
++                    if !customLabels.isEmpty {
++                        Section("Custom") {
++                            ForEach(customLabels.sorted(), id: \.self) { label in
++                                let tag = EquipmentTagCatalog.slugify(label)
++                                row(tag: tag, label: label, symbol: EquipmentTagCatalog.symbol(for: tag))
++                            }
++                        }
++                    }
++
++                    Section("Add tag") {
++                        HStack {
++                            TextField("e.g. Dip Station", text: $newTagLabel)
++                            Button("Add") {
++                                let tag = EquipmentTagCatalog.slugify(newTagLabel)
++                                guard !tag.isEmpty else { return }
++                                selected.insert(tag)
++                                newTagLabel = ""
++                            }
++                            .disabled(EquipmentTagCatalog.slugify(newTagLabel).isEmpty)
++                        }
++
++                        Text("Tags are stored as canonical keys (letters/numbers only).")
++                            .font(.caption)
++                            .foregroundStyle(.secondary)
++                    }
++                }
++                .navigationTitle(title)
++                .navigationBarTitleDisplayMode(.inline)
++                .toolbar {
++                    ToolbarItem(placement: .topBarLeading) {
++                        Button("Cancel") { dismiss() }
++                    }
++
++                    ToolbarItem(placement: .topBarTrailing) {
++                        Button("Save") {
++                            onSave(selected)
++                            dismiss()
++                        }
++                        .fontWeight(.semibold)
++                    }
++                }
++            }
++        }
++
++        private func row(tag: String, label: String, symbol: String) -> some View {
++            let isOn = selected.contains(tag)
++
++            return Button {
++                if isOn { selected.remove(tag) } else { selected.insert(tag) }
++            } label: {
++                HStack(spacing: 12) {
++                    Image(systemName: symbol)
++                        .symbolRenderingMode(.hierarchical)
++                        .foregroundStyle(.tint)
++                        .frame(width: 22)
++
++                    Text(label)
++
++                    Spacer()
++
++                    Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
++                        .symbolRenderingMode(.hierarchical)
++                        .foregroundStyle(isOn ? Color.accentColor : Color.secondary)
++                }
++                .padding(.vertical, 6)
++            }
++            .buttonStyle(.plain)
++        }
++    }
++
+ }
+diff --git a/workouttracker/Features/Exercises/ExerciseInsightsSectionView.swift b/workouttracker/Features/Exercises/ExerciseInsightsSectionView.swift
+index e4e1d5b..29d9da4 100644
+--- a/workouttracker/Features/Exercises/ExerciseInsightsSectionView.swift
++++ b/workouttracker/Features/Exercises/ExerciseInsightsSectionView.swift
+@@ -3,7 +3,7 @@ import SwiftData
+ 
+ struct ExerciseInsightsSectionView: View {
+     @Environment(\.modelContext) private var modelContext
+-    @Environment(GoalPrefillStore.self) private var goalPrefill
++    @EnvironmentObject private var goalPrefill: GoalPrefillStore
+ 
+     let exerciseId: UUID
+     let exerciseName: String
+@@ -93,6 +93,10 @@ struct ExerciseInsightsSectionView: View {
+     @MainActor
+     private func applyNextTargetPrefill() {
+         guard let t = nextTarget else { return }
+-        goalPrefill.set(.init(exerciseId: exerciseId, weight: t.targetWeight, reps: t.targetReps))
++        goalPrefill.set(GoalPrefillStore.Prefill(
++            exerciseId: exerciseId,
++            weight: t.targetWeight,
++            reps: t.targetReps
++        ))
+     }
+ }
+diff --git a/workouttracker/Features/Exercises/ExerciseLibraryScreen.swift b/workouttracker/Features/Exercises/ExerciseLibraryScreen.swift
+index 03c15c3..f17f1d0 100644
+--- a/workouttracker/Features/Exercises/ExerciseLibraryScreen.swift
++++ b/workouttracker/Features/Exercises/ExerciseLibraryScreen.swift
+@@ -14,6 +14,15 @@ struct ExerciseLibraryScreen: View {
+     @State private var showNewExerciseSheet = false
+     @State private var editingExercise: Exercise? = nil
+ 
++    @AppStorage("profile.equipment.selected.v1") private var equipmentSelectedJSON: String = "[]"
++    @State private var filterByEquipment: Bool = false
++
++    // ✅ Equipment picked by the user (canonicalized so it matches Exercise.equipmentTags)
++    private var selectedEquipmentTags: Set<String> {
++        let raw: [String] = decode(equipmentSelectedJSON)
++        return Set(raw.map(canonicalizeEquipmentTag).filter { !$0.isEmpty })
++    }
++
+     private var filtered: [Exercise] {
+         allExercises
+             .filter { showArchived ? true : !$0.isArchived }
+@@ -26,6 +35,13 @@ struct ExerciseLibraryScreen: View {
+                 guard !q.isEmpty else { return true }
+                 return $0.name.localizedCaseInsensitiveContains(q)
+             }
++            .filter {
++                // ✅ Equipment filter composed with existing filters
++                guard filterByEquipment else { return true }
++                let selected = selectedEquipmentTags
++                guard !selected.isEmpty else { return true }
++                return $0.matchesEquipmentFilter(selected)
++            }
+     }
+ 
+     var body: some View {
+@@ -41,23 +57,7 @@ struct ExerciseLibraryScreen: View {
+                     NavigationLink {
+                         ExerciseDetailScreen(exercise: ex)
+                     } label: {
+-                        HStack(spacing: 12) {
+-                            VStack(alignment: .leading, spacing: 4) {
+-                                Text(ex.name).font(.headline)
+-                                Text(ex.modality.rawValue.capitalized)
+-                                    .font(.subheadline)
+-                                    .foregroundStyle(.secondary)
+-                            }
+-                            Spacer()
+-                            if ex.isArchived {
+-                                Text("Archived")
+-                                    .font(.caption)
+-                                    .padding(.horizontal, 8)
+-                                    .padding(.vertical, 4)
+-                                    .background(.thinMaterial, in: Capsule())
+-                            }
+-                        }
+-                        .padding(.vertical, 2)
++                        ExerciseRow(exercise: ex)
+                     }
+                     .contextMenu {
+                         Button {
+@@ -85,6 +85,26 @@ struct ExerciseLibraryScreen: View {
+                     Image(systemName: "plus")
+                 }
+             }
++
++            ToolbarItem(placement: .topBarTrailing) {
++                NavigationLink {
++                    EquipmentPickerScreen()
++                } label: {
++                    Image(systemName: "wrench.and.screwdriver")
++                }
++                .accessibilityLabel("Equipment")
++            }
++
++            ToolbarItem(placement: .topBarTrailing) {
++                Button { filterByEquipment.toggle() } label: {
++                    Image(systemName: filterByEquipment
++                          ? "line.3.horizontal.decrease.circle.fill"
++                          : "line.3.horizontal.decrease.circle")
++                }
++                // ✅ FIX: use the real property in scope
++                .disabled(selectedEquipmentTags.isEmpty)
++                .accessibilityLabel("Filter by equipment")
++            }
+         }
+         .safeAreaInset(edge: .top) {
+             filtersBar
+@@ -133,4 +153,137 @@ struct ExerciseLibraryScreen: View {
+             Spacer()
+         }
+     }
++
++    // MARK: - Equipment normalization (makes filter work even if picker stores display names)
++
++    private func canonicalizeEquipmentTag(_ raw: String) -> String {
++        let s = slugify(raw)
++
++        // common plural -> singular
++        let singular = s.hasSuffix("s") ? String(s.dropLast()) : s
++
++        // map common display-ish values to canonical exercise tags
++        switch singular {
++        case "dumbbell", "dumbbellset": return "dumbbell"
++        case "barbell": return "barbell"
++        case "kettlebell": return "kettlebell"
++        case "weightplate", "plate", "plates", "weightplates": return "plates"
++
++        case "pullupbar", "pullup": return "pullupbar"
++        case "resistanceband", "band", "bands": return "bands"
++        case "bench": return "bench"
++
++        case "cablemachine", "cable": return "cable"
++        case "smithmachine", "smith": return "smith"
++        case "legpress": return "legpress"
++
++        case "treadmill": return "treadmill"
++        case "stationarybike", "bike": return "bike"
++        case "rowingmachine", "rower": return "rower"
++
++        default:
++            return singular
++        }
++    }
++
++    private func slugify(_ raw: String) -> String {
++        let lower = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
++        return String(lower.filter { $0.isLetter || $0.isNumber })
++    }
++
++    private func labelForEquipmentTag(_ tag: String) -> String {
++        switch tag {
++        case "dumbbell": return "Dumbbells"
++        case "barbell": return "Barbell"
++        case "kettlebell": return "Kettlebell"
++        case "plates": return "Plates"
++        case "bench": return "Bench"
++        case "pullupbar": return "Pull-up Bar"
++        case "bands": return "Bands"
++        case "cable": return "Cable"
++        case "smith": return "Smith"
++        case "legpress": return "Leg Press"
++        case "treadmill": return "Treadmill"
++        case "bike": return "Bike"
++        case "rower": return "Rower"
++        default:
++            return tag
++        }
++    }
++
++    // MARK: - JSON helpers
++
++    private func decode<T: Decodable>(_ s: String) -> T {
++        guard let data = s.data(using: .utf8) else {
++            return (try! JSONDecoder().decode(T.self, from: Data("[]".utf8)))
++        }
++        do { return try JSONDecoder().decode(T.self, from: data) }
++        catch { return (try! JSONDecoder().decode(T.self, from: Data("[]".utf8))) }
++    }
++}
++
++// MARK: - Row UI (chips)
++
++private struct ExerciseRow: View {
++    let exercise: Exercise
++
++    var body: some View {
++        VStack(alignment: .leading, spacing: 6) {
++            HStack(spacing: 12) {
++                VStack(alignment: .leading, spacing: 3) {
++                    Text(exercise.name).font(.headline)
++
++                    Text(exercise.modality.rawValue.capitalized)
++                        .font(.subheadline)
++                        .foregroundStyle(.secondary)
++                }
++
++                Spacer()
++
++                if exercise.isArchived {
++                    Text("Archived")
++                        .font(.caption)
++                        .padding(.horizontal, 8)
++                        .padding(.vertical, 4)
++                        .background(.thinMaterial, in: Capsule())
++                }
++            }
++
++            // ✅ Equipment chips (subtle + scroll if needed)
++            if !exercise.equipmentTags.isEmpty {
++                ScrollView(.horizontal, showsIndicators: false) {
++                    HStack(spacing: 6) {
++                        ForEach(exercise.equipmentTags.prefix(4), id: \.self) { tag in
++                            Text(tagLabel(tag))
++                                .font(.caption2)
++                                .padding(.horizontal, 8)
++                                .padding(.vertical, 4)
++                                .background(.thinMaterial, in: Capsule())
++                        }
++                    }
++                }
++            }
++        }
++        .padding(.vertical, 2)
++    }
++
++    private func tagLabel(_ tag: String) -> String {
++        // Keep labels readable; if you add EquipmentCatalog later, swap to that.
++        switch tag {
++        case "dumbbell": return "Dumbbells"
++        case "barbell": return "Barbell"
++        case "kettlebell": return "Kettlebell"
++        case "plates": return "Plates"
++        case "bench": return "Bench"
++        case "pullupbar": return "Pull-up Bar"
++        case "bands": return "Bands"
++        case "cable": return "Cable"
++        case "smith": return "Smith"
++        case "legpress": return "Leg Press"
++        case "treadmill": return "Treadmill"
++        case "bike": return "Bike"
++        case "rower": return "Rower"
++        default: return tag
++        }
++    }
+ }
+diff --git a/workouttracker/Features/Measurements/MeasurementsScreen.swift b/workouttracker/Features/Measurements/MeasurementsScreen.swift
+index 4f51d8a..8dff33e 100644
+--- a/workouttracker/Features/Measurements/MeasurementsScreen.swift
++++ b/workouttracker/Features/Measurements/MeasurementsScreen.swift
+@@ -1,14 +1,545 @@
+ import SwiftUI
+ 
+ struct MeasurementsScreen: View {
++
++    // MARK: Persistence (v1)
++    @AppStorage("measurements.entries.v1") private var entriesJSON: String = "[]"
++
++    @State private var entries: [MeasurementEntry] = []
++    @State private var mode: Mode = .overview
++
++    @State private var showAdd: Bool = false
++    @State private var editing: MeasurementEntry? = nil
++
++    private let cal = Calendar.current
++
++    enum Mode: String, CaseIterable, Identifiable {
++        case overview = "Overview"
++        case trends = "Trends"
++        var id: String { rawValue }
++    }
++
+     var body: some View {
+-        NavigationStack {
+-            ContentUnavailableView(
+-                "Measurements",
+-                systemImage: "ruler",
+-                description: Text("Next: body measurements list + add/edit entries.")
++        List {
++            Section {
++                Picker("Mode", selection: $mode) {
++                    ForEach(Mode.allCases) { m in
++                        Text(m.rawValue).tag(m)
++                    }
++                }
++                .pickerStyle(.segmented)
++            }
++
++            if entries.isEmpty {
++                ContentUnavailableView(
++                    "No Measurements Yet",
++                    systemImage: "ruler",
++                    description: Text("Add your first entry to start tracking trends.")
++                )
++                .listRowBackground(Color.clear)
++            } else {
++                switch mode {
++                case .overview:
++                    overview
++                case .trends:
++                    trends
++                }
++            }
++        }
++        .navigationTitle("Measurements")
++        .toolbar {
++            ToolbarItem(placement: .topBarTrailing) {
++                Button { showAdd = true } label: {
++                    Image(systemName: "plus.circle.fill")
++                }
++                .accessibilityLabel("Add measurement")
++            }
++        }
++        .onAppear {
++            entries = decode(entriesJSON)
++            normalize()
++        }
++        .onChange(of: entries) { _, newValue in
++            entriesJSON = encode(newValue)
++        }
++        .sheet(isPresented: $showAdd) {
++            MeasurementEditorSheet(
++                title: "Add Measurement",
++                initial: .new(defaultDate: Date()),
++                onSave: { newEntry in
++                    entries.append(newEntry)
++                    normalize()
++                }
+             )
+-            .navigationTitle("Measurements")
++        }
++        .sheet(item: $editing) { entry in
++            MeasurementEditorSheet(
++                title: "Edit Measurement",
++                initial: entry,
++                onSave: { updated in
++                    if let idx = entries.firstIndex(where: { $0.id == updated.id }) {
++                        entries[idx] = updated
++                        normalize()
++                    }
++                }
++            )
++        }
++    }
++
++    // MARK: - Overview
++
++    private var overview: some View {
++        let types = MeasurementType.allCases
++        let series = seriesByType(entries)
++
++        return Group {
++            Section("Latest") {
++                LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 12)], spacing: 12) {
++                    ForEach(types, id: \.self) { t in
++                        let s = series[t, default: []]
++                        LatestCard(type: t, series: s)
++                            .contentShape(Rectangle())
++                            .onTapGesture {
++                                // edit most recent entry for that type
++                                if let last = s.last {
++                                    editing = last
++                                }
++                            }
++                    }
++                }
++                .padding(.vertical, 4)
++            }
++
++            historySections
++        }
++    }
++
++    private var historySections: some View {
++        let grouped = groupedDays(entries)
++
++        return Group {
++            ForEach(grouped, id: \.day) { g in
++                Section(g.title) {
++                    ForEach(g.items) { e in
++                        Button { editing = e } label: {
++                            MeasurementRow(entry: e)
++                        }
++                        .buttonStyle(.plain)
++                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
++                            Button(role: .destructive) {
++                                delete(e)
++                            } label: {
++                                Label("Delete", systemImage: "trash")
++                            }
++                        }
++                    }
++                }
++            }
++        }
++    }
++
++    // MARK: - Trends
++
++    private var trends: some View {
++        let series = seriesByType(entries)
++
++        return Group {
++            Section("By Type") {
++                ForEach(MeasurementType.allCases, id: \.self) { t in
++                    let s = series[t, default: []]
++                    TrendRow(type: t, series: s)
++                        .contentShape(Rectangle())
++                        .onTapGesture {
++                            // edit most recent entry
++                            if let last = s.last { editing = last }
++                        }
++                }
++            }
++        }
++    }
++
++    // MARK: - Data shaping
++
++    private func seriesByType(_ entries: [MeasurementEntry]) -> [MeasurementType: [MeasurementEntry]] {
++        let dict = Dictionary(grouping: entries) { $0.type }
++        return dict.mapValues { $0.sorted(by: { $0.date < $1.date }) }
++    }
++
++    private func groupedDays(_ entries: [MeasurementEntry]) -> [DayGroup] {
++        let dict = Dictionary(grouping: entries) { cal.startOfDay(for: $0.date) }
++        return dict
++            .map { day, items in
++                DayGroup(day: day, items: items.sorted { $0.date > $1.date })
++            }
++            .sorted { $0.day > $1.day }
++    }
++
++    private func delete(_ entry: MeasurementEntry) {
++        entries.removeAll { $0.id == entry.id }
++        normalize()
++    }
++
++    private func normalize() {
++        // Keep newest first for list browsing
++        entries.sort { $0.date > $1.date }
++    }
++
++    // MARK: - JSON helpers
++
++    private func decode<T: Decodable>(_ s: String) -> T {
++        guard let data = s.data(using: .utf8) else {
++            return (try! JSONDecoder().decode(T.self, from: Data("[]".utf8)))
++        }
++        do {
++            let dec = JSONDecoder()
++            dec.dateDecodingStrategy = .iso8601
++            return try dec.decode(T.self, from: data)
++        } catch {
++            return (try! JSONDecoder().decode(T.self, from: Data("[]".utf8)))
++        }
++    }
++
++    private func encode<T: Encodable>(_ v: T) -> String {
++        do {
++            let enc = JSONEncoder()
++            enc.dateEncodingStrategy = .iso8601
++            let data = try enc.encode(v)
++            return String(data: data, encoding: .utf8) ?? "[]"
++        } catch {
++            return "[]"
++        }
++    }
++}
++
++// MARK: - Models (local v1)
++
++private struct MeasurementEntry: Identifiable, Codable, Hashable {
++    var id: UUID
++    var date: Date
++    var type: MeasurementType
++    var value: Double
++    var unit: MeasurementUnit
++    var note: String
++
++    static func new(defaultDate: Date) -> MeasurementEntry {
++        let t: MeasurementType = .weight
++        return .init(id: UUID(), date: defaultDate, type: t, value: 0, unit: t.defaultUnit, note: "")
++    }
++
++    var valueString: String {
++        switch unit {
++        case .percent: return "\(fmt(value))%"
++        case .kg:      return "\(fmt(value)) kg"
++        case .lb:      return "\(fmt(value)) lb"
++        case .cm:      return "\(fmt(value)) cm"
++        case .inch:    return "\(fmt(value)) in"
++        }
++    }
++
++    private func fmt(_ v: Double) -> String {
++        String(format: (abs(v.rounded() - v) < 0.0001) ? "%.0f" : "%.1f", v)
++    }
++}
++
++private enum MeasurementType: String, CaseIterable, Codable, Hashable {
++    case weight, bodyFat, waist, chest, hips, thigh, arm, neck
++
++    var displayName: String {
++        switch self {
++        case .weight: return "Weight"
++        case .bodyFat: return "Body Fat"
++        case .waist: return "Waist"
++        case .chest: return "Chest"
++        case .hips: return "Hips"
++        case .thigh: return "Thigh"
++        case .arm: return "Arm"
++        case .neck: return "Neck"
++        }
++    }
++
++    var defaultUnit: MeasurementUnit {
++        switch self {
++        case .weight: return .kg
++        case .bodyFat: return .percent
++        default: return .cm
++        }
++    }
++
++    var allowedUnits: [MeasurementUnit] {
++        switch self {
++        case .weight: return [.kg, .lb]
++        case .bodyFat: return [.percent]
++        default: return [.cm, .inch]
++        }
++    }
++}
++
++private enum MeasurementUnit: String, CaseIterable, Codable, Hashable {
++    case kg, lb, cm, inch, percent
++}
++
++private struct DayGroup: Hashable {
++    let day: Date
++    let items: [MeasurementEntry]
++
++    var title: String {
++        day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
++    }
++}
++
++// MARK: - UI
++
++private struct MeasurementRow: View {
++    let entry: MeasurementEntry
++
++    var body: some View {
++        HStack {
++            VStack(alignment: .leading, spacing: 2) {
++                Text(entry.type.displayName).font(.headline)
++                Text(entry.date.formatted(.dateTime.hour().minute()))
++                    .font(.subheadline)
++                    .foregroundStyle(.secondary)
++            }
++            Spacer()
++            Text(entry.valueString).font(.headline)
++        }
++        .padding(.vertical, 6)
++    }
++}
++
++/// Sparkline: lightweight Path-based chart (no Charts.framework needed)
++private struct SparklineView: View {
++    let values: [Double]
++
++    var body: some View {
++        GeometryReader { geo in
++            let w = geo.size.width
++            let h = geo.size.height
++
++            let minV = values.min() ?? 0
++            let maxV = values.max() ?? 1
++            let span = max(0.000001, maxV - minV)
++
++            Path { p in
++                guard values.count >= 2 else { return }
++                for (i, v) in values.enumerated() {
++                    let x = w * CGFloat(i) / CGFloat(values.count - 1)
++                    let yNorm = (v - minV) / span
++                    let y = h - (h * CGFloat(yNorm))
++                    if i == 0 { p.move(to: CGPoint(x: x, y: y)) }
++                    else { p.addLine(to: CGPoint(x: x, y: y)) }
++                }
++            }
++            .stroke(lineWidth: 2)
++            .opacity(values.count >= 2 ? 1 : 0)
++        }
++    }
++}
++
++private struct LatestCard: View {
++    let type: MeasurementType
++    let series: [MeasurementEntry]
++
++    var body: some View {
++        let last = series.last
++        let sparkVals = series.suffix(20).map(\.value)
++
++        VStack(alignment: .leading, spacing: 8) {
++            HStack {
++                Text(type.displayName)
++                    .font(.subheadline)
++                    .foregroundStyle(.secondary)
++                Spacer()
++                if let last {
++                    Text(last.valueString)
++                        .font(.headline)
++                } else {
++                    Text("—").font(.headline).foregroundStyle(.secondary)
++                }
++            }
++
++            SparklineView(values: sparkVals)
++                .frame(height: 26)
++                .foregroundStyle(.tint)
++                .opacity(sparkVals.count >= 2 ? 1 : 0.25)
++
++            if let last {
++                Text(last.date.formatted(.dateTime.month(.abbreviated).day()))
++                    .font(.caption)
++                    .foregroundStyle(.secondary)
++            } else {
++                Text("Tap + to add")
++                    .font(.caption)
++                    .foregroundStyle(.secondary)
++            }
++        }
++        .padding(12)
++        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
++    }
++}
++
++private struct TrendRow: View {
++    let type: MeasurementType
++    let series: [MeasurementEntry]
++
++    private var last: MeasurementEntry? { series.last }
++
++    var body: some View {
++        let spark = series.suffix(30).map(\.value)
++
++        VStack(alignment: .leading, spacing: 8) {
++            HStack {
++                Text(type.displayName).font(.headline)
++                Spacer()
++                Text(last?.valueString ?? "—")
++                    .font(.headline)
++                    .foregroundStyle(last == nil ? .secondary : .primary)
++            }
++
++            HStack(spacing: 12) {
++                let d7 = delta(daysBack: 7)
++                let d30 = delta(daysBack: 30)
++
++                TrendDelta(label: "7d", delta: d7)
++                TrendDelta(label: "30d", delta: d30)
++
++                Spacer()
++
++                SparklineView(values: spark)
++                    .frame(width: 120, height: 22)
++                    .foregroundStyle(.tint)
++                    .opacity(spark.count >= 2 ? 1 : 0.25)
++            }
++        }
++        .padding(.vertical, 6)
++    }
++
++    private func delta(daysBack: Int) -> Double? {
++        guard let last else { return nil }
++        let cal = Calendar.current
++        let cutoff = cal.date(byAdding: .day, value: -daysBack, to: last.date) ?? last.date
++        let past = series.last(where: { $0.date <= cutoff }) ?? series.first
++        guard let past else { return nil }
++        return last.value - past.value
++    }
++}
++
++private struct TrendDelta: View {
++    let label: String
++    let delta: Double?
++
++    var body: some View {
++        HStack(spacing: 6) {
++            Text(label).font(.caption).foregroundStyle(.secondary)
++
++            if let delta {
++                Text(deltaString(delta))
++                    .font(.caption.weight(.semibold))
++                    .foregroundStyle(delta == 0 ? .secondary : .primary)
++            } else {
++                Text("—").font(.caption).foregroundStyle(.secondary)
++            }
++        }
++        .padding(.horizontal, 8)
++        .padding(.vertical, 5)
++        .background(.thinMaterial, in: Capsule())
++    }
++
++    private func deltaString(_ d: Double) -> String {
++        let s = String(format: (abs(d.rounded() - d) < 0.0001) ? "%.0f" : "%.1f", d)
++        return (d > 0 ? "+\(s)" : s)
++    }
++}
++
++private struct MeasurementEditorSheet: View {
++    @Environment(\.dismiss) private var dismiss
++
++    let title: String
++    let initial: MeasurementEntry
++    let onSave: (MeasurementEntry) -> Void
++
++    @State private var id: UUID
++    @State private var date: Date
++    @State private var type: MeasurementType
++    @State private var value: Double
++    @State private var unit: MeasurementUnit
++    @State private var note: String
++
++    init(title: String, initial: MeasurementEntry, onSave: @escaping (MeasurementEntry) -> Void) {
++        self.title = title
++        self.initial = initial
++        self.onSave = onSave
++        _id = State(initialValue: initial.id)
++        _date = State(initialValue: initial.date)
++        _type = State(initialValue: initial.type)
++        _value = State(initialValue: initial.value)
++        _unit = State(initialValue: initial.unit)
++        _note = State(initialValue: initial.note)
++    }
++
++    var body: some View {
++        NavigationStack {
++            Form {
++                Section("Measurement") {
++                    Picker("Type", selection: $type) {
++                        ForEach(MeasurementType.allCases, id: \.self) { t in
++                            Text(t.displayName).tag(t)
++                        }
++                    }
++                    .onChange(of: type) { _, newType in
++                        if !newType.allowedUnits.contains(unit) {
++                            unit = newType.defaultUnit
++                        }
++                    }
++
++                    HStack {
++                        Text("Value")
++                        Spacer()
++                        TextField("0", value: $value, format: .number)
++                            .keyboardType(.decimalPad)
++                            .multilineTextAlignment(.trailing)
++                            .frame(width: 120)
++                    }
++
++                    Picker("Unit", selection: $unit) {
++                        ForEach(type.allowedUnits, id: \.self) { u in
++                            Text(unitLabel(u)).tag(u)
++                        }
++                    }
++                }
++
++                Section("When") {
++                    DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
++                }
++
++                Section("Note") {
++                    TextField("Optional", text: $note, axis: .vertical)
++                        .lineLimit(3...6)
++                }
++            }
++            .navigationTitle(title)
++            .toolbar {
++                ToolbarItem(placement: .topBarLeading) {
++                    Button("Cancel") { dismiss() }
++                }
++                ToolbarItem(placement: .topBarTrailing) {
++                    Button("Save") {
++                        onSave(.init(id: id, date: date, type: type, value: value, unit: unit, note: note))
++                        dismiss()
++                    }
++                    .fontWeight(.semibold)
++                }
++            }
++        }
++    }
++
++    private func unitLabel(_ u: MeasurementUnit) -> String {
++        switch u {
++        case .kg: return "kg"
++        case .lb: return "lb"
++        case .cm: return "cm"
++        case .inch: return "in"
++        case .percent: return "%"
+         }
+     }
+ }
+diff --git a/workouttracker/Features/Profile/EquipmentPickerScreen.swift b/workouttracker/Features/Profile/EquipmentPickerScreen.swift
+index ea93950..59f5008 100644
+--- a/workouttracker/Features/Profile/EquipmentPickerScreen.swift
++++ b/workouttracker/Features/Profile/EquipmentPickerScreen.swift
+@@ -1,14 +1,166 @@
+ import SwiftUI
+ 
+ struct EquipmentPickerScreen: View {
++    @AppStorage("profile.equipment.selected.v1") private var selectedJSON: String = "[]"
++    @AppStorage("profile.equipment.custom.v1") private var customJSON: String = "[]" // stores labels
++
++    @State private var selected: Set<String> = []   // canonical tags
++    @State private var custom: [String] = []        // labels
++
++    @State private var showAddCustom = false
++    @State private var newCustom = ""
++
+     var body: some View {
+-        NavigationStack {
+-            ContentUnavailableView(
+-                "Equipment",
+-                systemImage: "wrench.and.screwdriver",
+-                description: Text("Next: multi-select equipment and persist to profile.")
+-            )
+-            .navigationTitle("Equipment")
++        List {
++            Section {
++                Text("\(selected.count) selected")
++                    .foregroundStyle(.secondary)
++            }
++
++            Section("Common") {
++                ForEach(EquipmentCatalog.common) { item in
++                    row(tag: item.id, label: item.label, symbol: item.symbol)
++                }
++            }
++
++            Section("Custom") {
++                if custom.isEmpty {
++                    ContentUnavailableView(
++                        "No Custom Equipment",
++                        systemImage: "plus",
++                        description: Text("Add items you have at home or at your gym.")
++                    )
++                    .listRowBackground(Color.clear)
++                } else {
++                    ForEach(custom, id: \.self) { label in
++                        let tag = EquipmentCatalog.slugify(label)
++                        row(tag: tag, label: label, symbol: EquipmentCatalog.symbol(for: tag))
++                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
++                                Button(role: .destructive) {
++                                    removeCustom(label: label)
++                                } label: {
++                                    Label("Delete", systemImage: "trash")
++                                }
++                            }
++                    }
++                }
++
++                Button {
++                    newCustom = ""
++                    showAddCustom = true
++                } label: {
++                    Label("Add Custom Equipment", systemImage: "plus.circle.fill")
++                }
++            }
++        }
++        .navigationTitle("Equipment")
++        .toolbar {
++            ToolbarItem(placement: .topBarTrailing) {
++                Button {
++                    newCustom = ""
++                    showAddCustom = true
++                } label: {
++                    Image(systemName: "plus")
++                }
++            }
++        }
++        .onAppear {
++            selected = Set(decode(selectedJSON) as [String])
++            custom = decode(customJSON)
++            custom.sort()
++        }
++        .onChange(of: selected) { _, v in
++            selectedJSON = encode(Array(v).sorted())
++        }
++        .onChange(of: custom) { _, v in
++            customJSON = encode(v.sorted())
++        }
++        .sheet(isPresented: $showAddCustom) {
++            NavigationStack {
++                Form {
++                    Section("Name") {
++                        TextField("e.g. Dip Station", text: $newCustom)
++                    }
++                }
++                .navigationTitle("Add Equipment")
++                .toolbar {
++                    ToolbarItem(placement: .topBarLeading) {
++                        Button("Cancel") { showAddCustom = false }
++                    }
++                    ToolbarItem(placement: .topBarTrailing) {
++                        Button("Add") {
++                            addCustom(label: newCustom)
++                            showAddCustom = false
++                        }
++                        .disabled(newCustom.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
++                        .fontWeight(.semibold)
++                    }
++                }
++            }
++        }
++    }
++
++    private func row(tag: String, label: String, symbol: String) -> some View {
++        let isOn = selected.contains(tag)
++        return Button {
++            toggle(tag)
++        } label: {
++            HStack(spacing: 12) {
++                Image(systemName: symbol)
++                    .symbolRenderingMode(.hierarchical)
++                    .foregroundStyle(.tint)
++                    .frame(width: 22)
++
++                Text(label)
++
++                Spacer()
++
++                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
++                    .symbolRenderingMode(.hierarchical)
++                    .foregroundStyle(isOn ? Color.accentColor : Color.secondary)
++            }
++            .padding(.vertical, 6)
++        }
++        .buttonStyle(.plain)
++    }
++
++    private func toggle(_ tag: String) {
++        if selected.contains(tag) { selected.remove(tag) }
++        else { selected.insert(tag) }
++    }
++
++    private func addCustom(label raw: String) {
++        let label = raw.trimmingCharacters(in: .whitespacesAndNewlines)
++        guard !label.isEmpty else { return }
++
++        if !custom.contains(where: { $0.caseInsensitiveCompare(label) == .orderedSame }) {
++            custom.append(label)
++        }
++
++        // auto-select custom equipment slug
++        selected.insert(EquipmentCatalog.slugify(label))
++    }
++
++    private func removeCustom(label: String) {
++        custom.removeAll { $0 == label }
++        selected.remove(EquipmentCatalog.slugify(label))
++    }
++
++    // JSON helpers
++    private func decode<T: Decodable>(_ s: String) -> T {
++        guard let data = s.data(using: .utf8) else {
++            return (try! JSONDecoder().decode(T.self, from: Data("[]".utf8)))
++        }
++        do { return try JSONDecoder().decode(T.self, from: data) }
++        catch { return (try! JSONDecoder().decode(T.self, from: Data("[]".utf8))) }
++    }
++
++    private func encode<T: Encodable>(_ v: T) -> String {
++        do {
++            let data = try JSONEncoder().encode(v)
++            return String(data: data, encoding: .utf8) ?? "[]"
++        } catch {
++            return "[]"
+         }
+     }
+ }
+diff --git a/workouttracker/Features/Progress/ProgressScreen.swift b/workouttracker/Features/Progress/ProgressScreen.swift
+index b08fd27..a4811ec 100644
+--- a/workouttracker/Features/Progress/ProgressScreen.swift
++++ b/workouttracker/Features/Progress/ProgressScreen.swift
+@@ -4,17 +4,25 @@ struct ProgressScreen: View {
+     var body: some View {
+         List {
+             Section {
+-                ActionRow(
+-                    title: "Weekly Summary",
+-                    subtitle: "Workouts, sets, volume",
+-                    systemImage: "chart.bar.fill"
+-                )
++                NavigationLink {
++                    WeekProgressScreen()
++                } label: {
++                    ActionRow(
++                        title: "Weekly Summary",
++                        subtitle: "Workouts, sets, volume",
++                        systemImage: "chart.bar.fill"
++                    )
++                }
+ 
+-                ActionRow(
+-                    title: "Streaks",
+-                    subtitle: "Current and longest streak",
+-                    systemImage: "flame.fill"
+-                )
++                NavigationLink {
++                    WeekProgressScreen()
++                } label: {
++                    ActionRow(
++                        title: "Streaks",
++                        subtitle: "Current and longest streak",
++                        systemImage: "flame.fill"
++                    )
++                }
+             }
+ 
+             Section("Notes") {
+diff --git a/workouttracker/Features/Progress/WeekProgressScreen.swift b/workouttracker/Features/Progress/WeekProgressScreen.swift
+index 2dcad83..20af3f0 100644
+--- a/workouttracker/Features/Progress/WeekProgressScreen.swift
++++ b/workouttracker/Features/Progress/WeekProgressScreen.swift
+@@ -3,7 +3,7 @@ import SwiftData
+ 
+ struct WeekProgressScreen: View {
+     @Environment(\.modelContext) private var modelContext
+-    @Environment(GoalPrefillStore.self) private var goalPrefill
++    @EnvironmentObject private var goalPrefill: GoalPrefillStore
+ 
+     private let service = ProgressSummaryService()
+     private let insightsService = ProgressInsightsService()
+@@ -166,7 +166,12 @@ struct WeekProgressScreen: View {
+     @MainActor
+     private func startQuick(from t: ProgressInsightsService.TargetCard) {
+         do {
+-            goalPrefill.set(.init(exerciseId: t.id, weight: t.targetWeight, reps: t.targetReps))
++            goalPrefill.set(GoalPrefillStore.Prefill(
++                exerciseId: t.id,
++                weight: t.targetWeight,
++                reps: t.targetReps
++            ))
++
+             let session = try quickStarter.startOrReuseQuickSession(
+                 exerciseId: t.id,
+                 exerciseNameSnapshot: t.name,
+@@ -182,7 +187,12 @@ struct WeekProgressScreen: View {
+     private func resumeRoutineAndApplyTarget() {
+         guard let t = pendingTarget, let s = resumeCandidate else { return }
+         do {
+-            goalPrefill.set(.init(exerciseId: t.id, weight: t.targetWeight, reps: t.targetReps))
++            goalPrefill.set(GoalPrefillStore.Prefill(
++                exerciseId: t.id,
++                weight: t.targetWeight,
++                reps: t.targetReps
++            ))
++
+             try quickStarter.prepareSessionForTarget(
+                 session: s,
+                 exerciseId: t.id,
+diff --git a/workouttracker/Features/Routines/RoutineRow/RoutineListItem.swift b/workouttracker/Features/Routines/RoutineRow/RoutineListItem.swift
+index e69de29..6513801 100644
+--- a/workouttracker/Features/Routines/RoutineRow/RoutineListItem.swift
++++ b/workouttracker/Features/Routines/RoutineRow/RoutineListItem.swift
+@@ -0,0 +1,34 @@
++import SwiftUI
++
++struct RoutineListItem: View {
++    let title: String
++    let onStartNow: () -> Void
++    let onScheduleToday: () -> Void
++    let onRename: () -> Void
++    let onDelete: () -> Void
++
++    var body: some View {
++        RoutineRow(
++            title: title,
++            onStartNow: onStartNow,
++            onScheduleToday: onScheduleToday
++        )
++        .contentShape(Rectangle())
++        .contextMenu {
++            Button(action: onStartNow) { Label("Start now", systemImage: "play.fill") }
++            Button(action: onScheduleToday) { Label("Schedule for today", systemImage: "calendar.badge.plus") }
++            Button(action: onRename) { Label("Rename", systemImage: "pencil") }
++            Button(role: .destructive, action: onDelete) { Label("Delete", systemImage: "trash") }
++        }
++        .swipeActions(edge: .leading, allowsFullSwipe: true) {
++            Button(action: onStartNow) { Label("Start", systemImage: "play.fill") }
++                .tint(.green)
++        }
++        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
++            Button(action: onRename) { Label("Rename", systemImage: "pencil") }
++                .tint(.blue)
++
++            Button(role: .destructive, action: onDelete) { Label("Delete", systemImage: "trash") }
++        }
++    }
++}
+diff --git a/workouttracker/Features/Routines/RoutineRow/RoutineRow.swift b/workouttracker/Features/Routines/RoutineRow/RoutineRow.swift
+index e69de29..8cffb13 100644
+--- a/workouttracker/Features/Routines/RoutineRow/RoutineRow.swift
++++ b/workouttracker/Features/Routines/RoutineRow/RoutineRow.swift
+@@ -0,0 +1,41 @@
++import SwiftUI
++
++struct RoutineRow: View {
++    let title: String
++    let onStartNow: () -> Void
++    let onScheduleToday: () -> Void
++
++    var body: some View {
++        HStack(spacing: 12) {
++            ZStack {
++                RoundedRectangle(cornerRadius: 10)
++                    .fill(.thinMaterial)
++                    .frame(width: 36, height: 36)
++
++                Image(systemName: "list.bullet.rectangle.portrait")
++                    .font(.system(size: 16, weight: .semibold))
++                    .symbolRenderingMode(.hierarchical)
++            }
++
++            Text(title)
++                .font(.body.weight(.semibold))
++
++            Spacer()
++
++            Button(action: onScheduleToday) {
++                Image(systemName: "calendar.badge.plus")
++                    .symbolRenderingMode(.hierarchical)
++            }
++            .buttonStyle(.borderless)
++            .accessibilityLabel("Schedule for today")
++
++            Button(action: onStartNow) {
++                Image(systemName: "play.fill")
++                    .symbolRenderingMode(.hierarchical)
++            }
++            .buttonStyle(.borderless)
++            .accessibilityLabel("Start now")
++        }
++        .padding(.vertical, 4)
++    }
++}
+diff --git a/workouttracker/Features/Routines/RoutinesScreen.swift b/workouttracker/Features/Routines/RoutinesScreen.swift
+index b0acba6..077bb91 100644
+--- a/workouttracker/Features/Routines/RoutinesScreen.swift
++++ b/workouttracker/Features/Routines/RoutinesScreen.swift
+@@ -1,28 +1,413 @@
+ import SwiftUI
++import SwiftData
+ 
++@MainActor
+ struct RoutinesScreen: View {
++    @Environment(\.modelContext) private var modelContext
++
++    @Query(sort: [SortDescriptor(\WorkoutRoutine.name, order: .forward)])
++    private var routines: [WorkoutRoutine]
++
++    @State private var searchText: String = ""
++    @State private var nameEditor: RoutineNameEditorState? = nil
++
++    @State private var routineToDelete: WorkoutRoutine? = nil
++    @State private var showDeleteConfirm: Bool = false
++
++    @State private var launchedSession: WorkoutSession? = nil
++    @State private var showSessionCover: Bool = false
++
+     var body: some View {
+-        List {
+-            Section {
+-                ActionRow(
+-                    title: "My Routines",
+-                    subtitle: "View and edit your routines",
+-                    systemImage: "list.bullet.rectangle.portrait"
+-                )
+-
+-                ActionRow(
+-                    title: "Create Routine",
+-                    subtitle: "Build a new plan",
+-                    systemImage: "plus.circle.fill"
+-                )
++        // ✅ Cache once: helps the type-checker + avoids recomputing repeatedly
++        let items = filteredRoutines
++
++        return List {
++            listContent(items)
++        }
++        .listStyle(.insetGrouped)
++        .navigationTitle("Routines")
++        .searchable(text: $searchText, prompt: "Search routines")
++        .toolbar { topToolbar }
++        .sheet(item: $nameEditor, content: nameEditorSheet)
++        .confirmationDialog(
++            "Delete routine?",
++            isPresented: $showDeleteConfirm,
++            titleVisibility: .visible
++        ) {
++            Button("Delete", role: .destructive) { deleteConfirmed() }
++            Button("Cancel", role: .cancel) {}
++        } message: {
++            Text("This cannot be undone.")
++        }
++        .fullScreenCover(isPresented: $showSessionCover, content: sessionCover)
++    }
++
++    // MARK: - List content
++
++    @ViewBuilder
++    private func listContent(_ items: [WorkoutRoutine]) -> some View {
++        if items.isEmpty {
++            emptyStateRow
++        } else {
++            Section("Your routines") {
++                ForEach(items, id: \.persistentModelID) { routine in
++                    RoutineListItem(
++                        title: routine.name,
++                        onStartNow: { startRoutineNow(routine) },
++                        onScheduleToday: { scheduleForToday(routine) },
++                        onRename: { nameEditor = .rename(routine) },
++                        onDelete: { confirmDelete(routine) }
++                    )
++                }
+             }
++        }
++    }
++
++    private var emptyStateRow: some View {
++        ContentUnavailableView(
++            "No routines yet",
++            systemImage: "list.bullet.rectangle.portrait",
++            description: Text("Create your first routine to reuse it in your calendar or start it instantly.")
++        )
++        .listRowBackground(Color.clear)
++        .listRowSeparator(.hidden)
++        .padding(.vertical, 24)
++    }
++
++    // MARK: - Toolbar / Sheets / Covers (extracted to reduce inference load)
++
++    private var topToolbar: some ToolbarContent {
++        ToolbarItem(placement: .topBarTrailing) {
++            Button { nameEditor = .create } label: { Image(systemName: "plus") }
++                .accessibilityLabel("Create routine")
++        }
++    }
++
++    private func nameEditorSheet(_ state: RoutineNameEditorState) -> some View {
++        RoutineNameEditorSheet(
++            title: state.title,
++            initialName: state.initialName,
++            saveButtonTitle: state.saveButtonTitle,
++            onSave: { newName in saveRoutineName(state: state, newName: newName) },
++            onCancel: { nameEditor = nil }
++        )
++    }
+ 
+-            Section("Notes") {
+-                Text("This is the routines hub. Next step is to replace rows with NavigationLinks to your real routine list/detail screens.")
+-                    .font(.footnote)
+-                    .foregroundStyle(.secondary)
++    private func sessionCover() -> some View {
++        NavigationStack {
++            if let launchedSession {
++                WorkoutSessionScreen(session: launchedSession)
++                    .toolbar {
++                        ToolbarItem(placement: .topBarLeading) {
++                            Button {
++                                showSessionCover = false
++                                self.launchedSession = nil
++                            } label: {
++                                Image(systemName: "xmark")
++                            }
++                            .accessibilityLabel("Close workout")
++                        }
++                    }
++            } else {
++                ProgressView()
+             }
+         }
+-        .navigationTitle("Routines")
++    }
++
++    // MARK: - Filtering
++
++    private var filteredRoutines: [WorkoutRoutine] {
++        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
++        guard !q.isEmpty else { return routines }
++        return routines.filter { $0.name.localizedCaseInsensitiveContains(q) }
++    }
++
++    // MARK: - Create / Rename
++
++    private func saveRoutineName(state: RoutineNameEditorState, newName: String) {
++        let name = newName.trimmingCharacters(in: .whitespacesAndNewlines)
++        guard !name.isEmpty else { return }
++
++        switch state.kind {
++        case .create:
++            // ✅ If your WorkoutRoutine initializer differs, update THIS line.
++            let r = WorkoutRoutine(name: name)
++            modelContext.insert(r)
++            try? modelContext.save()
++
++        case .rename(let r):
++            r.name = name
++            try? modelContext.save()
++        }
++
++        nameEditor = nil
++    }
++
++    // MARK: - Delete
++
++    private func confirmDelete(_ routine: WorkoutRoutine) {
++        routineToDelete = routine
++        showDeleteConfirm = true
++    }
++
++    private func deleteConfirmed() {
++        guard let r = routineToDelete else { return }
++        modelContext.delete(r)
++        try? modelContext.save()
++        routineToDelete = nil
++    }
++
++    // MARK: - Actions: start / schedule
++
++    private func startRoutineNow(_ routine: WorkoutRoutine) {
++        let start = Date()
++        let end = Calendar.current.date(byAdding: .minute, value: 60, to: start)
++
++        let activity = Activity(
++            title: routine.name,
++            startAt: start,
++            endAt: end,
++            laneHint: 0,
++            kind: .workout,
++            workoutRoutineId: routine.id
++        )
++        activity.status = .planned
++        activity.completedAt = nil
++        activity.isAllDay = false
++
++        modelContext.insert(activity)
++
++        do {
++            let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
++            let session = WorkoutSessionFactory.makeSession(
++                linkedActivityId: activity.id,
++                sourceRoutineId: routine.id,
++                sourceRoutineNameSnapshot: routine.name,
++                exercises: templates,
++                prefillActualsFromTargets: true
++            )
++
++            modelContext.insert(session)
++            activity.workoutSessionId = session.id
++            try modelContext.save()
++
++            launchedSession = session
++            showSessionCover = true
++        } catch {
++            assertionFailure("Failed to start routine workout: \(error)")
++        }
++    }
++
++    private func scheduleForToday(_ routine: WorkoutRoutine) {
++        let start = nextFullHour(after: Date())
++        let end = Calendar.current.date(byAdding: .minute, value: 60, to: start)
++
++        let a = Activity(
++            title: routine.name,
++            startAt: start,
++            endAt: end,
++            laneHint: 0,
++            kind: .workout,
++            workoutRoutineId: routine.id
++        )
++        a.status = .planned
++        a.completedAt = nil
++        a.isAllDay = false
++
++        modelContext.insert(a)
++        try? modelContext.save()
++    }
++
++    private func nextFullHour(after date: Date) -> Date {
++        let cal = Calendar.current
++        let comps = cal.dateComponents([.year, .month, .day, .hour], from: date)
++        let startOfHour = cal.date(from: comps) ?? date
++        return cal.date(byAdding: .hour, value: 1, to: startOfHour) ?? date
++    }
++}
++
++//// MARK: - Row item (extracted: big win for compiler)
++//
++//private struct RoutineListItem: View {
++//    let routine: WorkoutRoutine
++//    let onStartNow: () -> Void
++//    let onScheduleToday: () -> Void
++//    let onRename: () -> Void
++//    let onDelete: () -> Void
++//
++//    var body: some View {
++//        RoutineRow(
++//            title: routine.name,
++//            onStartNow: onStartNow,
++//            onScheduleToday: onScheduleToday
++//        )
++//        .contentShape(Rectangle())
++//        .contextMenu {
++//            Button(action: onStartNow) {
++//                Label("Start now", systemImage: "play.fill")
++//            }
++//            Button(action: onScheduleToday) {
++//                Label("Schedule for today", systemImage: "calendar.badge.plus")
++//            }
++//            Button(action: onRename) {
++//                Label("Rename", systemImage: "pencil")
++//            }
++//            Button(role: .destructive, action: onDelete) {
++//                Label("Delete", systemImage: "trash")
++//            }
++//        }
++//        .swipeActions(edge: .leading, allowsFullSwipe: true) {
++//            Button(action: onStartNow) {
++//                Label("Start", systemImage: "play.fill")
++//            }
++//            .tint(.green)
++//        }
++//        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
++//            Button(action: onRename) {
++//                Label("Rename", systemImage: "pencil")
++//            }
++//            .tint(.blue)
++//
++//            Button(role: .destructive, action: onDelete) {
++//                Label("Delete", systemImage: "trash")
++//            }
++//        }
++//    }
++//}
++//
++//
++//
++//// MARK: - Small UI components
++//
++//private struct RoutineRow: View {
++//    let title: String
++//    let onStartNow: () -> Void
++//    let onScheduleToday: () -> Void
++//
++//    var body: some View {
++//        HStack(spacing: 12) {
++//            ZStack {
++//                RoundedRectangle(cornerRadius: 10)
++//                    .fill(.thinMaterial)
++//                    .frame(width: 36, height: 36)
++//
++//                Image(systemName: "list.bullet.rectangle.portrait")
++//                    .font(.system(size: 16, weight: .semibold))
++//                    .symbolRenderingMode(.hierarchical)
++//            }
++//
++//            Text(title)
++//                .font(.body.weight(.semibold))
++//
++//            Spacer()
++//
++//            Button(action: onScheduleToday) {
++//                Image(systemName: "calendar.badge.plus")
++//                    .symbolRenderingMode(.hierarchical)
++//            }
++//            .buttonStyle(.borderless)
++//            .accessibilityLabel("Schedule for today")
++//
++//            Button(action: onStartNow) {
++//                Image(systemName: "play.fill")
++//                    .symbolRenderingMode(.hierarchical)
++//            }
++//            .buttonStyle(.borderless)
++//            .accessibilityLabel("Start now")
++//        }
++//        .padding(.vertical, 4)
++//    }
++//}
++
++// MARK: - Name editor sheet
++
++private struct RoutineNameEditorSheet: View {
++    @Environment(\.dismiss) private var dismiss
++
++    let title: String
++    let initialName: String
++    let saveButtonTitle: String
++    let onSave: (String) -> Void
++    let onCancel: () -> Void
++
++    @State private var name: String
++
++    init(
++        title: String,
++        initialName: String,
++        saveButtonTitle: String,
++        onSave: @escaping (String) -> Void,
++        onCancel: @escaping () -> Void
++    ) {
++        self.title = title
++        self.initialName = initialName
++        self.saveButtonTitle = saveButtonTitle
++        self.onSave = onSave
++        self.onCancel = onCancel
++        _name = State(initialValue: initialName)
++    }
++
++    var body: some View {
++        NavigationStack {
++            Form {
++                Section("Name") {
++                    TextField("Routine name", text: $name)
++                        .textInputAutocapitalization(.words)
++                }
++            }
++            .navigationTitle(title)
++            .toolbar {
++                ToolbarItem(placement: .topBarLeading) {
++                    Button("Cancel") {
++                        onCancel()
++                        dismiss()
++                    }
++                }
++                ToolbarItem(placement: .topBarTrailing) {
++                    Button(saveButtonTitle) {
++                        onSave(name)
++                        dismiss()
++                    }
++                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
++                }
++            }
++        }
++    }
++}
++
++private struct RoutineNameEditorState: Identifiable {
++    enum Kind {
++        case create
++        case rename(WorkoutRoutine)
++    }
++
++    let id = UUID()
++    let kind: Kind
++
++    static let create = RoutineNameEditorState(kind: .create)
++
++    static func rename(_ routine: WorkoutRoutine) -> RoutineNameEditorState {
++        RoutineNameEditorState(kind: .rename(routine))
++    }
++
++    var title: String {
++        switch kind {
++        case .create: return "New Routine"
++        case .rename: return "Rename Routine"
++        }
++    }
++
++    var initialName: String {
++        switch kind {
++        case .create: return ""
++        case .rename(let r): return r.name
++        }
++    }
++
++    var saveButtonTitle: String {
++        switch kind {
++        case .create: return "Create"
++        case .rename: return "Save"
++        }
+     }
+ }
+diff --git a/workouttracker/Features/Sessions/GoalPrefill/GoalPrefillStore.swift b/workouttracker/Features/Sessions/GoalPrefill/GoalPrefillStore.swift
+index 0ef22f3..ba478c6 100644
+--- a/workouttracker/Features/Sessions/GoalPrefill/GoalPrefillStore.swift
++++ b/workouttracker/Features/Sessions/GoalPrefill/GoalPrefillStore.swift
+@@ -1,35 +1,70 @@
+ import Foundation
+-import Observation
++import Combine
+ 
+-@Observable
+-final class GoalPrefillStore {
++/// Stores one-shot “goal prefills” that can be applied when starting/logging a workout.
++@MainActor
++final class GoalPrefillStore: ObservableObject {
+ 
+-    struct Target: Hashable {
+-        let exerciseId: UUID
+-        let weight: Double?
+-        let reps: Int?
+-        let createdAt: Date
++    struct Prefill: Hashable, Codable {
++        var exerciseId: UUID
++        var weight: Double?
++        var reps: Int?
+ 
+-        init(exerciseId: UUID, weight: Double? = nil, reps: Int? = nil, createdAt: Date = Date()) {
++        init(exerciseId: UUID, weight: Double? = nil, reps: Int? = nil) {
+             self.exerciseId = exerciseId
+             self.weight = weight
+             self.reps = reps
+-            self.createdAt = createdAt
+         }
+     }
+ 
+-    private(set) var pending: Target?
++    /// Prefills are stored per-exercise so multiple can be queued.
++    @Published private var storage: [UUID: Prefill] = [:]
+ 
+-    var pendingExerciseId: UUID? { pending?.exerciseId }
++    /// The “active” exercise id that should receive the next prefill application.
++    /// This matches how your WorkoutSessionScreen applies targets.
++    @Published private(set) var pendingExerciseId: UUID? = nil
+ 
+-    func set(_ target: Target) {
+-        pending = target
++    init() {}
++
++    // MARK: - Write
++
++    func set(_ prefill: Prefill) {
++        storage[prefill.exerciseId] = prefill
++        pendingExerciseId = prefill.exerciseId
++    }
++
++    func clear(exerciseId: UUID) {
++        storage.removeValue(forKey: exerciseId)
++        if pendingExerciseId == exerciseId {
++            pendingExerciseId = storage.keys.first
++        }
++    }
++
++    func clearAll() {
++        storage.removeAll()
++        pendingExerciseId = nil
+     }
+ 
+-    /// One-shot consume: prevents the goal from “sticking” forever and accidentally applying later.
+-    func consumeIfMatches(exerciseId: UUID) -> Target? {
+-        guard let p = pending, p.exerciseId == exerciseId else { return nil }
+-        pending = nil
++    // MARK: - Read
++
++    func peek(exerciseId: UUID) -> Prefill? {
++        storage[exerciseId]
++    }
++
++    /// Read-once: returns the prefill and removes it.
++    func consume(exerciseId: UUID) -> Prefill? {
++        guard let p = storage[exerciseId] else { return nil }
++        storage.removeValue(forKey: exerciseId)
++
++        if pendingExerciseId == exerciseId {
++            pendingExerciseId = storage.keys.first
++        }
+         return p
+     }
++
++    /// Your session screen logic: only consume if it matches the pending exercise.
++    func consumeIfMatches(exerciseId: UUID) -> Prefill? {
++        guard pendingExerciseId == exerciseId else { return nil }
++        return consume(exerciseId: exerciseId)
++    }
+ }
+diff --git a/workouttracker/Features/Sessions/WorkoutSessionScreen.swift b/workouttracker/Features/Sessions/WorkoutSessionScreen.swift
+index 8d957dd..115a117 100644
+--- a/workouttracker/Features/Sessions/WorkoutSessionScreen.swift
++++ b/workouttracker/Features/Sessions/WorkoutSessionScreen.swift
+@@ -6,7 +6,7 @@ import UIKit
+ @MainActor
+ struct WorkoutSessionScreen: View {
+     @Environment(\.dismiss) private var dismiss
+-    @Environment(GoalPrefillStore.self) private var goalPrefill
++    @EnvironmentObject private var goalPrefill: GoalPrefillStore
+     @Environment(\.modelContext) private var modelContext
+ 
+ 
+@@ -710,7 +710,7 @@ struct WorkoutSessionScreen: View {
+         }
+     }
+ 
+-    private func bannerMessageApplied(target: GoalPrefillStore.Target, setNumber: Int, unit: String) -> String {
++    private func bannerMessageApplied(target: GoalPrefillStore.Prefill, setNumber: Int, unit: String) -> String {
+         var parts: [String] = []
+         if let w = target.weight { parts.append("\(formatWeight(w)) \(unit)") }
+         if let r = target.reps { parts.append("\(r) reps") }

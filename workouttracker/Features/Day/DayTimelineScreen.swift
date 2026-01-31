@@ -17,8 +17,8 @@ struct DayTimelineScreen: View {
     @State private var latestSessionByActivityIdCache: [UUID: WorkoutSession] = [:]
     @State private var suppressWorkoutTap = false
     @State private var didSeedUITestData = false
-
-
+    @State private var activityActionActivity: Activity? = nil
+    @State private var showActivityDialog: Bool = false
 
     private let day: Date
     private let cal = Calendar.current
@@ -229,7 +229,47 @@ struct DayTimelineScreen: View {
                 Text("")
             }
         }
+        .confirmationDialog(
+            (activityActionActivity?.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
+                ? (activityActionActivity?.title ?? "Activity")
+                : "Activity",
+            isPresented: $showActivityDialog,
+            titleVisibility: .visible
+        ) {
+            if let a = activityActionActivity {
+                Button("Edit") { onEdit(a); closeActivityActionDialog() }
 
+                Button(a.isDone ? "Mark as not done" : "Mark as done") {
+                    toggleDone(a)
+                    closeActivityActionDialog()
+                }
+
+                if a.templateId != nil {
+                    Button("Skip today") {
+                        skipToday(a)
+                        closeActivityActionDialog()
+                    }
+                }
+
+                Divider()
+
+                Button("Delete", role: .destructive) {
+                    deleteActivity(a)
+                    closeActivityActionDialog()
+                }
+            }
+
+            Button("Cancel", role: .cancel) { closeActivityActionDialog() }
+        } message: {
+            if let a = activityActionActivity {
+                Text(a.templateId != nil
+                     ? "Actions for this activity (template instance)."
+                     : "Actions for this activity.")
+            } else {
+                Text("")
+            }
+        }
+        
     }
     
     private func fetchLatestSession(for activity: Activity) -> WorkoutSession? {
@@ -907,7 +947,9 @@ struct DayTimelineScreen: View {
         lanesX0: CGFloat,
         laneSpan: CGFloat
     ) -> some View {
-        ForEach(laidOut.items) { item in
+        let items: [TimelineLayout.Item] = laidOut.items
+        SwiftUI.ForEach(items.indices, id: \.self) { (idx: Int) in
+            let item: TimelineLayout.Item = items[idx]
             let a = item.activity
             let workout = isWorkout(a)
 
@@ -934,6 +976,13 @@ struct DayTimelineScreen: View {
                         handleWorkoutTap(a)   // tap = push
                     } else {
                         onEdit(a)
+                    }
+                },
+                onMoreActions: {
+                    if workout {
+                        showWorkoutActions(for: a)   // same actions as long-press
+                    } else {
+                        showActivityActions(for: a)
                     }
                 },
                 onCommitLaneChange: { oldLane, newLane in
@@ -1121,6 +1170,20 @@ struct DayTimelineScreen: View {
     private func closeWorkoutDialog() {
         showWorkoutDialog = false
         workoutActionActivity = nil
+    }
+    
+    private func showActivityActions(for activity: Activity) {
+        activityActionActivity = activity
+        showActivityDialog = true
+    }
+
+    private func closeActivityDialog() {
+        showActivityDialog = false
+        activityActionActivity = nil
+    }
+
+    private func closeActivityActionDialog() {
+        closeActivityDialog()
     }
 
     private func startWorkout(from activity: Activity) {
