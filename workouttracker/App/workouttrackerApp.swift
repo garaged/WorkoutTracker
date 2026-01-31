@@ -3,7 +3,7 @@ import SwiftData
 
 @main
 struct workouttrackerApp: App {
-    @State private var goalPrefill = GoalPrefillStore()
+    @StateObject private var goalPrefill = GoalPrefillStore()   // ✅ keep one instance alive
 
     var sharedModelContainer: ModelContainer = {
         let env = ProcessInfo.processInfo.environment
@@ -63,38 +63,32 @@ struct workouttrackerApp: App {
     var body: some Scene {
         WindowGroup {
             AppRootView()
+                .environmentObject(goalPrefill)                 // ✅ inject once at the top
         }
         .modelContainer(sharedModelContainer)
     }
 }
 
 // MARK: - UI Test seed
-
 @MainActor
 private func seedForUITestsIfNeeded(context: ModelContext, calendar: Calendar = .current) throws {
-    // If we already seeded during this launch, or the store already has content, skip.
     let existingActivities = try context.fetch(FetchDescriptor<Activity>())
     if !existingActivities.isEmpty { return }
 
-    // 1) Seed a demo routine (and exercises) so workout paths are available.
     _ = try RoutineSeeder.seedDemoDataIfEmpty(context: context)
 
-    // 2) Add two activities for "today" in local calendar.
     let todayStart = calendar.startOfDay(for: Date())
 
-    // Timed activity at 09:00 for visibility.
     let nineAM = calendar.date(byAdding: .hour, value: 9, to: todayStart) ?? todayStart
     let tenAM = calendar.date(byAdding: .hour, value: 10, to: todayStart) ?? nineAM
     let timed = Activity(title: "UITest — Timed", startAt: nineAM, endAt: tenAM, laneHint: 0, kind: .generic)
     context.insert(timed)
 
-    // All-day activity.
     let allDayEnd = calendar.date(byAdding: .day, value: 1, to: todayStart)
     let allDay = Activity(title: "UITest — All-day", startAt: todayStart, endAt: allDayEnd, laneHint: 0, kind: .generic)
     allDay.isAllDay = true
     context.insert(allDay)
 
-    // 3) A template that matches daily so TemplatePreloader has something to work with.
     let recurrence = RecurrenceRule(kind: .daily, startDate: todayStart, endDate: nil, interval: 1, weekdays: [])
     let template = TemplateActivity(
         title: "UITest — Template",

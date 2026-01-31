@@ -4,8 +4,9 @@ import Charts
 
 struct ExerciseDetailScreen: View {
     @Environment(\.modelContext) private var modelContext
-    @Environment(GoalPrefillStore.self) private var goalPrefill
-
+    @EnvironmentObject private var goalPrefill: GoalPrefillStore
+    @AppStorage("profile.equipment.custom.v1") private var customEquipmentJSON: String = "[]"
+    
     let exercise: Exercise
 
     /// Shortcut hook. Default keeps existing call sites unchanged.
@@ -17,7 +18,7 @@ struct ExerciseDetailScreen: View {
     @State private var loadError: String?
     @State private var nextTarget: PersonalRecordsService.NextTarget? = nil
     @State private var showNextTargetActions: Bool = false
-
+    @State private var showEquipmentEditor: Bool = false
 
     private let prService = PersonalRecordsService()
 
@@ -25,11 +26,24 @@ struct ExerciseDetailScreen: View {
         self.exercise = exercise
         self.startWorkoutAction = startWorkoutAction
     }
-
+    
+    private var customEquipmentLabels: [String] {
+        decode(customEquipmentJSON)
+    }
+    
+    private func decode<T: Decodable>(_ s: String) -> T {
+        guard let data = s.data(using: .utf8) else {
+            return (try! JSONDecoder().decode(T.self, from: Data("[]".utf8)))
+        }
+        do { return try JSONDecoder().decode(T.self, from: data) }
+        catch { return (try! JSONDecoder().decode(T.self, from: Data("[]".utf8))) }
+    }
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 header
+                equipmentSection
 
                 if let instructions = exercise.instructions,
                    !instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -336,4 +350,323 @@ struct ExerciseDetailScreen: View {
             reps: t.targetReps
         ))
     }
+    private var equipmentSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Equipment")
+                    .font(.headline)
+                Spacer()
+                Button {
+                    showEquipmentEditor = true
+                } label: {
+                    Label("Edit", systemImage: "tag")
+                }
+                .buttonStyle(.bordered)
+            }
+
+            if exercise.equipmentTags.isEmpty {
+                Text("No equipment tags yet.")
+                    .foregroundStyle(.secondary)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(exercise.equipmentTags, id: \.self) { tag in
+                            TagChip(
+                                label: EquipmentCatalog.label(for: tag),
+                                systemImage: EquipmentCatalog.symbol(for: tag)
+                            )
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+        }
+        .sheet(isPresented: $showEquipmentEditor) {
+            EquipmentTagsEditorSheet(
+                title: exercise.name,
+                initialTags: Set(exercise.equipmentTags),
+                customLabels: customEquipmentLabels,
+                onSave: { tags in
+                    // Store canonical tags on the exercise
+                    exercise.setEquipmentTags(Array(tags).sorted())
+                    // SwiftData will persist changes automatically; no explicit save required here.
+                }
+            )
+        }
+    }
+
+    private struct TagChip: View {
+        let label: String
+        let systemImage: String
+
+        var body: some View {
+            HStack(spacing: 6) {
+                Image(systemName: systemImage)
+                    .font(.caption.weight(.semibold))
+                    .symbolRenderingMode(.hierarchical)
+                Text(label)
+                    .font(.caption)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(.thinMaterial, in: Capsule())
+        }
+    }
+}
+
+private struct EquipmentTagsEditorSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let title: String
+    let initialTags: Set<String>
+    let customLabels: [String]
+    let onSave: (Set<String>) -> Void
+
+    @State private var selected: Set<String>
+    @State private var newTagLabel: String = ""
+
+    init(
+        title: String,
+        initialTags: Set<String>,
+        customLabels: [String],
+        onSave: @escaping (Set<String>) -> Void
+    ) {
+        self.title = title
+        self.initialTags = initialTags
+        self.customLabels = customLabels
+        self.onSave = onSave
+        _selected = State(initialValue: initialTags)
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("\(selected.count) selected")
+                        .foregroundStyle(.secondary)
+                }
+
+                Section("Common") {
+                    ForEach(EquipmentCatalog.common) { item in
+                        row(tag: item.id, label: item.label, symbol: item.symbol)
+                    }
+                }
+
+                if !customLabels.isEmpty {
+                    Section("Custom") {
+                        ForEach(customLabels.sorted(), id: \.self) { label in
+                            let tag = EquipmentCatalog.slugify(label)
+                            row(tag: tag, label: label, symbol: EquipmentCatalog.symbol(for: tag))
+                        }
+                    }
+                }
+
+                Section("Add tag") {
+                    HStack {
+                        TextField("e.g. Dip Station", text: $newTagLabel)
+                        Button("Add") {
+                            let tag = EquipmentCatalog.slugify(newTagLabel)
+                            guard !tag.isEmpty else { return }
+                            selected.insert(tag)
+                            newTagLabel = ""
+                        }
+                        .disabled(EquipmentCatalog.slugify(newTagLabel).isEmpty)
+                    }
+                    Text("Tags are stored as canonical keys (letters/numbers only).")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") {
+                        onSave(selected)
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+    }
+
+    private func row(tag: String, label: String, symbol: String) -> some View {
+        let isOn = selected.contains(tag)
+
+        return Button {
+            if isOn { selected.remove(tag) } else { selected.insert(tag) }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: symbol)
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.tint)
+                    .frame(width: 22)
+
+                Text(label)
+
+                Spacer()
+
+                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(isOn ? Color.accentColor : Color.secondary)
+            }
+            .padding(.vertical, 6)
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private enum EquipmentTagCatalog {
+        struct Item: Identifiable, Hashable {
+            let id: String      // canonical tag (slug): "dumbbell"
+            let label: String   // display: "Dumbbells"
+            let symbol: String  // SF Symbol
+        }
+
+        static let common: [Item] = [
+            .init(id: "dumbbell",   label: "Dumbbells",        symbol: "dumbbell.fill"),
+            .init(id: "barbell",    label: "Barbell",          symbol: "figure.strengthtraining.traditional"),
+            .init(id: "kettlebell", label: "Kettlebell",       symbol: "figure.strengthtraining.traditional"),
+            .init(id: "plates",     label: "Weight Plates",    symbol: "circle.grid.3x3.fill"),
+
+            .init(id: "bench",      label: "Bench",            symbol: "bed.double.fill"),
+            .init(id: "pullupbar",  label: "Pull-up Bar",      symbol: "figure.pullup"),
+            .init(id: "bands",      label: "Resistance Bands", symbol: "circle.dashed"),
+
+            .init(id: "cable",      label: "Cable Machine",    symbol: "cable.connector"),
+            .init(id: "smith",      label: "Smith Machine",    symbol: "square.split.2x2"),
+            .init(id: "legpress",   label: "Leg Press",        symbol: "figure.strengthtraining.traditional"),
+
+            .init(id: "treadmill",  label: "Treadmill",        symbol: "figure.run"),
+            .init(id: "bike",       label: "Stationary Bike",  symbol: "bicycle"),
+            .init(id: "rower",      label: "Rowing Machine",   symbol: "figure.rower")
+        ]
+
+        static func label(for tag: String) -> String {
+            common.first(where: { $0.id == tag })?.label ?? tag
+        }
+
+        static func symbol(for tag: String) -> String {
+            common.first(where: { $0.id == tag })?.symbol ?? "wrench.and.screwdriver"
+        }
+
+        /// "Pull-up Bar" -> "pullupbar"
+        static func slugify(_ raw: String) -> String {
+            let lower = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            return String(lower.filter { $0.isLetter || $0.isNumber })
+        }
+    }
+
+    private struct EquipmentTagsEditorSheet: View {
+        @Environment(\.dismiss) private var dismiss
+
+        let title: String
+        let initialTags: Set<String>
+        let customLabels: [String]
+        let onSave: (Set<String>) -> Void
+
+        @State private var selected: Set<String>
+        @State private var newTagLabel: String = ""
+
+        init(
+            title: String,
+            initialTags: Set<String>,
+            customLabels: [String],
+            onSave: @escaping (Set<String>) -> Void
+        ) {
+            self.title = title
+            self.initialTags = initialTags
+            self.customLabels = customLabels
+            self.onSave = onSave
+            _selected = State(initialValue: initialTags)
+        }
+
+        var body: some View {
+            NavigationStack {
+                List {
+                    Section {
+                        Text("\(selected.count) selected")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Section("Common") {
+                        ForEach(EquipmentTagCatalog.common) { item in
+                            row(tag: item.id, label: item.label, symbol: item.symbol)
+                        }
+                    }
+
+                    if !customLabels.isEmpty {
+                        Section("Custom") {
+                            ForEach(customLabels.sorted(), id: \.self) { label in
+                                let tag = EquipmentTagCatalog.slugify(label)
+                                row(tag: tag, label: label, symbol: EquipmentTagCatalog.symbol(for: tag))
+                            }
+                        }
+                    }
+
+                    Section("Add tag") {
+                        HStack {
+                            TextField("e.g. Dip Station", text: $newTagLabel)
+                            Button("Add") {
+                                let tag = EquipmentTagCatalog.slugify(newTagLabel)
+                                guard !tag.isEmpty else { return }
+                                selected.insert(tag)
+                                newTagLabel = ""
+                            }
+                            .disabled(EquipmentTagCatalog.slugify(newTagLabel).isEmpty)
+                        }
+
+                        Text("Tags are stored as canonical keys (letters/numbers only).")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .navigationTitle(title)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Cancel") { dismiss() }
+                    }
+
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Save") {
+                            onSave(selected)
+                            dismiss()
+                        }
+                        .fontWeight(.semibold)
+                    }
+                }
+            }
+        }
+
+        private func row(tag: String, label: String, symbol: String) -> some View {
+            let isOn = selected.contains(tag)
+
+            return Button {
+                if isOn { selected.remove(tag) } else { selected.insert(tag) }
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: symbol)
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.tint)
+                        .frame(width: 22)
+
+                    Text(label)
+
+                    Spacer()
+
+                    Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(isOn ? Color.accentColor : Color.secondary)
+                }
+                .padding(.vertical, 6)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
 }

@@ -6,7 +6,7 @@ import UIKit
 @MainActor
 struct WorkoutSessionScreen: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(GoalPrefillStore.self) private var goalPrefill
+    @EnvironmentObject private var goalPrefill: GoalPrefillStore
     @Environment(\.modelContext) private var modelContext
 
 
@@ -710,7 +710,7 @@ struct WorkoutSessionScreen: View {
         }
     }
 
-    private func bannerMessageApplied(target: GoalPrefillStore.Target, setNumber: Int, unit: String) -> String {
+    private func bannerMessageApplied(target: GoalPrefillStore.Prefill, setNumber: Int, unit: String) -> String {
         var parts: [String] = []
         if let w = target.weight { parts.append("\(formatWeight(w)) \(unit)") }
         if let r = target.reps { parts.append("\(r) reps") }

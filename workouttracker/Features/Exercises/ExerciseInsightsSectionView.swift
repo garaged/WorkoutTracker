@@ -3,7 +3,7 @@ import SwiftData
 
 struct ExerciseInsightsSectionView: View {
     @Environment(\.modelContext) private var modelContext
-    @Environment(GoalPrefillStore.self) private var goalPrefill
+    @EnvironmentObject private var goalPrefill: GoalPrefillStore
 
     let exerciseId: UUID
     let exerciseName: String
@@ -93,6 +93,10 @@ struct ExerciseInsightsSectionView: View {
     @MainActor
     private func applyNextTargetPrefill() {
         guard let t = nextTarget else { return }
-        goalPrefill.set(.init(exerciseId: exerciseId, weight: t.targetWeight, reps: t.targetReps))
+        goalPrefill.set(GoalPrefillStore.Prefill(
+            exerciseId: exerciseId,
+            weight: t.targetWeight,
+            reps: t.targetReps
+        ))
     }
 }

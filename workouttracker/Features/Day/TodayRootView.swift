@@ -103,7 +103,11 @@ struct TodayRootView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
+                            .symbolRenderingMode(.hierarchical)
+                            .imageScale(.large)
+                            .contentShape(Rectangle())
                     }
+                    .accessibilityLabel("More")
                     .accessibilityIdentifier("nav.moreMenu")
 
                     Button {

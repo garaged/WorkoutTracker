@@ -11,8 +11,8 @@ struct AppRootView: View {
                 title: "Calendar",
                 subtitle: "Plan and log your day",
                 systemImage: "calendar",
-                tint: .accentColor,
-                destination: { AnyView(DayTimelineEntryScreen()) }   // ✅ timeline/day view
+                tint: Color.accentColor,
+                destination: { AnyView(DayTimelineEntryScreen()) }   // ✅ timeline/day entry
             ),
 
             HomeTile(

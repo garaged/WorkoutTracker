@@ -77,5 +77,16 @@ final class Exercise {
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
             .filter { !$0.isEmpty }
             .joined(separator: ",")
+
+        updatedAt = Date()
+    }
+    
+    var equipmentTagSet: Set<String> {
+        Set(equipmentTags)
+    }
+
+    func matchesEquipmentFilter(_ selectedTags: Set<String>) -> Bool {
+        guard !selectedTags.isEmpty else { return true }
+        return !equipmentTagSet.isDisjoint(with: selectedTags)
     }
 }

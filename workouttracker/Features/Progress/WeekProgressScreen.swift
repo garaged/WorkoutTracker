@@ -3,7 +3,7 @@ import SwiftData
 
 struct WeekProgressScreen: View {
     @Environment(\.modelContext) private var modelContext
-    @Environment(GoalPrefillStore.self) private var goalPrefill
+    @EnvironmentObject private var goalPrefill: GoalPrefillStore
 
     private let service = ProgressSummaryService()
     private let insightsService = ProgressInsightsService()
@@ -166,7 +166,12 @@ struct WeekProgressScreen: View {
     @MainActor
     private func startQuick(from t: ProgressInsightsService.TargetCard) {
         do {
-            goalPrefill.set(.init(exerciseId: t.id, weight: t.targetWeight, reps: t.targetReps))
+            goalPrefill.set(GoalPrefillStore.Prefill(
+                exerciseId: t.id,
+                weight: t.targetWeight,
+                reps: t.targetReps
+            ))
+
             let session = try quickStarter.startOrReuseQuickSession(
                 exerciseId: t.id,
                 exerciseNameSnapshot: t.name,
@@ -182,7 +187,12 @@ struct WeekProgressScreen: View {
     private func resumeRoutineAndApplyTarget() {
         guard let t = pendingTarget, let s = resumeCandidate else { return }
         do {
-            goalPrefill.set(.init(exerciseId: t.id, weight: t.targetWeight, reps: t.targetReps))
+            goalPrefill.set(GoalPrefillStore.Prefill(
+                exerciseId: t.id,
+                weight: t.targetWeight,
+                reps: t.targetReps
+            ))
+
             try quickStarter.prepareSessionForTarget(
                 session: s,
                 exerciseId: t.id,
