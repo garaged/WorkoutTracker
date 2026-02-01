@@ -14,11 +14,23 @@ struct DayTimelineEntryScreen: View {
     @State private var day: Date
     @State private var presentedSession: WorkoutSession? = nil
 
-    @State private var editingActivity: Activity? = nil
-    @State private var editorPresented: Bool = false
-    @State private var editorIsNew: Bool = false
+    @State private var editorRequest: ActivityEditorRequest? = nil
 
-    init(initialDay: Date = Date()) {
+    private struct ActivityEditorRequest: Identifiable {
+    // Using the Activity's id keeps the sheet stable for this specific object.
+    // When the sheet dismisses, we set `editorRequest = nil`, so reopening works normally.
+    let id: UUID
+    let activity: Activity
+    let isNew: Bool
+
+    init(activity: Activity, isNew: Bool) {
+        self.id = activity.id
+        self.activity = activity
+        self.isNew = isNew
+    }
+}
+
+init(initialDay: Date = Date()) {
         _day = State(initialValue: initialDay)
     }
 
@@ -46,13 +58,10 @@ struct DayTimelineEntryScreen: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { headerToolbar }
-        .sheet(isPresented: $editorPresented, onDismiss: {
-            editingActivity = nil
-            editorIsNew = false
-        }) {
-            if let a = editingActivity {
-                ActivityEditorSheet(activity: a, isNew: editorIsNew)
-            }
+        .sheet(item: $editorRequest, onDismiss: {
+            editorRequest = nil
+        }) { req in
+            ActivityEditorSheet(activity: req.activity, isNew: req.isNew)
         }
     }
 
@@ -98,9 +107,8 @@ struct DayTimelineEntryScreen: View {
     }
 
     private func openEditor(for a: Activity, isNew: Bool) {
-        editingActivity = a
-        editorIsNew = isNew
-        editorPresented = true
+        // Drive the sheet off an Identifiable item so it never presents “blank” on first open.
+        editorRequest = ActivityEditorRequest(activity: a, isNew: isNew)
     }
 
     private func createActivity(start: Date, end: Date?, lane: Int) -> Activity {

@@ -19,6 +19,7 @@ final class UserPreferences: ObservableObject {
         static let autoStartRest = "prefs.autoStartRest"           // Bool
         static let confirmDestructiveActions = "prefs.confirmDestructiveActions" // Bool
         static let lastBackupAt = "prefs.lastBackupAt" // Double (time interval)
+        static let diagnosticsVerboseLoggingEnabled = "prefs.diagnosticsVerboseLoggingEnabled" // Bool
     }
 
     // MARK: - Backing store
@@ -51,6 +52,12 @@ final class UserPreferences: ObservableObject {
     /// If true, show confirmations for destructive actions (delete/wipe).
     @Published var confirmDestructiveActions: Bool {
         didSet { defaults.set(confirmDestructiveActions, forKey: Keys.confirmDestructiveActions) }
+    }
+
+    /// If true, `.debug` logs are written to the app's shareable log file.
+    /// Keep this off by default so exported logs stay lean.
+    @Published var diagnosticsVerboseLoggingEnabled: Bool {
+        didSet { defaults.set(diagnosticsVerboseLoggingEnabled, forKey: Keys.diagnosticsVerboseLoggingEnabled) }
     }
     
     // Add as Published property:
@@ -104,6 +111,14 @@ final class UserPreferences: ObservableObject {
             self.confirmDestructiveActions = true
         } else {
             self.confirmDestructiveActions = defaults.bool(forKey: Keys.confirmDestructiveActions)
+        }
+
+
+        // Verbose diagnostics logging (debug-level logs)
+        if defaults.object(forKey: Keys.diagnosticsVerboseLoggingEnabled) == nil {
+            self.diagnosticsVerboseLoggingEnabled = false
+        } else {
+            self.diagnosticsVerboseLoggingEnabled = defaults.bool(forKey: Keys.diagnosticsVerboseLoggingEnabled)
         }
     }
 

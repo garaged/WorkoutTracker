@@ -4,6 +4,9 @@ import SwiftUI
 struct SettingsScreen: View {
     @StateObject private var prefs = UserPreferences.shared
 
+    // Create once per screen instance so both destinations share the same exporter.
+    private let exporter = AppBackupExporter()
+
     var body: some View {
         Form {
             Section("Units") {
@@ -44,10 +47,25 @@ struct SettingsScreen: View {
             Section("Backup") {
                 NavigationLink {
                     BackupRestoreScreen()
+                        .environment(\.backupExporter, exporter)
                 } label: {
                     Label("Backup & Restore", systemImage: "externaldrive")
                 }
             }
+
+            Section("Diagnostics") {
+                NavigationLink {
+                    FeedbackScreen()
+                        .environment(\.backupExporter, exporter)
+                } label: {
+                    Label("Feedback", systemImage: "ladybug")
+                }
+            
+
+Toggle("Verbose logging", isOn: $prefs.diagnosticsVerboseLoggingEnabled)
+    .accessibilityLabel(AccessibilityLabels.Toggles.verboseLogging)
+    .accessibilityHint(AccessibilityLabels.Toggles.verboseLoggingHint)
+}
 
             Section("About") {
                 HStack {

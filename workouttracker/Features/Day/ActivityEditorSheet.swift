@@ -5,8 +5,7 @@ import SwiftData
 //
 // Why this exists:
 // - DayTimelineEntryScreen needs a real UI to edit / create activities.
-// - We keep this as a standalone sheet so it can be reused later
-//   (e.g., editing from a list view, templates, etc.).
+// - We keep this as a standalone sheet so it can be reused later.
 //
 // Design choice (important):
 // - The sheet uses LOCAL state and only writes back on Save.
@@ -20,12 +19,18 @@ struct ActivityEditorSheet: View {
     @Bindable var activity: Activity
     let isNew: Bool
 
+    // Routines are only relevant for workout activities.
+    @Query(sort: \WorkoutRoutine.name) private var routines: [WorkoutRoutine]
+
     @State private var title: String
     @State private var startAt: Date
     @State private var hasEndAt: Bool
     @State private var endAt: Date
     @State private var laneHint: Int
     @State private var status: ActivityStatus
+
+    @State private var kind: ActivityKind
+    @State private var routineId: UUID?
 
     init(activity: Activity, isNew: Bool) {
         self.activity = activity
@@ -44,6 +49,9 @@ struct ActivityEditorSheet: View {
 
         _laneHint = State(initialValue: activity.laneHint)
         _status = State(initialValue: activity.status)
+
+        _kind = State(initialValue: activity.kind)
+        _routineId = State(initialValue: activity.workoutRoutineId)
     }
 
     var body: some View {
@@ -80,12 +88,31 @@ struct ActivityEditorSheet: View {
                 }
 
                 Section("Kind") {
-                    // Read-only for now (keeps this sheet resilient even if ActivityKind evolves).
-                    HStack {
-                        Text("Type")
-                        Spacer()
-                        Text(activity.kindRaw.capitalized)
-                            .foregroundStyle(.secondary)
+                    Picker("Type", selection: $kind) {
+                        ForEach(ActivityKind.allCases, id: \.self) { k in
+                            Text(kindLabel(k)).tag(k)
+                        }
+                    }
+                    .onChange(of: kind) { newKind in
+                        // If the user changes away from Workout, clear the routine selection so we don't persist stale ids.
+                        if newKind != .workout {
+                            routineId = nil
+                        }
+                    }
+
+                    if kind == .workout {
+                        if routines.isEmpty {
+                            Text("No routines yet. Create one in the Routines tab.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Picker("Routine", selection: $routineId) {
+                                Text("Quick workout").tag(UUID?.none)
+                                ForEach(routines) { r in
+                                    Text(r.name).tag(Optional(r.id))
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -113,6 +140,12 @@ struct ActivityEditorSheet: View {
         }
     }
 
+    private func kindLabel(_ k: ActivityKind) -> String {
+        // Avoid tying display names to raw values so the model can evolve.
+        let s = String(describing: k)
+        return s.prefix(1).uppercased() + s.dropFirst()
+    }
+
     private func cancel() {
         if isNew {
             modelContext.delete(activity)
@@ -127,6 +160,10 @@ struct ActivityEditorSheet: View {
         activity.endAt = hasEndAt ? endAt : nil
         activity.laneHint = laneHint
         activity.status = status
+
+        // Persist kind + workout routine selection.
+        activity.kind = kind
+        activity.workoutRoutineId = (kind == .workout) ? routineId : nil
 
         // Keep the dayKey updated so your “day bucket” fetches stay correct.
         activity.dayKey = DayTimelineEntryScreen.dayKey(for: startAt)

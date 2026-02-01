@@ -5,12 +5,18 @@ import UniformTypeIdentifiers
 
 struct BackupRestoreScreen: View {
     @Environment(\.modelContext) private var context
+    @Environment(\.backupExporter) private var backupExporter
 
     private let backupService = BackupService()
     @StateObject private var prefs = UserPreferences.shared
 
+    // JSON backup (restore-friendly)
     @State private var exportURL: URL?
     @State private var exportError: String?
+
+    // Full diagnostic backup (ZIP) via AppBackupExporter
+    @State private var fullExportURL: URL?
+    @State private var fullExportError: String?
 
     @State private var showImporter = false
     @State private var importedData: Data?
@@ -22,15 +28,17 @@ struct BackupRestoreScreen: View {
     var body: some View {
         Form {
             Section("Export") {
+                // Opinionated: keep JSON because it's the safest path for restore (you already validate it).
+                // Add ZIP for real-world debugging (logs + settings + best-effort SwiftData store).
                 Button {
-                    exportBackup()
+                    exportBackupJSON()
                 } label: {
                     Label("Generate JSON Backup", systemImage: "square.and.arrow.up")
                 }
 
                 if let url = exportURL {
                     ShareLink(item: url) {
-                        Label("Share Backup File", systemImage: "square.and.arrow.up.on.square")
+                        Label("Share JSON Backup", systemImage: "square.and.arrow.up.on.square")
                     }
                     .padding(.top, 4)
 
@@ -44,6 +52,46 @@ struct BackupRestoreScreen: View {
                         .foregroundStyle(.red)
                         .font(.footnote)
                 }
+
+                Divider().padding(.vertical, 6)
+
+                Button {
+                    exportFullBackupZIP()
+                } label: {
+                    Label("Generate Full Backup (ZIP)", systemImage: "ladybug")
+                }
+                .disabled(backupExporter == nil)
+                .accessibilityLabel(AccessibilityLabels.Buttons.exportBackup)
+                .accessibilityHint(AccessibilityLabels.Buttons.exportBackupHint)
+
+                if let url = fullExportURL {
+                    ShareLink(item: url) {
+                        Label("Share Full Backup", systemImage: "square.and.arrow.up.on.square")
+                    }
+                    .padding(.top, 4)
+
+                    Text(url.lastPathComponent)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
+                if backupExporter == nil {
+                    Text("Full backup export isn’t configured yet. Add an exporter in SettingsScreen via .environment(\\.backupExporter, AppBackupExporter()).")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 2)
+                }
+
+                if let fullExportError {
+                    Text(fullExportError)
+                        .foregroundStyle(.red)
+                        .font(.footnote)
+                }
+
+                Text("JSON is best for restore. ZIP is best for debugging (logs + settings + data snapshot).")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 2)
             }
 
             Section("Import") {
@@ -182,7 +230,7 @@ struct BackupRestoreScreen: View {
 
     // MARK: - Actions
 
-    private func exportBackup() {
+    private func exportBackupJSON() {
         do {
             let data = try backupService.exportJSON(
                 context: context,
@@ -209,6 +257,26 @@ struct BackupRestoreScreen: View {
         } catch {
             exportURL = nil
             exportError = "Export failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func exportFullBackupZIP() {
+        guard let exporter = backupExporter else {
+            fullExportURL = nil
+            fullExportError = "Full backup exporter is not configured."
+            return
+        }
+
+        do {
+            let url = try exporter.exportBackup()
+            fullExportURL = url
+            fullExportError = nil
+
+            // Track last export time (for user confidence).
+            prefs.lastBackupAt = Date()
+        } catch {
+            fullExportURL = nil
+            fullExportError = "Full backup failed: \(error.localizedDescription)"
         }
     }
 
