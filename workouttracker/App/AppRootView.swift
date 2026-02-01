@@ -14,8 +14,29 @@ struct AppRootView: View {
     private let cal = Calendar.current
 
     var body: some View {
+    let env = ProcessInfo.processInfo.environment
+
+    // UI tests can request a deterministic entry point so tests don't depend on Home navigation.
+    if env["UITESTS"] == "1", let start = env["UITESTS_START"]?.lowercased() {
+        let applyDay = cal.startOfDay(for: Date())
+        switch start {
+        case "calendar":
+            NavigationStack { DayTimelineEntryScreen() }
+        case "settings":
+            NavigationStack { SettingsScreen() }
+        case "templates":
+            NavigationStack { TemplatesScreen(applyDay: applyDay) }
+        case "workouts":
+            NavigationStack { WorkoutSessionsScreen() }
+        case "routines":
+            NavigationStack { RoutinesScreen() }
+        default:
+            HomeScreen(tiles: tiles)
+        }
+    } else {
         HomeScreen(tiles: tiles)
     }
+}
 
     private var tiles: [HomeTile] {
         let applyDay = cal.startOfDay(for: Date())

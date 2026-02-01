@@ -14,23 +14,10 @@ struct DayTimelineEntryScreen: View {
     @State private var day: Date
     @State private var presentedSession: WorkoutSession? = nil
 
-    @State private var editorRequest: ActivityEditorRequest? = nil
+    @State private var editingActivity: Activity? = nil
+    @State private var editorIsNew: Bool = false
 
-    private struct ActivityEditorRequest: Identifiable {
-    // Using the Activity's id keeps the sheet stable for this specific object.
-    // When the sheet dismisses, we set `editorRequest = nil`, so reopening works normally.
-    let id: UUID
-    let activity: Activity
-    let isNew: Bool
-
-    init(activity: Activity, isNew: Bool) {
-        self.id = activity.id
-        self.activity = activity
-        self.isNew = isNew
-    }
-}
-
-init(initialDay: Date = Date()) {
+    init(initialDay: Date = Date()) {
         _day = State(initialValue: initialDay)
     }
 
@@ -58,10 +45,43 @@ init(initialDay: Date = Date()) {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { headerToolbar }
-        .sheet(item: $editorRequest, onDismiss: {
-            editorRequest = nil
-        }) { req in
-            ActivityEditorSheet(activity: req.activity, isNew: req.isNew)
+        .toolbar { headerToolbar }
+        .safeAreaInset(edge: .top, alignment: .trailing) {
+            // XCUITest reliability: SwiftUI toolbar items often don't expose identifiers.
+            // Provide a stable, view-hierarchy button only in UITESTS mode.
+            if ProcessInfo.processInfo.environment["UITESTS"] == "1" {
+                Button { createNewActivityFromToolbar() } label: {
+                    Label("New activity", systemImage: "plus.circle")
+                        .font(.caption)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.thinMaterial, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("timeline.newActivityButton")
+                .padding(.trailing, 8)
+                .padding(.top, 6)
+            }
+        }
+        .safeAreaInset(edge: .top, alignment: .trailing) {
+            if ProcessInfo.processInfo.environment["UITESTS"] == "1" {
+                Button { createNewActivityFromToolbar() } label: {
+                    Label("New activity", systemImage: "plus.circle")
+                        .labelStyle(.titleAndIcon)
+                        .font(.caption)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.thinMaterial, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 8)
+                .padding(.top, 6)
+            }
+        }
+        .sheet(item: $editingActivity, onDismiss: {
+            editorIsNew = false
+        }) { a in
+            ActivityEditorSheet(activity: a, isNew: editorIsNew)
         }
     }
 
@@ -81,6 +101,13 @@ init(initialDay: Date = Date()) {
             }
 
             ToolbarItemGroup(placement: .topBarTrailing) {
+                Button { createNewActivityFromToolbar() } label: {
+                    Image(systemName: "plus.circle")
+                        .labelStyle(.iconOnly)
+                }
+                .accessibilityLabel("New activity")
+                .accessibilityIdentifier("timeline.newActivityButton")
+
                 Button { shiftDay(-1) } label: {
                     Image(systemName: "chevron.left.circle")
                 }
@@ -107,8 +134,8 @@ init(initialDay: Date = Date()) {
     }
 
     private func openEditor(for a: Activity, isNew: Bool) {
-        // Drive the sheet off an Identifiable item so it never presents “blank” on first open.
-        editorRequest = ActivityEditorRequest(activity: a, isNew: isNew)
+        editingActivity = a
+        editorIsNew = isNew
     }
 
     private func createActivity(start: Date, end: Date?, lane: Int) -> Activity {
@@ -137,4 +164,26 @@ init(initialDay: Date = Date()) {
         f.dateFormat = "yyyy-MM-dd"
         return f.string(from: start)
     }
+    
+    private func createNewActivityFromToolbar() {
+            let start = defaultNewActivityStart()
+            let a = createActivity(start: start, end: nil, lane: 0)
+            openEditor(for: a, isNew: true)
+        }
+
+        private func defaultNewActivityStart() -> Date {
+            if isToday {
+                // Next 15-minute slot from “now”
+                let now = Date()
+                let comps = cal.dateComponents([.year, .month, .day, .hour, .minute], from: now)
+                let minute = comps.minute ?? 0
+                let rounded = ((minute + 14) / 15) * 15
+                var start = cal.date(from: comps) ?? now
+                start = cal.date(bySetting: .minute, value: min(rounded, 59), of: start) ?? start
+                return start
+            } else {
+                // 9:00am on the selected day
+                return cal.date(bySettingHour: 9, minute: 0, second: 0, of: dayStart) ?? dayStart
+            }
+        }
 }

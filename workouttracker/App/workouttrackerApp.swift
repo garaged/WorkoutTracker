@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 @main
 struct workouttrackerApp: App {
@@ -10,6 +11,14 @@ struct workouttrackerApp: App {
 
         // ✅ UI tests: fast + deterministic
         if env["UITESTS"] == "1" {
+            // UI tests: reduce flakiness and make runs deterministic.
+            UIView.setAnimationsEnabled(false)
+
+            if env["UITESTS_RESET"] == "1", let bid = Bundle.main.bundleIdentifier {
+                UserDefaults.standard.removePersistentDomain(forName: bid)
+                UserDefaults.standard.synchronize()
+            }
+
             do {
                 let container = try ModelContainerFactory.makeInMemoryContainer()
 
