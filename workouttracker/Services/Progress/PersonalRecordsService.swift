@@ -127,7 +127,7 @@ final class PersonalRecordsService {
     /// - PRs and charts are just reductions over those summaries.
     private func loadSummaries(for exerciseID: UUID, context: ModelContext) throws -> [SessionSummary] {
         // NOTE: If your completion flag differs, change this filter (endedAt != nil).
-        var fd = FetchDescriptor<WorkoutSession>(
+        let fd = FetchDescriptor<WorkoutSession>(
             sortBy: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)]
         )
 

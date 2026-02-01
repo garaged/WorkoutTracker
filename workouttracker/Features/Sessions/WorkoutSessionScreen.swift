@@ -827,7 +827,7 @@ struct WorkoutSessionScreen: View {
         guard let t = nextTargets[ex.exerciseId] else { return }
 
         // Apply into the first incomplete set (by order); create one if none exist.
-        var sets = sortedSets(for: ex)
+        let sets = sortedSets(for: ex)
         let targetSet: WorkoutSetLog
 
         if let s = sets.first(where: { !$0.completed }) {
