@@ -199,6 +199,9 @@
 			);
 			mainGroup = 35BA2D3B2F11D33200EEE02C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				35D849C32F2F239B000BEFC0 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 35BA2D452F11D33200EEE02C /* Products */;
 			projectDirPath = "";
@@ -602,6 +605,17 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		35D849C32F2F239B000BEFC0 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.20;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 	};
 	rootObject = 35BA2D3C2F11D33200EEE02C /* Project object */;
 }

@@ -21,17 +21,31 @@ struct WeekProgressScreen: View {
     @State private var resumeCandidate: WorkoutSession? = nil
     @State private var showResumeChoice: Bool = false
 
+    /// If everything is 0 across the window, treat it as “no data yet”.
+    /// This avoids the prototype-y feeling of a giant list of zeros.
+    private var hasAnyProgressData: Bool {
+        guard let summary else { return false }
+        return summary.weeks.contains(where: { w in
+            w.workoutsCompleted > 0 ||
+            w.totalSetsCompleted > 0 ||
+            w.totalVolume > 0 ||
+            w.timeTrainedSeconds > 0
+        })
+    }
+
 
     var body: some View {
         Group {
             if let summary {
                 List {
-                    Section {
-                        HStack {
-                            StatChip(title: "Current streak", value: "\(summary.currentStreakDays)d")
-                            StatChip(title: "Longest streak", value: "\(summary.longestStreakDays)d")
+                    if hasAnyProgressData {
+                        Section {
+                            HStack {
+                                StatChip(title: "Current streak", value: "\(summary.currentStreakDays)d")
+                                StatChip(title: "Longest streak", value: "\(summary.longestStreakDays)d")
+                            }
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
                     }
 
                     Section {
@@ -41,22 +55,38 @@ struct WeekProgressScreen: View {
                             Text("24w").tag(24)
                         }
                         .pickerStyle(.segmented)
+                        .accessibilityLabel(AccessibilityLabels.Pickers.progressWindow)
+                        .accessibilityHint(AccessibilityLabels.Pickers.progressWindowHint)
                     }
 
-                    if let insights {
-                        Section("Insights") {
-                            ProgressInsightsSectionView(
-                                insights: insights,
-                                onStartTarget: startFromTarget
+                    if hasAnyProgressData {
+                        if let insights {
+                            Section("Insights") {
+                                ProgressInsightsSectionView(
+                                    insights: insights,
+                                    onStartTarget: startFromTarget
+                                )
+                                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                            }
+                        }
+
+                        Section("Weeks") {
+                            ForEach(summary.weeks) { w in
+                                WeekRow(w: w)
+                            }
+                        }
+                    } else {
+                        Section {
+                            EmptyStateView(
+                                title: AccessibilityLabels.EmptyStates.weekProgressTitle,
+                                message: AccessibilityLabels.EmptyStates.weekProgressMessage,
+                                systemImage: "chart.bar.xaxis"
                             )
-                            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
                         }
-                    }
-
-                    Section("Weeks") {
-                        ForEach(summary.weeks) { w in
-                            WeekRow(w: w)
-                        }
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                        .listRowBackground(Color.clear)
                     }
                 }
                 .listStyle(.insetGrouped)
@@ -124,6 +154,7 @@ struct WeekProgressScreen: View {
             insights = try insightsService.summarize(weeksBack: weeksBack, context: modelContext)
             loadError = nil
         } catch {
+            AppLogger.shared.error("WeekProgress reload failed: \(String(describing: error))", category: .persistence)
             summary = nil
             insights = nil
             loadError = String(describing: error)

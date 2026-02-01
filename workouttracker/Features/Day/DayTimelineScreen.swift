@@ -372,7 +372,7 @@ struct DayTimelineScreen: View {
                 0,
                 geo.size.width - gutterWidth - sidePadding * 2
             )
-            let laneCount = max(1, laidOut.laneCount)
+            let laneCount = max(1, laidOut.maxLaneCount)
             let laneWidth =
                 (availableWidth - laneGap * CGFloat(laneCount - 1))
                 / CGFloat(laneCount)
@@ -452,7 +452,8 @@ struct DayTimelineScreen: View {
                     laneCount: laneCount,
                     laneWidth: laneWidth,
                     lanesX0: lanesX0,
-                    laneSpan: laneSpan
+                    laneSpan: laneSpan,
+                    availableWidth: availableWidth
                 )
 
             }
@@ -945,7 +946,8 @@ struct DayTimelineScreen: View {
         laneCount: Int,
         laneWidth: CGFloat,
         lanesX0: CGFloat,
-        laneSpan: CGFloat
+        laneSpan: CGFloat,
+        availableWidth: CGFloat
     ) -> some View {
         let items: [TimelineLayout.Item] = laidOut.items
         SwiftUI.ForEach(items.indices, id: \.self) { (idx: Int) in
@@ -953,7 +955,12 @@ struct DayTimelineScreen: View {
             let a = item.activity
             let workout = isWorkout(a)
 
-            let x = lanesX0 + CGFloat(item.lane) * laneSpan
+            let isSoloGroup = item.groupLaneCount <= 1
+
+            let x = isSoloGroup
+                ? lanesX0
+                : (lanesX0 + CGFloat(item.lane) * laneSpan)
+
             let y = yFromMinutes(item.displayStartMinute)
             let h = max(28, heightFromMinutes(item.displayDurationMinutes))
 
@@ -1052,7 +1059,7 @@ struct DayTimelineScreen: View {
                         }
                 }
             }
-            .frame(width: max(60, laneWidth), height: h, alignment: .topLeading)
+            .frame(width: max(60, isSoloGroup ? availableWidth : laneWidth), height: h, alignment: .topLeading)
             .offset(x: x, y: y)
         }
     }
@@ -1648,7 +1655,7 @@ private struct LaneHighlight: View {
 private enum TimelineLayout {
     struct Result {
         let items: [Item]
-        let laneCount: Int
+        let maxLaneCount: Int
     }
 
     struct Item {
@@ -1659,6 +1666,7 @@ private enum TimelineLayout {
         let displayDurationMinutes: Int
 
         let lane: Int
+        let groupLaneCount: Int
         let clippedStart: Bool
         let clippedEnd: Bool
     }
@@ -1709,73 +1717,118 @@ private enum TimelineLayout {
             return $0.end < $1.end
         }
 
-        // 1) Compute max concurrency (how many lanes we truly need)
-        // Process end events before start events at the same minute so [end==start] doesn't overlap.
-        var events: [(t: Int, delta: Int)] = []
-        events.reserveCapacity(segments.count * 2)
+        // 1) Compute maximum concurrency across the day (used by the interaction layer).
+// Process end events before start events at the same minute so [end==start] doesn't overlap.
+var sweep: [(t: Int, delta: Int)] = []
+sweep.reserveCapacity(segments.count * 2)
 
-        for s in segments {
-            events.append((s.start, +1))
-            events.append((s.end, -1))
-        }
+for s in segments {
+    sweep.append((s.start, +1))
+    sweep.append((s.end, -1))
+}
 
-        events.sort {
-            if $0.t != $1.t { return $0.t < $1.t }
-            return $0.delta < $1.delta  // -1 before +1
-        }
+sweep.sort {
+    if $0.t != $1.t { return $0.t < $1.t }
+    return $0.delta < $1.delta  // -1 before +1
+}
 
-        var cur = 0
-        var maxConcurrent = 0
-        for e in events {
-            cur += e.delta
-            if cur > maxConcurrent { maxConcurrent = cur }
-        }
+var cur = 0
+var maxLaneCount = 0
+for e in sweep {
+    cur += e.delta
+    if cur > maxLaneCount { maxLaneCount = cur }
+}
 
-        let laneCount = max(1, maxConcurrent)
+maxLaneCount = max(1, maxLaneCount)
 
-        // 2) Pre-create lanes so lane 1/2 exists even for earliest item (needed for “swap order”)
-        var laneEnds = Array(repeating: 0, count: laneCount)
+// 2) Split into connected overlap clusters so non-overlapping items can expand again.
+var out: [Item] = []
+out.reserveCapacity(segments.count)
 
-        var out: [Item] = []
-        out.reserveCapacity(segments.count)
+var i = 0
+while i < segments.count {
+    var cluster:
+        [(
+            activity: Activity, start: Int, end: Int, clippedStart: Bool,
+            clippedEnd: Bool
+        )] = []
+    cluster.reserveCapacity(8)
 
-        // 3) Greedy assignment honoring laneHint (but never creating extra lanes beyond concurrency)
-        for s in segments {
-            let preferred = min(max(0, s.activity.laneHint), laneCount - 1)
+    var clusterEnd = segments[i].end
+    cluster.append(segments[i])
+    i += 1
 
-            var chosen: Int? = nil
+    while i < segments.count && segments[i].start < clusterEnd {
+        cluster.append(segments[i])
+        clusterEnd = max(clusterEnd, segments[i].end)
+        i += 1
+    }
 
-            // try preferred first
-            if laneEnds[preferred] <= s.start {
-                chosen = preferred
-            } else {
-                // else first free lane
-                for i in 0..<laneCount {
-                    if laneEnds[i] <= s.start {
-                        chosen = i
-                        break
-                    }
+    // 2a) Compute lane count for this overlap group (max concurrency within the cluster).
+    var events: [(t: Int, delta: Int)] = []
+    events.reserveCapacity(cluster.count * 2)
+
+    for s in cluster {
+        events.append((s.start, +1))
+        events.append((s.end, -1))
+    }
+
+    events.sort {
+        if $0.t != $1.t { return $0.t < $1.t }
+        return $0.delta < $1.delta  // -1 before +1
+    }
+
+    var ccur = 0
+    var clusterMax = 0
+    for e in events {
+        ccur += e.delta
+        if ccur > clusterMax { clusterMax = ccur }
+    }
+
+    let groupLaneCount = max(1, clusterMax)
+
+    // 2b) Greedy assignment honoring laneHint within the group's laneCount.
+    var laneEnds = Array(repeating: 0, count: groupLaneCount)
+
+    for s in cluster {
+        let preferred = min(max(0, s.activity.laneHint), groupLaneCount - 1)
+
+        var chosen: Int? = nil
+
+        // try preferred first
+        if laneEnds[preferred] <= s.start {
+            chosen = preferred
+        } else {
+            // else first free lane
+            for li in 0..<groupLaneCount {
+                if laneEnds[li] <= s.start {
+                    chosen = li
+                    break
                 }
             }
-
-            // With correct maxConcurrent, a lane should always exist; this is just a safety fallback.
-            let lane = chosen ?? 0
-            laneEnds[lane] = s.end
-
-            out.append(
-                Item(
-                    activity: s.activity,
-                    displayStartMinute: s.start,
-                    displayEndMinute: s.end,
-                    displayDurationMinutes: s.end - s.start,
-                    lane: lane,
-                    clippedStart: s.clippedStart,
-                    clippedEnd: s.clippedEnd
-                )
-            )
         }
 
-        return Result(items: out, laneCount: laneCount)
+        // safety fallback
+        let lane = chosen ?? 0
+        laneEnds[lane] = s.end
+
+        out.append(
+            Item(
+                activity: s.activity,
+                displayStartMinute: s.start,
+                displayEndMinute: s.end,
+                displayDurationMinutes: s.end - s.start,
+                lane: lane,
+                groupLaneCount: groupLaneCount,
+                clippedStart: s.clippedStart,
+                clippedEnd: s.clippedEnd
+            )
+        )
+    }
+}
+
+return Result(items: out, maxLaneCount: maxLaneCount)
+
     }
 
     private static func clamp(_ m: Int) -> Int {

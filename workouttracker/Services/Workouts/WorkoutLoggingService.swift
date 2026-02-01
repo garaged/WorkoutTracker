@@ -268,10 +268,16 @@ final class WorkoutLoggingService: ObservableObject {
         undoToast = toast
 
         dismissTask?.cancel()
+        dismissTask = nil
+
+        // Capture the duration outside the Task closure to satisfy Swift 6 explicit-capture rules.
+        // This avoids referencing `self` (captured weakly) before the `guard let self`.
+        let delaySeconds = toastDurationSeconds
+
         dismissTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(nanoseconds: UInt64(toastDurationSeconds * 1_000_000_000))
+            try? await Task.sleep(nanoseconds: UInt64(delaySeconds * 1_000_000_000))
             guard let self else { return }
-            if self.undoToast?.id == toast.id {
+if self.undoToast?.id == toast.id {
                 self.undoToast = nil
             }
         }
