@@ -1,18 +1,32 @@
 import SwiftUI
 
+// File: workouttracker/App/AppRootView.swift
+//
+// What changed:
+// - All Home tiles are now actually wired to real screens.
+// - Added a Templates tile so template editing is accessible again.
+// - Fixed the HomeTile API usage: `destination` is a closure `() -> AnyView`.
+//
+// Why this lives here:
+// - AppRootView is the single place that defines “top-level navigation” for the app.
+
 struct AppRootView: View {
+    private let cal = Calendar.current
+
     var body: some View {
         HomeScreen(tiles: tiles)
     }
 
     private var tiles: [HomeTile] {
-        [
+        let applyDay = cal.startOfDay(for: Date())
+
+        return [
             HomeTile(
                 title: "Calendar",
                 subtitle: "Plan and log your day",
                 systemImage: "calendar",
-                tint: Color.accentColor,
-                destination: { AnyView(DayTimelineEntryScreen()) }   // ✅ timeline/day entry
+                tint: .accentColor,
+                destination: { AnyView(DayTimelineEntryScreen()) }
             ),
 
             HomeTile(
@@ -29,6 +43,14 @@ struct AppRootView: View {
                 systemImage: "list.bullet.rectangle.portrait",
                 tint: .purple,
                 destination: { AnyView(RoutinesScreen()) }
+            ),
+
+            HomeTile(
+                title: "Templates",
+                subtitle: "Auto-preload your day",
+                systemImage: "wand.and.stars",
+                tint: .indigo,
+                destination: { AnyView(TemplatesScreen(applyDay: applyDay)) }
             ),
 
             HomeTile(

@@ -9,12 +9,6 @@ struct TemplateUpdatePlanner {
         self.calendar = calendar
     }
 
-    /// Main entry point used by the UI (preview) and by Save (real plan).
-    ///
-    /// - daysAhead: only used for `.thisAndFuture` to keep things bounded (keeps your previous behavior).
-    /// - includeApplyDayCreate: if true, applyDay is allowed to be created (resurrect behavior).
-    /// - resurrectOverridesOnApplyDay: if true, an override on applyDay will be removed.
-    /// - forceApplyDay: if true, applyDay will update/create even if template is disabled or recurrence doesn't match.
     func makePlan(
         templateId: UUID,
         draft: TemplateDraft,
