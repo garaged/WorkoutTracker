@@ -54,20 +54,20 @@ struct SettingsScreen: View {
             }
 
             Section("Diagnostics") {
-                NavigationLink {
-                    FeedbackScreen()
-                        .environment(\.backupExporter, exporter)
-                } label: {
-                    Label("Feedback", systemImage: "ladybug")
-                }
-            
+    NavigationLink {
+        FeedbackScreen()
+            .environment(\.backupExporter, exporter)
+    } label: {
+        Label("Feedback", systemImage: "ladybug")
+    }
 
-Toggle("Verbose logging", isOn: $prefs.diagnosticsVerboseLoggingEnabled)
-    .accessibilityLabel(AccessibilityLabels.Toggles.verboseLogging)
-    .accessibilityHint(AccessibilityLabels.Toggles.verboseLoggingHint)
+    Toggle("Verbose logging", isOn: $prefs.diagnosticsVerboseLoggingEnabled)
+        .accessibilityIdentifier("settings.verboseLoggingToggle")
+        .accessibilityLabel(AccessibilityLabels.Toggles.verboseLogging)
+        .accessibilityHint(AccessibilityLabels.Toggles.verboseLoggingHint)
 }
 
-            Section("About") {
+Section("About") {
                 HStack {
                     Text("Version")
                     Spacer()

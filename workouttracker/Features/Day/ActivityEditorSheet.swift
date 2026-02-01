@@ -3,14 +3,10 @@ import SwiftData
 
 // File: workouttracker/Features/Day/ActivityEditorSheet.swift
 //
-// Why this exists:
-// - DayTimelineEntryScreen needs a real UI to edit / create activities.
-// - We keep this as a standalone sheet so it can be reused later.
-//
-// Design choice (important):
-// - The sheet uses LOCAL state and only writes back on Save.
-//   This gives you a real “Cancel” that discards changes.
-// - For newly-created activities, Cancel deletes the activity so you don’t keep junk rows.
+// Why:
+// - Editing/creating activities from the day timeline.
+// - Local state so Cancel truly discards changes.
+// - For new activities, Cancel deletes the created row to avoid junk.
 
 struct ActivityEditorSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -59,6 +55,7 @@ struct ActivityEditorSheet: View {
             Form {
                 Section("Details") {
                     TextField("Title", text: $title)
+                        .accessibilityIdentifier("activityEditor.titleField")
 
                     Picker("Status", selection: $status) {
                         Text("Planned").tag(ActivityStatus.planned)
@@ -79,7 +76,6 @@ struct ActivityEditorSheet: View {
 
                 Section("Time") {
                     DatePicker("Start", selection: $startAt, displayedComponents: [.date, .hourAndMinute])
-
                     Toggle("Has end time", isOn: $hasEndAt)
 
                     if hasEndAt {
@@ -88,16 +84,17 @@ struct ActivityEditorSheet: View {
                 }
 
                 Section("Kind") {
-                    Picker("Type", selection: $kind) {
-                        ForEach(ActivityKind.allCases, id: \.self) { k in
-                            Text(kindLabel(k)).tag(k)
+                    LabeledContent("Type") {
+                        Picker("", selection: $kind) {
+                            ForEach(ActivityKind.allCases, id: \.self) { k in
+                                Text(String(describing: k).capitalized).tag(k)
+                            }
                         }
+                        .accessibilityIdentifier("activityEditor.typePicker")
                     }
-                    .onChange(of: kind) { newKind in
-                        // If the user changes away from Workout, clear the routine selection so we don't persist stale ids.
-                        if newKind != .workout {
-                            routineId = nil
-                        }
+                    
+                    .onChange(of: kind) { _, newKind in
+                        if newKind != .workout { routineId = nil }
                     }
 
                     if kind == .workout {
@@ -106,11 +103,14 @@ struct ActivityEditorSheet: View {
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         } else {
-                            Picker("Routine", selection: $routineId) {
-                                Text("Quick workout").tag(UUID?.none)
-                                ForEach(routines) { r in
-                                    Text(r.name).tag(Optional(r.id))
+                            LabeledContent("Routine") {
+                                Picker("", selection: $routineId) {
+                                    Text("Quick workout").tag(UUID?.none)
+                                    ForEach(routines) { r in
+                                        Text(r.name).tag(Optional(r.id))
+                                    }
                                 }
+                                .accessibilityIdentifier("activityEditor.routinePicker")
                             }
                         }
                     }
@@ -131,17 +131,18 @@ struct ActivityEditorSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { cancel() }
+                        .accessibilityIdentifier("activityEditor.cancelButton")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") { save() }
                         .font(.headline)
+                        .accessibilityIdentifier("activityEditor.saveButton")
                 }
             }
         }
     }
 
     private func kindLabel(_ k: ActivityKind) -> String {
-        // Avoid tying display names to raw values so the model can evolve.
         let s = String(describing: k)
         return s.prefix(1).uppercased() + s.dropFirst()
     }
@@ -161,11 +162,9 @@ struct ActivityEditorSheet: View {
         activity.laneHint = laneHint
         activity.status = status
 
-        // Persist kind + workout routine selection.
-        activity.kind = kind
+        activity.kindRaw = kind.rawValue
         activity.workoutRoutineId = (kind == .workout) ? routineId : nil
 
-        // Keep the dayKey updated so your “day bucket” fetches stay correct.
         activity.dayKey = DayTimelineEntryScreen.dayKey(for: startAt)
 
         try? modelContext.save()
