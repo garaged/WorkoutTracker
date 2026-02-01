@@ -8,8 +8,6 @@ struct ExerciseDetailScreen: View {
     @AppStorage("profile.equipment.custom.v1") private var customEquipmentJSON: String = "[]"
     
     let exercise: Exercise
-
-    /// Shortcut hook. Default keeps existing call sites unchanged.
     let startWorkoutAction: ((Exercise) -> Void)?
 
     @State private var history: [WorkoutSetLog] = []

@@ -1,23 +1,26 @@
 // File: workouttracker/Features/Day/DayTimelineEntryScreen.swift
 //
-// This is the "Calendar entry" wrapper pushed from Home.
-// It owns navigation to WorkoutSessionScreen (so Summary works when launched from Home)
-// and provides a compact, consistent header:
-// - Back chevron stays on the left (system)
-// - Day navigation (prev / go-to-today / next) stays on the right
+// Patch: add an initializer so other screens (like Routines) can open the Calendar at a specific day.
+// This is a backwards-compatible change (existing call sites still compile).
 
 import SwiftUI
+import SwiftData
 
 struct DayTimelineEntryScreen: View {
     private let cal = Calendar.current
 
-    @State private var day: Date = Date()
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var day: Date
     @State private var presentedSession: WorkoutSession? = nil
 
-    // Placeholders so the callbacks are satisfied.
-    // Later: wire to your real activity editor / creator flows.
-    @State private var showingEditPlaceholder = false
-    @State private var showingCreatePlaceholder = false
+    @State private var editingActivity: Activity? = nil
+    @State private var editorPresented: Bool = false
+    @State private var editorIsNew: Bool = false
+
+    init(initialDay: Date = Date()) {
+        _day = State(initialValue: initialDay)
+    }
 
     private var dayStart: Date { cal.startOfDay(for: day) }
     private var isToday: Bool { cal.isDateInToday(day) }
@@ -26,52 +29,48 @@ struct DayTimelineEntryScreen: View {
         DayTimelineScreen(
             day: dayStart,
             presentedSession: $presentedSession,
-            onEdit: { _ in showingEditPlaceholder = true },
-            onCreateAt: { _, _ in showingCreatePlaceholder = true },
-            onCreateRange: { _, _, _ in showingCreatePlaceholder = true }
+            onEdit: { a in
+                openEditor(for: a, isNew: false)
+            },
+            onCreateAt: { start, lane in
+                let a = createActivity(start: start, end: nil, lane: lane)
+                openEditor(for: a, isNew: true)
+            },
+            onCreateRange: { start, end, lane in
+                let a = createActivity(start: start, end: end, lane: lane)
+                openEditor(for: a, isNew: true)
+            }
         )
-        // ✅ Critical: without this, `openSession(...)` sets the binding but nothing navigates.
         .navigationDestination(item: $presentedSession) { s in
             WorkoutSessionScreen(session: s)
         }
         .navigationBarTitleDisplayMode(.inline)
-        // ✅ Do NOT hide the system back button. Keeps the chevron consistent across the app.
         .toolbar { headerToolbar }
-        .sheet(isPresented: $showingEditPlaceholder) {
-            PlaceholderSheet(
-                title: "Edit Activity",
-                message: "This entry screen is wired. Next, connect onEdit to your real activity editor."
-            )
-        }
-        .sheet(isPresented: $showingCreatePlaceholder) {
-            PlaceholderSheet(
-                title: "Create Activity",
-                message: "This entry screen is wired. Next, connect onCreateAt/onCreateRange to your real create flow."
-            )
+        .sheet(isPresented: $editorPresented, onDismiss: {
+            editingActivity = nil
+            editorIsNew = false
+        }) {
+            if let a = editingActivity {
+                ActivityEditorSheet(activity: a, isNew: editorIsNew)
+            }
         }
     }
 
-    // Matches your prior “Tue 27 Jan” style
     private var dayTitle: String {
         day.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
     }
 
     private var headerToolbar: some ToolbarContent {
         Group {
-            // Compact title in the center so trailing buttons don’t get dropped
             ToolbarItem(placement: .principal) {
                 Text(dayTitle)
                     .font(.headline)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
                     .contentShape(Rectangle())
-                    .onTapGesture {
-                        // Optional: tap the date to jump to today (keeps the "go to today" feature alive)
-                        day = Date()
-                    }
+                    .onTapGesture { day = Date() }
             }
 
-            // Keep all day navigation on the right to avoid visually clashing with the back chevron.
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button { shiftDay(-1) } label: {
                     Image(systemName: "chevron.left.circle")
@@ -97,28 +96,37 @@ struct DayTimelineEntryScreen: View {
     private func shiftDay(_ delta: Int) {
         day = cal.date(byAdding: .day, value: delta, to: day) ?? day
     }
-}
 
-private struct PlaceholderSheet: View {
-    let title: String
-    let message: String
+    private func openEditor(for a: Activity, isNew: Bool) {
+        editingActivity = a
+        editorIsNew = isNew
+        editorPresented = true
+    }
 
-    @Environment(\.dismiss) private var dismiss
+    private func createActivity(start: Date, end: Date?, lane: Int) -> Activity {
+        let cleanStart = start
+        let computedEnd = end ?? cal.date(byAdding: .minute, value: 30, to: cleanStart)
 
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 16) {
-                Text(message)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
+        let a = Activity(
+            title: "New Activity",
+            startAt: cleanStart,
+            endAt: computedEnd,
+            laneHint: lane
+        )
+        a.dayKey = Self.dayKey(for: cleanStart)
 
-                Button("OK") { dismiss() }
-                    .buttonStyle(.borderedProminent)
-            }
-            .padding()
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-        }
+        modelContext.insert(a)
+        try? modelContext.save()
+        return a
+    }
+
+    static func dayKey(for date: Date) -> String {
+        let start = Calendar.current.startOfDay(for: date)
+        let f = DateFormatter()
+        f.calendar = Calendar.current
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone.current
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: start)
     }
 }
