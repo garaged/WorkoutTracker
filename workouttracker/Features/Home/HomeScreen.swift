@@ -21,7 +21,6 @@ struct HomeScreen: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Subtle background that looks good in light/dark mode.
                 LinearGradient(
                     colors: [
                         Color(.systemBackground),
@@ -56,18 +55,36 @@ struct HomeScreen: View {
                     .padding(16)
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
+            // ✅ Key change: Home uses a custom header, so hide the nav bar entirely.
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Workout Tracker")
-                .font(.largeTitle.bold())
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Workout Tracker")
+                    .font(.largeTitle.bold())
 
-            Text(Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                Text(Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            // ✅ Better placement: in the header, not in a blank nav bar.
+            NavigationLink {
+                SettingsScreen()
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 18, weight: .semibold))
+                    .symbolRenderingMode(.hierarchical)
+                    .padding(10)
+                    .background(.ultraThinMaterial, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Settings")
         }
     }
 }
