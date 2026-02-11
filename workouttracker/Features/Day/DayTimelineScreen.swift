@@ -133,26 +133,33 @@ struct DayTimelineScreen: View {
             }
         }
         .task(id: day.dayKey()) { @MainActor in
-            if ProcessInfo.processInfo.arguments.contains("-uiTesting") {
+            let env = ProcessInfo.processInfo.environment
+            let isUITests = env["UITESTS"] == "1" || ProcessInfo.processInfo.arguments.contains("-uiTesting")
+            let startRoute = (env["UITESTS_START"] ?? "").lowercased()
+
+            // UI tests: only seed + auto-open a session when explicitly requested.
+            // This prevents calendar/timeline smoke tests from being hijacked into the session screen.
+            if isUITests && startRoute == "session" {
                 guard !didSeedUITestData else { return }
                 didSeedUITestData = true
 
                 do {
                     let seededSession = try UITestDataSeeder.resetAndSeed(day: day, context: modelContext)
                     refreshWorkoutSessionCache()
-                    openSession(seededSession)   // ✅ deterministic: UI test starts inside the session
+                    openSession(seededSession)   // ✅ deterministic for logging tests
                 } catch {
                     assertionFailure("UI test seeding failed: \(error)")
                 }
                 return
             }
 
-            // Normal (non-test) behavior:
+            // Normal app behavior (and calendar UI tests): preload day but do NOT auto-navigate away.
             do {
                 try TemplatePreloader.ensureDayIsPreloaded(for: day, context: modelContext)
             } catch {
                 assertionFailure("Failed to preload day: \(error)")
             }
+
             refreshWorkoutSessionCache()
         }
         .confirmationDialog(

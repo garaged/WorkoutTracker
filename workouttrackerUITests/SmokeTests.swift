@@ -69,11 +69,13 @@ final class SmokeTests: XCTestCase {
         let app = makeApp(start: "calendar", resetDefaults: true, seed: false)
         app.launch()
 
-        XCTAssertTrue(tapNewActivityButton(app))
-        guard app.navigationBars["New Activity"].waitForExistence(timeout: 4) else { return }
+        tapNewActivityButton(app)
 
-        XCTAssertTrue(find(app, id: "activityEditor.titleField").waitForExistence(timeout: 4))
-        XCTAssertTrue(find(app, id: "activityEditor.saveButton").waitForExistence(timeout: 4))
+        XCTAssertTrue(app.navigationBars["New Activity"].waitForExistence(timeout: 4))
+
+        XCTAssertTrue(el(app, "activityEditor.titleField").waitForExistence(timeout: 4))
+        XCTAssertTrue(el(app, "activityEditor.typePicker").waitForExistence(timeout: 4))
+        XCTAssertTrue(el(app, "activityEditor.saveButton").waitForExistence(timeout: 4))
     }
 
     func testWorkoutTypeShowsRoutinePickerOrEmptyState() {

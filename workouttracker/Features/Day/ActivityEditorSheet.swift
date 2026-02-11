@@ -3,20 +3,23 @@ import SwiftData
 
 // File: workouttracker/Features/Day/ActivityEditorSheet.swift
 //
-// Why:
-// - Editing/creating activities from the day timeline.
-// - Local state so Cancel truly discards changes.
-// - For new activities, Cancel deletes the created row to avoid junk.
+// Patch:
+// - Adds editable Type picker (driven by kindRaw, so no enum conformance assumptions).
+// - Restores routine selection when Type == Workout.
+// - Adds stable accessibility identifiers used by UITests:
+//   - activityEditor.titleField
+//   - activityEditor.typePicker
+//   - activityEditor.routinePicker
+//   - activityEditor.saveButton
 
 struct ActivityEditorSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
+    @Query private var routines: [WorkoutRoutine]
+
     @Bindable var activity: Activity
     let isNew: Bool
-
-    // Routines are only relevant for workout activities.
-    @Query(sort: \WorkoutRoutine.name) private var routines: [WorkoutRoutine]
 
     @State private var title: String
     @State private var startAt: Date
@@ -25,8 +28,8 @@ struct ActivityEditorSheet: View {
     @State private var laneHint: Int
     @State private var status: ActivityStatus
 
-    @State private var kind: ActivityKind
-    @State private var routineId: UUID?
+    @State private var kindRaw: String
+    @State private var workoutRoutineId: UUID?
 
     init(activity: Activity, isNew: Bool) {
         self.activity = activity
@@ -46,8 +49,12 @@ struct ActivityEditorSheet: View {
         _laneHint = State(initialValue: activity.laneHint)
         _status = State(initialValue: activity.status)
 
-        _kind = State(initialValue: activity.kind)
-        _routineId = State(initialValue: activity.workoutRoutineId)
+        _kindRaw = State(initialValue: activity.kindRaw)
+        _workoutRoutineId = State(initialValue: activity.workoutRoutineId)
+    }
+
+    private var isWorkout: Bool {
+        kindRaw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "workout"
     }
 
     var body: some View {
@@ -76,6 +83,7 @@ struct ActivityEditorSheet: View {
 
                 Section("Time") {
                     DatePicker("Start", selection: $startAt, displayedComponents: [.date, .hourAndMinute])
+
                     Toggle("Has end time", isOn: $hasEndAt)
 
                     if hasEndAt {
@@ -84,34 +92,36 @@ struct ActivityEditorSheet: View {
                 }
 
                 Section("Kind") {
-                    LabeledContent("Type") {
-                        Picker("", selection: $kind) {
-                            ForEach(ActivityKind.allCases, id: \.self) { k in
-                                Text(String(describing: k).capitalized).tag(k)
-                            }
+                    Picker("Type", selection: $kindRaw) {
+                        ForEach(kindOptions, id: \.raw) { opt in
+                            Text(opt.label).tag(opt.raw)
                         }
-                        .accessibilityIdentifier("activityEditor.typePicker")
                     }
-                    
-                    .onChange(of: kind) { _, newKind in
-                        if newKind != .workout { routineId = nil }
+                    .pickerStyle(.menu)
+                    .accessibilityIdentifier("activityEditor.typePicker")
+                    .onChange(of: kindRaw) { _, newRaw in
+                        if newRaw.lowercased() != "workout" {
+                            workoutRoutineId = nil
+                        }
                     }
 
-                    if kind == .workout {
+                    if isWorkout {
                         if routines.isEmpty {
-                            Text("No routines yet. Create one in the Routines tab.")
+                            Text("No routines yet. Create one in Routines.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
-                        } else {
-                            LabeledContent("Routine") {
-                                Picker("", selection: $routineId) {
-                                    Text("Quick workout").tag(UUID?.none)
-                                    ForEach(routines) { r in
-                                        Text(r.name).tag(Optional(r.id))
-                                    }
-                                }
                                 .accessibilityIdentifier("activityEditor.routinePicker")
+                        } else {
+                            Picker("Routine", selection: Binding(
+                                get: { workoutRoutineId ?? routines.first?.id },
+                                set: { workoutRoutineId = $0 }
+                            )) {
+                                ForEach(routines) { r in
+                                    Text(r.name).tag(Optional(r.id))
+                                }
                             }
+                            .pickerStyle(.menu)
+                            .accessibilityIdentifier("activityEditor.routinePicker")
                         }
                     }
                 }
@@ -131,7 +141,6 @@ struct ActivityEditorSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { cancel() }
-                        .accessibilityIdentifier("activityEditor.cancelButton")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") { save() }
@@ -142,9 +151,15 @@ struct ActivityEditorSheet: View {
         }
     }
 
-    private func kindLabel(_ k: ActivityKind) -> String {
-        let s = String(describing: k)
-        return s.prefix(1).uppercased() + s.dropFirst()
+    private var kindOptions: [(raw: String, label: String)] {
+        var opts: [(String, String)] = [("generic", "Generic"), ("workout", "Workout")]
+
+        // If you add new kinds later, keep them selectable instead of breaking the editor.
+        let normalized = kindRaw.lowercased()
+        if !opts.contains(where: { $0.0 == normalized }) && !normalized.isEmpty {
+            opts.append((normalized, normalized.capitalized))
+        }
+        return opts
     }
 
     private func cancel() {
@@ -162,9 +177,8 @@ struct ActivityEditorSheet: View {
         activity.laneHint = laneHint
         activity.status = status
 
-        activity.kindRaw = kind.rawValue
-        activity.workoutRoutineId = (kind == .workout) ? routineId : nil
-
+        activity.kindRaw = kindRaw.lowercased()
+        activity.workoutRoutineId = isWorkout ? workoutRoutineId : nil
         activity.dayKey = DayTimelineEntryScreen.dayKey(for: startAt)
 
         try? modelContext.save()

@@ -22,7 +22,7 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         app.launchEnvironment["UITESTS"] = "1"
         app.launchEnvironment["UITESTS_SEED"] = "1"
         app.launchEnvironment["UITESTS_RESET"] = "1"
-        app.launchEnvironment["UITESTS_START"] = "routines"
+        app.launchEnvironment["UITESTS_START"] = "session"
         app.launchArguments = ["-uiTesting"]
         app.launch()
 

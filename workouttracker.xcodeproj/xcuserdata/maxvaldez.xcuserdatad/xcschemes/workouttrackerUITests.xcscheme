@@ -34,7 +34,7 @@
             default = "YES">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:workouttracker.xctestplan">
+            reference = "container:workouttrackerTest.xctestplan">
          </TestPlanReference>
       </TestPlans>
       <Testables>
@@ -57,6 +57,39 @@
                BlueprintIdentifier = "35BA2D5C2F11D33300EEE02C"
                BuildableName = "workouttrackerUITests.xctest"
                BlueprintName = "workouttrackerUITests"
+               ReferencedContainer = "container:workouttracker.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "35D84B842F3C2BCE000BEFC0"
+               BuildableName = "workouttrackerUITestHost.app"
+               BlueprintName = "workouttrackerUITestHost"
+               ReferencedContainer = "container:workouttracker.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "35D84B922F3C2BD0000BEFC0"
+               BuildableName = "workouttrackerUITestHostTests.xctest"
+               BlueprintName = "workouttrackerUITestHostTests"
+               ReferencedContainer = "container:workouttracker.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "35D84B9C2F3C2BD0000BEFC0"
+               BuildableName = "workouttrackerUITestHostUITests.xctest"
+               BlueprintName = "workouttrackerUITestHostUITests"
                ReferencedContainer = "container:workouttracker.xcodeproj">
             </BuildableReference>
          </TestableReference>
