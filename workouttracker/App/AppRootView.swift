@@ -2,41 +2,45 @@ import SwiftUI
 
 // File: workouttracker/App/AppRootView.swift
 //
-// What changed:
-// - All Home tiles are now actually wired to real screens.
-// - Added a Templates tile so template editing is accessible again.
-// - Fixed the HomeTile API usage: `destination` is a closure `() -> AnyView`.
-//
-// Why this lives here:
-// - AppRootView is the single place that defines “top-level navigation” for the app.
+// Patch:
+// - UI-test-only router via launchEnvironment (UITESTS_START).
+// - Default behavior unchanged: HomeScreen remains root.
 
 struct AppRootView: View {
     private let cal = Calendar.current
 
     var body: some View {
-    let env = ProcessInfo.processInfo.environment
+        if let start = uiTestStartRoute {
+            uiTestRoot(for: start)
+        } else {
+            HomeScreen(tiles: tiles)
+        }
+    }
 
-    // UI tests can request a deterministic entry point so tests don't depend on Home navigation.
-    if env["UITESTS"] == "1", let start = env["UITESTS_START"]?.lowercased() {
-        let applyDay = cal.startOfDay(for: Date())
-        switch start {
+    // MARK: - UI test routing
+
+    private var uiTestStartRoute: String? {
+        let env = ProcessInfo.processInfo.environment
+        guard env["UITESTS"] == "1" else { return nil }
+        return env["UITESTS_START"]
+    }
+
+    @ViewBuilder
+    private func uiTestRoot(for start: String) -> some View {
+        switch start.lowercased() {
         case "calendar":
             NavigationStack { DayTimelineEntryScreen() }
         case "settings":
             NavigationStack { SettingsScreen() }
-        case "templates":
-            NavigationStack { TemplatesScreen(applyDay: applyDay) }
-        case "workouts":
-            NavigationStack { WorkoutSessionsScreen() }
-        case "routines":
-            NavigationStack { RoutinesScreen() }
+        case "session":
+            // We boot into Calendar, then DayTimelineScreen (only in this route) will seed+auto-open a session.
+            NavigationStack { DayTimelineEntryScreen() }
         default:
             HomeScreen(tiles: tiles)
         }
-    } else {
-        HomeScreen(tiles: tiles)
     }
-}
+
+    // MARK: - Home tiles
 
     private var tiles: [HomeTile] {
         let applyDay = cal.startOfDay(for: Date())

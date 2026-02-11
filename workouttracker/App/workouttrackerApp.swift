@@ -6,6 +6,15 @@ import UIKit
 struct workouttrackerApp: App {
     @StateObject private var goalPrefill = GoalPrefillStore()   // ✅ keep one instance alive
 
+    init() {
+        let env = ProcessInfo.processInfo.environment
+        if env["UITESTS"] == "1", env["UITESTS_RESET"] == "1",
+           let bundleID = Bundle.main.bundleIdentifier {
+            UserDefaults.standard.removePersistentDomain(forName: bundleID)
+            UserDefaults.standard.synchronize()
+        }
+    }
+    
     var sharedModelContainer: ModelContainer = {
         let env = ProcessInfo.processInfo.environment
 
@@ -71,8 +80,14 @@ struct workouttrackerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppRootView()
-                .environmentObject(goalPrefill)                 // ✅ inject once at the top
+            let env = ProcessInfo.processInfo.environment
+            if env["UITESTS"] == "1" {
+                UITestStartRouter()
+                    .environmentObject(goalPrefill)
+            } else {
+                AppRootView()
+                    .environmentObject(goalPrefill)
+            }
         }
         .modelContainer(sharedModelContainer)
     }

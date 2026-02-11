@@ -1,7 +1,4 @@
 // File: workouttracker/Features/Day/DayTimelineEntryScreen.swift
-//
-// Patch: add an initializer so other screens (like Routines) can open the Calendar at a specific day.
-// This is a backwards-compatible change (existing call sites still compile).
 
 import SwiftUI
 import SwiftData
@@ -13,9 +10,7 @@ struct DayTimelineEntryScreen: View {
 
     @State private var day: Date
     @State private var presentedSession: WorkoutSession? = nil
-
-    @State private var editingActivity: Activity? = nil
-    @State private var editorIsNew: Bool = false
+    @State private var editorItem: EditorItem? = nil
 
     init(initialDay: Date = Date()) {
         _day = State(initialValue: initialDay)
@@ -23,6 +18,11 @@ struct DayTimelineEntryScreen: View {
 
     private var dayStart: Date { cal.startOfDay(for: day) }
     private var isToday: Bool { cal.isDateInToday(day) }
+
+    private var isUITesting: Bool {
+        let env = ProcessInfo.processInfo.environment
+        return env["UITESTS"] == "1" || ProcessInfo.processInfo.arguments.contains("-uiTesting")
+    }
 
     var body: some View {
         DayTimelineScreen(
@@ -45,45 +45,42 @@ struct DayTimelineEntryScreen: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { headerToolbar }
-        .toolbar { headerToolbar }
-        .safeAreaInset(edge: .top, alignment: .trailing) {
-            // XCUITest reliability: SwiftUI toolbar items often don't expose identifiers.
-            // Provide a stable, view-hierarchy button only in UITESTS mode.
-            if ProcessInfo.processInfo.environment["UITESTS"] == "1" {
-                Button { createNewActivityFromToolbar() } label: {
-                    Label("New activity", systemImage: "plus.circle")
-                        .font(.caption)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(.thinMaterial, in: Capsule())
+        .sheet(item: $editorItem) { item in
+            ActivityEditorSheet(activity: item.activity, isNew: item.isNew)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            // Test-only: stable entry point for "New Activity" without relying on SwiftUI header/toolbar accessibility.
+            if isUITesting {
+                Button {
+                    createNewActivityFromUITestButton()
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.title2.weight(.semibold))
+                        .padding(14)
                 }
-                .buttonStyle(.plain)
+                .background(.thinMaterial, in: Circle())
+                .shadow(radius: 4)
+                .padding(16)
                 .accessibilityIdentifier("timeline.newActivityButton")
-                .padding(.trailing, 8)
-                .padding(.top, 6)
+                .accessibilityLabel("New activity")
+                .accessibilityAddTraits(.isButton)
             }
-        }
-        .safeAreaInset(edge: .top, alignment: .trailing) {
-            if ProcessInfo.processInfo.environment["UITESTS"] == "1" {
-                Button { createNewActivityFromToolbar() } label: {
-                    Label("New activity", systemImage: "plus.circle")
-                        .labelStyle(.titleAndIcon)
-                        .font(.caption)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(.thinMaterial, in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .padding(.trailing, 8)
-                .padding(.top, 6)
-            }
-        }
-        .sheet(item: $editingActivity, onDismiss: {
-            editorIsNew = false
-        }) { a in
-            ActivityEditorSheet(activity: a, isNew: editorIsNew)
         }
     }
+
+    // MARK: - Editor
+
+    private struct EditorItem: Identifiable {
+        let id = UUID()
+        let activity: Activity
+        let isNew: Bool
+    }
+
+    private func openEditor(for a: Activity, isNew: Bool) {
+        editorItem = EditorItem(activity: a, isNew: isNew)
+    }
+
+    // MARK: - Toolbar
 
     private var dayTitle: String {
         day.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
@@ -101,17 +98,8 @@ struct DayTimelineEntryScreen: View {
             }
 
             ToolbarItemGroup(placement: .topBarTrailing) {
-                Button { createNewActivityFromToolbar() } label: {
-                    Image(systemName: "plus.circle")
-                        .labelStyle(.iconOnly)
-                }
-                .accessibilityLabel("New activity")
-                .accessibilityIdentifier("timeline.newActivityButton")
-
-                Button { shiftDay(-1) } label: {
-                    Image(systemName: "chevron.left.circle")
-                }
-                .accessibilityLabel("Previous day")
+                Button { shiftDay(-1) } label: { Image(systemName: "chevron.left.circle") }
+                    .accessibilityLabel("Previous day")
 
                 Button { day = Date() } label: {
                     Image(systemName: "calendar")
@@ -121,10 +109,8 @@ struct DayTimelineEntryScreen: View {
                 .disabled(isToday)
                 .accessibilityLabel("Go to today")
 
-                Button { shiftDay(1) } label: {
-                    Image(systemName: "chevron.right.circle")
-                }
-                .accessibilityLabel("Next day")
+                Button { shiftDay(1) } label: { Image(systemName: "chevron.right.circle") }
+                    .accessibilityLabel("Next day")
             }
         }
     }
@@ -133,22 +119,42 @@ struct DayTimelineEntryScreen: View {
         day = cal.date(byAdding: .day, value: delta, to: day) ?? day
     }
 
-    private func openEditor(for a: Activity, isNew: Bool) {
-        editingActivity = a
-        editorIsNew = isNew
+    // MARK: - Create
+
+    private func createNewActivityFromUITestButton() {
+        let start = defaultNewActivityStart()
+        let a = createActivity(start: start, end: nil, lane: 0)
+        openEditor(for: a, isNew: true)
+    }
+
+    private func defaultNewActivityStart() -> Date {
+        // If we're looking at today, use "now rounded to 5 minutes".
+        // If we're looking at another day, default to 08:00 on that day.
+        let base = dayStart
+        let now = Date()
+
+        if cal.isDate(now, inSameDayAs: day) {
+            let comps = cal.dateComponents([.hour, .minute], from: now)
+            let hour = comps.hour ?? 8
+            let minute = comps.minute ?? 0
+            let rounded = (minute / 5) * 5
+            return cal.date(bySettingHour: hour, minute: rounded, second: 0, of: base) ?? base
+        } else {
+            return cal.date(bySettingHour: 8, minute: 0, second: 0, of: base) ?? base
+        }
     }
 
     private func createActivity(start: Date, end: Date?, lane: Int) -> Activity {
-        let cleanStart = start
-        let computedEnd = end ?? cal.date(byAdding: .minute, value: 30, to: cleanStart)
+        let computedEnd = end ?? cal.date(byAdding: .minute, value: 30, to: start)
 
         let a = Activity(
             title: "New Activity",
-            startAt: cleanStart,
+            startAt: start,
             endAt: computedEnd,
             laneHint: lane
         )
-        a.dayKey = Self.dayKey(for: cleanStart)
+
+        a.dayKey = Self.dayKey(for: start)
 
         modelContext.insert(a)
         try? modelContext.save()
@@ -164,26 +170,4 @@ struct DayTimelineEntryScreen: View {
         f.dateFormat = "yyyy-MM-dd"
         return f.string(from: start)
     }
-    
-    private func createNewActivityFromToolbar() {
-            let start = defaultNewActivityStart()
-            let a = createActivity(start: start, end: nil, lane: 0)
-            openEditor(for: a, isNew: true)
-        }
-
-        private func defaultNewActivityStart() -> Date {
-            if isToday {
-                // Next 15-minute slot from “now”
-                let now = Date()
-                let comps = cal.dateComponents([.year, .month, .day, .hour, .minute], from: now)
-                let minute = comps.minute ?? 0
-                let rounded = ((minute + 14) / 15) * 15
-                var start = cal.date(from: comps) ?? now
-                start = cal.date(bySetting: .minute, value: min(rounded, 59), of: start) ?? start
-                return start
-            } else {
-                // 9:00am on the selected day
-                return cal.date(bySettingHour: 9, minute: 0, second: 0, of: dayStart) ?? dayStart
-            }
-        }
 }
