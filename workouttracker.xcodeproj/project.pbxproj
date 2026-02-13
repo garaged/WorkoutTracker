@@ -21,14 +21,7 @@
 			remoteGlobalIDString = 35BA2D432F11D33200EEE02C;
 			remoteInfo = workouttracker;
 		};
-		35D84B942F3C2BD0000BEFC0 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 35BA2D3C2F11D33200EEE02C /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 35D84B842F3C2BCE000BEFC0;
-			remoteInfo = workouttrackerUITestHost;
-		};
-		35D84B9E2F3C2BD0000BEFC0 /* PBXContainerItemProxy */ = {
+		35D84C382F3CCB60000BEFC0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 35BA2D3C2F11D33200EEE02C /* Project object */;
 			proxyType = 1;
@@ -44,13 +37,32 @@
 		35BA2D532F11D33300EEE02C /* workouttrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = workouttrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		35BA2D5D2F11D33300EEE02C /* workouttrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = workouttrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		35D84B852F3C2BCE000BEFC0 /* workouttrackerUITestHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = workouttrackerUITestHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		35D84B932F3C2BD0000BEFC0 /* workouttrackerUITestHostTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = workouttrackerUITestHostTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		35D84B9D2F3C2BD0000BEFC0 /* workouttrackerUITestHostUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = workouttrackerUITestHostUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		35D84C342F3CCA92000BEFC0 /* Exceptions for "workouttracker" folder in "workouttrackerUITestHost" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				App/workouttrackerApp.swift,
+			);
+			target = 35D84B842F3C2BCE000BEFC0 /* workouttrackerUITestHost */;
+		};
+		35D84C362F3CCABC000BEFC0 /* Exceptions for "workouttrackerUITestHost" folder in "workouttrackerUITestHost" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				UITestHostRootView.swift,
+				workouttrackerUITestHostApp.swift,
+			);
+			target = 35D84B842F3C2BCE000BEFC0 /* workouttrackerUITestHost */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		35BA2D462F11D33200EEE02C /* workouttracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				35D84C342F3CCA92000BEFC0 /* Exceptions for "workouttracker" folder in "workouttrackerUITestHost" target */,
+			);
 			path = workouttracker;
 			sourceTree = "<group>";
 		};
@@ -66,17 +78,10 @@
 		};
 		35D84B2E2F32EB85000BEFC0 /* workouttrackerUITestHost */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				35D84C362F3CCABC000BEFC0 /* Exceptions for "workouttrackerUITestHost" folder in "workouttrackerUITestHost" target */,
+			);
 			path = workouttrackerUITestHost;
-			sourceTree = "<group>";
-		};
-		35D84B962F3C2BD0000BEFC0 /* workouttrackerUITestHostTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = workouttrackerUITestHostTests;
-			sourceTree = "<group>";
-		};
-		35D84BA02F3C2BD0000BEFC0 /* workouttrackerUITestHostUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = workouttrackerUITestHostUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -110,20 +115,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		35D84B902F3C2BD0000BEFC0 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		35D84B9A2F3C2BD0000BEFC0 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -136,8 +127,6 @@
 				35BA2D562F11D33300EEE02C /* workouttrackerTests */,
 				35BA2D602F11D33300EEE02C /* workouttrackerUITests */,
 				35D84B2E2F32EB85000BEFC0 /* workouttrackerUITestHost */,
-				35D84B962F3C2BD0000BEFC0 /* workouttrackerUITestHostTests */,
-				35D84BA02F3C2BD0000BEFC0 /* workouttrackerUITestHostUITests */,
 				35BA2D452F11D33200EEE02C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -149,8 +138,6 @@
 				35BA2D532F11D33300EEE02C /* workouttrackerTests.xctest */,
 				35BA2D5D2F11D33300EEE02C /* workouttrackerUITests.xctest */,
 				35D84B852F3C2BCE000BEFC0 /* workouttrackerUITestHost.app */,
-				35D84B932F3C2BD0000BEFC0 /* workouttrackerUITestHostTests.xctest */,
-				35D84B9D2F3C2BD0000BEFC0 /* workouttrackerUITestHostUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -215,6 +202,7 @@
 			);
 			dependencies = (
 				35BA2D5F2F11D33300EEE02C /* PBXTargetDependency */,
+				35D84C392F3CCB60000BEFC0 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				35BA2D602F11D33300EEE02C /* workouttrackerUITests */,
@@ -238,58 +226,15 @@
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				35BA2D462F11D33200EEE02C /* workouttracker */,
+			);
 			name = workouttrackerUITestHost;
 			packageProductDependencies = (
 			);
 			productName = workouttrackerUITestHost;
 			productReference = 35D84B852F3C2BCE000BEFC0 /* workouttrackerUITestHost.app */;
 			productType = "com.apple.product-type.application";
-		};
-		35D84B922F3C2BD0000BEFC0 /* workouttrackerUITestHostTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 35D84BA82F3C2BD0000BEFC0 /* Build configuration list for PBXNativeTarget "workouttrackerUITestHostTests" */;
-			buildPhases = (
-				35D84B8F2F3C2BD0000BEFC0 /* Sources */,
-				35D84B902F3C2BD0000BEFC0 /* Frameworks */,
-				35D84B912F3C2BD0000BEFC0 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				35D84B952F3C2BD0000BEFC0 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				35D84B962F3C2BD0000BEFC0 /* workouttrackerUITestHostTests */,
-			);
-			name = workouttrackerUITestHostTests;
-			packageProductDependencies = (
-			);
-			productName = workouttrackerUITestHostTests;
-			productReference = 35D84B932F3C2BD0000BEFC0 /* workouttrackerUITestHostTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		35D84B9C2F3C2BD0000BEFC0 /* workouttrackerUITestHostUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 35D84BAB2F3C2BD0000BEFC0 /* Build configuration list for PBXNativeTarget "workouttrackerUITestHostUITests" */;
-			buildPhases = (
-				35D84B992F3C2BD0000BEFC0 /* Sources */,
-				35D84B9A2F3C2BD0000BEFC0 /* Frameworks */,
-				35D84B9B2F3C2BD0000BEFC0 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				35D84B9F2F3C2BD0000BEFC0 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				35D84BA02F3C2BD0000BEFC0 /* workouttrackerUITestHostUITests */,
-			);
-			name = workouttrackerUITestHostUITests;
-			packageProductDependencies = (
-			);
-			productName = workouttrackerUITestHostUITests;
-			productReference = 35D84B9D2F3C2BD0000BEFC0 /* workouttrackerUITestHostUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
@@ -310,18 +255,10 @@
 					};
 					35BA2D5C2F11D33300EEE02C = {
 						CreatedOnToolsVersion = 26.2;
-						TestTargetID = 35BA2D432F11D33200EEE02C;
+						TestTargetID = 35D84B842F3C2BCE000BEFC0;
 					};
 					35D84B842F3C2BCE000BEFC0 = {
 						CreatedOnToolsVersion = 26.2;
-					};
-					35D84B922F3C2BD0000BEFC0 = {
-						CreatedOnToolsVersion = 26.2;
-						TestTargetID = 35D84B842F3C2BCE000BEFC0;
-					};
-					35D84B9C2F3C2BD0000BEFC0 = {
-						CreatedOnToolsVersion = 26.2;
-						TestTargetID = 35D84B842F3C2BCE000BEFC0;
 					};
 				};
 			};
@@ -346,8 +283,6 @@
 				35BA2D522F11D33300EEE02C /* workouttrackerTests */,
 				35BA2D5C2F11D33300EEE02C /* workouttrackerUITests */,
 				35D84B842F3C2BCE000BEFC0 /* workouttrackerUITestHost */,
-				35D84B922F3C2BD0000BEFC0 /* workouttrackerUITestHostTests */,
-				35D84B9C2F3C2BD0000BEFC0 /* workouttrackerUITestHostUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -375,20 +310,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		35D84B832F3C2BCE000BEFC0 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		35D84B912F3C2BD0000BEFC0 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		35D84B9B2F3C2BD0000BEFC0 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -426,20 +347,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		35D84B8F2F3C2BD0000BEFC0 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		35D84B992F3C2BD0000BEFC0 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -453,15 +360,10 @@
 			target = 35BA2D432F11D33200EEE02C /* workouttracker */;
 			targetProxy = 35BA2D5E2F11D33300EEE02C /* PBXContainerItemProxy */;
 		};
-		35D84B952F3C2BD0000BEFC0 /* PBXTargetDependency */ = {
+		35D84C392F3CCB60000BEFC0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 35D84B842F3C2BCE000BEFC0 /* workouttrackerUITestHost */;
-			targetProxy = 35D84B942F3C2BD0000BEFC0 /* PBXContainerItemProxy */;
-		};
-		35D84B9F2F3C2BD0000BEFC0 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 35D84B842F3C2BCE000BEFC0 /* workouttrackerUITestHost */;
-			targetProxy = 35D84B9E2F3C2BD0000BEFC0 /* PBXContainerItemProxy */;
+			targetProxy = 35D84C382F3CCB60000BEFC0 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -723,6 +625,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttrackerUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -732,7 +635,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = workouttracker;
+				TEST_TARGET_NAME = workouttrackerUITestHost;
 			};
 			name = Debug;
 		};
@@ -742,6 +645,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttrackerUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -751,7 +655,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = workouttracker;
+				TEST_TARGET_NAME = workouttrackerUITestHost;
 			};
 			name = Release;
 		};
@@ -780,7 +684,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -812,95 +716,11 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		35D84BA92F3C2BD0000BEFC0 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttrackerUITestHostTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/workouttrackerUITestHost.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/workouttrackerUITestHost";
-			};
-			name = Debug;
-		};
-		35D84BAA2F3C2BD0000BEFC0 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttrackerUITestHostTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/workouttrackerUITestHost.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/workouttrackerUITestHost";
-			};
-			name = Release;
-		};
-		35D84BAC2F3C2BD0000BEFC0 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttrackerUITestHostUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = workouttrackerUITestHost;
-			};
-			name = Debug;
-		};
-		35D84BAD2F3C2BD0000BEFC0 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttrackerUITestHostUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = workouttrackerUITestHost;
 			};
 			name = Release;
 		};
@@ -948,24 +768,6 @@
 			buildConfigurations = (
 				35D84BA62F3C2BD0000BEFC0 /* Debug */,
 				35D84BA72F3C2BD0000BEFC0 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		35D84BA82F3C2BD0000BEFC0 /* Build configuration list for PBXNativeTarget "workouttrackerUITestHostTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				35D84BA92F3C2BD0000BEFC0 /* Debug */,
-				35D84BAA2F3C2BD0000BEFC0 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		35D84BAB2F3C2BD0000BEFC0 /* Build configuration list for PBXNativeTarget "workouttrackerUITestHostUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				35D84BAC2F3C2BD0000BEFC0 /* Debug */,
-				35D84BAD2F3C2BD0000BEFC0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
