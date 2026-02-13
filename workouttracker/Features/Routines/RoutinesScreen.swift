@@ -45,6 +45,14 @@ struct RoutinesScreen: View {
     @State private var showScheduledAlert: Bool = false
     @State private var navToCalendar: Bool = false
     @State private var calendarInitialDay: Date = Date()
+    // Full routine editor (name + exercises)
+    @State private var showRoutineEditor: Bool = false
+    @State private var routineEditorMode: RoutineEditorScreen.Mode = .create
+
+    private var isCreatingRoutine: Bool {
+        if case .create = routineEditorMode { return true }
+        return false
+    }
 
     private var filteredRoutines: [WorkoutRoutine] {
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -116,6 +124,13 @@ struct RoutinesScreen: View {
                 }
             }
         }
+        .sheet(isPresented: $showRoutineEditor) {
+            NavigationStack {
+                RoutineEditorScreen(mode: routineEditorMode)
+            }
+            // Prevent swipe-down dismiss from leaving an empty routine behind in create mode.
+            .interactiveDismissDisabled(isCreatingRoutine)
+        }
     }
 
     // MARK: - Pieces (split up to reduce generic complexity)
@@ -133,10 +148,25 @@ struct RoutinesScreen: View {
 
     @ViewBuilder
     private func routinesSection(_ data: [WorkoutRoutine]) -> some View {
-        Section("Your routines") {
-            ForEach(data, id: \.id) { routine in
-                rowView(for: routine)
-            }
+        ForEach(data) { routine in
+            rowView(for: routine)
+                .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                    Button {
+                        routineEditorMode = .edit(routine)
+                        showRoutineEditor = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .tint(.blue)
+                }
+                .contextMenu {
+                    Button {
+                        routineEditorMode = .edit(routine)
+                        showRoutineEditor = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                }
         }
     }
 
@@ -168,7 +198,10 @@ struct RoutinesScreen: View {
             }
             .accessibilityLabel("Templates")
 
-            Button { nameEditor = .create } label: {
+            Button {
+                routineEditorMode = .create
+                showRoutineEditor = true
+            } label: {
                 Image(systemName: "plus")
             }
             .accessibilityLabel("Create routine")
