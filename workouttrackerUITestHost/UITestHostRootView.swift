@@ -1,4 +1,4 @@
-// workouttrackerUITestHost/UITestHostRootView.swift
+// File: workouttrackerUITestHost/UITestHostRootView.swift
 import SwiftUI
 
 struct UITestHostRootView: View {
@@ -9,14 +9,10 @@ struct UITestHostRootView: View {
             switch (env["UITESTS_START"] ?? "calendar").lowercased() {
             case "settings":
                 SettingsScreen()
-
             case "home":
                 AppRootView()
-
-            // Default to calendar because most UI tests expect it.
             case "calendar", "":
                 DayTimelineEntryScreen()
-
             default:
                 DayTimelineEntryScreen()
             }

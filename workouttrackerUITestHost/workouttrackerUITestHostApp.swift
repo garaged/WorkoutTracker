@@ -1,32 +1,21 @@
-//
-//  workouttrackerUITestHostApp.swift
-//  workouttrackerUITestHost
-//
-//  Created by Max Valdez on 10/02/26.
-//
-
 import SwiftUI
 import SwiftData
 
 @main
 struct workouttrackerUITestHostApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
+    @StateObject private var goalPrefillStore = GoalPrefillStore()
+
+    private let container: ModelContainer = {
+        do { return try ModelContainerFactory.makeInMemoryContainer() }
+        catch { fatalError("UITestHost: failed to create in-memory ModelContainer: \(error)") }
     }()
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            UITestHostRootView()
+                .environmentObject(goalPrefillStore)
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(container)
     }
 }

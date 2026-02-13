@@ -18,12 +18,7 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         super.setUp()
         continueAfterFailure = false
 
-        app = XCUIApplication()
-        app.launchEnvironment["UITESTS"] = "1"
-        app.launchEnvironment["UITESTS_SEED"] = "1"
-        app.launchEnvironment["UITESTS_RESET"] = "1"
-        app.launchEnvironment["UITESTS_START"] = "session"
-        app.launchArguments = ["-uiTesting"]
+        app = UITestLaunch.app(start: "session", reset: true, seed: true)
         app.launch()
 
         startFirstRoutineSessionIfNeeded(app)
@@ -113,32 +108,52 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         }
     }
 
-    // MARK: - Set Row Identification
+    // MARK: - Set Row Identification (optimized)
 
-    private func setToggleElements(in app: XCUIApplication) -> [XCUIElement] {
-        app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
-                        "WorkoutSetEditorRow.", ".DoneToggle")
-        ).allElementsBoundByIndex
+    private var doneTogglePredicate: NSPredicate {
+        NSPredicate(format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
+                    "WorkoutSetEditorRow.", ".DoneToggle")
+    }
+
+    /// Narrow queries to common element types first (MUCH faster than `.any`).
+    private func setToggleQuery(in app: XCUIApplication) -> XCUIElementQuery {
+        let buttons = app.buttons.matching(doneTogglePredicate)
+        if buttons.count > 0 { return buttons }
+
+        let switches = app.switches.matching(doneTogglePredicate)
+        if switches.count > 0 { return switches }
+
+        // Last resort: otherElements (still far cheaper than `.any`)
+        return app.otherElements.matching(doneTogglePredicate)
     }
 
     private func setToggleIDs(in app: XCUIApplication) -> Set<String> {
-        Set(setToggleElements(in: app).map { $0.identifier }.filter { !$0.isEmpty })
+        let els = setToggleQuery(in: app).allElementsBoundByIndex
+        return Set(els.map(\.identifier).filter { !$0.isEmpty })
     }
 
     private func waitForNewSetToggleID(after before: Set<String>, timeout: TimeInterval) -> String? {
         let start = Date()
+
+        // Wait for count to grow first (cheap), then compute diff once.
+        let beforeCount = before.count
+
         while Date().timeIntervalSince(start) < timeout {
-            let after = setToggleIDs(in: app)
-            let diff = after.subtracting(before)
-            if let first = diff.first {
-                return first
+            let q = setToggleQuery(in: app)
+            if q.count > beforeCount {
+                let after = setToggleIDs(in: app)
+                let diff = after.subtracting(before)
+                return diff.first
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.05))
         }
-        return nil
-    }
 
+        // If count didn’t grow, still try a final diff (in case count check was weird).
+        let after = setToggleIDs(in: app)
+        let diff = after.subtracting(before)
+        return diff.first
+    }
+    
     private func waitForElementToDisappear(app: XCUIApplication, identifier: String, timeout: TimeInterval) -> Bool {
         let el = app.descendants(matching: .any).matching(identifier: identifier).firstMatch
         let start = Date()
@@ -152,26 +167,22 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
     // MARK: - Finders
 
     private func firstDoneToggle(in app: XCUIApplication) -> XCUIElement {
-        setToggleElements(in: app).first ?? app.buttons.firstMatch
+        setToggleQuery(in: app).firstMatch
     }
-
+    
     private func firstAddSetButton(in app: XCUIApplication) -> XCUIElement {
-        let byId = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
-                        "WorkoutSetEditorRow.", ".Actions.AddButton")
-        ).firstMatch
+        let pred = NSPredicate(format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
+                               "WorkoutSetEditorRow.", ".Actions.AddButton")
+        let byId = app.buttons.matching(pred).firstMatch
         if byId.exists { return byId }
-
         return app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Add")).firstMatch
     }
 
     private func firstCopySetButton(in app: XCUIApplication) -> XCUIElement {
-        let byId = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
-                        "WorkoutSetEditorRow.", ".Actions.CopyButton")
-        ).firstMatch
+        let pred = NSPredicate(format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
+                               "WorkoutSetEditorRow.", ".Actions.CopyButton")
+        let byId = app.buttons.matching(pred).firstMatch
         if byId.exists { return byId }
-
         return app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Copy")).firstMatch
     }
 
@@ -198,10 +209,10 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
     private func waitForSessionScreen(app: XCUIApplication, timeout: TimeInterval) -> Bool {
         let start = Date()
         while Date().timeIntervalSince(start) < timeout {
-            if setToggleElements(in: app).count > 0 { return true }
+            if setToggleQuery(in: app).count > 0 { return true }
             RunLoop.current.run(until: Date().addingTimeInterval(0.1))
         }
-        return setToggleElements(in: app).count > 0
+        return setToggleQuery(in: app).count > 0
     }
 
     private func assertOnSessionScreen(_ app: XCUIApplication,
