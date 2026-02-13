@@ -10,6 +10,8 @@ final class WorkoutSetPlan {
     var targetReps: Int?
     var targetWeight: Double?
     var weightUnitRaw: String
+    var targetDurationSeconds: Int? = nil
+    var targetDistance: Double? = nil
 
     var targetRPE: Double?
     var restSeconds: Int?

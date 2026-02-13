@@ -14,7 +14,9 @@ final class WorkoutRoutineItem {
 
     /// Which exercise this item refers to
     var exercise: Exercise?
-
+    
+    var trackingStyle: ExerciseTrackingStyle = .strength
+    
     // ✅ Item -> planned sets (cascade), no inverse
     @Relationship(deleteRule: .cascade)
     var setPlans: [WorkoutSetPlan] = []

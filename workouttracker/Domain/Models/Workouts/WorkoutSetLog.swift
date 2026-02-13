@@ -22,6 +22,10 @@ final class WorkoutSetLog {
     var targetWeightUnitRaw: String
     var targetRPE: Double?
     var targetRestSeconds: Int?
+    var targetDurationSeconds: Int? = nil
+    var actualDurationSeconds: Int? = nil
+    var targetDistance: Double? = nil
+    var actualDistance: Double? = nil
 
     var sessionExercise: WorkoutSessionExercise?
 
