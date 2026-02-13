@@ -85,15 +85,6 @@ struct RoutinesScreen: View {
         } message: {
             Text(scheduledMessage)
         }
-        .sheet(item: $nameEditor) { state in
-            NameEditorSheet(
-                title: state.title,
-                initialName: state.initialName,
-                saveButtonTitle: state.saveButtonTitle,
-                onSave: { newName in saveRoutineName(state: state, newName: newName) },
-                onCancel: { nameEditor = nil }
-            )
-        }
         .confirmationDialog(
             "Delete routine?",
             isPresented: $showDeleteConfirm,
@@ -128,7 +119,7 @@ struct RoutinesScreen: View {
             NavigationStack {
                 RoutineEditorScreen(mode: routineEditorMode)
             }
-            // Prevent swipe-down dismiss from leaving an empty routine behind in create mode.
+            // important: create-mode inserts a new routine immediately
             .interactiveDismissDisabled(isCreatingRoutine)
         }
     }
@@ -159,14 +150,6 @@ struct RoutinesScreen: View {
                     }
                     .tint(.blue)
                 }
-                .contextMenu {
-                    Button {
-                        routineEditorMode = .edit(routine)
-                        showRoutineEditor = true
-                    } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-                }
         }
     }
 
@@ -174,7 +157,10 @@ struct RoutinesScreen: View {
     private func rowView(for routine: WorkoutRoutine) -> AnyView {
         let startNow: () -> Void = { startRoutineNow(routine) }
         let scheduleToday: () -> Void = { scheduleForToday(routine) }
-        let rename: () -> Void = { nameEditor = .rename(routine) }
+        let rename: () -> Void = {
+            routineEditorMode = .edit(routine)
+            showRoutineEditor = true
+        }
         let delete: () -> Void = { confirmDelete(routine) }
 
         return AnyView(

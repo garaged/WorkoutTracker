@@ -20,6 +20,11 @@ final class WorkoutSessionExercise {
     // Persisted relationship (different name => avoids macro accessor collision on `setLogs`)
     @Relationship(deleteRule: .cascade)
     var setLogsStorage: [WorkoutSetLog]
+    
+    var targetDurationSeconds: Int? = nil
+    var actualDurationSeconds: Int? = nil
+    var targetDistance: Double? = nil
+    var actualDistance: Double? = nil
 
     // Public API the rest of the app keeps using (not persisted)
     @Transient

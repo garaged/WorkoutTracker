@@ -16,7 +16,11 @@ struct RoutineEditorScreen: View {
 
     @State private var routine: WorkoutRoutine? = nil
     @State private var showExercisePicker = false
-
+    
+    @State private var pendingExerciseToAdd: Exercise? = nil
+    @State private var pendingTrackingStyle: ExerciseTrackingStyle = .strength
+    @State private var showTrackingStylePicker = false
+    
     init(mode: Mode = .create) {
         self.mode = mode
         switch mode {
@@ -54,7 +58,20 @@ struct RoutineEditorScreen: View {
                 .sheet(isPresented: $showExercisePicker) {
                     ExercisePickerSheet { picked in
                         guard let picked else { return }
-                        addExercise(picked, to: routine)
+                        pendingExerciseToAdd = picked
+                        pendingTrackingStyle = .strength
+                        showTrackingStylePicker = true
+                    }
+                }
+                .sheet(isPresented: $showTrackingStylePicker) {
+                    TrackingStylePickerSheet(
+                        exerciseName: pendingExerciseToAdd?.name ?? "Exercise",
+                        selection: $pendingTrackingStyle
+                    ) {
+                        guard let ex = pendingExerciseToAdd, let routine else { return }
+                        addExercise(ex, tracking: pendingTrackingStyle, to: routine)
+                        pendingExerciseToAdd = nil
+                        showTrackingStylePicker = false
                     }
                 }
             } else {
@@ -107,15 +124,29 @@ struct RoutineEditorScreen: View {
         dismiss()
     }
 
-    private func addExercise(_ ex: Exercise, to routine: WorkoutRoutine) {
+    private func addExercise(_ ex: Exercise, tracking style: ExerciseTrackingStyle, to routine: WorkoutRoutine) {
         let nextOrder = (routine.items.map(\.order).max() ?? -1) + 1
         let item = WorkoutRoutineItem(order: nextOrder, routine: routine, exercise: ex, notes: nil)
 
-        // default: 3 planned sets (common case)
-        let sets = (0..<3).map { i in
-            WorkoutSetPlan(order: i, targetReps: nil, targetWeight: nil, weightUnit: .kg, targetRPE: nil, restSeconds: 90, routineItem: item)
+        item.trackingStyle = style
+
+        let rows = style.defaultPlannedRows
+        if rows > 0 {
+            let plans = (0..<rows).map { i in
+                WorkoutSetPlan(
+                    order: i,
+                    targetReps: nil,
+                    targetWeight: nil,
+                    weightUnit: .kg,
+                    targetRPE: nil,
+                    restSeconds: 90,
+                    routineItem: item
+                )
+            }
+            item.setPlans = plans
+        } else {
+            item.setPlans = []
         }
-        item.setPlans = sets
 
         routine.items.append(item)
         routine.updatedAt = Date()
