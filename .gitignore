@@ -4,6 +4,8 @@ xcuserdata/
 *.xcuserstate
 *.xccheckout
 *.xcscmblueprint
+*.xcbkptlist
+*.xcworkspace/xcuserdata/
 
 # Build products
 DerivedData/
