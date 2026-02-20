@@ -60,6 +60,7 @@ struct RoutineEditorScreen: View {
                         guard let picked else { return }
                         pendingExerciseToAdd = picked
                         pendingTrackingStyle = .strength
+                        showExercisePicker = false
                         showTrackingStylePicker = true
                     }
                 }
@@ -68,10 +69,9 @@ struct RoutineEditorScreen: View {
                         exerciseName: pendingExerciseToAdd?.name ?? "Exercise",
                         selection: $pendingTrackingStyle
                     ) {
-                        guard let ex = pendingExerciseToAdd, let routine else { return }
+                        guard let ex = pendingExerciseToAdd else { return }
                         addExercise(ex, tracking: pendingTrackingStyle, to: routine)
                         pendingExerciseToAdd = nil
-                        showTrackingStylePicker = false
                     }
                 }
             } else {
@@ -126,13 +126,18 @@ struct RoutineEditorScreen: View {
 
     private func addExercise(_ ex: Exercise, tracking style: ExerciseTrackingStyle, to routine: WorkoutRoutine) {
         let nextOrder = (routine.items.map(\.order).max() ?? -1) + 1
-        let item = WorkoutRoutineItem(order: nextOrder, routine: routine, exercise: ex, notes: nil)
 
-        item.trackingStyle = style
+        let item = WorkoutRoutineItem(
+            order: nextOrder,
+            routine: routine,
+            exercise: ex,
+            notes: nil,
+            trackingStyleRaw: style.rawValue
+        )
 
-        let rows = style.defaultPlannedRows
-        if rows > 0 {
-            let plans = (0..<rows).map { i in
+        let count = style.defaultPlannedRows
+        if count > 0 {
+            let sets = (0..<count).map { i in
                 WorkoutSetPlan(
                     order: i,
                     targetReps: nil,
@@ -143,7 +148,7 @@ struct RoutineEditorScreen: View {
                     routineItem: item
                 )
             }
-            item.setPlans = plans
+            item.setPlans = sets
         } else {
             item.setPlans = []
         }

@@ -5,19 +5,15 @@ import SwiftData
 final class WorkoutRoutineItem {
     @Attribute(.unique) var id: UUID
 
-    /// Ordering inside a routine
     var order: Int
     var notes: String?
 
-    /// Belongs-to
     var routine: WorkoutRoutine?
-
-    /// Which exercise this item refers to
     var exercise: Exercise?
-    
-    var trackingStyle: ExerciseTrackingStyle = .strength
-    
-    // ✅ Item -> planned sets (cascade), no inverse
+
+    // ✅ Persisted value (SwiftData-friendly). MUST be a literal default.
+    var trackingStyleRaw: String = "strength"
+
     @Relationship(deleteRule: .cascade)
     var setPlans: [WorkoutSetPlan] = []
 
@@ -26,12 +22,14 @@ final class WorkoutRoutineItem {
         order: Int,
         routine: WorkoutRoutine? = nil,
         exercise: Exercise? = nil,
-        notes: String? = nil
+        notes: String? = nil,
+        trackingStyleRaw: String = "strength"
     ) {
         self.id = id
         self.order = order
         self.routine = routine
         self.exercise = exercise
         self.notes = notes
+        self.trackingStyleRaw = trackingStyleRaw
     }
 }

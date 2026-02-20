@@ -1,10 +1,10 @@
 import Foundation
 
 enum ExerciseTrackingStyle: String, CaseIterable, Codable, Hashable, Identifiable {
-    case strength        // reps + weight + rpe + rest
-    case repsOnly        // reps (+ optional rpe/rest)
-    case timeOnly        // duration (+ optional rest)
-    case timeDistance    // duration + distance (cardio)
+    case strength        // reps + weight (+ rpe/rest)
+    case repsOnly        // reps (+ rpe/rest)
+    case timeOnly        // duration (+ rest)
+    case timeDistance    // duration + distance
     case distanceOnly    // distance only
     case notesOnly       // no numeric fields
 
@@ -28,7 +28,7 @@ enum ExerciseTrackingStyle: String, CaseIterable, Codable, Hashable, Identifiabl
     var showsDuration: Bool { self == .timeOnly || self == .timeDistance }
     var showsDistance: Bool { self == .timeDistance || self == .distanceOnly }
 
-    /// Default number of planned “rows” when adding an exercise to a routine.
+    /// Defaults are opinionated: strength starts with 3 sets, cardio/timed starts with 1, notes-only starts empty.
     var defaultPlannedRows: Int {
         switch self {
         case .strength, .repsOnly: return 3

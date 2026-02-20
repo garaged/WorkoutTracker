@@ -10,8 +10,10 @@ final class WorkoutSetPlan {
     var targetReps: Int?
     var targetWeight: Double?
     var weightUnitRaw: String
-    var targetDurationSeconds: Int? = nil
-    var targetDistance: Double? = nil
+
+    // Cardio/timed targets (pro tracking styles)
+    var targetDurationSeconds: Int?
+    var targetDistance: Double?
 
     var targetRPE: Double?
     var restSeconds: Int?
@@ -25,6 +27,8 @@ final class WorkoutSetPlan {
         targetReps: Int? = nil,
         targetWeight: Double? = nil,
         weightUnit: WeightUnit = .kg,
+        targetDurationSeconds: Int? = nil,
+        targetDistance: Double? = nil,
         targetRPE: Double? = nil,
         restSeconds: Int? = nil,
         routineItem: WorkoutRoutineItem? = nil
@@ -34,6 +38,8 @@ final class WorkoutSetPlan {
         self.targetReps = targetReps
         self.targetWeight = targetWeight
         self.weightUnitRaw = weightUnit.rawValue
+        self.targetDurationSeconds = targetDurationSeconds
+        self.targetDistance = targetDistance
         self.targetRPE = targetRPE
         self.restSeconds = restSeconds
         self.routineItem = routineItem
