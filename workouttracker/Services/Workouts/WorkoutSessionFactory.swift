@@ -9,6 +9,8 @@ enum WorkoutSessionFactory {
         var targetWeightUnit: WeightUnit
         var targetRPE: Double?
         var targetRestSeconds: Int?
+    var targetDurationSeconds: Int? = nil
+        var targetDistance: Double? = nil
     }
 
     struct ExerciseTemplate: Hashable {
@@ -48,7 +50,7 @@ enum WorkoutSessionFactory {
             let sortedSets = ex.sets.sorted { $0.order < $1.order }
 
             se.setLogs = sortedSets.map { st in
-                WorkoutSetLog(
+                let log = WorkoutSetLog(
                     order: st.order,
                     origin: .planned,
                     reps: prefillActualsFromTargets ? st.targetReps : nil,
@@ -63,6 +65,17 @@ enum WorkoutSessionFactory {
                     targetRestSeconds: st.targetRestSeconds,
                     sessionExercise: se
                 )
+
+                // Timed / distance targets (used for cardio, intervals, mobility, etc.)
+                log.targetDurationSeconds = st.targetDurationSeconds
+                log.targetDistance = st.targetDistance
+
+                if prefillActualsFromTargets {
+                    log.actualDurationSeconds = st.targetDurationSeconds
+                    log.actualDistance = st.targetDistance
+                }
+
+                return log
             }
 
             return se

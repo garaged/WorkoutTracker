@@ -1,19 +1,34 @@
 import SwiftUI
+import SwiftData
 
 // File: workouttracker/App/AppRootView.swift
 //
 // Patch:
 // - UI-test-only router via launchEnvironment (UITESTS_START).
-// - Default behavior unchanged: HomeScreen remains root.
+// - Real app seeds a Starter Pack once (common exercises + routines).
 
 struct AppRootView: View {
+    @Environment(\.modelContext) private var modelContext
+    @State private var didSeed = false
+
     private let cal = Calendar.current
 
     var body: some View {
-        if let start = uiTestStartRoute {
-            uiTestRoot(for: start)
-        } else {
-            HomeScreen(tiles: tiles)
+        Group {
+            if let start = uiTestStartRoute {
+                uiTestRoot(for: start)
+            } else {
+                HomeScreen(tiles: tiles)
+            }
+        }
+        .task {
+            guard !didSeed else { return }
+            didSeed = true
+
+            // Don’t mutate the persistent store during UITests.
+            guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
+
+            _ = try? RoutineSeeder.seedStarterPackIfEmpty(context: modelContext)
         }
     }
 

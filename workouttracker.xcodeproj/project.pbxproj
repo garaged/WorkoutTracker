@@ -40,9 +40,17 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		353429C72F47E79400FFEE78 /* Exceptions for "workouttracker" folder in "workouttracker" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				App/Seed/seed_v1.json,
+			);
+			target = 35BA2D432F11D33200EEE02C /* workouttracker */;
+		};
 		35D84C342F3CCA92000BEFC0 /* Exceptions for "workouttracker" folder in "workouttrackerUITestHost" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				App/Seed/seed_v1.json,
 				App/workouttrackerApp.swift,
 			);
 			target = 35D84B842F3C2BCE000BEFC0 /* workouttrackerUITestHost */;
@@ -57,11 +65,31 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		353429C82F47E79400FFEE78 /* Exceptions for "workouttracker" folder in "Compile Sources" phase from "workouttracker" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 35BA2D402F11D33200EEE02C /* Sources */;
+			membershipExceptions = (
+				App/Seed/seed_v1.json,
+			);
+		};
+		353429C92F47E79400FFEE78 /* Exceptions for "workouttracker" folder in "Compile Sources" phase from "workouttrackerUITestHost" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 35D84B812F3C2BCE000BEFC0 /* Sources */;
+			membershipExceptions = (
+				App/Seed/seed_v1.json,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		35BA2D462F11D33200EEE02C /* workouttracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				353429C72F47E79400FFEE78 /* Exceptions for "workouttracker" folder in "workouttracker" target */,
+				353429C82F47E79400FFEE78 /* Exceptions for "workouttracker" folder in "Compile Sources" phase from "workouttracker" target */,
 				35D84C342F3CCA92000BEFC0 /* Exceptions for "workouttracker" folder in "workouttrackerUITestHost" target */,
+				353429C92F47E79400FFEE78 /* Exceptions for "workouttracker" folder in "Compile Sources" phase from "workouttrackerUITestHost" target */,
 			);
 			path = workouttracker;
 			sourceTree = "<group>";

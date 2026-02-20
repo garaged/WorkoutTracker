@@ -13,6 +13,12 @@ final class WorkoutSessionExercise {
 
     var notes: String?
 
+    /// How this exercise should be tracked during the session.
+    ///
+    /// Stored as a raw string for SwiftData compatibility / stability.
+    /// (We keep the typed computed property below.)
+    var trackingStyleRaw: String = "strength"
+
     // Explicit relationship (no inverse to avoid macro circular-reference issues)
     @Relationship(deleteRule: .nullify)
     var session: WorkoutSession?
@@ -20,7 +26,8 @@ final class WorkoutSessionExercise {
     // Persisted relationship (different name => avoids macro accessor collision on `setLogs`)
     @Relationship(deleteRule: .cascade)
     var setLogsStorage: [WorkoutSetLog]
-    
+
+    // Optional exercise-level targets (some UIs might use these as a summary)
     var targetDurationSeconds: Int? = nil
     var actualDurationSeconds: Int? = nil
     var targetDistance: Double? = nil
@@ -45,6 +52,7 @@ final class WorkoutSessionExercise {
         exerciseId: UUID,
         exerciseNameSnapshot: String,
         notes: String? = nil,
+        trackingStyle: ExerciseTrackingStyle = .strength,
         session: WorkoutSession? = nil,
         setLogsStorage: [WorkoutSetLog] = []
     ) {
@@ -53,6 +61,7 @@ final class WorkoutSessionExercise {
         self.exerciseId = exerciseId
         self.exerciseNameSnapshot = exerciseNameSnapshot
         self.notes = notes
+        self.trackingStyleRaw = trackingStyle.rawValue
         self.session = session
 
         self.setLogsStorage = setLogsStorage
@@ -62,7 +71,12 @@ final class WorkoutSessionExercise {
             log.sessionExercise = self
         }
     }
-    
+
+    var trackingStyle: ExerciseTrackingStyle {
+        get { ExerciseTrackingStyle(rawValue: trackingStyleRaw) ?? .strength }
+        set { trackingStyleRaw = newValue.rawValue }
+    }
+
     @Transient
     var orderedSetLogs: [WorkoutSetLog] {
         setLogsStorage.sorted { $0.order < $1.order }

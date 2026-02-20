@@ -415,7 +415,11 @@ struct WorkoutSessionScreen: View {
             Button {
                 markActive(exerciseID: ex.id, setID: nil)
                 if let newSet = logging.addSet(to: ex, template: sets.last, context: modelContext) {
+                    // If the template was a timed/distance set, ensure the new set keeps those fields
+                    applyTimedTemplate(from: sets.last, to: newSet, prefillActuals: true)
+
                     markActive(exerciseID: ex.id, setID: newSet.id)
+                    saveOrAssert("add set")
                     scrollToSet(newSet.id, proxy: proxy)
                 }
             } label: {
@@ -570,94 +574,162 @@ struct WorkoutSessionScreen: View {
     
     @ViewBuilder
     private func setRow(ex: WorkoutSessionExercise, set: WorkoutSetLog, proxy: ScrollViewProxy) -> some View {
-        WorkoutSetEditorRow(
-            set: set,
-            setNumber: set.order + 1,
-            isReadOnly: isReadOnly,
-            onCompleted: { suggestedRest in
-                handleSetCompleted(ex: ex, set: set, suggestedRest: suggestedRest)
-            },
-            onPersist: {
-                markActive(exerciseID: ex.id, setID: set.id)
-                saveOrAssert("set edit")
-            },
-            onToggleComplete: {
-                markActive(exerciseID: ex.id, setID: set.id)
+        if isTimedSet(set) {
+            TimedSetEditorRow(
+                set: set,
+                setNumber: set.order + 1,
+                isReadOnly: isReadOnly,
+                showsDistance: (set.targetDistance != nil || set.actualDistance != nil),
+                onPersist: {
+                    markActive(exerciseID: ex.id, setID: set.id)
+                    saveOrAssert("set edit")
+                },
+                onToggleComplete: {
+                    markActive(exerciseID: ex.id, setID: set.id)
+                    logging.toggleCompleted(set, context: modelContext)
+                    saveOrAssert("toggle complete")
+                },
+                onCopySet: {
+                    markActive(exerciseID: ex.id, setID: set.id)
+                    if !isReadOnly, let newSet = logging.copySet(set, in: ex, context: modelContext) {
+                        applyTimedTemplate(from: set, to: newSet, prefillActuals: true)
+                        markActive(exerciseID: ex.id, setID: newSet.id)
+                        saveOrAssert("copy set")
+                        scrollToSet(newSet.id, proxy: proxy)
+                    }
+                },
+                onAddSet: {
+                    markActive(exerciseID: ex.id, setID: set.id)
+                    if !isReadOnly, let newSet = logging.addSet(to: ex, after: set, template: set, context: modelContext) {
+                        applyTimedTemplate(from: set, to: newSet, prefillActuals: true)
+                        markActive(exerciseID: ex.id, setID: newSet.id)
+                        saveOrAssert("add set")
+                        scrollToSet(newSet.id, proxy: proxy)
+                    }
+                },
+                onDeleteSet: {
+                    markActive(exerciseID: ex.id, setID: set.id)
+                    if !isReadOnly {
+                        logging.deleteSet(set, from: ex, context: modelContext)
+                        saveOrAssert("delete set")
+                        if activeSetID == set.id { activeSetID = nil }
+                    }
+                }
+            )
+        } else {
+            WorkoutSetEditorRow(
+                set: set,
+                setNumber: set.order + 1,
+                isReadOnly: isReadOnly,
+                onCompleted: { suggestedRest in
+                    handleSetCompleted(ex: ex, set: set, suggestedRest: suggestedRest)
+                },
+                onPersist: {
+                    markActive(exerciseID: ex.id, setID: set.id)
+                    saveOrAssert("set edit")
+                },
+                onToggleComplete: {
+                    markActive(exerciseID: ex.id, setID: set.id)
 
-                let wasCompleted = set.completed
-                logging.toggleCompleted(set, context: modelContext)
+                    let wasCompleted = set.completed
+                    logging.toggleCompleted(set, context: modelContext)
 
-                // If user un-completes, clear PR markers so re-completing can celebrate again.
-                if wasCompleted && !set.completed {
-                    prBadgesBySetId[set.id] = nil
-                    celebratedPRSetIDs.remove(set.id)
-                    return
-                }
+                    // If user un-completes, clear PR markers so re-completing can celebrate again.
+                    if wasCompleted && !set.completed {
+                        prBadgesBySetId[set.id] = nil
+                        celebratedPRSetIDs.remove(set.id)
+                        return
+                    }
 
-                // Only trigger celebration on the transition to completed.
-                if !wasCompleted && set.completed {
-                    Task { await celebratePRIfNeeded(ex: ex, set: set) }
+                    // Only trigger celebration on the transition to completed.
+                    if !wasCompleted && set.completed {
+                        Task { await celebratePRIfNeeded(ex: ex, set: set) }
+                    }
+                },
+                onCopySet: {
+                    markActive(exerciseID: ex.id, setID: set.id)
+                    if !isReadOnly, let newSet = logging.copySet(set, in: ex, context: modelContext) {
+                        markActive(exerciseID: ex.id, setID: newSet.id)
+                        scrollToSet(newSet.id, proxy: proxy)
+                    }
+                },
+                onAddSet: {
+                    markActive(exerciseID: ex.id, setID: set.id)
+                    if !isReadOnly, let newSet = logging.addSet(to: ex, after: set, template: set, context: modelContext) {
+                        markActive(exerciseID: ex.id, setID: newSet.id)
+                        scrollToSet(newSet.id, proxy: proxy)
+                    }
+                },
+                onDeleteSet: {
+                    markActive(exerciseID: ex.id, setID: set.id)
+                    if !isReadOnly {
+                        logging.deleteSet(set, from: ex, context: modelContext)
+                        if activeSetID == set.id { activeSetID = nil }
+                    }
+                },
+                onBumpReps: { delta in
+                    markActive(exerciseID: ex.id, setID: set.id)
+                    if !isReadOnly { logging.bumpReps(set, delta: delta, context: modelContext) }
+                },
+                onBumpWeight: { delta in
+                    markActive(exerciseID: ex.id, setID: set.id)
+                    if !isReadOnly { logging.bumpWeight(set, delta: delta, context: modelContext) }
+                },
+                weightStep: 2.5
+            )
+            .overlay(alignment: .topTrailing) {
+                if let ach = prBadgesBySetId[set.id], !ach.isEmpty {
+                    Button {
+                        prDetails = PRDetailsContext(
+                            setId: set.id,
+                            exerciseName: ex.exerciseNameSnapshot,
+                            setNumber: set.order + 1,
+                            achievements: ach,
+                            weight: set.weight,
+                            reps: set.reps,
+                            unit: set.weightUnit.rawValue
+                        )
+                    } label: {
+                        Text("PR")
+                            .font(.caption2.weight(.bold))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(.thinMaterial, in: Capsule())
+                            .overlay(Capsule().stroke(.yellow.opacity(0.35), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 6)
+                    .accessibilityLabel("Show PR details")
                 }
-            },
-            onCopySet: {
-                markActive(exerciseID: ex.id, setID: set.id)
-                if !isReadOnly, let newSet = logging.copySet(set, in: ex, context: modelContext) {
-                    markActive(exerciseID: ex.id, setID: newSet.id)
-                    scrollToSet(newSet.id, proxy: proxy)
-                }
-            },
-            onAddSet: {
-                markActive(exerciseID: ex.id, setID: set.id)
-                if !isReadOnly, let newSet = logging.addSet(to: ex, after: set, template: set, context: modelContext) {
-                    markActive(exerciseID: ex.id, setID: newSet.id)
-                    scrollToSet(newSet.id, proxy: proxy)
-                }
-            },
-            onDeleteSet: {
-                markActive(exerciseID: ex.id, setID: set.id)
-                if !isReadOnly {
-                    logging.deleteSet(set, from: ex, context: modelContext)
-                    if activeSetID == set.id { activeSetID = nil }
-                }
-            },
-            onBumpReps: { delta in
-                markActive(exerciseID: ex.id, setID: set.id)
-                if !isReadOnly { logging.bumpReps(set, delta: delta, context: modelContext) }
-            },
-            onBumpWeight: { delta in
-                markActive(exerciseID: ex.id, setID: set.id)
-                if !isReadOnly { logging.bumpWeight(set, delta: delta, context: modelContext) }
-            },
-            weightStep: 2.5
-        )
-        .overlay(alignment: .topTrailing) {
-            if let ach = prBadgesBySetId[set.id], !ach.isEmpty {
-                Button {
-                    prDetails = PRDetailsContext(
-                        setId: set.id,
-                        exerciseName: ex.exerciseNameSnapshot,
-                        setNumber: set.order + 1,
-                        achievements: ach,
-                        weight: set.weight,
-                        reps: set.reps,
-                        unit: set.weightUnit.rawValue
-                    )
-                } label: {
-                    Text("PR")
-                        .font(.caption2.weight(.bold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(.thinMaterial, in: Capsule())
-                        .overlay(Capsule().stroke(.yellow.opacity(0.35), lineWidth: 1))
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 6)
-                .accessibilityLabel("Show PR details")
             }
         }
     }
 
-    
+    /// Timed / distance sets are detected by the presence of those target/actual fields.
+    private func isTimedSet(_ set: WorkoutSetLog) -> Bool {
+        set.targetDurationSeconds != nil ||
+        set.actualDurationSeconds != nil ||
+        set.targetDistance != nil ||
+        set.actualDistance != nil
+    }
+
+    /// Keep cardio/mobility sets “timed” even when created via generic add/copy helpers that
+    /// might only clone reps/weight fields.
+    private func applyTimedTemplate(from template: WorkoutSetLog?, to set: WorkoutSetLog, prefillActuals: Bool) {
+        guard let template else { return }
+        guard isTimedSet(template) else { return }
+
+        set.targetDurationSeconds = template.targetDurationSeconds
+        set.targetDistance = template.targetDistance
+
+        if prefillActuals {
+            set.actualDurationSeconds = template.actualDurationSeconds ?? template.targetDurationSeconds
+            set.actualDistance = template.actualDistance ?? template.targetDistance
+        } else {
+            // Keep whatever actuals it already had.
+        }
+    }
+
     @MainActor
     private func applyGoalPrefillIfNeeded() async {
         guard session.status == .inProgress else { return }
@@ -1040,6 +1112,185 @@ struct WorkoutSessionScreen: View {
         }
     }
     
+
+    private struct TimedSetEditorRow: View {
+        @Bindable var set: WorkoutSetLog
+        var setNumber: Int
+        var isReadOnly: Bool
+        var showsDistance: Bool
+
+        var onPersist: () -> Void
+        var onToggleComplete: () -> Void
+        var onCopySet: () -> Void
+        var onAddSet: () -> Void
+        var onDeleteSet: () -> Void
+
+        var body: some View {
+            HStack(alignment: .center, spacing: 14) {
+                Text("\(setNumber)")
+                    .font(.headline)
+                    .frame(width: 24, alignment: .leading)
+                    .foregroundStyle(.secondary)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 16) {
+                        durationField
+
+                        if showsDistance {
+                            distanceField
+                        }
+                    }
+
+                    HStack(spacing: 14) {
+                        actionButton(system: "doc.on.doc", label: "Copy", action: onCopySet)
+                        actionButton(system: "plus", label: "Add", action: onAddSet)
+                        actionButton(system: "trash", label: "Delete", action: onDeleteSet)
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 6)
+
+                Button {
+                    if !isReadOnly { onToggleComplete() }
+                } label: {
+                    Image(systemName: set.completed ? "checkmark.circle.fill" : "circle")
+                        .font(.title3)
+                        .foregroundStyle(set.completed ? .green : .secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(set.completed ? "Mark incomplete" : "Mark complete")
+                .disabled(isReadOnly)
+            }
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
+        }
+
+        private var durationField: some View {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Time (min)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    stepButton(system: "minus.circle") { bumpDurationMinutes(-1) }
+
+                    TextField("—", text: durationMinutesBinding)
+                        .multilineTextAlignment(.center)
+                        .keyboardType(.numberPad)
+                        .frame(width: 54)
+                        .textFieldStyle(.roundedBorder)
+                        .disabled(isReadOnly)
+
+                    stepButton(system: "plus.circle") { bumpDurationMinutes(+1) }
+                }
+            }
+        }
+
+        private var distanceField: some View {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Distance")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    stepButton(system: "minus.circle") { bumpDistance(-0.1) }
+
+                    TextField("—", text: distanceBinding)
+                        .multilineTextAlignment(.center)
+                        .keyboardType(.decimalPad)
+                        .frame(width: 64)
+                        .textFieldStyle(.roundedBorder)
+                        .disabled(isReadOnly)
+
+                    stepButton(system: "plus.circle") { bumpDistance(+0.1) }
+                }
+            }
+        }
+
+        private func actionButton(system: String, label: String, action: @escaping () -> Void) -> some View {
+            Button(action: action) {
+                Image(systemName: system)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(label)
+            .disabled(isReadOnly)
+        }
+
+        private func stepButton(system: String, action: @escaping () -> Void) -> some View {
+            Button {
+                if !isReadOnly {
+                    action()
+                    onPersist()
+                }
+            } label: {
+                Image(systemName: system)
+                    .font(.title3)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .disabled(isReadOnly)
+        }
+
+        private var durationMinutesBinding: Binding<String> {
+            Binding(
+                get: {
+                    let seconds = set.actualDurationSeconds ?? set.targetDurationSeconds
+                    guard let seconds else { return "" }
+                    let minutes = max(0, Int(round(Double(seconds) / 60.0)))
+                    return minutes == 0 ? "" : String(minutes)
+                },
+                set: { newValue in
+                    guard !isReadOnly else { return }
+                    let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard let m = Int(trimmed), m >= 0 else {
+                        set.actualDurationSeconds = nil
+                        onPersist()
+                        return
+                    }
+                    set.actualDurationSeconds = m * 60
+                    onPersist()
+                }
+            )
+        }
+
+        private var distanceBinding: Binding<String> {
+            Binding(
+                get: {
+                    let v = set.actualDistance ?? set.targetDistance
+                    guard let v else { return "" }
+                    let rounded = (v * 10).rounded() / 10
+                    return rounded == 0 ? "" : String(format: "%.1f", rounded)
+                },
+                set: { newValue in
+                    guard !isReadOnly else { return }
+                    let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard let d = Double(trimmed), d >= 0 else {
+                        set.actualDistance = nil
+                        onPersist()
+                        return
+                    }
+                    set.actualDistance = d
+                    onPersist()
+                }
+            )
+        }
+
+        private func bumpDurationMinutes(_ delta: Int) {
+            let currentSeconds = set.actualDurationSeconds ?? set.targetDurationSeconds ?? 0
+            let currentMinutes = max(0, Int(round(Double(currentSeconds) / 60.0)))
+            let next = max(0, currentMinutes + delta)
+            set.actualDurationSeconds = next * 60
+        }
+
+        private func bumpDistance(_ delta: Double) {
+            let current = set.actualDistance ?? set.targetDistance ?? 0
+            let next = max(0, current + delta)
+            set.actualDistance = next
+        }
+    }
+
     private enum Haptics {
         static func success() {
     #if canImport(UIKit)

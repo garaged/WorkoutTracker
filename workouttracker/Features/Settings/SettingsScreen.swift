@@ -31,6 +31,9 @@ struct SettingsScreen: View {
                 }
             }
 
+            StarterPackSettingsSection()
+
+
             Section("Diagnostics") {
                 NavigationLink {
                     FeedbackScreen()

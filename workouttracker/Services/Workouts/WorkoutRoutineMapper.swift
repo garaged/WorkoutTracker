@@ -13,7 +13,7 @@ enum WorkoutRoutineMapper {
             let plans = item.setPlans.sorted { $0.order < $1.order }
             let sets: [WorkoutSessionFactory.SetTemplate] =
                 plans.isEmpty
-                ? [defaultSet(order: 0)]
+                ? [defaultSet(order: 0, style: item.trackingStyle)]
                 : plans.map { p in
                     WorkoutSessionFactory.SetTemplate(
                         order: p.order,
@@ -21,7 +21,9 @@ enum WorkoutRoutineMapper {
                         targetWeight: p.targetWeight,
                         targetWeightUnit: p.weightUnit,
                         targetRPE: p.targetRPE,
-                        targetRestSeconds: p.restSeconds
+                        targetRestSeconds: p.restSeconds,
+                        targetDurationSeconds: p.targetDurationSeconds,
+                        targetDistance: p.targetDistance
                     )
                 }
 
@@ -39,7 +41,34 @@ enum WorkoutRoutineMapper {
         return out
     }
 
-    private static func defaultSet(order: Int) -> WorkoutSessionFactory.SetTemplate {
-        .init(order: order, targetReps: 10, targetWeight: nil, targetWeightUnit: .kg, targetRPE: nil, targetRestSeconds: 90)
+    private static func defaultSet(order: Int, style: ExerciseTrackingStyle) -> WorkoutSessionFactory.SetTemplate {
+        // Use the same "capability" flags the routine editor UI uses, so this stays future-proof
+        // if you add new styles later.
+        var t = WorkoutSessionFactory.SetTemplate(
+            order: order,
+            targetReps: nil,
+            targetWeight: nil,
+            targetWeightUnit: .kg,
+            targetRPE: nil,
+            targetRestSeconds: nil,
+            targetDurationSeconds: nil,
+            targetDistance: nil
+        )
+
+        if style.showsReps { t.targetReps = 10 }
+        if style.showsWeight { t.targetRestSeconds = 90 }
+
+        if style.showsDuration {
+            // Default: 10 minutes
+            t.targetDurationSeconds = 10 * 60
+        }
+
+        if style.showsDistance {
+            // If distance is tracked, also default a duration if none was set.
+            if t.targetDurationSeconds == nil { t.targetDurationSeconds = 20 * 60 }
+            t.targetDistance = 3.0
+        }
+
+        return t
     }
 }
