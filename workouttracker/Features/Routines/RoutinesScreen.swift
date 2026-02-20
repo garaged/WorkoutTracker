@@ -1,28 +1,6 @@
 import SwiftUI
 import SwiftData
 
-// File: workouttracker/Features/Routines/RoutinesScreen.swift
-//
-// Fixes the errors you reported:
-//
-// 1) "Cannot assign to value: 'launchedSession' is a 'let' constant"
-//    - This happens when you do `if let launchedSession { ... }` and then try to set
-//      `launchedSession = nil` inside that scope. The `if let` creates a shadowed constant.
-//    - Fix: use `if let session = launchedSession { ... }` and mutate the @State optional.
-//
-// 2) "'nil' cannot be assigned to type 'WorkoutSession'"
-//    - Your @State must be optional to be able to set it to nil.
-//    - Fix: `@State private var launchedSession: WorkoutSession? = nil`
-//
-// 3) RoutineListItem initializer mismatch
-//    - Your existing RoutineListItem.swift expects `title:` (String), not `routine:`.
-//    - Fix: call `RoutineListItem(title: routine.name, ...)`
-//
-// 4) Still resilient against SwiftUI type-checker timeouts
-//    - Hard fix: type-erase each row with AnyView via `rowView(for:)`
-//
-// This file does NOT redefine RoutineListItem/RoutineRow (so no duplicates).
-
 @MainActor
 struct RoutinesScreen: View {
     @Environment(\.modelContext) private var modelContext
@@ -31,7 +9,6 @@ struct RoutinesScreen: View {
     private var routines: [WorkoutRoutine]
 
     @State private var searchText: String = ""
-    @State private var nameEditor: NameEditorState? = nil
 
     @State private var routineToDelete: WorkoutRoutine? = nil
     @State private var showDeleteConfirm: Bool = false
@@ -45,6 +22,7 @@ struct RoutinesScreen: View {
     @State private var showScheduledAlert: Bool = false
     @State private var navToCalendar: Bool = false
     @State private var calendarInitialDay: Date = Date()
+
     // Full routine editor (name + exercises)
     @State private var showRoutineEditor: Bool = false
     @State private var routineEditorMode: RoutineEditorScreen.Mode = .create
@@ -61,7 +39,6 @@ struct RoutinesScreen: View {
     }
 
     var body: some View {
-        // ✅ Explicit type helps the compiler.
         let data: [WorkoutRoutine] = filteredRoutines
 
         List {
@@ -119,12 +96,10 @@ struct RoutinesScreen: View {
             NavigationStack {
                 RoutineEditorScreen(mode: routineEditorMode)
             }
-            // important: create-mode inserts a new routine immediately
+            // Create mode inserts immediately — prevent swipe-dismiss leaving an empty routine behind.
             .interactiveDismissDisabled(isCreatingRoutine)
         }
     }
-
-    // MARK: - Pieces (split up to reduce generic complexity)
 
     private var emptyState: some View {
         ContentUnavailableView(
@@ -150,22 +125,38 @@ struct RoutinesScreen: View {
                     }
                     .tint(.blue)
                 }
+                .contextMenu {
+                    Button {
+                        routineEditorMode = .edit(routine)
+                        showRoutineEditor = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+
+                    Button(role: .destructive) {
+                        confirmDelete(routine)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
         }
     }
 
-    /// Type-erased row. This is the “hard fix” for stubborn type-checker timeouts.
     private func rowView(for routine: WorkoutRoutine) -> AnyView {
         let startNow: () -> Void = { startRoutineNow(routine) }
         let scheduleToday: () -> Void = { scheduleForToday(routine) }
+
+        // Pro behavior: rename opens the full editor (name + items).
         let rename: () -> Void = {
             routineEditorMode = .edit(routine)
             showRoutineEditor = true
         }
+
         let delete: () -> Void = { confirmDelete(routine) }
 
         return AnyView(
             RoutineListItem(
-                title: routine.name,     // ✅ matches RoutineListItem.swift
+                title: routine.name,
                 onStartNow: startNow,
                 onScheduleToday: scheduleToday,
                 onRename: rename,
@@ -194,28 +185,6 @@ struct RoutinesScreen: View {
         }
     }
 
-    // MARK: - Create / Rename
-
-    private func saveRoutineName(state: NameEditorState, newName: String) {
-        let name = newName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
-
-        switch state.kind {
-        case .create:
-            let r = WorkoutRoutine(name: name)
-            modelContext.insert(r)
-            try? modelContext.save()
-
-        case .rename(let r):
-            r.name = name
-            try? modelContext.save()
-        }
-
-        nameEditor = nil
-    }
-
-    // MARK: - Delete
-
     private func confirmDelete(_ routine: WorkoutRoutine) {
         routineToDelete = routine
         showDeleteConfirm = true
@@ -227,8 +196,6 @@ struct RoutinesScreen: View {
         try? modelContext.save()
         routineToDelete = nil
     }
-
-    // MARK: - Actions: start / schedule
 
     private func startRoutineNow(_ routine: WorkoutRoutine) {
         let cal = Calendar.current
@@ -244,13 +211,10 @@ struct RoutinesScreen: View {
             workoutRoutineId: routine.id
         )
         activity.dayKey = dayKey(for: start)
-        activity.status = .planned
-        activity.completedAt = nil
-        activity.isAllDay = false
-
-        modelContext.insert(activity)
 
         do {
+            modelContext.insert(activity)
+
             let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
             let session = WorkoutSessionFactory.makeSession(
                 linkedActivityId: activity.id,
@@ -277,10 +241,8 @@ struct RoutinesScreen: View {
         let todayStart = cal.startOfDay(for: now)
         let todayEnd = cal.date(byAdding: .day, value: 1, to: todayStart)!
 
-        // Keep it today + rounded (5 min)
         let rounded = roundUp(now, toMinutes: 5)
         let start = min(rounded, todayEnd.addingTimeInterval(-60))
-
         let end = cal.date(byAdding: .minute, value: 60, to: start)
 
         let a = Activity(
@@ -304,8 +266,6 @@ struct RoutinesScreen: View {
         calendarInitialDay = todayStart
     }
 
-    // MARK: - Helpers
-
     private func roundUp(_ date: Date, toMinutes step: Int) -> Date {
         let cal = Calendar.current
         let comps = cal.dateComponents([.year, .month, .day, .hour, .minute], from: date)
@@ -328,95 +288,5 @@ struct RoutinesScreen: View {
     private func dayKey(for date: Date) -> String {
         let start = Calendar.current.startOfDay(for: date)
         return Self.dayKeyFormatter.string(from: start)
-    }
-
-    // MARK: - Nested types (nested to avoid module-wide name collisions)
-
-    private struct NameEditorState: Identifiable {
-        enum Kind {
-            case create
-            case rename(WorkoutRoutine)
-        }
-
-        let id = UUID()
-        let kind: Kind
-
-        static let create = NameEditorState(kind: .create)
-        static func rename(_ r: WorkoutRoutine) -> NameEditorState { .init(kind: .rename(r)) }
-
-        var title: String {
-            switch kind {
-            case .create: return "New Routine"
-            case .rename: return "Rename Routine"
-            }
-        }
-
-        var initialName: String {
-            switch kind {
-            case .create: return ""
-            case .rename(let r): return r.name
-            }
-        }
-
-        var saveButtonTitle: String {
-            switch kind {
-            case .create: return "Create"
-            case .rename: return "Save"
-            }
-        }
-    }
-
-    private struct NameEditorSheet: View {
-        @Environment(\.dismiss) private var dismiss
-
-        let title: String
-        let initialName: String
-        let saveButtonTitle: String
-        let onSave: (String) -> Void
-        let onCancel: () -> Void
-
-        @State private var name: String
-
-        init(
-            title: String,
-            initialName: String,
-            saveButtonTitle: String,
-            onSave: @escaping (String) -> Void,
-            onCancel: @escaping () -> Void
-        ) {
-            self.title = title
-            self.initialName = initialName
-            self.saveButtonTitle = saveButtonTitle
-            self.onSave = onSave
-            self.onCancel = onCancel
-            _name = State(initialValue: initialName)
-        }
-
-        var body: some View {
-            NavigationStack {
-                Form {
-                    Section("Name") {
-                        TextField("Routine name", text: $name)
-                            .textInputAutocapitalization(.words)
-                    }
-                }
-                .navigationTitle(title)
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button("Cancel") {
-                            onCancel()
-                            dismiss()
-                        }
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button(saveButtonTitle) {
-                            onSave(name)
-                            dismiss()
-                        }
-                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
-                }
-            }
-        }
     }
 }
