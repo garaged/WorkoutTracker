@@ -1,5 +1,14 @@
 import SwiftUI
 import SwiftData
+import Foundation
+
+// File: workouttracker/Features/Routines/RoutinesScreen.swift
+//
+// Fix:
+// - Removes references to missing/legacy views (RoutineEditSheet, RoutineRowTitle, StartRoutineButton).
+// - Uses RoutineEditorScreen for create/edit so routines can edit exercises (not just rename).
+// - Keeps delete + start-now + schedule-today behaviors.
+// - Adds an optional "Starter" badge for seeded routines (name prefix: "Starter —").
 
 @MainActor
 struct RoutinesScreen: View {
@@ -10,6 +19,7 @@ struct RoutinesScreen: View {
 
     @State private var searchText: String = ""
 
+    // Delete confirmation
     @State private var routineToDelete: WorkoutRoutine? = nil
     @State private var showDeleteConfirm: Bool = false
 
@@ -23,7 +33,7 @@ struct RoutinesScreen: View {
     @State private var navToCalendar: Bool = false
     @State private var calendarInitialDay: Date = Date()
 
-    // Full routine editor (name + exercises)
+    // Full routine editor (name + exercises + tracking styles)
     @State private var showRoutineEditor: Bool = false
     @State private var routineEditorMode: RoutineEditorScreen.Mode = .create
 
@@ -39,13 +49,30 @@ struct RoutinesScreen: View {
     }
 
     var body: some View {
-        let data: [WorkoutRoutine] = filteredRoutines
+        let data = filteredRoutines
 
         List {
             if data.isEmpty {
-                emptyState
+                ContentUnavailableView(
+                    "No routines yet",
+                    systemImage: "list.bullet.rectangle.portrait",
+                    description: Text("Create your first routine to reuse it in your calendar or start it instantly.")
+                )
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .padding(.vertical, 24)
             } else {
-                routinesSection(data)
+                ForEach(data, id: \.id) { routine in
+                    RoutineListItem(
+                        title: routine.name,
+                        badgeText: starterBadgeText(for: routine),
+                        onStartNow: { startRoutineNow(routine) },
+                        onScheduleToday: { scheduleForToday(routine) },
+                        // “Rename” opens the full editor (name + items) — pro behavior.
+                        onRename: { openEditor(for: routine) },
+                        onDelete: { confirmDelete(routine) }
+                    )
+                }
             }
         }
         .listStyle(.insetGrouped)
@@ -101,70 +128,6 @@ struct RoutinesScreen: View {
         }
     }
 
-    private var emptyState: some View {
-        ContentUnavailableView(
-            "No routines yet",
-            systemImage: "list.bullet.rectangle.portrait",
-            description: Text("Create your first routine to reuse it in your calendar or start it instantly.")
-        )
-        .listRowBackground(Color.clear)
-        .listRowSeparator(.hidden)
-        .padding(.vertical, 24)
-    }
-
-    @ViewBuilder
-    private func routinesSection(_ data: [WorkoutRoutine]) -> some View {
-        ForEach(data) { routine in
-            rowView(for: routine)
-                .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                    Button {
-                        routineEditorMode = .edit(routine)
-                        showRoutineEditor = true
-                    } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-                    .tint(.blue)
-                }
-                .contextMenu {
-                    Button {
-                        routineEditorMode = .edit(routine)
-                        showRoutineEditor = true
-                    } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-
-                    Button(role: .destructive) {
-                        confirmDelete(routine)
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                    }
-                }
-        }
-    }
-
-    private func rowView(for routine: WorkoutRoutine) -> AnyView {
-        let startNow: () -> Void = { startRoutineNow(routine) }
-        let scheduleToday: () -> Void = { scheduleForToday(routine) }
-
-        // Pro behavior: rename opens the full editor (name + items).
-        let rename: () -> Void = {
-            routineEditorMode = .edit(routine)
-            showRoutineEditor = true
-        }
-
-        let delete: () -> Void = { confirmDelete(routine) }
-
-        return AnyView(
-            RoutineListItem(
-                title: routine.name,
-                onStartNow: startNow,
-                onScheduleToday: scheduleToday,
-                onRename: rename,
-                onDelete: delete
-            )
-        )
-    }
-
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItemGroup(placement: .topBarTrailing) {
@@ -183,6 +146,16 @@ struct RoutinesScreen: View {
             }
             .accessibilityLabel("Create routine")
         }
+    }
+
+    private func openEditor(for routine: WorkoutRoutine) {
+        routineEditorMode = .edit(routine)
+        showRoutineEditor = true
+    }
+
+    private func starterBadgeText(for routine: WorkoutRoutine) -> String? {
+        // Derived (no schema change needed): Starter pack names use this prefix.
+        routine.name.hasPrefix("Starter —") ? "Starter" : nil
     }
 
     private func confirmDelete(_ routine: WorkoutRoutine) {

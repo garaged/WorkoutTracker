@@ -1,0 +1,119 @@
+{
+  "exercises": [
+    { "id": "11111111-1111-1111-1111-111111111111", "key": "back-squat", "name": "Back Squat", "notes": "Barbell squat." },
+    { "id": "22222222-2222-2222-2222-222222222222", "key": "bench-press", "name": "Bench Press", "notes": "Flat barbell bench." },
+    { "id": "33333333-3333-3333-3333-333333333333", "key": "deadlift", "name": "Deadlift", "notes": "Conventional deadlift." },
+    { "id": "44444444-4444-4444-4444-444444444444", "key": "overhead-press", "name": "Overhead Press", "notes": "Standing press." },
+    { "id": "55555555-5555-5555-5555-555555555555", "key": "barbell-row", "name": "Barbell Row", "notes": "Bent-over row." },
+    { "id": "66666666-6666-6666-6666-666666666666", "key": "pull-up", "name": "Pull-up", "notes": "Bodyweight." },
+    { "id": "77777777-7777-7777-7777-777777777777", "key": "push-up", "name": "Push-up", "notes": "Bodyweight." },
+    { "id": "88888888-8888-8888-8888-888888888888", "key": "lunges", "name": "Lunges", "notes": "Alternating legs." },
+    { "id": "99999999-9999-9999-9999-999999999999", "key": "plank", "name": "Plank", "notes": "Timed hold." },
+    { "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "key": "running", "name": "Running", "notes": "Cardio." },
+    { "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "key": "cycling", "name": "Cycling", "notes": "Cardio." }
+  ],
+  "routines": [
+    {
+      "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "name": "Beginner Full Body A",
+      "items": [
+        {
+          "exerciseKey": "back-squat",
+          "trackingStyleRaw": "strength",
+          "notes": null,
+          "plans": [
+            { "targetReps": 8, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 120 },
+            { "targetReps": 8, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 120 },
+            { "targetReps": 8, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 120 }
+          ]
+        },
+        {
+          "exerciseKey": "bench-press",
+          "trackingStyleRaw": "strength",
+          "notes": null,
+          "plans": [
+            { "targetReps": 8, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 120 },
+            { "targetReps": 8, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 120 },
+            { "targetReps": 8, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 120 }
+          ]
+        },
+        {
+          "exerciseKey": "barbell-row",
+          "trackingStyleRaw": "strength",
+          "notes": null,
+          "plans": [
+            { "targetReps": 10, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 90 },
+            { "targetReps": 10, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 90 },
+            { "targetReps": 10, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 90 }
+          ]
+        },
+        {
+          "exerciseKey": "plank",
+          "trackingStyleRaw": "timeOnly",
+          "notes": null,
+          "plans": [
+            { "targetReps": null, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": 60, "targetDistance": null, "targetRPE": null, "restSeconds": 60 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+      "name": "Beginner Full Body B",
+      "items": [
+        {
+          "exerciseKey": "deadlift",
+          "trackingStyleRaw": "strength",
+          "notes": null,
+          "plans": [
+            { "targetReps": 5, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 150 },
+            { "targetReps": 5, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 150 },
+            { "targetReps": 5, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 150 }
+          ]
+        },
+        {
+          "exerciseKey": "overhead-press",
+          "trackingStyleRaw": "strength",
+          "notes": null,
+          "plans": [
+            { "targetReps": 8, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 120 },
+            { "targetReps": 8, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 120 },
+            { "targetReps": 8, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 120 }
+          ]
+        },
+        {
+          "exerciseKey": "pull-up",
+          "trackingStyleRaw": "repsOnly",
+          "notes": null,
+          "plans": [
+            { "targetReps": 6, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 90 },
+            { "targetReps": 6, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 90 },
+            { "targetReps": 6, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": null, "targetDistance": null, "targetRPE": null, "restSeconds": 90 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      "name": "Cardio Starter",
+      "items": [
+        {
+          "exerciseKey": "running",
+          "trackingStyleRaw": "timeDistance",
+          "notes": "Easy pace.",
+          "plans": [
+            { "targetReps": null, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": 900, "targetDistance": 2.0, "targetRPE": null, "restSeconds": null }
+          ]
+        },
+        {
+          "exerciseKey": "cycling",
+          "trackingStyleRaw": "timeOnly",
+          "notes": "Steady.",
+          "plans": [
+            { "targetReps": null, "targetWeight": null, "weightUnit": "kg", "targetDurationSeconds": 1200, "targetDistance": null, "targetRPE": null, "restSeconds": null }
+          ]
+        }
+      ]
+    }
+  ]
+}
