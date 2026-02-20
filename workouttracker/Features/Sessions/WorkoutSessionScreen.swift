@@ -1172,6 +1172,8 @@ struct WorkoutSessionScreen: View {
                 Text("Time (min)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)                // ✅ don’t wrap
+                    .fixedSize(horizontal: true, vertical: false) // ✅ keep text intrinsic width
 
                 HStack(spacing: 8) {
                     stepButton(system: "minus.circle") { bumpDurationMinutes(-1) }
@@ -1186,6 +1188,7 @@ struct WorkoutSessionScreen: View {
                     stepButton(system: "plus.circle") { bumpDurationMinutes(+1) }
                 }
             }
+            .layoutPriority(1) // ✅ resist being squeezed compared to other columns
         }
 
         private var distanceField: some View {
@@ -1193,6 +1196,8 @@ struct WorkoutSessionScreen: View {
                 Text("Distance")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)                // ✅ don’t wrap
+                    .fixedSize(horizontal: true, vertical: false) // ✅ keep text intrinsic width
 
                 HStack(spacing: 8) {
                     stepButton(system: "minus.circle") { bumpDistance(-0.1) }
@@ -1207,6 +1212,7 @@ struct WorkoutSessionScreen: View {
                     stepButton(system: "plus.circle") { bumpDistance(+0.1) }
                 }
             }
+            .layoutPriority(1) // ✅ resist being squeezed compared to other columns
         }
 
         private func actionButton(system: String, label: String, action: @escaping () -> Void) -> some View {
