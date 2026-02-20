@@ -1,0 +1,20 @@
+# Xcode
+.DS_Store
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+
+# Build products
+DerivedData/
+build/
+
+# SwiftPM (if you add it later)
+.swiftpm/
+Package.resolved
+
+# Crash logs
+*.crash
+
+# Optional: local env files
+.env
