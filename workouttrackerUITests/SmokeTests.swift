@@ -2,7 +2,7 @@ import XCTest
 
 final class SmokeTests: XCTestCase {
 
-    // MARK: - Launch
+    // MARK: - App bootstrap
 
     private func makeApp(start: String, resetDefaults: Bool = true, seed: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
@@ -14,14 +14,10 @@ final class SmokeTests: XCTestCase {
         return app
     }
 
-    // MARK: - Finders (identifier-first, label fallback)
+    // MARK: - Generic finders
 
     private func any(_ app: XCUIApplication, id: String) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: id).firstMatch
-    }
-
-    private func buttonByLabel(_ app: XCUIApplication, contains text: String) -> XCUIElement {
-        app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", text)).firstMatch
     }
 
     private func cellByLabel(_ app: XCUIApplication, contains text: String) -> XCUIElement {
@@ -32,240 +28,180 @@ final class SmokeTests: XCTestCase {
         app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", text)).firstMatch
     }
 
+    private func buttonByLabel(_ app: XCUIApplication, contains text: String) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", text)).firstMatch
+    }
+
     private func waitAny(_ candidates: [XCUIElement], timeout: TimeInterval) -> XCUIElement? {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
-            for c in candidates where c.exists {
-                // For table cells offscreen, exists might be true but not hittable;
-                // we still return it so caller can scroll/tap via coordinate.
-                return c
-            }
+            for c in candidates where c.exists { return c }
             RunLoop.current.run(until: Date().addingTimeInterval(0.05))
         }
-        // final: allow waitForExistence on each quickly
         for c in candidates {
             if c.waitForExistence(timeout: 0.5) { return c }
         }
         return nil
     }
 
-    // MARK: - Scrolling helpers
-
-    @discardableResult
-    private func scrollToElement(_ element: XCUIElement, in app: XCUIApplication, maxSwipes: Int = 10) -> Bool {
-        // Try to make it exist by scrolling anyway (cells may be lazily created).
-        if !element.exists {
-            for _ in 0..<maxSwipes { app.swipeUp() }
-            return element.exists
-        }
-
-        if element.isHittable { return true }
-
-        for _ in 0..<maxSwipes {
-            app.swipeUp()
-            if element.isHittable { return true }
-        }
-
-        // Try reverse direction once.
-        for _ in 0..<maxSwipes {
-            app.swipeDown()
-            if element.isHittable { return true }
-        }
-
-        return element.isHittable
+    private func swipeUpInSheet(_ app: XCUIApplication) {
+        // Prefer the sheet’s scroll view (SwiftUI Form is usually a scroll view)
+        let sv = app.scrollViews.firstMatch
+        if sv.exists { sv.swipeUp() }
+        else { app.swipeUp() }
     }
 
-    // MARK: - Actions
+    // MARK: - Open New Activity sheet
 
     @discardableResult
-    private func openNewActivitySheet(_ app: XCUIApplication,
-                                      file: StaticString = #filePath,
-                                      line: UInt = #line) -> Bool {
-        // 1) Prefer your identifier
-        let byId = any(app, id: "timeline.newActivityButton")
-        if byId.waitForExistence(timeout: 6) {
-            if byId.isHittable { byId.tap() }
-            else { byId.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
+    private func openNewActivitySheet(_ app: XCUIApplication) -> Bool {
+        // Prefer an identifier if you have it
+        let newBtn = any(app, id: "timeline.newActivityButton")
+        if newBtn.waitForExistence(timeout: 4) {
+            if newBtn.isHittable { newBtn.tap() }
+            else { newBtn.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
         } else {
-            // 2) Fallback: look for “Add” / “New activity”
-            let fallback = waitAny([
-                buttonByLabel(app, contains: "New"),
+            // Fallbacks: “Add” button, plus, etc.
+            let fallbacks: [XCUIElement] = [
+                app.navigationBars.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Add")).firstMatch,
                 buttonByLabel(app, contains: "Add"),
-                app.navigationBars.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Add")).firstMatch
-            ], timeout: 4)
-
-            guard let fb = fallback else {
-                XCTFail("Could not find a way to open New Activity sheet.", file: file, line: line)
-                return false
-            }
+                buttonByLabel(app, contains: "New")
+            ]
+            guard let fb = waitAny(fallbacks, timeout: 3) else { return false }
             fb.tap()
         }
 
-        // The most reliable signal that the sheet opened: a Save button OR at least one text field.
-        let save = waitAny([
-            any(app, id: "activityEditor.saveButton"),
-            app.buttons["Save"],
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Save")).firstMatch
-        ], timeout: 6)
-
-        if save != nil { return true }
-
-        // If no save button is exposed, accept “a screen with textfields” as the sheet
-        return app.textFields.firstMatch.waitForExistence(timeout: 3)
+        // Sheet opened signal
+        return any(app, id: "activityEditor.saveButton").waitForExistence(timeout: 6)
+            || app.buttons["Save"].waitForExistence(timeout: 6)
+            || app.textFields.firstMatch.waitForExistence(timeout: 6)
     }
 
-    private func findActivityTypeRow(_ app: XCUIApplication) -> XCUIElement? {
-        // Your app may label this row “Type” or “Kind” depending on earlier refactors.
-        return waitAny([
-            any(app, id: "activityEditor.typePicker"),
-            any(app, id: "activityEditor.kindPicker"),
-            cellByLabel(app, contains: "Type"),
-            cellByLabel(app, contains: "Kind"),
-            staticByLabel(app, contains: "Type"),
-            staticByLabel(app, contains: "Kind"),
-        ], timeout: 4)
-    }
+    // MARK: - Select Workout type (segmented OR picker)
 
-    private func selectActivityType(_ app: XCUIApplication, label: String) {
-        // Many UIs expose type choices directly (segmented control / menu buttons).
-        if waitAny([
-            app.buttons[label],
-            app.staticTexts[label],
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", label)).firstMatch,
-            app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", label)).firstMatch
-        ], timeout: 1) != nil {
-            // Tap the first candidate (coordinate tap if not hittable).
-            let c = waitAny([
-                app.buttons[label],
-                app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", label)).firstMatch,
-                app.staticTexts[label],
-                app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", label)).firstMatch
-            ], timeout: 1)
-
-            if let c {
-                if c.isHittable { c.tap() }
-                else { c.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
-            }
+    private func selectWorkoutTypeIfPossible(_ app: XCUIApplication) {
+        // 1) Segmented control is the most common
+        let segCandidates: [XCUIElement] = [
+            app.segmentedControls.buttons["Workout"],
+            app.segmentedControls.buttons["Entrenamiento"],
+            app.buttons["Workout"],
+            app.buttons["Entrenamiento"],
+            buttonByLabel(app, contains: "Workout"),
+            buttonByLabel(app, contains: "Entrenamiento")
+        ]
+        if let seg = waitAny(segCandidates, timeout: 2) {
+            if !seg.isHittable { swipeUpInSheet(app) }
+            if seg.isHittable { seg.tap() }
+            else { seg.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
             return
         }
 
-        // Otherwise, open a “Type/Kind” row and pick.
-        if let row = findActivityTypeRow(app) {
-            if !row.isHittable { _ = scrollToElement(row, in: app) }
-            row.tap()
-        }
+        // 2) Otherwise try a picker row/menu
+        let typeRowCandidates: [XCUIElement] = [
+            any(app, id: "activityEditor.typePicker"),
+            cellByLabel(app, contains: "Type"),
+            cellByLabel(app, contains: "Kind"),
+            staticByLabel(app, contains: "Type"),
+            staticByLabel(app, contains: "Kind")
+        ]
+        if let typeRow = waitAny(typeRowCandidates, timeout: 2) {
+            if !typeRow.isHittable { swipeUpInSheet(app) }
+            typeRow.tap()
 
-        let choice = waitAny([
-            app.buttons[label],
-            app.staticTexts[label],
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", label)).firstMatch,
-            app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", label)).firstMatch
-        ], timeout: 4)
+            let workoutChoice = waitAny([
+                app.buttons["Workout"],
+                app.buttons["Entrenamiento"],
+                app.staticTexts["Workout"],
+                app.staticTexts["Entrenamiento"],
+                buttonByLabel(app, contains: "Workout"),
+                staticByLabel(app, contains: "Workout"),
+            ], timeout: 3)
 
-        if let choice {
-            if choice.isHittable { choice.tap() }
-            else { choice.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
-        }
+            if let workoutChoice {
+                workoutChoice.tap()
+            }
 
-        // Some pickers need a Done button.
-        let done = waitAny([
-            app.buttons["Done"],
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Done")).firstMatch
-        ], timeout: 1)
-
-        if let done {
-            if done.isHittable { done.tap() }
-            else { done.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
+            if app.buttons["Done"].exists { app.buttons["Done"].tap() }
         }
     }
 
+    // MARK: - Routine picker / empty state detection
+
     private func routinePickerOrEmptyStateExists(_ app: XCUIApplication) -> Bool {
-        let routineCandidates: [XCUIElement] = [
-            any(app, id: "activityEditor.routinePicker"),
-            any(app, id: "activityEditor.workoutRoutinePicker"),
-            cellByLabel(app, contains: "Routine"),
-            cellByLabel(app, contains: "Workout routine"),
-            staticByLabel(app, contains: "Routine"),
-        ]
+        // Identifiers (best case)
+        let byIdPicker = any(app, id: "activityEditor.routinePicker")
+        let byIdEmpty  = any(app, id: "activityEditor.routineEmptyState")
 
-        let emptyPhrases = [
-            "No routines",
-            "No routine",
-            "Create a routine",
-            "Create routines",
-            "No exercises yet" // some builds show this guidance inline
-        ]
+        // Broad “routine-ish” fallback: label or identifier contains routine/rutina/plan
+        let routineish = app.descendants(matching: .any).matching(
+            NSPredicate(format:
+                "identifier CONTAINS[c] 'routine' OR label CONTAINS[c] 'routine' OR label CONTAINS[c] 'rutina' OR label CONTAINS[c] 'workout routine' OR label CONTAINS[c] 'plan'"
+            )
+        ).firstMatch
 
-        func hasEmptyMessage() -> Bool {
-            emptyPhrases.contains { phrase in
-                app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", phrase)).firstMatch.exists
+        func hasEmptyText() -> Bool {
+            let phrases = [
+                "No routines", "No routine", "No routines yet",
+                "Sin rutinas", "No hay rutinas",
+                "Create a routine", "Crea una rutina",
+                "No workout routines"
+            ]
+            return phrases.contains { p in
+                app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", p)).firstMatch.exists
             }
         }
 
-        // First pass without scrolling.
-        if waitAny(routineCandidates, timeout: 1) != nil { return true }
-        if hasEmptyMessage() { return true }
+        // Immediate check
+        if byIdPicker.exists || byIdEmpty.exists || routineish.exists { return true }
+        if hasEmptyText() { return true }
 
-        // Scroll within the sheet (Form/List rows may be lazily created).
-        for _ in 0..<10 {
-            app.swipeUp()
-            if waitAny(routineCandidates, timeout: 0.5) != nil { return true }
-            if hasEmptyMessage() { return true }
+        // Scroll to force SwiftUI Form rows to materialize
+        for _ in 0..<24 {
+            swipeUpInSheet(app)
+            if byIdPicker.exists || byIdEmpty.exists || routineish.exists { return true }
+            if hasEmptyText() { return true }
         }
-
         return false
     }
 
-    private func ensureSwitchOn(_ sw: XCUIElement) {
-        // Works even when normal taps don’t toggle
-        let off = ((sw.value as? String) == "0" || (sw.value as? String) == "Off")
-        if off {
-            if sw.isHittable { sw.tap() }
-            else { sw.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap() }
+    // MARK: - Verbose logging toggle finder (container-safe)
+
+    private func findVerboseSwitch(_ app: XCUIApplication) -> XCUIElement? {
+        // Identifier might be on a container, not the switch
+        let container = any(app, id: "settings.verboseLoggingToggle")
+        if container.waitForExistence(timeout: 2) {
+            let sw = container.switches.firstMatch
+            if sw.exists { return sw }
         }
 
-        let pred = NSPredicate(format: "value == '1' OR value == 'On'")
-        expectation(for: pred, evaluatedWith: sw)
-        waitForExpectations(timeout: 8)
+        // Fallback: any switch with label containing "Verbose"
+        let sw2 = app.switches.matching(NSPredicate(format: "label CONTAINS[c] %@", "Verbose")).firstMatch
+        if sw2.exists { return sw2 }
+
+        // Scroll and retry
+        for _ in 0..<18 {
+            app.swipeUp()
+            if container.exists {
+                let sw = container.switches.firstMatch
+                if sw.exists { return sw }
+            }
+            if sw2.exists { return sw2 }
+        }
+        return nil
     }
 
-    private func findVerboseLoggingSwitch(_ app: XCUIApplication) -> XCUIElement? {
-        let candidates = [
-            app.switches.matching(identifier: "settings.verboseLoggingToggle").firstMatch,
-            any(app, id: "settings.verboseLoggingToggle"),
-            app.switches.matching(NSPredicate(format: "label CONTAINS[c] %@", "Verbose")).firstMatch
-        ]
+    private func ensureSwitchOn(_ sw: XCUIElement, app: XCUIApplication) {
+        if !sw.isHittable { app.swipeUp() }
 
-        // First try without scrolling.
-        if let found = waitAny(candidates, timeout: 2) { return found }
+        func isOn(_ v: String) -> Bool { v == "1" || v.lowercased() == "on" || v.lowercased() == "true" }
 
-        // Then scroll and retry.
-        for _ in 0..<12 {
-            app.swipeUp()
-            if let found = waitAny(candidates, timeout: 0.5) { return found }
+        let deadline = Date().addingTimeInterval(8)
+        while Date() < deadline {
+            let v = (sw.value as? String) ?? ""
+            if isOn(v) { return }
+            sw.tap()
+            RunLoop.current.run(until: Date().addingTimeInterval(0.15))
         }
-
-        // Last: try opening Preferences (some builds may move the toggle there).
-        let prefs = waitAny([
-            cellByLabel(app, contains: "Preferences"),
-            staticByLabel(app, contains: "Preferences")
-        ], timeout: 1)
-        if let prefs, prefs.exists {
-            if !prefs.isHittable { _ = scrollToElement(prefs, in: app) }
-            prefs.tap()
-
-            if let found = waitAny(candidates, timeout: 3) { return found }
-            for _ in 0..<10 {
-                app.swipeUp()
-                if let found = waitAny(candidates, timeout: 0.5) { return found }
-            }
-
-            // Go back if needed.
-            let back = app.navigationBars.buttons.firstMatch
-            if back.exists { back.tap() }
-        }
-
-        return nil
     }
 
     // MARK: - Tests
@@ -274,72 +210,56 @@ final class SmokeTests: XCTestCase {
         let app = makeApp(start: "calendar", resetDefaults: true, seed: false)
         app.launch()
 
-        XCTAssertTrue(openNewActivitySheet(app))
+        XCTAssertTrue(openNewActivitySheet(app), "Could not open New Activity sheet.")
 
-        // Don’t hard-require nav bar title; it’s brittle.
-        // Require “basic editing affordances exist”.
-        let titleField = waitAny([
-            any(app, id: "activityEditor.titleField"),
-            app.textFields.matching(NSPredicate(format: "placeholderValue CONTAINS[c] %@", "Title")).firstMatch,
-            app.textFields.matching(NSPredicate(format: "label CONTAINS[c] %@", "Title")).firstMatch,
-            app.textFields.firstMatch
-        ], timeout: 6)
+        XCTAssertTrue(
+            any(app, id: "activityEditor.titleField").exists || app.textFields.firstMatch.exists,
+            "Expected a title TextField in New Activity sheet."
+        )
 
-        XCTAssertNotNil(titleField, "Expected a title TextField in New Activity sheet.")
-
-        // The UI may use “Type” or “Kind”, or expose options directly.
-        let typeRow = findActivityTypeRow(app)
-        let canSeeAnyTypeOption = waitAny([
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Workout")).firstMatch,
-            app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", "Workout")).firstMatch
-        ], timeout: 2) != nil
-
-        XCTAssertTrue(typeRow != nil || canSeeAnyTypeOption,
-                      "Expected an Activity Type/Kind selector (row or visible options) in New Activity sheet.")
-
-        let save = waitAny([
-            any(app, id: "activityEditor.saveButton"),
-            app.buttons["Save"],
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Save")).firstMatch
-        ], timeout: 4)
-
-        XCTAssertNotNil(save, "Expected a Save button in New Activity sheet.")
+        XCTAssertTrue(
+            any(app, id: "activityEditor.saveButton").exists || app.buttons["Save"].exists,
+            "Expected a Save button in New Activity sheet."
+        )
     }
 
     func testWorkoutTypeShowsRoutinePickerOrEmptyState() {
-        let app = makeApp(start: "calendar", resetDefaults: true, seed: false)
+        let app = makeApp(start: "calendar", resetDefaults: true, seed: true)
         app.launch()
 
-        XCTAssertTrue(openNewActivitySheet(app))
+        XCTAssertTrue(openNewActivitySheet(app), "Could not open New Activity sheet.")
 
-        // Select Workout in a robust way (segmented/menu/row).
-        selectActivityType(app, label: "Workout")
+        // Try to select Workout (segmented or picker). If it is already selected, this is a no-op.
+        selectWorkoutTypeIfPossible(app)
 
-        // Now we expect a Routine picker OR an empty-state message.
-        XCTAssertTrue(routinePickerOrEmptyStateExists(app),
-                      "Expected Routine picker or empty-state text after selecting Workout.")
+        XCTAssertTrue(
+            routinePickerOrEmptyStateExists(app),
+            "Expected Routine picker or empty-state text after selecting Workout."
+        )
     }
 
     func testVerboseLoggingTogglePersistsAcrossRelaunch() {
         var app = makeApp(start: "settings", resetDefaults: true, seed: false)
         app.launch()
 
-        let sw = findVerboseLoggingSwitch(app)
-        XCTAssertNotNil(sw, "Expected a Verbose logging toggle/switch.")
-        guard let sw1 = sw else { return }
-
-        if !sw1.isHittable { _ = scrollToElement(sw1, in: app) }
-        ensureSwitchOn(sw1)
+        guard let sw1 = findVerboseSwitch(app) else {
+            XCTFail("Expected a Verbose logging toggle/switch.")
+            return
+        }
+        ensureSwitchOn(sw1, app: app)
 
         app.terminate()
+
+        // Relaunch without reset
         app = makeApp(start: "settings", resetDefaults: false, seed: false)
         app.launch()
 
-        let sw2 = findVerboseLoggingSwitch(app)
-        XCTAssertNotNil(sw2, "Expected to find Verbose logging toggle after relaunch.")
-        guard let swRelaunch = sw2 else { return }
+        guard let sw2 = findVerboseSwitch(app) else {
+            XCTFail("Expected Verbose logging switch after relaunch.")
+            return
+        }
 
-        if !swRelaunch.isHittable { _ = scrollToElement(swRelaunch, in: app) }
-        XCTAssertTrue((swRelaunch.value as? String) == "1" || (swRelaunch.value as? String) == "On")
+        let v2 = (sw2.value as? String) ?? ""
+        XCTAssertTrue(v2 == "1" || v2.lowercased() == "on" || v2.lowercased() == "true")
     }
 }

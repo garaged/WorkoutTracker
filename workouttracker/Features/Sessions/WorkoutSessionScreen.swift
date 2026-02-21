@@ -32,6 +32,9 @@ struct WorkoutSessionScreen: View {
     
     @State private var prDetails: PRDetailsContext? = nil
     
+    @State private var showReflectionSheet = false
+    @State private var dismissAfterReflectionSheet = false
+    
     private struct PRDetailsContext: Identifiable, Hashable {
         // Use setId as identity so it behaves nicely
         var id: UUID { setId }
@@ -125,6 +128,12 @@ struct WorkoutSessionScreen: View {
                     .ignoresSafeArea()
                     .transition(.opacity)
             }
+        }
+        .sheet(isPresented: $showReflectionSheet, onDismiss: {
+            if dismissAfterReflectionSheet { dismiss() }
+            dismissAfterReflectionSheet = false
+        }) {
+            SessionReflectionSheet(session: session)
         }
         .sheet(item: $prDetails) { ctx in
             PRDetailsSheetView(ctx: ctx)
@@ -247,9 +256,7 @@ struct WorkoutSessionScreen: View {
                         return acc + (reps * w)
                     }
 
-                    LabeledContent("Sets") {
-                        Text("\(completedSets)/\(totalSets)")
-                    }
+                    LabeledContent("Sets") { Text("\(completedSets)/\(totalSets)") }
 
                     LabeledContent("Volume") {
                         Text(String(format: "%.0f", volume))
@@ -261,6 +268,27 @@ struct WorkoutSessionScreen: View {
                             Text(endedAt, format: .dateTime.hour().minute())
                         }
                     }
+                }
+
+                Section("Reflection") {
+                    if let mood = session.reflectionMood {
+                        LabeledContent("Mood") {
+                            Text(mood.displayText)
+                        }
+                    }
+
+                    let note = (session.reflectionNote ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !note.isEmpty {
+                        Text(note)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button(hasReflection ? "Edit Reflection" : "Add Reflection") {
+                        dismissAfterReflectionSheet = false
+                        showReflectionSheet = true
+                    }
+                    .fontWeight(.semibold)
                 }
             }
         }
@@ -286,6 +314,12 @@ struct WorkoutSessionScreen: View {
         case .completed: return "Completed"
         case .abandoned: return "Abandoned"
         }
+    }
+    
+    private var hasReflection: Bool {
+        if session.reflectionMood != nil { return true }
+        let note = (session.reflectionNote ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return !note.isEmpty
     }
 
     // MARK: Logging actions
@@ -543,7 +577,15 @@ struct WorkoutSessionScreen: View {
         session.endedAt = Date()
         session.status = .completed
         saveOrAssert("finish")
-        dismiss()
+
+        // Optional, post-session, never blocks logging flow:
+        // we only prompt if the user hasn't added a reflection yet.
+        if !hasReflection {
+            dismissAfterReflectionSheet = true
+            showReflectionSheet = true
+        } else {
+            dismiss()
+        }
     }
 
     private func abandon() {
@@ -1143,8 +1185,11 @@ struct WorkoutSessionScreen: View {
 
                     HStack(spacing: 14) {
                         actionButton(system: "doc.on.doc", label: "Copy", action: onCopySet)
+                            .accessibilityIdentifier("WorkoutSetEditorRow.\(set.id.uuidString).Actions.CopyButton")
                         actionButton(system: "plus", label: "Add", action: onAddSet)
+                            .accessibilityIdentifier("WorkoutSetEditorRow.\(set.id.uuidString).Actions.AddButton")
                         actionButton(system: "trash", label: "Delete", action: onDeleteSet)
+                            .accessibilityIdentifier("WorkoutSetEditorRow.\(set.id.uuidString).Actions.DeleteButton")
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -1161,6 +1206,7 @@ struct WorkoutSessionScreen: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(set.completed ? "Mark incomplete" : "Mark complete")
+                .accessibilityIdentifier("WorkoutSetEditorRow.\(set.id.uuidString).DoneToggle")
                 .disabled(isReadOnly)
             }
             .padding(.vertical, 10)

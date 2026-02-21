@@ -7,11 +7,13 @@ struct WeekProgressScreen: View {
 
     private let service = ProgressSummaryService()
     private let insightsService = ProgressInsightsService()
+    private let reflectionService = ReflectionInsightsService()
     private let quickStarter = QuickWorkoutStarterService()
 
     @State private var weeksBack: Int = 12
     @State private var summary: ProgressSummaryService.Summary? = nil
     @State private var insights: ProgressInsightsService.Summary? = nil
+    @State private var reflectionSummary: ReflectionInsightsService.Summary? = nil
     @State private var loadError: String? = nil
 
     @State private var presentedSession: WorkoutSession? = nil
@@ -62,6 +64,10 @@ struct WeekProgressScreen: View {
                     if hasAnyProgressData {
                         if let insights {
                             Section("Insights") {
+                                if let reflectionSummary {
+                                    ReflectionRateInsightCard(summary: reflectionSummary)
+                                }
+
                                 ProgressInsightsSectionView(
                                     insights: insights,
                                     onStartTarget: startFromTarget
@@ -152,11 +158,13 @@ struct WeekProgressScreen: View {
         do {
             summary = try service.summarize(weeksBack: weeksBack, context: modelContext)
             insights = try insightsService.summarize(weeksBack: weeksBack, context: modelContext)
+            reflectionSummary = try reflectionService.summarize(weeksBack: weeksBack, context: modelContext)
             loadError = nil
         } catch {
             AppLogger.shared.error("WeekProgress reload failed: \(String(describing: error))", category: .persistence)
             summary = nil
             insights = nil
+            reflectionSummary = nil
             loadError = String(describing: error)
         }
     }
@@ -281,3 +289,48 @@ private struct WeekRow: View {
     }
 }
 
+// MARK: - Inline insight card
+
+private struct ReflectionRateInsightCard: View {
+    let summary: ReflectionInsightsService.Summary
+
+    var body: some View {
+        NavigationLink {
+            ReflectionInsightsScreen()
+        } label: {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Reflections")
+                        .font(.subheadline.weight(.semibold))
+
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Text(rateText)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var subtitle: String {
+        if summary.completedSessions == 0 {
+            return "Finish a workout to start stats"
+        }
+        return "\(summary.sessionsWithReflection)/\(summary.completedSessions) sessions reflected"
+    }
+
+    private var rateText: String {
+        guard let r = summary.reflectionRate else { return "—" }
+        let pct = (r * 100).formatted(.number.precision(.fractionLength(0...0)))
+        return "\(pct)%"
+    }
+}

@@ -26,19 +26,27 @@ Core features:
 Non-goals:
 - No social feed, no accounts required, no “gamification” bloat (yet?)
 
-## Comming up
+## Changelog
 
-### Session reflections (comments + mood)
+### DONE in v1.0.1 - Session reflections (comments + mood)
 
 - At the end of a session, pop a quick “How did it feel?” step:
   - pick a mood/result in 1–2 taps
   - optionally jot a short note
 - Idea is to capture the vibe/context without slowing down logging.
 
-### iPad support
+### DONE in v1.0.1 - iPad support
 
 - Make the UI feel right on big screens (Split View, better spacing/density, keyboard-friendly).
 - Goal: more of a “coach clipboard” vibe for gym/home.
+
+### DONE in v1.0.1 - Programs / plans (shareable)
+
+- Add real training programs people can download/import.
+- Later: let the community submit programs too (but that needs moderation + somewhere to host them).
+
+
+## Comming up
 
 ### Better communication with users
 
@@ -49,11 +57,6 @@ Non-goals:
 
 - Beef up automated tests, especially around data integrity + export/diagnostics.
 - CI runs tests on every PR so we don’t get “works on my machine” surprises.
-
-### Programs / plans (shareable)
-
-- Add real training programs people can download/import.
-- Later: let the community submit programs too (but that needs moderation + somewhere to host them).
 
 ### Apple Watch companion (remote control)
 

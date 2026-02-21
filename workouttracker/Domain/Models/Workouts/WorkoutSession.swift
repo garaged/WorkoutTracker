@@ -28,6 +28,20 @@ final class WorkoutSession {
     // ✅ Explicit inverse breaks SwiftData macro cycles
     @Relationship(deleteRule: .cascade)
     var exercises: [WorkoutSessionExercise]
+    
+    // MARK: - Session Reflection (optional / post-session)
+
+    /// Optional “how did it go” mood.
+    /// Keep optional so it never blocks the logging flow.
+    var reflectionMood: SessionReflectionMood?
+
+    /// Optional free-form note (trimmed on save).
+    var reflectionNote: String?
+
+    /// Set when the reflection is first saved (not updated on edits).
+    var reflectionCreatedAt: Date?
+    
+    // MARK: model
 
     init(
         id: UUID = UUID(),

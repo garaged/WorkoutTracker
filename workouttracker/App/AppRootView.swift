@@ -1,15 +1,49 @@
+// workouttracker/App/AppRootView.swift
 import SwiftUI
 import SwiftData
+import Combine
 
-// File: workouttracker/App/AppRootView.swift
-//
-// Patch:
-// - UI-test-only router via launchEnvironment (UITESTS_START).
-// - Real app seeds a Starter Pack once (common exercises + routines).
+enum RootDestination: String, CaseIterable, Identifiable {
+    case home
+    case routines
+    case history
+    case settings
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .home: "Home"
+        case .routines: "Routines"
+        case .history: "History"
+        case .settings: "Settings"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .home: "house"
+        case .routines: "list.bullet.rectangle"
+        case .history: "clock.arrow.circlepath"
+        case .settings: "gearshape"
+        }
+    }
+}
 
 struct AppRootView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.platform) private var platform
+
     @State private var didSeed = false
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    @State private var selection: RootDestination? = .home
+    
+    @State private var timelineJump: TimelineJump? = nil
+
+    private struct TimelineJump: Identifiable {
+        let id = UUID()
+        let day: Date
+    }
 
     private let cal = Calendar.current
 
@@ -17,18 +51,66 @@ struct AppRootView: View {
         Group {
             if let start = uiTestStartRoute {
                 uiTestRoot(for: start)
+            } else if platform.prefersSplitNavigation {
+                NavigationSplitView(columnVisibility: $columnVisibility) {
+                    sidebar
+                } detail: {
+                    NavigationStack {
+                        detail(for: selection ?? .home)
+                    }
+                }
             } else {
-                HomeScreen(tiles: tiles)
+                NavigationStack {
+                    HomeScreen(tiles: tiles)
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("workouttracker.openTimelineForDate"))) { note in
+            guard let date = note.object as? Date else { return }
+            timelineJump = TimelineJump(day: cal.startOfDay(for: date))
+        }
+        .fullScreenCover(item: $timelineJump) { jump in
+            NavigationStack {
+                DayTimelineEntryScreen(initialDay: jump.day)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button("Close") { timelineJump = nil }
+                        }
+                    }
             }
         }
         .task {
+            // Seed once, across iPhone + iPad paths.
             guard !didSeed else { return }
             didSeed = true
 
-            // Don’t mutate the persistent store during UITests.
+            // Don’t mutate persistent store during UITests.
             guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
 
             _ = try? RoutineSeeder.seedStarterPackIfEmpty(context: modelContext)
+        }
+    }
+
+    private var sidebar: some View {
+        List(RootDestination.allCases, selection: $selection) { dest in
+            Label(dest.title, systemImage: dest.systemImage)
+                .tag(dest as RootDestination?)
+        }
+        .navigationTitle("Workout Tracker")
+        .listStyle(.sidebar)
+    }
+
+    @ViewBuilder
+    private func detail(for dest: RootDestination) -> some View {
+        switch dest {
+        case .home:
+            HomeScreen(tiles: tiles)
+        case .routines:
+            RoutinesScreen()
+        case .history:
+            HistoryRootPlaceholder()
+        case .settings:
+            SettingsScreen()
         }
     }
 
@@ -48,10 +130,9 @@ struct AppRootView: View {
         case "settings":
             NavigationStack { SettingsScreen() }
         case "session":
-            // We boot into Calendar, then DayTimelineScreen (only in this route) will seed+auto-open a session.
             NavigationStack { DayTimelineEntryScreen() }
         default:
-            HomeScreen(tiles: tiles)
+            NavigationStack { HomeScreen(tiles: tiles) }
         }
     }
 
@@ -68,7 +149,6 @@ struct AppRootView: View {
                 tint: .accentColor,
                 destination: { AnyView(DayTimelineEntryScreen()) }
             ),
-
             HomeTile(
                 title: "Workouts",
                 subtitle: "Start sessions and review history",
@@ -76,7 +156,6 @@ struct AppRootView: View {
                 tint: .orange,
                 destination: { AnyView(WorkoutSessionsScreen()) }
             ),
-
             HomeTile(
                 title: "Routines",
                 subtitle: "Build plans and reuse them",
@@ -84,7 +163,6 @@ struct AppRootView: View {
                 tint: .purple,
                 destination: { AnyView(RoutinesScreen()) }
             ),
-
             HomeTile(
                 title: "Templates",
                 subtitle: "Auto-preload your day",
@@ -92,7 +170,6 @@ struct AppRootView: View {
                 tint: .indigo,
                 destination: { AnyView(TemplatesScreen(applyDay: applyDay)) }
             ),
-
             HomeTile(
                 title: "Exercises",
                 subtitle: "Browse and edit your library",
@@ -100,7 +177,6 @@ struct AppRootView: View {
                 tint: .mint,
                 destination: { AnyView(ExerciseLibraryScreen()) }
             ),
-
             HomeTile(
                 title: "Progress",
                 subtitle: "Streaks, volume, trends",
@@ -108,7 +184,6 @@ struct AppRootView: View {
                 tint: .blue,
                 destination: { AnyView(ProgressScreen()) }
             ),
-
             HomeTile(
                 title: "Body",
                 subtitle: "Measurements and tracking",
@@ -116,7 +191,6 @@ struct AppRootView: View {
                 tint: .green,
                 destination: { AnyView(MeasurementsScreen()) }
             ),
-
             HomeTile(
                 title: "Settings",
                 subtitle: "Preferences and app info",
@@ -125,5 +199,16 @@ struct AppRootView: View {
                 destination: { AnyView(SettingsScreen()) }
             )
         ]
+    }
+
+    private struct HistoryRootPlaceholder: View {
+        var body: some View {
+            ContentUnavailableView(
+                "History",
+                systemImage: "clock.arrow.circlepath",
+                description: Text("Wire your existing History screen here.")
+            )
+            .navigationTitle("History")
+        }
     }
 }

@@ -87,6 +87,7 @@ struct workouttrackerApp: App {
             } else {
                 AppRootView()
                     .environmentObject(goalPrefill)
+                    .providePlatformContext()
             }
         }
         .modelContainer(sharedModelContainer)

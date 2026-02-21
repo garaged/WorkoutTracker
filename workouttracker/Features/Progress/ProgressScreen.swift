@@ -23,6 +23,16 @@ struct ProgressScreen: View {
                         systemImage: "flame.fill"
                     )
                 }
+
+                NavigationLink {
+                    ReflectionInsightsScreen()
+                } label: {
+                    ProgressHubRow(
+                        title: "Reflections",
+                        subtitle: "Reflection rate + mood breakdown",
+                        systemImage: "face.smiling"
+                    )
+                }
             }
         }
         .navigationTitle("Progress")
@@ -56,10 +66,6 @@ private struct ProgressHubRow: View {
             }
 
             Spacer()
-
-//            Image(systemName: "chevron.right")
-//                .font(.caption.weight(.semibold))
-//                .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 4)
     }

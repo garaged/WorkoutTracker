@@ -1,18 +1,12 @@
+// workouttracker/Features/Routines/RoutinesScreen.swift
 import SwiftUI
 import SwiftData
 import Foundation
 
-// File: workouttracker/Features/Routines/RoutinesScreen.swift
-//
-// Fix:
-// - Removes references to missing/legacy views (RoutineEditSheet, RoutineRowTitle, StartRoutineButton).
-// - Uses RoutineEditorScreen for create/edit so routines can edit exercises (not just rename).
-// - Keeps delete + start-now + schedule-today behaviors.
-// - Adds an optional "Starter" badge for seeded routines (name prefix: "Starter —").
-
 @MainActor
 struct RoutinesScreen: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.platform) private var platform
 
     @Query(sort: [SortDescriptor(\WorkoutRoutine.name, order: .forward)])
     private var routines: [WorkoutRoutine]
@@ -68,14 +62,14 @@ struct RoutinesScreen: View {
                         badgeText: starterBadgeText(for: routine),
                         onStartNow: { startRoutineNow(routine) },
                         onScheduleToday: { scheduleForToday(routine) },
-                        // “Rename” opens the full editor (name + items) — pro behavior.
                         onRename: { openEditor(for: routine) },
                         onDelete: { confirmDelete(routine) }
                     )
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .readableWidth()
+        .platformListChrome(platform)
         .navigationTitle("Routines")
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Search routines")
@@ -123,7 +117,6 @@ struct RoutinesScreen: View {
             NavigationStack {
                 RoutineEditorScreen(mode: routineEditorMode)
             }
-            // Create mode inserts immediately — prevent swipe-dismiss leaving an empty routine behind.
             .interactiveDismissDisabled(isCreatingRoutine)
         }
     }
@@ -154,7 +147,6 @@ struct RoutinesScreen: View {
     }
 
     private func starterBadgeText(for routine: WorkoutRoutine) -> String? {
-        // Derived (no schema change needed): Starter pack names use this prefix.
         routine.name.hasPrefix("Starter —") ? "Starter" : nil
     }
 

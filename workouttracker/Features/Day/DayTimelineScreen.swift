@@ -3,6 +3,7 @@ import SwiftUI
 
 struct DayTimelineScreen: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.platform) private var platform
     @Query private var activities: [Activity]
     @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
     private var sessions: [WorkoutSession]
@@ -19,6 +20,7 @@ struct DayTimelineScreen: View {
     @State private var didSeedUITestData = false
     @State private var activityActionActivity: Activity? = nil
     @State private var showActivityDialog: Bool = false
+    @State private var workoutStartErrorMessage: String? = nil
 
     private let day: Date
     private let cal = Calendar.current
@@ -92,14 +94,27 @@ struct DayTimelineScreen: View {
                 defaultDurationMinutes: defaultDurationMinutes,
                 onSelect: { onTapActivity($0) }
             )
-            .padding(.horizontal, 8)
+            .padding(.horizontal, platform.isPad ? 16 : 8)
+            if isUITesting {
+                HStack(spacing: 12) {
+                    Text("Activities: \(activities.count)")
+                        .accessibilityIdentifier("DayTimeline.Debug.ActivitiesCount")
+
+                    Text("Workouts: \(activities.filter { $0.kind == .workout }.count)")
+                        .accessibilityIdentifier("DayTimeline.Debug.WorkoutsCount")
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, platform.isPad ? 16 : 8)
+                .padding(.vertical, 4)
+            }
 
             Divider()
 
             ScrollViewReader { proxy in
                 ScrollView(.vertical) {
                     timeline()
-                        .padding(.horizontal, 8)
+                        .padding(.horizontal, platform.isPad ? 16 : 8)
                         .padding(.bottom, 24)
                         .background(
                             ScrollViewIntrospector { sv in
@@ -236,6 +251,14 @@ struct DayTimelineScreen: View {
                 Text("")
             }
         }
+        .alert("Couldn't start workout", isPresented: Binding(
+            get: { workoutStartErrorMessage != nil },
+            set: { if !$0 { workoutStartErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) { workoutStartErrorMessage = nil }
+        } message: {
+            Text(workoutStartErrorMessage ?? "")
+        }
         .confirmationDialog(
             (activityActionActivity?.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
                 ? (activityActionActivity?.title ?? "Activity")
@@ -277,6 +300,11 @@ struct DayTimelineScreen: View {
             }
         }
         
+    }
+    
+    private var isUITesting: Bool {
+        let env = ProcessInfo.processInfo.environment
+        return env["UITESTS"] == "1" || ProcessInfo.processInfo.arguments.contains("-uiTesting")
     }
     
     private func fetchLatestSession(for activity: Activity) -> WorkoutSession? {
@@ -1200,7 +1228,7 @@ struct DayTimelineScreen: View {
         closeActivityDialog()
     }
 
-    private func startWorkout(from activity: Activity) {
+    func startWorkout(from activity: Activity) {
         guard let routineId = activity.workoutRoutineId else {
             startQuickWorkout(from: activity)
             return
@@ -1210,13 +1238,17 @@ struct DayTimelineScreen: View {
             let desc = FetchDescriptor<WorkoutRoutine>(
                 predicate: #Predicate { r in r.id == routineId }
             )
+
             guard let routine = try modelContext.fetch(desc).first else {
-                assertionFailure("WorkoutRoutine not found for id=\(routineId)")
-                startQuickWorkout(from: activity)
+                workoutStartErrorMessage = "The attached routine could not be found. Please reattach a routine."
                 return
             }
 
             let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
+            guard !templates.isEmpty else {
+                workoutStartErrorMessage = "Routine “\(routine.name)” has no linked exercises. Reinstall the pack or fix the routine."
+                return
+            }
 
             let session = WorkoutSessionFactory.makeSession(
                 linkedActivityId: activity.id,
@@ -1229,18 +1261,16 @@ struct DayTimelineScreen: View {
 
             modelContext.insert(session)
 
-            // ✅ make sure the activity becomes “workout” and is linked
             activity.kind = .workout
             activity.workoutSessionId = session.id
 
             try modelContext.save()
 
-            presentedSession = session      // ✅ now triggers push
+            presentedSession = session
             workoutLaunchState = .inProgress(session)
             workoutActionActivity = nil
         } catch {
-            assertionFailure("Failed to start workout: \(error)")
-            startQuickWorkout(from: activity)
+            workoutStartErrorMessage = "Failed to start workout: \(error.localizedDescription)"
         }
     }
     

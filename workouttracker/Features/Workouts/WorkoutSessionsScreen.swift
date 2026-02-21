@@ -128,7 +128,7 @@ private struct ActionRow: View {
             }
 
             Spacer()
-
+// This duplicates the chevron handle, don't bring it back unless the other one is removed.
 //            Image(systemName: "chevron.right")
 //                .font(.caption.weight(.semibold))
 //                .foregroundStyle(.tertiary)

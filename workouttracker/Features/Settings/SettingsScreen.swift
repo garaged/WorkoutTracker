@@ -1,10 +1,6 @@
+// workouttracker/Features/Settings/SettingsScreen.swift
 import SwiftUI
 import SwiftData
-
-// File: workouttracker/Features/Settings/SettingsScreen.swift
-//
-// Patch:
-// - Adds accessibilityIdentifier for the Verbose Logging toggle so UITests can find it reliably.
 
 struct SettingsScreen: View {
     @Environment(\.modelContext) private var context
@@ -14,14 +10,6 @@ struct SettingsScreen: View {
 
     var body: some View {
         List {
-            Section("Preferences") {
-                NavigationLink {
-                    PreferencesScreen()
-                } label: {
-                    Label("Preferences", systemImage: "slider.horizontal.3")
-                }
-            }
-
             Section("Backup") {
                 NavigationLink {
                     BackupRestoreScreen()
@@ -33,6 +21,22 @@ struct SettingsScreen: View {
 
             StarterPackSettingsSection()
 
+            // ✅ NEW
+            Section("Programs") {
+                NavigationLink {
+                    ProgramsLibraryScreen()
+                } label: {
+                    Label("Programs", systemImage: "books.vertical")
+                }
+                .accessibilityIdentifier("settings.programsLink")
+                
+                NavigationLink {
+                    ProgramAssetsScreen()
+                } label: {
+                    Label("Program Assets", systemImage: "wrench.and.screwdriver")
+                }
+                .accessibilityIdentifier("settings.programAssetsLink")
+            }
 
             Section("Diagnostics") {
                 NavigationLink {
@@ -41,10 +45,15 @@ struct SettingsScreen: View {
                     Label("Feedback", systemImage: "ladybug")
                 }
 
-                Toggle("Verbose logging", isOn: $prefs.diagnosticsVerboseLoggingEnabled)
-                    .accessibilityIdentifier("settings.verboseLoggingToggle")
-                    .accessibilityLabel(AccessibilityLabels.Toggles.verboseLogging)
-                    .accessibilityHint(AccessibilityLabels.Toggles.verboseLoggingHint)
+                HStack {
+                    Text("Verbose logging")
+                    Spacer()
+                    Toggle("", isOn: $prefs.diagnosticsVerboseLoggingEnabled)
+                        .labelsHidden()
+                        .accessibilityIdentifier("settings.verboseLoggingToggle")
+                }
+                .accessibilityLabel(AccessibilityLabels.Toggles.verboseLogging)
+                .accessibilityHint(AccessibilityLabels.Toggles.verboseLoggingHint)
             }
 
             Section("About") {
@@ -63,9 +72,11 @@ struct SettingsScreen: View {
                 }
             }
         }
+        .readableWidth()
         .navigationTitle("Settings")
+        .scrollDismissesKeyboard(.interactively)
     }
-    
+
     private var appVersionLabel: String {
         let info = Bundle.main.infoDictionary
         let v = (info?["CFBundleShortVersionString"] as? String) ?? "0"
@@ -77,5 +88,4 @@ struct SettingsScreen: View {
         guard let d = prefs.lastBackupAt else { return "Never" }
         return d.formatted(date: .abbreviated, time: .shortened)
     }
-
 }

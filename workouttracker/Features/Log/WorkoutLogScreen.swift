@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 
 // File: workouttracker/Features/Log/WorkoutLogScreen.swift
 struct WorkoutLogScreen: View {
@@ -81,6 +82,20 @@ struct WorkoutLogScreen: View {
                 .accessibilityLabel("History")
             }
         }
+
+        // ✅ NEW: respond to "open day" requests from Program scheduling
+        .onReceive(NotificationCenter.default.publisher(for: .openTimelineForDate)) { note in
+            guard let date = note.object as? Date else { return }
+            let target = cal.startOfDay(for: date)
+
+            withAnimation(.easeInOut(duration: 0.25)) {
+                selectedDay = target
+                if !cal.isDate(month, equalTo: target, toGranularity: .month) {
+                    month = startOfMonth(target)
+                }
+            }
+        }
+
         .task(id: cal.startOfDay(for: initialSelectedDay)) {
             let targetDay = cal.startOfDay(for: initialSelectedDay)
             if !cal.isDate(selectedDay, inSameDayAs: targetDay) {

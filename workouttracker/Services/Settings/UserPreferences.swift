@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SwiftUI
 
 /// Centralized user preferences backed by UserDefaults.
 ///
@@ -16,7 +17,7 @@ final class UserPreferences: ObservableObject {
         static let autoStartRest = "prefs.autoStartRest"
         static let confirmDestructiveActions = "prefs.confirmDestructiveActions"
         static let lastBackupAt = "prefs.lastBackupAt"
-        static let diagnosticsVerboseLoggingEnabled = "prefs.diagnosticsVerboseLoggingEnabled" // ✅ add
+        static let diagnosticsVerboseLoggingEnabled = "prefs.diagnosticsVerboseLoggingEnabled"
     }
 
     private let defaults: UserDefaults
@@ -43,6 +44,12 @@ final class UserPreferences: ObservableObject {
         didSet { defaults.set(confirmDestructiveActions, forKey: Keys.confirmDestructiveActions) }
     }
 
+    /// When enabled, the app writes extra debug logs.
+    /// Persisted via UserDefaults so it survives relaunch (used by UITests).
+    @Published var diagnosticsVerboseLoggingEnabled: Bool {
+        didSet { defaults.set(diagnosticsVerboseLoggingEnabled, forKey: Keys.diagnosticsVerboseLoggingEnabled) }
+    }
+
     /// Updated by backup export flows to reassure the user.
     @Published var lastBackupAt: Date? {
         didSet {
@@ -52,12 +59,6 @@ final class UserPreferences: ObservableObject {
                 defaults.removeObject(forKey: Keys.lastBackupAt)
             }
         }
-    }
-
-    /// When enabled, the app writes extra debug logs.
-    /// Useful for real-world troubleshooting + exporting logs.
-    @Published var diagnosticsVerboseLoggingEnabled: Bool {
-        didSet { defaults.set(diagnosticsVerboseLoggingEnabled, forKey: Keys.diagnosticsVerboseLoggingEnabled) }
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -88,11 +89,7 @@ final class UserPreferences: ObservableObject {
         }
 
         // Diagnostics
-        if defaults.object(forKey: Keys.diagnosticsVerboseLoggingEnabled) == nil {
-            self.diagnosticsVerboseLoggingEnabled = false
-        } else {
-            self.diagnosticsVerboseLoggingEnabled = defaults.bool(forKey: Keys.diagnosticsVerboseLoggingEnabled)
-        }
+        self.diagnosticsVerboseLoggingEnabled = defaults.bool(forKey: Keys.diagnosticsVerboseLoggingEnabled)
     }
 
     // MARK: - Derived labels

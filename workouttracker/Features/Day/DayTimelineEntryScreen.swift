@@ -2,6 +2,7 @@
 
 import SwiftUI
 import SwiftData
+import Combine
 
 struct DayTimelineEntryScreen: View {
     private let cal = Calendar.current
@@ -40,6 +41,11 @@ struct DayTimelineEntryScreen: View {
                 openEditor(for: a, isNew: true)
             }
         )
+        // ✅ NEW: respond to program scheduling "open day" signal
+        .onReceive(NotificationCenter.default.publisher(for: .openTimelineForDate)) { note in
+            guard let date = note.object as? Date else { return }
+            day = cal.startOfDay(for: date)
+        }
         .navigationDestination(item: $presentedSession) { s in
             WorkoutSessionScreen(session: s)
         }

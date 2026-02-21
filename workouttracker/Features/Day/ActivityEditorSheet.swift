@@ -110,7 +110,7 @@ struct ActivityEditorSheet: View {
                             Text("No routines yet. Create one in Routines.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
-                                .accessibilityIdentifier("activityEditor.routinePicker")
+                                .accessibilityIdentifier("activityEditor.routineEmptyState")
                         } else {
                             Picker("Routine", selection: Binding(
                                 get: { workoutRoutineId ?? routines.first?.id },

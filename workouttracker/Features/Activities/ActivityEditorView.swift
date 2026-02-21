@@ -117,7 +117,7 @@ struct ActivityEditorView: View {
             Form {
                 Section("Activity") {
                     TextField("Title", text: $title)
-                        .accessibilityIdentifier("activityEditor.title")
+                        .accessibilityIdentifier("activityEditor.titleField")
                 }
 
                 Section("Type") {
@@ -126,21 +126,31 @@ struct ActivityEditorView: View {
                         Text("Workout").tag(ActivityKind.workout)
                     }
                     .pickerStyle(.segmented)
+                    .accessibilityIdentifier("activityEditor.typePicker")
 
                     if kind == .workout && routines.isEmpty {
                         Text("Create a routine first to use Workout activities.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("activityEditor.routineEmptyState")
                     }
                 }
 
                 if kind == .workout {
                     Section("Workout") {
-                        Picker("Routine", selection: $workoutRoutineId) {
-                            Text("Choose…").tag(UUID?.none)
-                            ForEach(routines) { r in
-                                Text(r.name).tag(Optional(r.id))
+                        if routines.isEmpty {
+                            Text("No routines yet. Create one in Routines first.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .accessibilityIdentifier("activityEditor.routineEmptyState")
+                        } else {
+                            Picker("Routine", selection: $workoutRoutineId) {
+                                Text("Choose…").tag(UUID?.none)
+                                ForEach(routines) { r in
+                                    Text(r.name).tag(Optional(r.id))
+                                }
                             }
+                            .accessibilityIdentifier("activityEditor.routinePicker")
                         }
 
                         if workoutRoutineId == nil {
@@ -243,8 +253,8 @@ struct ActivityEditorView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }
-                        .accessibilityIdentifier("activityEditor.save")
-                        .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .accessibilityIdentifier("activityEditor.saveButton")
+                        .disabled(!canSave)
                 }
             }
             // ✅ Guardrails for workout selection
@@ -255,11 +265,6 @@ struct ActivityEditorView: View {
                     // If user switches to Workout and nothing selected yet, pick first routine automatically.
                     if workoutRoutineId == nil, let first = routines.first {
                         workoutRoutineId = first.id
-                    }
-                    // If there are no routines, force back to generic (prevents dead-end state)
-                    if routines.isEmpty {
-                        kind = .generic
-                        workoutRoutineId = nil
                     }
                 }
             }
