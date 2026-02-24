@@ -16,6 +16,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  XCODE_PROJECT: workouttracker.xcodeproj
+  SCHEME_UNIT: workouttracker
+  SCHEME_UI: workouttrackerUITestHost
   CONFIGURATION: Debug
   UI_TEST_BUNDLE: workouttrackerUITests
 
@@ -26,117 +29,27 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Select Xcode (latest stable)
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
 
-      - name: Detect workspace/project + print schemes
-        id: xcode
+      - name: Preflight (ensure project exists)
         shell: bash
         run: |
           set -euo pipefail
-
-          # 1) Prefer top-level workspace/project, else search recursively.
-          XCODE_ARG=""
-          XCODE_PATH=""
-
-          if compgen -G "*.xcworkspace" > /dev/null; then
-            XCODE_ARG="-workspace"
-            XCODE_PATH="$(ls -1 *.xcworkspace | head -n 1)"
-          elif compgen -G "*.xcodeproj" > /dev/null; then
-            XCODE_ARG="-project"
-            XCODE_PATH="$(ls -1 *.xcodeproj | head -n 1)"
-          else
-            # Search up to 4 levels deep (adjust if your repo is deeper)
-            XCODE_PATH="$(find . -maxdepth 4 -name '*.xcworkspace' -print | head -n 1 || true)"
-            if [[ -n "${XCODE_PATH}" ]]; then
-              XCODE_ARG="-workspace"
-            else
-              XCODE_PATH="$(find . -maxdepth 4 -name '*.xcodeproj' -print | head -n 1 || true)"
-              if [[ -n "${XCODE_PATH}" ]]; then
-                XCODE_ARG="-project"
-              else
-                # If only a project.pbxproj is found, infer its parent .xcodeproj
-                PBX="$(find . -maxdepth 6 -name 'project.pbxproj' -print | head -n 1 || true)"
-                if [[ -n "${PBX}" ]]; then
-                  XCODE_ARG="-project"
-                  XCODE_PATH="$(dirname "${PBX}")"
-                fi
-              fi
-            fi
-          fi
-
-          if [[ -z "${XCODE_ARG}" || -z "${XCODE_PATH}" ]]; then
-            echo "ERROR: Could not locate an .xcworkspace or .xcodeproj in the repo."
-            echo "Found candidates:"
-            find . -maxdepth 6 \( -name "*.xcworkspace" -o -name "*.xcodeproj" -o -name "project.pbxproj" \) -print || true
-            exit 1
-          fi
-
-          echo "Using: ${XCODE_ARG} ${XCODE_PATH}"
-          echo "xcode_arg=${XCODE_ARG}" >> "$GITHUB_OUTPUT"
-          echo "xcode_path=${XCODE_PATH}" >> "$GITHUB_OUTPUT"
-
+          ls -la
+          test -d "${XCODE_PROJECT}"
           xcodebuild -version
-          echo ""
-          echo "== Schemes =="
-          xcodebuild "${XCODE_ARG}" "${XCODE_PATH}" -list
 
-      - name: Pick unit + UI schemes (auto)
-        id: schemes
+      - name: List schemes
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json, subprocess, os
-
-          arg  = os.environ["XCODE_ARG"]
-          path = os.environ["XCODE_PATH"]
-
-          out = subprocess.check_output(["xcodebuild", arg, path, "-list", "-json"], text=True)
-          data = json.loads(out)
-          root = data.get("project") or data.get("workspace") or {}
-          schemes = root.get("schemes") or []
-
-          def pick(prefer, contains=None):
-            for p in prefer:
-              if p in schemes:
-                return p
-            if contains:
-              for s in schemes:
-                if contains.lower() in s.lower():
-                  return s
-            return schemes[0] if schemes else ""
-
-          unit = pick(["workouttracker", "WorkoutTracker"], contains="workout")
-          ui   = pick(["workouttrackerUITestHost", "WorkoutTrackerUITestHost"], contains="uitesthost")
-
-          if not unit:
-            raise SystemExit("No schemes found. Ensure schemes are Shared and committed (xcshareddata/xcschemes).")
-          if not ui:
-            ui = unit
-
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-            f.write(f"unit_scheme={unit}\n")
-            f.write(f"ui_scheme={ui}\n")
-
-          print("Schemes:", schemes)
-          print("Unit scheme:", unit)
-          print("UI scheme:", ui)
-          PY
-        env:
-          XCODE_ARG:  ${{ steps.xcode.outputs.xcode_arg }}
-          XCODE_PATH: ${{ steps.xcode.outputs.xcode_path }}
-
-      - name: Restore Xcode caches (DerivedData + SourcePackages)
-        uses: irgaly/xcode-cache@v1
-        with:
-          key: xcode-cache-deriveddata-${{ github.workflow }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            xcode-cache-deriveddata-${{ github.workflow }}-${{ github.ref_name }}-
+          echo "== Schemes =="
+          xcodebuild -project "${XCODE_PROJECT}" -list
 
       - name: Pick an iPhone simulator destination
         id: sim
@@ -150,38 +63,45 @@ jobs:
           data = json.loads(out)
 
           def ios_ver(runtime_name: str) -> float:
-            m = re.search(r"iOS[- ](\d+(?:\.\d+)?)", runtime_name)
-            return float(m.group(1)) if m else 0.0
+              m = re.search(r"iOS[- ](\d+(?:\.\d+)?)", runtime_name)
+              return float(m.group(1)) if m else 0.0
 
           candidates = []
           for runtime, devices in data.get("devices", {}).items():
-            if "iOS" not in runtime:
-              continue
-            for d in devices:
-              if not d.get("isAvailable", False):
-                continue
-              name = d.get("name", "")
-              if name.startswith("iPhone"):
-                candidates.append((ios_ver(runtime), name, d.get("udid")))
+              if "iOS" not in runtime:
+                  continue
+              for d in devices:
+                  if not d.get("isAvailable", False):
+                      continue
+                  name = d.get("name", "")
+                  if name.startswith("iPhone"):
+                      candidates.append((ios_ver(runtime), name, d.get("udid")))
 
           candidates.sort(reverse=True)
           if not candidates:
-            raise SystemExit("No available iPhone simulators found")
+              raise SystemExit("No available iPhone simulators found")
 
           _, name, udid = candidates[0]
           dest = f"platform=iOS Simulator,id={udid}"
           print(f"Using simulator: {name} ({udid})")
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-            f.write(f"destination={dest}\n")
+              f.write(f"destination={dest}\n")
           PY
+
+      - name: Restore Xcode caches (DerivedData + SourcePackages)
+        uses: irgaly/xcode-cache@v1
+        with:
+          key: xcode-cache-${{ github.workflow }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            xcode-cache-${{ github.workflow }}-${{ github.ref_name }}-
 
       - name: Resolve Swift Package dependencies
         shell: bash
         run: |
           set -euo pipefail
-          xcodebuild ${{ steps.xcode.outputs.xcode_arg }} "${{ steps.xcode.outputs.xcode_path }}" \
-            -scheme "${{ steps.schemes.outputs.unit_scheme }}" \
+          xcodebuild -project "${XCODE_PROJECT}" \
+            -scheme "${SCHEME_UNIT}" \
             -resolvePackageDependencies
 
       - name: Run unit tests (skip UI tests)
@@ -190,8 +110,8 @@ jobs:
           set -euo pipefail
           mkdir -p TestResults
 
-          xcodebuild ${{ steps.xcode.outputs.xcode_arg }} "${{ steps.xcode.outputs.xcode_path }}" \
-            -scheme "${{ steps.schemes.outputs.unit_scheme }}" \
+          xcodebuild -project "${XCODE_PROJECT}" \
+            -scheme "${SCHEME_UNIT}" \
             -configuration "${CONFIGURATION}" \
             -sdk iphonesimulator \
             -destination "${{ steps.sim.outputs.destination }}" \
@@ -209,8 +129,8 @@ jobs:
           set -euo pipefail
           mkdir -p TestResults
 
-          xcodebuild ${{ steps.xcode.outputs.xcode_arg }} "${{ steps.xcode.outputs.xcode_path }}" \
-            -scheme "${{ steps.schemes.outputs.ui_scheme }}" \
+          xcodebuild -project "${XCODE_PROJECT}" \
+            -scheme "${SCHEME_UI}" \
             -configuration "${CONFIGURATION}" \
             -sdk iphonesimulator \
             -destination "${{ steps.sim.outputs.destination }}" \
@@ -223,7 +143,7 @@ jobs:
 
       - name: Upload xcresult bundles (on failure)
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: xcresults
           path: TestResults/*.xcresult
