@@ -449,8 +449,17 @@ struct WorkoutSessionScreen: View {
             Button {
                 markActive(exerciseID: ex.id, setID: nil)
                 if let newSet = logging.addSet(to: ex, template: sets.last, context: modelContext) {
-                    // If the template was a timed/distance set, ensure the new set keeps those fields
-                    applyTimedTemplate(from: sets.last, to: newSet, prefillActuals: true)
+                    // "Add" should create a fresh set: keep the plan (targets), clear what the user actually logged.
+                    // ("Copy" is the action that duplicates actuals.)
+                    applyTimedTemplate(from: sets.last, to: newSet, prefillActuals: false)
+
+                    // Clear actuals so this doesn't look/feel like "Copy".
+                    newSet.reps = nil
+                    newSet.weight = nil
+                    newSet.actualDurationSeconds = nil
+                    newSet.actualDistance = nil
+                    newSet.completed = false
+                    newSet.completedAt = nil
 
                     markActive(exerciseID: ex.id, setID: newSet.id)
                     saveOrAssert("add set")
@@ -639,11 +648,18 @@ struct WorkoutSessionScreen: View {
                         saveOrAssert("copy set")
                         scrollToSet(newSet.id, proxy: proxy)
                     }
+                    saveOrAssert("copy set")
                 },
                 onAddSet: {
                     markActive(exerciseID: ex.id, setID: set.id)
                     if !isReadOnly, let newSet = logging.addSet(to: ex, after: set, template: set, context: modelContext) {
-                        applyTimedTemplate(from: set, to: newSet, prefillActuals: true)
+                        // "Add" should keep targets but not clone actual duration/distance.
+                        applyTimedTemplate(from: set, to: newSet, prefillActuals: false)
+                        newSet.actualDurationSeconds = nil
+                        newSet.actualDistance = nil
+                        newSet.completed = false
+                        newSet.completedAt = nil
+
                         markActive(exerciseID: ex.id, setID: newSet.id)
                         saveOrAssert("add set")
                         scrollToSet(newSet.id, proxy: proxy)
@@ -694,11 +710,19 @@ struct WorkoutSessionScreen: View {
                         markActive(exerciseID: ex.id, setID: newSet.id)
                         scrollToSet(newSet.id, proxy: proxy)
                     }
+                    saveOrAssert("copy set")
                 },
                 onAddSet: {
                     markActive(exerciseID: ex.id, setID: set.id)
                     if !isReadOnly, let newSet = logging.addSet(to: ex, after: set, template: set, context: modelContext) {
+                        // "Add" keeps targets (plan) but clears actuals; otherwise it's indistinguishable from "Copy".
+                        newSet.reps = nil
+                        newSet.weight = nil
+                        newSet.completed = false
+                        newSet.completedAt = nil
+
                         markActive(exerciseID: ex.id, setID: newSet.id)
+                        saveOrAssert("add set")
                         scrollToSet(newSet.id, proxy: proxy)
                     }
                 },
@@ -706,6 +730,7 @@ struct WorkoutSessionScreen: View {
                     markActive(exerciseID: ex.id, setID: set.id)
                     if !isReadOnly {
                         logging.deleteSet(set, from: ex, context: modelContext)
+                        saveOrAssert("delete set")
                         if activeSetID == set.id { activeSetID = nil }
                     }
                 },

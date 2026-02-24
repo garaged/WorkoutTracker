@@ -138,7 +138,7 @@ struct WorkoutSetEditorRow: View {
                         plus: { bumpReps(+1) },
                         idBase: "\(a11yPrefix).Reps"
                     )
-
+                    
                     valueEditor(
                         title: "Weight",
                         text: weightBinding,
@@ -154,19 +154,26 @@ struct WorkoutSetEditorRow: View {
                         idBase: "\(a11yPrefix).Weight"
                     )
                 }
-
+                
                 if let hint = targetHint {
                     Text(hint)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
-
+                
                 SetRowActionsBar(
                     isReadOnly: isReadOnly,
-                    onCopy: onCopySet,
-                    onAdd: onAddSet,
-                    onDelete: onDeleteSet,
+                    onAction: { action in
+                        switch action {
+                        case .copy:
+                            onCopySet?()
+                        case .add:
+                            onAddSet?()
+                        case .delete:
+                            onDeleteSet?()
+                        }
+                    },
                     idPrefix: "\(a11yPrefix).Actions"
                 )
             }
