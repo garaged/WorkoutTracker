@@ -22,6 +22,15 @@ If you add analytics, crash reporting, ads, cloud sync, or any other network fea
 - Update this policy, and
 - Update App Store privacy disclosures accordingly.
 
+## Support & External Links
+
+The app includes optional Support links (e.g., GitHub pages/issues, a support page, and an email link).
+
+- The app does **not** send diagnostics or personal data automatically.
+- If you choose to open a Support link, it will open **your browser** or **your mail app**.
+- Any data you submit on external sites (for example, a GitHub issue) or via email is handled by those services under their own privacy policies.
+- The “Support Summary” shown in the app is generated locally on your device and is only shared if you explicitly copy/share it.
+
 ## Contact
 
-- Recommended: use GitHub Issues for support, or add a support email once published.
+- https://github.com/garaged/WorkoutTracker/issues
