@@ -165,6 +165,10 @@ struct FeedbackScreen: View {
     }
 }
 
+private var supportSummary: String {
+    SupportSummaryBuilder.build()
+}
+
 // MARK: - Support Summary Builder (local-only)
 
 private enum SupportSummaryBuilder {

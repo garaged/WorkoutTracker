@@ -9,7 +9,7 @@ Workout Tracker is designed to be privacy-friendly and work without an account.
 ## Data collection
 
 - No account is required to use core features.
-- The app does not intentionally track you across apps/websites by default.
+- The app does not use analytics, advertising SDKs, or cross-app tracking.
 
 ## Backups / export
 

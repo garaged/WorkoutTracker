@@ -28,30 +28,31 @@ Non-goals:
 
 ## Changelog
 
-### DONE in v1.0.1 - Session reflections (comments + mood)
+### DON in v1.0.1 (2) - Better communication with users
+
+- Add a super easy “Feedback / Report a bug” button that actually gives useful info.
+- Make support routes obvious (Support link + a privacy-friendly way to reach out).
+
+
+### DONE in v1.0.1 (1) - Session reflections (comments + mood)
 
 - At the end of a session, pop a quick “How did it feel?” step:
   - pick a mood/result in 1–2 taps
   - optionally jot a short note
 - Idea is to capture the vibe/context without slowing down logging.
 
-### DONE in v1.0.1 - iPad support
+### DONE in v1.0.1 (1) - iPad support
 
 - Make the UI feel right on big screens (Split View, better spacing/density, keyboard-friendly).
 - Goal: more of a “coach clipboard” vibe for gym/home.
 
-### DONE in v1.0.1 - Programs / plans (shareable)
+### DONE in v1.0.1 (1) - Programs / plans (shareable)
 
 - Add real training programs people can download/import.
 - Later: let the community submit programs too (but that needs moderation + somewhere to host them).
 
 
-## Comming up
-
-### Better communication with users
-
-- Add a super easy “Feedback / Report a bug” button that actually gives useful info.
-- Make support routes obvious (Support link + a privacy-friendly way to reach out).
+## Coming up
 
 ### Code quality & regression prevention
 
@@ -109,6 +110,38 @@ Quality gates:
 - `⌘U` should pass (unit + UI tests if configured)
 - No new warnings introduced
 
+## Support
+
+Best way to get help or report issues:
+
+- **Report a bug / request a feature:** open a GitHub issue  
+  https://github.com/garaged/WorkoutTracker/issues/new/choose
+- **Browse existing issues:**  
+  https://github.com/garaged/WorkoutTracker/issues
+- **Email support:** garaged@gmail.com
+
+When reporting a bug, include:
+- steps to reproduce
+- what you expected vs what happened
+- your iOS version + app version (the in-app Support screen can copy a summary)
+
+## FAQ
+
+**Does Workout Tracker require an account?**  
+No. The app is on-device first.
+
+**Is any workout data uploaded anywhere?**  
+By default, no. Your data stays on-device unless you choose to export/share it.
+
+**How do I export/backup my data?**  
+Use the in-app backup/export feature (see Settings).
+
+**How do I report a bug?**  
+Settings → Support → “Open GitHub Issue” (preferred) or “Email Support”.
+
+**Do you use analytics / trackers / ad SDKs?**  
+No (see `PRIVACY.md`).
+
 ## Privacy
 
 Short version: your workout data stays **on-device** by default.
@@ -124,4 +157,4 @@ Open `workouttracker.xcodeproj` (or `.xcworkspace`) and run the `workouttracker`
 
 ## License
 
-Licensed under the Apache License 2.0. See `LICENSE` (or `LICENCE.txt`) and `NOTICE`.
+Licensed under the Apache License 2.0. See `LICENSE` and `NOTICE`.
