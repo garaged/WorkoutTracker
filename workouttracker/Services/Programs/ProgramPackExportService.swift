@@ -1,5 +1,6 @@
 // workouttracker/Services/Programs/ProgramPackExportService.swift
 import Foundation
+import Combine
 import SwiftData
 
 @MainActor

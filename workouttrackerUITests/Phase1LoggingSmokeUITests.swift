@@ -82,6 +82,100 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         // The key contract: after Undo, the toast disappears (meaning the mutation was reverted/committed).
         // Row-count assertions are avoided here to prevent false failures from list virtualization.
     }
+
+    // MARK: - Regression: Copy vs Add should NOT be identical
+
+    func test_addSet_doesNotDuplicateRepsOrWeight() {
+        guard let uuid = firstRepsWeightSetUUID(in: app) else {
+            attachUITestDebug(app, name: "No reps/weight set found")
+            XCTFail("Expected to find a reps/weight set row to exercise copy/add semantics.")
+            return
+        }
+
+        // Fill a known value in the current set.
+        let repsField = app.textFields["WorkoutSetEditorRow.\(uuid).Reps.Field"]
+        let weightField = app.textFields["WorkoutSetEditorRow.\(uuid).Weight.Field"]
+        XCTAssertTrue(repsField.waitForExistence(timeout: 10), "Expected reps field.")
+        XCTAssertTrue(weightField.waitForExistence(timeout: 10), "Expected weight field.")
+
+        replaceText(in: repsField, with: "10")
+        replaceText(in: weightField, with: "100")
+
+        let before = setToggleIDs(in: app)
+
+        let addBtn = app.buttons["WorkoutSetEditorRow.\(uuid).Actions.AddButton"]
+        XCTAssertTrue(addBtn.waitForExistence(timeout: 10), "Expected Add button for the selected set row.")
+        addBtn.tap()
+
+        XCTAssertTrue(firstUndoButton(in: app).waitForExistence(timeout: 10),
+                      "Expected Undo toast after adding a set.")
+
+        guard let newToggleID = waitForNewSetToggleID(after: before, timeout: 10),
+              let newUUID = uuidFromDoneToggleIdentifier(newToggleID)
+        else {
+            attachUITestDebug(app, name: "Add did not create a visible new set")
+            XCTFail("Expected Add to create a new set row (new DoneToggle identifier not detected).")
+            return
+        }
+
+        let newReps = app.textFields["WorkoutSetEditorRow.\(newUUID).Reps.Field"]
+        let newWeight = app.textFields["WorkoutSetEditorRow.\(newUUID).Weight.Field"]
+        XCTAssertTrue(newReps.waitForExistence(timeout: 10), "Expected reps field for the added set.")
+        XCTAssertTrue(newWeight.waitForExistence(timeout: 10), "Expected weight field for the added set.")
+
+        let repsValue = normalizedTextFieldValue(newReps)
+        let weightValue = normalizedTextFieldValue(newWeight)
+
+        // Contract: Add creates a *fresh* set (actuals cleared). It should NOT look like a Copy.
+        XCTAssertTrue(repsValue.isEmpty, "Expected added set reps to be empty, got '\(repsValue)'.")
+        XCTAssertTrue(weightValue.isEmpty, "Expected added set weight to be empty, got '\(weightValue)'.")
+    }
+
+    func test_copySet_duplicatesRepsAndWeight() {
+        guard let uuid = firstRepsWeightSetUUID(in: app) else {
+            attachUITestDebug(app, name: "No reps/weight set found")
+            XCTFail("Expected to find a reps/weight set row to exercise copy/add semantics.")
+            return
+        }
+
+        // Fill a known value in the current set.
+        let repsField = app.textFields["WorkoutSetEditorRow.\(uuid).Reps.Field"]
+        let weightField = app.textFields["WorkoutSetEditorRow.\(uuid).Weight.Field"]
+        XCTAssertTrue(repsField.waitForExistence(timeout: 10), "Expected reps field.")
+        XCTAssertTrue(weightField.waitForExistence(timeout: 10), "Expected weight field.")
+
+        replaceText(in: repsField, with: "10")
+        replaceText(in: weightField, with: "100")
+
+        let before = setToggleIDs(in: app)
+
+        let copyBtn = app.buttons["WorkoutSetEditorRow.\(uuid).Actions.CopyButton"]
+        XCTAssertTrue(copyBtn.waitForExistence(timeout: 10), "Expected Copy button for the selected set row.")
+        copyBtn.tap()
+
+        XCTAssertTrue(firstUndoButton(in: app).waitForExistence(timeout: 10),
+                      "Expected Undo toast after copying a set.")
+
+        guard let newToggleID = waitForNewSetToggleID(after: before, timeout: 10),
+              let newUUID = uuidFromDoneToggleIdentifier(newToggleID)
+        else {
+            attachUITestDebug(app, name: "Copy did not create a visible new set")
+            XCTFail("Expected Copy to create a new set row (new DoneToggle identifier not detected).")
+            return
+        }
+
+        let newReps = app.textFields["WorkoutSetEditorRow.\(newUUID).Reps.Field"]
+        let newWeight = app.textFields["WorkoutSetEditorRow.\(newUUID).Weight.Field"]
+        XCTAssertTrue(newReps.waitForExistence(timeout: 10), "Expected reps field for the copied set.")
+        XCTAssertTrue(newWeight.waitForExistence(timeout: 10), "Expected weight field for the copied set.")
+
+        let repsValue = normalizedTextFieldValue(newReps)
+        let weightValue = normalizedTextFieldValue(newWeight)
+
+        // Contract: Copy duplicates actuals.
+        XCTAssertEqual(repsValue, "10", "Expected copied set reps to match source.")
+        XCTAssertEqual(weightValue, "100", "Expected copied set weight to match source.")
+    }
     
     // MARK: - Navigation to Session
     
@@ -270,5 +364,62 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         }
 
         return setToggleQuery(in: app).count == expected
+    }
+
+    // MARK: - Helpers for copy/add semantics
+
+    private func uuidFromDoneToggleIdentifier(_ id: String) -> String? {
+        guard id.hasPrefix("WorkoutSetEditorRow."), id.hasSuffix(".DoneToggle") else { return nil }
+        return id
+            .replacingOccurrences(of: "WorkoutSetEditorRow.", with: "")
+            .replacingOccurrences(of: ".DoneToggle", with: "")
+    }
+
+    /// Returns a UUID string for the first *reps/weight* set row we can find (some sessions may start
+    /// with timed sets, which won't have the Reps/Weight fields).
+    private func firstRepsWeightSetUUID(in app: XCUIApplication) -> String? {
+        func searchVisible() -> String? {
+            let toggles = setToggleQuery(in: app).allElementsBoundByIndex
+            for t in toggles.prefix(24) {
+                guard let uuid = uuidFromDoneToggleIdentifier(t.identifier) else { continue }
+                let reps = app.textFields["WorkoutSetEditorRow.\(uuid).Reps.Field"]
+                let weight = app.textFields["WorkoutSetEditorRow.\(uuid).Weight.Field"]
+                if reps.exists && weight.exists { return uuid }
+            }
+            return nil
+        }
+
+        if let u = searchVisible() { return u }
+
+        // Nudge scroll a bit to force row realization and try again.
+        for _ in 0..<6 {
+            app.swipeUp()
+            if let u = searchVisible() { return u }
+        }
+
+        return nil
+    }
+
+    private func replaceText(in field: XCUIElement, with newValue: String) {
+        XCTAssertTrue(field.exists, "Field does not exist: \(field)")
+        field.tap()
+
+        // SwiftUI TextField often reports placeholder text as its value (e.g. "—").
+        // We try to clear whatever is there by sending a few deletes.
+        let current = (field.value as? String) ?? ""
+        if !current.isEmpty && current != "—" {
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: max(8, current.count + 2)))
+        }
+
+        field.typeText(newValue)
+    }
+
+    private func normalizedTextFieldValue(_ field: XCUIElement) -> String {
+        let raw = ((field.value as? String) ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Placeholder shown when empty in this UI.
+        if raw == "—" { return "" }
+        return raw
     }
 }

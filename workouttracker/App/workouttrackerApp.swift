@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UIKit
+import Foundation
 
 @main
 struct workouttrackerApp: App {
@@ -12,6 +13,15 @@ struct workouttrackerApp: App {
            let bundleID = Bundle.main.bundleIdentifier {
             UserDefaults.standard.removePersistentDomain(forName: bundleID)
             UserDefaults.standard.synchronize()
+        }
+
+        // ✅ WatchConnectivity should not run in UI tests (avoids extra flakiness + overhead).
+        // Note: avoid capturing `self` from an escaping Task in a struct init.
+        if env["UITESTS"] != "1" {
+            let container = sharedModelContainer
+            Task { @MainActor in
+                WorkoutRemoteControlRouter.shared.start(modelContainer: container)
+            }
         }
     }
     

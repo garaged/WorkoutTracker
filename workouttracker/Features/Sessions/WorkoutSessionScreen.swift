@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 import Charts
 import UIKit
+// No Combine needed here; we avoid NotificationCenter publishers for Watch commands.
 
 @MainActor
 struct WorkoutSessionScreen: View {
@@ -13,6 +14,7 @@ struct WorkoutSessionScreen: View {
     @Bindable var session: WorkoutSession
 
     @StateObject private var logging = WorkoutLoggingService()
+    @ObservedObject private var restTimer = RestTimerController.shared
 
     @State private var showFinishConfirm = false
     @State private var showAbandonConfirm = false
@@ -109,6 +111,44 @@ struct WorkoutSessionScreen: View {
                 .task(id: session.id) {
                     await applyGoalPrefillIfNeeded()
                     await reloadPinnedTargets()
+                }
+                .onAppear {
+                    ensureActiveCursorIfNeeded()
+                    if isInProgress {
+                        WorkoutRemoteControlRouter.shared.updateCursor(
+                            sessionID: session.id,
+                            exerciseID: activeExerciseID,
+                            setID: activeSetID
+                        )
+                    }
+                }
+
+                // Start/stop the shared timer when the panel is shown/hidden.
+                .onChange(of: showRestTimer) { isShown in
+                    guard isInProgress else { return }
+
+                    if isShown && !session.isPaused && !restTimer.isRunning {
+                        restTimer.start(seconds: restSecondsToStart)
+                    } else if !isShown && restTimer.isRunning {
+                        restTimer.stop()
+                    }
+                }
+
+                // If the timer ends naturally, close the panel.
+                .onChange(of: restTimer.didFinishToken) { _ in
+                    if showRestTimer {
+                        withAnimation { showRestTimer = false }
+                    }
+                }
+
+                // If the watch starts/stops the timer, keep the phone UI consistent.
+                .onChange(of: restTimer.isRunning) { running in
+                    guard isInProgress else { return }
+                    if running && !showRestTimer {
+                        withAnimation { showRestTimer = true }
+                    } else if !running && showRestTimer {
+                        withAnimation { showRestTimer = false }
+                    }
                 }
                 .safeAreaInset(edge: .top) {
                     if let prToast {
@@ -344,9 +384,10 @@ struct WorkoutSessionScreen: View {
         if let owningExercise = exercises.first(where: { ex in
             ex.setLogs.contains(where: { $0.id == targetID })
         }) {
-            activeExerciseID = owningExercise.id
+            markActive(exerciseID: owningExercise.id, setID: targetID)
+        } else {
+            activeSetID = targetID
         }
-        activeSetID = targetID
 
         scrollToSet(targetID, proxy: proxy)
     }
@@ -378,6 +419,28 @@ struct WorkoutSessionScreen: View {
         // Start rest timer using coach suggestion
         restSecondsToStart = max(1, prompt.suggestedRestSeconds)
         withAnimation { showRestTimer = true }
+    }
+    
+    // MARK: - Cursor helpers
+
+    private func ensureActiveCursorIfNeeded() {
+        guard isInProgress else { return }
+
+        // If user hasn’t tapped anything yet, pick first incomplete as the initial cursor.
+        if activeExerciseID == nil || activeSetID == nil {
+            for ex in sortedExercises {
+                if let firstIncomplete = sortedSets(for: ex).first(where: { !$0.completed }) ?? sortedSets(for: ex).first {
+                    markActive(exerciseID: ex.id, setID: firstIncomplete.id)
+                    break
+                }
+            }
+        }
+    }
+
+    private func formatWeight(_ w: Double) -> String {
+        // Avoid "110.0" spam; keep one decimal only when needed.
+        if abs(w.rounded() - w) < 0.0001 { return String(format: "%.0f", w) }
+        return String(format: "%.1f", w)
     }
 
     // MARK: View builders
@@ -471,8 +534,6 @@ struct WorkoutSessionScreen: View {
         }
     }
 
-
-
     @ViewBuilder
     private func bottomInset(proxy: ScrollViewProxy) -> some View {
         VStack(spacing: 10) {
@@ -495,7 +556,7 @@ struct WorkoutSessionScreen: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
-                RestTimerView(initialSeconds: restSecondsToStart) {
+                RestTimerPanelView(timer: restTimer) {
                     withAnimation { showRestTimer = false }
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -556,7 +617,7 @@ struct WorkoutSessionScreen: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             if isInProgress {
-                Button { withAnimation { showRestTimer.toggle() } } label: {
+                Button { toggleRestTimerUI() } label: {
                     Image(systemName: "timer")
                 }
                 .disabled(session.isPaused)
@@ -578,15 +639,31 @@ struct WorkoutSessionScreen: View {
             }
         }
     }
+    
+    private func toggleRestTimerUI() {
+        guard isInProgress, !session.isPaused else { return }
+
+        if showRestTimer {
+            withAnimation { showRestTimer = false }
+        } else {
+            // If we have a coach prompt, respect its suggested rest by default.
+            if let ctx = coachPrompt {
+                restSecondsToStart = max(1, ctx.prompt.suggestedRestSeconds)
+            }
+            withAnimation { showRestTimer = true }
+        }
+    }
 
     // MARK: Finish/abandon
 
     private func finish() {
         if session.isPaused { session.resume() }
+        restTimer.stop()
+        showRestTimer = false
         session.endedAt = Date()
         session.status = .completed
         saveOrAssert("finish")
-
+        WorkoutRemoteControlRouter.shared.clearNowPlaying(sessionID: session.id)
         // Optional, post-session, never blocks logging flow:
         // we only prompt if the user hasn't added a reflection yet.
         if !hasReflection {
@@ -595,13 +672,17 @@ struct WorkoutSessionScreen: View {
         } else {
             dismiss()
         }
+        
     }
 
     private func abandon() {
         if session.isPaused { session.resume() }
+        restTimer.stop()
+        showRestTimer = false
         session.endedAt = Date()
         session.status = .abandoned
         saveOrAssert("abandon")
+        WorkoutRemoteControlRouter.shared.clearNowPlaying(sessionID: session.id)
         dismiss()
     }
 
@@ -621,6 +702,14 @@ struct WorkoutSessionScreen: View {
     private func markActive(exerciseID: UUID, setID: UUID?) {
         activeExerciseID = exerciseID
         activeSetID = setID
+
+        if isInProgress {
+            WorkoutRemoteControlRouter.shared.updateCursor(
+                sessionID: session.id,
+                exerciseID: exerciseID,
+                setID: setID
+            )
+        }
     }
     
     @ViewBuilder
@@ -861,10 +950,6 @@ struct WorkoutSessionScreen: View {
         }
     }
 
-    private func formatWeight(_ w: Double) -> String {
-        if w.rounded() == w { return String(Int(w)) }
-        return String(format: "%.1f", w)
-    }
 
     private struct TargetAppliedBannerView: View {
         let text: String

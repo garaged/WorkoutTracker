@@ -20,7 +20,10 @@ struct WorkoutSessionsScreen: View {
     @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
     private var sessions: [WorkoutSession]
 
-    private var latestSession: WorkoutSession? { sessions.first }
+    /// Opinionated: "Continue" should open the active in-progress session, not a completed one.
+    private var continueSession: WorkoutSession? {
+        sessions.first(where: { $0.status == .inProgress })
+    }
 
     var body: some View {
         List {
@@ -45,7 +48,7 @@ struct WorkoutSessionsScreen: View {
                     )
                 }
 
-                if let s = latestSession {
+                if let s = continueSession {
                     NavigationLink {
                         WorkoutSessionScreen(session: s)
                     } label: {

@@ -1,5 +1,6 @@
 // workouttracker/Services/Programs/ProgramPackAssetMapStore.swift
 import Foundation
+import Combine
 
 struct ProgramPackAssetMap: Codable {
     var routinesBySlug: [String: UUID]

@@ -1,5 +1,6 @@
 // workouttracker/Services/Programs/ProgramPackV2.swift
 import Foundation
+import Combine
 
 struct ProgramPackV2: Codable {
     var formatVersion: Int
