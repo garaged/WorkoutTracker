@@ -115,16 +115,6 @@ struct WorkoutSetEditorRow: View {
                     .font(.headline)
                     .frame(width: 28, alignment: .leading)
                     .foregroundStyle(set.completed ? .secondary : .primary)
-
-                if set.completed {
-                    Text("DONE")
-                        .font(.caption2.weight(.semibold))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(.ultraThinMaterial, in: Capsule())
-                        .foregroundStyle(.secondary)
-                        .accessibilityLabel("Done")
-                }
             }
 
             VStack(alignment: .leading, spacing: 8) {
@@ -195,7 +185,7 @@ struct WorkoutSetEditorRow: View {
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("\(a11yPrefix).Row")
         .padding(.vertical, 6)
-        .opacity(set.completed ? 0.92 : 1.0)
+        // Visual state (selected/completed) is handled by the parent List row styling.
         .onDisappear {
             // Don’t drop the last typed values if the row/screen disappears.
             persistDebounceTask?.cancel()

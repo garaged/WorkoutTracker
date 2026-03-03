@@ -68,101 +68,9 @@ struct WorkoutSessionScreen: View {
     var body: some View {
         ZStack {
             ScrollViewReader { proxy in
-                List {
-                    headerSection
-                    summarySectionIfReadOnly
-                    exercisesSection(proxy: proxy)
-                }
-                .accessibilityIdentifier("WorkoutSession.Screen")
-                .navigationTitle(session.sourceRoutineNameSnapshot ?? "Workout")
-                .navigationBarTitleDisplayMode(.inline)
-                .safeAreaInset(edge: .bottom) { bottomInset(proxy: proxy) }
-                .safeAreaInset(edge: .top) {
-                    if let banner = targetAppliedBanner {
-                        TargetAppliedBannerView(text: banner.text) {
-                            withAnimation(.snappy) { targetAppliedBanner = nil }
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.top, 6)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    }
-                }
-                .toolbar { toolbarContent }
-                .confirmationDialog(
-                    "Finish workout?",
-                    isPresented: $showFinishConfirm,
-                    titleVisibility: .visible
-                ) {
-                    Button("Finish & Save", role: .destructive) { finish() }
-                    Button("Keep Logging", role: .cancel) { }
-                } message: {
-                    Text("This will mark the session as completed.")
-                }
-                .confirmationDialog(
-                    "Abandon session?",
-                    isPresented: $showAbandonConfirm,
-                    titleVisibility: .visible
-                ) {
-                    Button("Abandon", role: .destructive) { abandon() }
-                    Button("Cancel", role: .cancel) { }
-                } message: {
-                    Text("This will mark the session as abandoned (not completed).")
-                }
-                .task(id: session.id) {
-                    await applyGoalPrefillIfNeeded()
-                    await reloadPinnedTargets()
-                }
-                .onAppear {
-                    ensureActiveCursorIfNeeded()
-                    if isInProgress {
-                        WorkoutRemoteControlRouter.shared.updateCursor(
-                            sessionID: session.id,
-                            exerciseID: activeExerciseID,
-                            setID: activeSetID
-                        )
-                    }
-                }
-
-                // Start/stop the shared timer when the panel is shown/hidden.
-                .onChange(of: showRestTimer) { isShown in
-                    guard isInProgress else { return }
-
-                    if isShown && !session.isPaused && !restTimer.isRunning {
-                        restTimer.start(seconds: restSecondsToStart)
-                    } else if !isShown && restTimer.isRunning {
-                        restTimer.stop()
-                    }
-                }
-
-                // If the timer ends naturally, close the panel.
-                .onChange(of: restTimer.didFinishToken) { _ in
-                    if showRestTimer {
-                        withAnimation { showRestTimer = false }
-                    }
-                }
-
-                // If the watch starts/stops the timer, keep the phone UI consistent.
-                .onChange(of: restTimer.isRunning) { running in
-                    guard isInProgress else { return }
-                    if running && !showRestTimer {
-                        withAnimation { showRestTimer = true }
-                    } else if !running && showRestTimer {
-                        withAnimation { showRestTimer = false }
-                    }
-                }
-                .safeAreaInset(edge: .top) {
-                    if let prToast {
-                        PRToastView(
-                            title: prToast.title,
-                            subtitle: prToast.subtitle,
-                            onDismiss: { withAnimation(.snappy) { self.prToast = nil } }
-                        )
-                        .padding(.horizontal, 12)
-                        .padding(.top, 6)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    }
-                }
+                sessionList(proxy: proxy)
             }
+
             if let token = confettiToken {
                 ConfettiBurstView(token: token)
                     .ignoresSafeArea()
@@ -218,6 +126,12 @@ struct WorkoutSessionScreen: View {
             await applyGoalPrefillIfNeeded()
             await reloadPinnedTargets()
         }
+        .task { await listenForWatchSelectionEvents(proxy: proxy) }
+        .task { await listenForWatchCompletionEvents(proxy: proxy) }
+        .onAppear { syncWatchCursorIfNeeded() }
+        .onChange(of: activeExerciseID) { _, _ in syncWatchCursorIfNeeded() }
+        .onChange(of: activeSetID) { _, _ in syncWatchCursorIfNeeded() }
+        .onChange(of: session.status) { _, _ in syncWatchCursorIfNeeded() }
     }
 
     @ViewBuilder
@@ -497,10 +411,33 @@ struct WorkoutSessionScreen: View {
     @ViewBuilder
     private func setsList(for ex: WorkoutSessionExercise, proxy: ScrollViewProxy) -> some View {
         let sets = sortedSets(for: ex)
-
+        
         ForEach(sets, id: \.id) { set in
+            let isActive = (activeSetID == set.id)
+            
             setRow(ex: ex, set: set, proxy: proxy)
                 .id(set.id)
+            // Selected + completed styling lives at the List row level so layout stays stable.
+                .listRowBackground(
+                    isActive
+                    ? Color.accentColor.opacity(0.12)
+                    : (set.completed ? Color.secondary.opacity(0.08) : Color.clear)
+                )
+                .overlay(alignment: .leading) {
+                    if isActive {
+                        Capsule()
+                            .fill(Color.accentColor)
+                            .frame(width: 4)
+                            .padding(.vertical, 8)
+                    }
+                }
+                .opacity(set.completed ? 0.82 : 1.0)
+                .contentShape(Rectangle())
+                .simultaneousGesture(
+                    TapGesture().onEnded {
+                        markActive(exerciseID: ex.id, setID: set.id)
+                    }
+                )
         }
     }
 
@@ -702,14 +639,17 @@ struct WorkoutSessionScreen: View {
     private func markActive(exerciseID: UUID, setID: UUID?) {
         activeExerciseID = exerciseID
         activeSetID = setID
-
-        if isInProgress {
-            WorkoutRemoteControlRouter.shared.updateCursor(
-                sessionID: session.id,
-                exerciseID: exerciseID,
-                setID: setID
-            )
-        }
+        syncWatchCursorIfNeeded()
+    }
+    
+    private func syncWatchCursorIfNeeded() {
+        // v1: the watch is a remote control for the *active* workout screen.
+        guard session.status == .inProgress else { return }
+        WorkoutRemoteControlRouter.shared.updateCursor(
+            sessionID: session.id,
+            exerciseID: activeExerciseID,
+            setID: activeSetID
+        )
     }
     
     @ViewBuilder
@@ -1461,5 +1401,56 @@ struct WorkoutSessionScreen: View {
             g.notificationOccurred(.success)
     #endif
         }
+    }
+    
+    private func listenForWatchSelectionEvents(proxy: ScrollViewProxy) async {
+        for await note in NotificationCenter.default.notifications(named: .workoutWatchSelectedSet) {
+            guard let evt = note.object as? WorkoutWatchSelectedSetEvent else { continue }
+            guard evt.sessionID == session.id else { continue }
+            guard session.status == .inProgress else { continue }
+
+            if let exID = evt.exerciseID { activeExerciseID = exID }
+            if let setID = evt.setID {
+                activeSetID = setID
+                scrollToSet(setID, proxy: proxy)
+            }
+        }
+    }
+
+    private func listenForWatchCompletionEvents(proxy: ScrollViewProxy) async {
+        for await note in NotificationCenter.default.notifications(named: .workoutWatchSetCompletionChanged) {
+            guard let evt = note.object as? WorkoutWatchSetCompletionChangedEvent else { continue }
+            guard evt.sessionID == session.id else { continue }
+            guard session.status == .inProgress else { continue }
+
+            guard let (ex, set) = findExerciseAndSet(setID: evt.setID) else { continue }
+
+            // Apply desired state safely (prevents double-toggles).
+            if set.completed != evt.isCompleted {
+                let wasCompleted = set.completed
+                logging.toggleCompleted(set, context: modelContext)
+                saveOrAssert("watch completion")
+
+                if !wasCompleted && set.completed {
+                    Task { await celebratePRIfNeeded(ex: ex, set: set) }
+                    handleSetCompleted(ex: ex, set: set, suggestedRest: set.targetRestSeconds)
+                } else if wasCompleted && !set.completed {
+                    prBadgesBySetId[set.id] = nil
+                    celebratedPRSetIDs.remove(set.id)
+                }
+            }
+
+            markActive(exerciseID: ex.id, setID: set.id)
+            scrollToSet(set.id, proxy: proxy)
+        }
+    }
+
+    private func findExerciseAndSet(setID: UUID) -> (WorkoutSessionExercise, WorkoutSetLog)? {
+        for ex in sortedExercises {
+            if let s = sortedSets(for: ex).first(where: { $0.id == setID }) {
+                return (ex, s)
+            }
+        }
+        return nil
     }
 }

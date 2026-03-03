@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import WatchConnectivity
+import os
 
 @MainActor
 final class WatchConnectivityService: NSObject, ObservableObject {
@@ -13,7 +14,9 @@ final class WatchConnectivityService: NSObject, ObservableObject {
     @Published private(set) var isReachable: Bool = false
 
     private var latestState: WatchNowPlayingState = .inactive
-    private var needsFlushLatestState: Bool = false   // ✅ new
+    private var needsFlushLatestState: Bool = false
+
+    private let log = Logger(subsystem: "garaged.org.workouttracker", category: "WatchConnectivity")
 
     var onCommand: ((WatchCommand) -> Void)?
 
@@ -26,9 +29,9 @@ final class WatchConnectivityService: NSObject, ObservableObject {
         session.activate()
         refreshFlags(from: session)
 
-        // ✅ If we already had a state queued, try to flush shortly after start.
+        // Small delayed flush to cover "activation finishes right after start()".
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3s
+            try? await Task.sleep(nanoseconds: 300_000_000)
             flushLatestStateIfNeeded()
         }
     }
@@ -36,11 +39,13 @@ final class WatchConnectivityService: NSObject, ObservableObject {
     func pushNowPlayingState(_ state: WatchNowPlayingState) {
         latestState = state
         guard WCSession.isSupported() else { return }
+
         let session = WCSession.default
 
-        // If session isn't activated yet, queue a flush.
+        // If not activated yet, queue.
         guard session.activationState == .activated else {
             needsFlushLatestState = true
+            log.debug("Queued state flush; activationState=\(String(describing: session.activationState.rawValue))")
             return
         }
 
@@ -55,36 +60,41 @@ final class WatchConnectivityService: NSObject, ObservableObject {
         isPaired = session.isPaired
         isWatchAppInstalled = session.isWatchAppInstalled
         isReachable = session.isReachable
+        log.debug("Flags paired=\(self.isPaired) installed=\(self.isWatchAppInstalled) reachable=\(self.isReachable)")
     }
 
     private func flushLatestStateIfNeeded() {
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
-
         guard session.activationState == .activated else { return }
-        guard needsFlushLatestState || latestState != .inactive else { return }
 
+        guard needsFlushLatestState || latestState != .inactive else { return }
         needsFlushLatestState = false
         flush(latestState, via: session)
     }
 
     private func flush(_ state: WatchNowPlayingState, via session: WCSession) {
-        // Durable latest snapshot (watch can read it even if not reachable).
-        do {
-            try session.updateApplicationContext(WatchMessageCodec.encodeState(state))
-        } catch {
-            // Queue a retry (session might still be warming up).
+        guard session.isPaired else { return }
+        guard session.isWatchAppInstalled else {
             needsFlushLatestState = true
             return
         }
+        do {
+            try session.updateApplicationContext(WatchMessageCodec.encodeState(state))
+            log.debug("updateApplicationContext OK; active=\(state.isActiveSession)")
+        } catch {
+            needsFlushLatestState = true
+            log.error("updateApplicationContext failed: \(String(describing: error))")
+            return
+        }
 
-        // Live update while watch app is open.
+        // Live push only when reachable (watch app open + phone app active).
         if session.isReachable {
-            session.sendMessage(
-                WatchMessageCodec.encodeState(state),
-                replyHandler: nil,
-                errorHandler: { _ in }
-            )
+            session.sendMessage(WatchMessageCodec.encodeState(state),
+                                replyHandler: nil,
+                                errorHandler: { err in
+                self.log.error("sendMessage failed: \(String(describing: err))")
+            })
         }
     }
 
@@ -93,13 +103,10 @@ final class WatchConnectivityService: NSObject, ObservableObject {
             reply?(WatchMessageCodec.encodeState(latestState))
             return
         }
-
         onCommand?(command)
         reply?(["ok": true])
     }
 }
-
-// MARK: - WCSessionDelegate (phone)
 
 extension WatchConnectivityService: WCSessionDelegate {
 
@@ -108,7 +115,7 @@ extension WatchConnectivityService: WCSessionDelegate {
                              error: Error?) {
         Task { @MainActor in
             self.refreshFlags(from: session)
-            self.flushLatestStateIfNeeded()   // ✅ key line
+            self.flushLatestStateIfNeeded()
         }
     }
 
@@ -125,7 +132,6 @@ extension WatchConnectivityService: WCSessionDelegate {
     nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
         Task { @MainActor in
             self.refreshFlags(from: session)
-            // ✅ when watch becomes reachable, send a live message too
             self.flushLatestStateIfNeeded()
         }
     }
@@ -133,9 +139,7 @@ extension WatchConnectivityService: WCSessionDelegate {
     nonisolated func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
         let command = WatchMessageCodec.decodeCommand(from: message)
         Task { @MainActor in
-            if let command {
-                self.handleIncomingCommand(command, reply: nil)
-            }
+            if let command { self.handleIncomingCommand(command, reply: nil) }
         }
     }
 
