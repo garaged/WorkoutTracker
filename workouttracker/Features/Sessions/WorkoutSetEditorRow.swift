@@ -14,9 +14,15 @@ struct WorkoutSetEditorRow: View {
     @AppStorage(UnitPreferences.Keys.weightUnitRaw)
     private var preferredUnitRaw: String = WeightUnit.kg.rawValue
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     private var preferredUnit: WeightUnit {
         WeightUnit(rawValue: preferredUnitRaw) ?? .kg
     }
+
+    private var isCompact: Bool { horizontalSizeClass == .compact }
+    private var repsFieldWidth: CGFloat { isCompact ? 54 : 62 }
+    private var weightFieldWidth: CGFloat { isCompact ? 68 : 84 }
 
     let setNumber: Int
     let isReadOnly: Bool
@@ -109,34 +115,34 @@ struct WorkoutSetEditorRow: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(spacing: 4) {
-                Text("\(setNumber)")
-                    .font(.headline)
-                    .frame(width: 28, alignment: .leading)
-                    .foregroundStyle(set.completed ? .secondary : .primary)
-            }
+        HStack(alignment: .center, spacing: 8) {
+            // Fixed left index column so it never gets squeezed.
+            Text("\(setNumber)")
+                .font(.headline)
+                .frame(width: 28, alignment: .leading)
+                .foregroundStyle(set.completed ? .secondary : .primary)
+                .layoutPriority(2)
 
             VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 12) {
+                HStack(spacing: isCompact ? 8 : 12) {
                     valueEditor(
                         title: "Reps",
                         text: repsBinding,
                         keyboard: .numberPad,
-                        width: 62,
+                        width: repsFieldWidth,
                         minus: { bumpReps(-1) },
                         plus: { bumpReps(+1) },
                         idBase: "\(a11yPrefix).Reps"
                     )
-                    
+
                     valueEditor(
-                        title: "Weight",
+                        title: isCompact ? "Wt (\(preferredUnit.label))" : "Weight",
                         text: weightBinding,
                         keyboard: .decimalPad,
-                        width: 84,
+                        width: weightFieldWidth,
                         minus: { bumpWeight(-weightStep) },
                         plus: { bumpWeight(+weightStep) },
-                        trailing: AnyView(
+                        trailing: isCompact ? nil : AnyView(
                             Text(preferredUnit.label)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -144,14 +150,15 @@ struct WorkoutSetEditorRow: View {
                         idBase: "\(a11yPrefix).Weight"
                     )
                 }
-                
+
                 if let hint = targetHint {
                     Text(hint)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
-                
+
                 SetRowActionsBar(
                     isReadOnly: isReadOnly,
                     onAction: { action in
@@ -167,8 +174,9 @@ struct WorkoutSetEditorRow: View {
                     idPrefix: "\(a11yPrefix).Actions"
                 )
             }
+            .layoutPriority(1)
 
-            Spacer()
+            Spacer(minLength: 0)
 
             Button {
                 toggleDone()
@@ -176,8 +184,11 @@ struct WorkoutSetEditorRow: View {
                 Image(systemName: set.completed ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
                     .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(set.completed ? .green : .secondary)
             }
             .buttonStyle(.plain)
+            .frame(width: 44, alignment: .trailing)
+            .layoutPriority(2)
             .disabled(isReadOnly)
             .accessibilityLabel(set.completed ? "Mark set not completed" : "Mark set completed")
             .accessibilityIdentifier("\(a11yPrefix).DoneToggle")
@@ -185,7 +196,6 @@ struct WorkoutSetEditorRow: View {
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("\(a11yPrefix).Row")
         .padding(.vertical, 6)
-        // Visual state (selected/completed) is handled by the parent List row styling.
         .onDisappear {
             // Don’t drop the last typed values if the row/screen disappears.
             persistDebounceTask?.cancel()

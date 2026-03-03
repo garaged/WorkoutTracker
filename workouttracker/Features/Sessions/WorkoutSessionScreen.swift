@@ -2,7 +2,6 @@ import SwiftUI
 import SwiftData
 import Charts
 import UIKit
-// No Combine needed here; we avoid NotificationCenter publishers for Watch commands.
 
 @MainActor
 struct WorkoutSessionScreen: View {
@@ -14,7 +13,6 @@ struct WorkoutSessionScreen: View {
     @Bindable var session: WorkoutSession
 
     @StateObject private var logging = WorkoutLoggingService()
-    @ObservedObject private var restTimer = RestTimerController.shared
 
     @State private var showFinishConfirm = false
     @State private var showAbandonConfirm = false
@@ -68,9 +66,65 @@ struct WorkoutSessionScreen: View {
     var body: some View {
         ZStack {
             ScrollViewReader { proxy in
-                sessionList(proxy: proxy)
+                List {
+                    headerSection
+                    summarySectionIfReadOnly
+                    exercisesSection(proxy: proxy)
+                }
+                .accessibilityIdentifier("WorkoutSession.Screen")
+                .navigationTitle(session.sourceRoutineNameSnapshot ?? "Workout")
+                .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+                .safeAreaInset(edge: .bottom) { bottomInset(proxy: proxy) }
+                .safeAreaInset(edge: .top) {
+                    if let banner = targetAppliedBanner {
+                        TargetAppliedBannerView(text: banner.text) {
+                            withAnimation(.snappy) { targetAppliedBanner = nil }
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.top, 6)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                }
+                .toolbar { toolbarContent }
+                .confirmationDialog(
+                    "Finish workout?",
+                    isPresented: $showFinishConfirm,
+                    titleVisibility: .visible
+                ) {
+                    Button("Finish & Save", role: .destructive) { finish() }
+                    Button("Keep Logging", role: .cancel) { }
+                } message: {
+                    Text("This will mark the session as completed.")
+                }
+                .confirmationDialog(
+                    "Abandon session?",
+                    isPresented: $showAbandonConfirm,
+                    titleVisibility: .visible
+                ) {
+                    Button("Abandon", role: .destructive) { abandon() }
+                    Button("Cancel", role: .cancel) { }
+                } message: {
+                    Text("This will mark the session as abandoned (not completed).")
+                }
+                .task(id: session.id) {
+                    await applyGoalPrefillIfNeeded()
+                    await reloadPinnedTargets()
+                }
+                .safeAreaInset(edge: .top) {
+                    if let prToast {
+                        PRToastView(
+                            title: prToast.title,
+                            subtitle: prToast.subtitle,
+                            onDismiss: { withAnimation(.snappy) { self.prToast = nil } }
+                        )
+                        .padding(.horizontal, 12)
+                        .padding(.top, 6)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                }
             }
-
             if let token = confettiToken {
                 ConfettiBurstView(token: token)
                     .ignoresSafeArea()
@@ -99,6 +153,8 @@ struct WorkoutSessionScreen: View {
         .accessibilityIdentifier("WorkoutSession.Screen.List")
         .navigationTitle(session.sourceRoutineNameSnapshot ?? "Workout")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .safeAreaInset(edge: .top) { topInset }
         .safeAreaInset(edge: .bottom) { bottomInset(proxy: proxy) }
         .toolbar { toolbarContent }
@@ -126,12 +182,6 @@ struct WorkoutSessionScreen: View {
             await applyGoalPrefillIfNeeded()
             await reloadPinnedTargets()
         }
-        .task { await listenForWatchSelectionEvents(proxy: proxy) }
-        .task { await listenForWatchCompletionEvents(proxy: proxy) }
-        .onAppear { syncWatchCursorIfNeeded() }
-        .onChange(of: activeExerciseID) { _, _ in syncWatchCursorIfNeeded() }
-        .onChange(of: activeSetID) { _, _ in syncWatchCursorIfNeeded() }
-        .onChange(of: session.status) { _, _ in syncWatchCursorIfNeeded() }
     }
 
     @ViewBuilder
@@ -298,10 +348,9 @@ struct WorkoutSessionScreen: View {
         if let owningExercise = exercises.first(where: { ex in
             ex.setLogs.contains(where: { $0.id == targetID })
         }) {
-            markActive(exerciseID: owningExercise.id, setID: targetID)
-        } else {
-            activeSetID = targetID
+            activeExerciseID = owningExercise.id
         }
+        activeSetID = targetID
 
         scrollToSet(targetID, proxy: proxy)
     }
@@ -334,28 +383,6 @@ struct WorkoutSessionScreen: View {
         restSecondsToStart = max(1, prompt.suggestedRestSeconds)
         withAnimation { showRestTimer = true }
     }
-    
-    // MARK: - Cursor helpers
-
-    private func ensureActiveCursorIfNeeded() {
-        guard isInProgress else { return }
-
-        // If user hasn’t tapped anything yet, pick first incomplete as the initial cursor.
-        if activeExerciseID == nil || activeSetID == nil {
-            for ex in sortedExercises {
-                if let firstIncomplete = sortedSets(for: ex).first(where: { !$0.completed }) ?? sortedSets(for: ex).first {
-                    markActive(exerciseID: ex.id, setID: firstIncomplete.id)
-                    break
-                }
-            }
-        }
-    }
-
-    private func formatWeight(_ w: Double) -> String {
-        // Avoid "110.0" spam; keep one decimal only when needed.
-        if abs(w.rounded() - w) < 0.0001 { return String(format: "%.0f", w) }
-        return String(format: "%.1f", w)
-    }
 
     // MARK: View builders
 
@@ -381,95 +408,156 @@ struct WorkoutSessionScreen: View {
     }
 
     private func exerciseSection(_ ex: WorkoutSessionExercise, proxy: ScrollViewProxy) -> some View {
-        Section {
-            setsList(for: ex, proxy: proxy)
-            addSetButton(for: ex, proxy: proxy)
-        } header: {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(ex.exerciseNameSnapshot)
+        VStack(alignment: .leading, spacing: 12) {
+            exerciseCardHeader(ex)
 
-                if isInProgress, let t = nextTargets[ex.exerciseId] {
-                    HStack(spacing: 8) {
-                        Text("Next: \(t.text)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
+            VStack(alignment: .leading, spacing: 10) {
+                setsList(for: ex, proxy: proxy)
+            }
+        }
+        .padding(14)
+        .background(exerciseCardBackground)
+        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+    }
 
-                        Spacer()
+    private func exerciseCardHeader(_ ex: WorkoutSessionExercise) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(ex.exerciseNameSnapshot)
+                .font(.headline)
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                        Button("Apply") {
-                            applyPinnedTarget(for: ex)
-                        }
-                        .font(.caption.weight(.semibold))
-                        .buttonStyle(.bordered)
+            if isInProgress, let t = nextTargets[ex.exerciseId] {
+                HStack(spacing: 8) {
+                    Text("Next: \(t.text)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+
+                    Spacer(minLength: 8)
+
+                    Button("Apply") {
+                        applyPinnedTarget(for: ex)
                     }
+                    .font(.caption.weight(.semibold))
+                    .buttonStyle(.bordered)
                 }
             }
         }
+    }
+
+    private var exerciseCardBackground: some View {
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .fill(Color.secondary.opacity(0.05))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.secondary.opacity(0.12), lineWidth: 1)
+            )
     }
 
     @ViewBuilder
     private func setsList(for ex: WorkoutSessionExercise, proxy: ScrollViewProxy) -> some View {
         let sets = sortedSets(for: ex)
-        
-        ForEach(sets, id: \.id) { set in
-            let isActive = (activeSetID == set.id)
-            
-            setRow(ex: ex, set: set, proxy: proxy)
-                .id(set.id)
-            // Selected + completed styling lives at the List row level so layout stays stable.
-                .listRowBackground(
-                    isActive
-                    ? Color.accentColor.opacity(0.12)
-                    : (set.completed ? Color.secondary.opacity(0.08) : Color.clear)
-                )
-                .overlay(alignment: .leading) {
-                    if isActive {
-                        Capsule()
-                            .fill(Color.accentColor)
-                            .frame(width: 4)
-                            .padding(.vertical, 8)
-                    }
-                }
-                .opacity(set.completed ? 0.82 : 1.0)
-                .contentShape(Rectangle())
-                .simultaneousGesture(
-                    TapGesture().onEnded {
-                        markActive(exerciseID: ex.id, setID: set.id)
-                    }
-                )
-        }
-    }
 
-    @ViewBuilder
-    private func addSetButton(for ex: WorkoutSessionExercise, proxy: ScrollViewProxy) -> some View {
-        if !isReadOnly {
-            let sets = sortedSets(for: ex)
+        VStack(spacing: 10) {
+            ForEach(sets, id: \.id) { set in
+                let state = setRowVisualState(for: set)
 
-            Button {
-                markActive(exerciseID: ex.id, setID: nil)
-                if let newSet = logging.addSet(to: ex, template: sets.last, context: modelContext) {
-                    // "Add" should create a fresh set: keep the plan (targets), clear what the user actually logged.
-                    // ("Copy" is the action that duplicates actuals.)
-                    applyTimedTemplate(from: sets.last, to: newSet, prefillActuals: false)
-
-                    // Clear actuals so this doesn't look/feel like "Copy".
-                    newSet.reps = nil
-                    newSet.weight = nil
-                    newSet.actualDurationSeconds = nil
-                    newSet.actualDistance = nil
-                    newSet.completed = false
-                    newSet.completedAt = nil
-
-                    markActive(exerciseID: ex.id, setID: newSet.id)
-                    saveOrAssert("add set")
-                    scrollToSet(newSet.id, proxy: proxy)
-                }
-            } label: {
-                Label("Add set", systemImage: "plus")
+                setRow(ex: ex, set: set, proxy: proxy)
+                    .id(set.id)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(setRowChrome(state: state))
+                    .contentShape(Rectangle())
+                    .simultaneousGesture(
+                        TapGesture().onEnded {
+                            markActive(exerciseID: ex.id, setID: set.id)
+                        }
+                    )
             }
         }
     }
+
+    // MARK: - Row styling
+
+    private enum SetRowVisualState {
+        case pending
+        case current
+        case done
+        case behind
+    }
+
+    private func setRowVisualState(for set: WorkoutSetLog) -> SetRowVisualState {
+        if activeSetID == set.id { return .current }
+        if set.completed { return .done }
+        if isBehind(set) { return .behind }
+        return .pending
+    }
+
+    private var behindSetIDs: Set<UUID> {
+        guard isInProgress, let activeSetID else { return [] }
+
+        let ordered: [WorkoutSetLog] = sortedExercises.flatMap { ex in
+            sortedSets(for: ex)
+        }
+
+        guard let activeIndex = ordered.firstIndex(where: { $0.id == activeSetID }) else { return [] }
+
+        return Set(
+            ordered.prefix(activeIndex)
+                .filter { !$0.completed }
+                .map(\.id)
+        )
+    }
+
+    private func isBehind(_ set: WorkoutSetLog) -> Bool {
+        behindSetIDs.contains(set.id)
+    }
+
+    private func setRowChrome(state: SetRowVisualState) -> some View {
+        let bg: Color
+        let border: Color
+        let bar: Color?
+
+        switch state {
+        case .pending:
+            bg = Color.secondary.opacity(0.03)
+            border = Color.secondary.opacity(0.10)
+            bar = nil
+        case .current:
+            bg = Color.accentColor.opacity(0.12)
+            border = Color.accentColor.opacity(0.28)
+            bar = Color.accentColor
+        case .done:
+            bg = Color.green.opacity(0.12)
+            border = Color.green.opacity(0.22)
+            bar = nil
+        case .behind:
+            bg = Color.orange.opacity(0.06)
+            border = Color.orange.opacity(0.18)
+            bar = nil
+        }
+
+        return RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .fill(bg)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(border, lineWidth: 1)
+            )
+            .overlay(alignment: .leading) {
+                if let bar {
+                    Capsule()
+                        .fill(bar)
+                        .frame(width: 4)
+                        .padding(.leading, 10)
+                        .padding(.vertical, 10)
+                }
+            }
+    }
+
+
 
     @ViewBuilder
     private func bottomInset(proxy: ScrollViewProxy) -> some View {
@@ -493,7 +581,7 @@ struct WorkoutSessionScreen: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
-                RestTimerPanelView(timer: restTimer) {
+                RestTimerView(initialSeconds: restSecondsToStart) {
                     withAnimation { showRestTimer = false }
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -554,7 +642,7 @@ struct WorkoutSessionScreen: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             if isInProgress {
-                Button { toggleRestTimerUI() } label: {
+                Button { withAnimation { showRestTimer.toggle() } } label: {
                     Image(systemName: "timer")
                 }
                 .disabled(session.isPaused)
@@ -576,31 +664,15 @@ struct WorkoutSessionScreen: View {
             }
         }
     }
-    
-    private func toggleRestTimerUI() {
-        guard isInProgress, !session.isPaused else { return }
-
-        if showRestTimer {
-            withAnimation { showRestTimer = false }
-        } else {
-            // If we have a coach prompt, respect its suggested rest by default.
-            if let ctx = coachPrompt {
-                restSecondsToStart = max(1, ctx.prompt.suggestedRestSeconds)
-            }
-            withAnimation { showRestTimer = true }
-        }
-    }
 
     // MARK: Finish/abandon
 
     private func finish() {
         if session.isPaused { session.resume() }
-        restTimer.stop()
-        showRestTimer = false
         session.endedAt = Date()
         session.status = .completed
         saveOrAssert("finish")
-        WorkoutRemoteControlRouter.shared.clearNowPlaying(sessionID: session.id)
+
         // Optional, post-session, never blocks logging flow:
         // we only prompt if the user hasn't added a reflection yet.
         if !hasReflection {
@@ -609,17 +681,13 @@ struct WorkoutSessionScreen: View {
         } else {
             dismiss()
         }
-        
     }
 
     private func abandon() {
         if session.isPaused { session.resume() }
-        restTimer.stop()
-        showRestTimer = false
         session.endedAt = Date()
         session.status = .abandoned
         saveOrAssert("abandon")
-        WorkoutRemoteControlRouter.shared.clearNowPlaying(sessionID: session.id)
         dismiss()
     }
 
@@ -639,17 +707,6 @@ struct WorkoutSessionScreen: View {
     private func markActive(exerciseID: UUID, setID: UUID?) {
         activeExerciseID = exerciseID
         activeSetID = setID
-        syncWatchCursorIfNeeded()
-    }
-    
-    private func syncWatchCursorIfNeeded() {
-        // v1: the watch is a remote control for the *active* workout screen.
-        guard session.status == .inProgress else { return }
-        WorkoutRemoteControlRouter.shared.updateCursor(
-            sessionID: session.id,
-            exerciseID: activeExerciseID,
-            setID: activeSetID
-        )
     }
     
     @ViewBuilder
@@ -890,6 +947,10 @@ struct WorkoutSessionScreen: View {
         }
     }
 
+    private func formatWeight(_ w: Double) -> String {
+        if w.rounded() == w { return String(Int(w)) }
+        return String(format: "%.1f", w)
+    }
 
     private struct TargetAppliedBannerView: View {
         let text: String
@@ -1173,6 +1234,8 @@ struct WorkoutSessionScreen: View {
                 }
                 .navigationTitle("PR")
                 .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Done") { dismiss() }
@@ -1221,8 +1284,9 @@ struct WorkoutSessionScreen: View {
             HStack(alignment: .center, spacing: 14) {
                 Text("\(setNumber)")
                     .font(.headline)
-                    .frame(width: 24, alignment: .leading)
+                    .frame(width: 28, alignment: .leading)
                     .foregroundStyle(.secondary)
+                    .layoutPriority(2)
 
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 16) {
@@ -1244,8 +1308,9 @@ struct WorkoutSessionScreen: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 }
+                .layoutPriority(1)
 
-                Spacer(minLength: 6)
+                Spacer(minLength: 8)
 
                 Button {
                     if !isReadOnly { onToggleComplete() }
@@ -1255,6 +1320,8 @@ struct WorkoutSessionScreen: View {
                         .foregroundStyle(set.completed ? .green : .secondary)
                 }
                 .buttonStyle(.plain)
+                .frame(width: 44, alignment: .trailing)
+                .layoutPriority(2)
                 .accessibilityLabel(set.completed ? "Mark incomplete" : "Mark complete")
                 .accessibilityIdentifier("WorkoutSetEditorRow.\(set.id.uuidString).DoneToggle")
                 .disabled(isReadOnly)
@@ -1401,56 +1468,5 @@ struct WorkoutSessionScreen: View {
             g.notificationOccurred(.success)
     #endif
         }
-    }
-    
-    private func listenForWatchSelectionEvents(proxy: ScrollViewProxy) async {
-        for await note in NotificationCenter.default.notifications(named: .workoutWatchSelectedSet) {
-            guard let evt = note.object as? WorkoutWatchSelectedSetEvent else { continue }
-            guard evt.sessionID == session.id else { continue }
-            guard session.status == .inProgress else { continue }
-
-            if let exID = evt.exerciseID { activeExerciseID = exID }
-            if let setID = evt.setID {
-                activeSetID = setID
-                scrollToSet(setID, proxy: proxy)
-            }
-        }
-    }
-
-    private func listenForWatchCompletionEvents(proxy: ScrollViewProxy) async {
-        for await note in NotificationCenter.default.notifications(named: .workoutWatchSetCompletionChanged) {
-            guard let evt = note.object as? WorkoutWatchSetCompletionChangedEvent else { continue }
-            guard evt.sessionID == session.id else { continue }
-            guard session.status == .inProgress else { continue }
-
-            guard let (ex, set) = findExerciseAndSet(setID: evt.setID) else { continue }
-
-            // Apply desired state safely (prevents double-toggles).
-            if set.completed != evt.isCompleted {
-                let wasCompleted = set.completed
-                logging.toggleCompleted(set, context: modelContext)
-                saveOrAssert("watch completion")
-
-                if !wasCompleted && set.completed {
-                    Task { await celebratePRIfNeeded(ex: ex, set: set) }
-                    handleSetCompleted(ex: ex, set: set, suggestedRest: set.targetRestSeconds)
-                } else if wasCompleted && !set.completed {
-                    prBadgesBySetId[set.id] = nil
-                    celebratedPRSetIDs.remove(set.id)
-                }
-            }
-
-            markActive(exerciseID: ex.id, setID: set.id)
-            scrollToSet(set.id, proxy: proxy)
-        }
-    }
-
-    private func findExerciseAndSet(setID: UUID) -> (WorkoutSessionExercise, WorkoutSetLog)? {
-        for ex in sortedExercises {
-            if let s = sortedSets(for: ex).first(where: { $0.id == setID }) {
-                return (ex, s)
-            }
-        }
-        return nil
     }
 }
