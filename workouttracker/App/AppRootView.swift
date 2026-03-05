@@ -35,6 +35,7 @@ struct AppRootView: View {
     @Environment(\.platform) private var platform
 
     @State private var didSeed = false
+    @AppStorage("workouttracker.starterPackVersion") private var starterPackVersion = 0
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var selection: RootDestination? = .home
     
@@ -49,7 +50,9 @@ struct AppRootView: View {
 
     var body: some View {
         Group {
-            if let start = uiTestStartRoute {
+            if shouldWaitForStarterPackBootstrap {
+                bootstrapView
+            } else if let start = uiTestStartRoute {
                 uiTestRoot(for: start)
             } else if platform.prefersSplitNavigation {
                 NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -82,12 +85,41 @@ struct AppRootView: View {
         .task {
             // Seed once, across iPhone + iPad paths.
             guard !didSeed else { return }
-            didSeed = true
 
             // Don’t mutate persistent store during UITests.
-            guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
+            guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else {
+                didSeed = true
+                return
+            }
 
-            _ = try? RoutineSeeder.seedStarterPackIfEmpty(context: modelContext)
+            StarterPackSeeder.seedIfNeeded(context: modelContext)
+            didSeed = true
+        }
+    }
+
+    private var shouldWaitForStarterPackBootstrap: Bool {
+        ProcessInfo.processInfo.environment["UITESTS"] != "1" &&
+        starterPackVersion == 0 &&
+        !didSeed
+    }
+
+    private var bootstrapView: some View {
+        NavigationStack {
+            VStack(spacing: 14) {
+                ProgressView()
+                    .controlSize(.large)
+
+                Text("Preparing starter pack…")
+                    .font(.headline)
+
+                Text("This only happens on first launch so Workout activities have routines ready immediately.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(.systemBackground))
         }
     }
 

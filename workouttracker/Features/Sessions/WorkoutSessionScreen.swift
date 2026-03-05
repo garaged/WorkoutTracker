@@ -1270,6 +1270,8 @@ struct WorkoutSessionScreen: View {
 
     private struct TimedSetEditorRow: View {
         @Bindable var set: WorkoutSetLog
+        @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
         var setNumber: Int
         var isReadOnly: Bool
         var showsDistance: Bool
@@ -1280,8 +1282,14 @@ struct WorkoutSessionScreen: View {
         var onAddSet: () -> Void
         var onDeleteSet: () -> Void
 
+        private var isCompact: Bool { horizontalSizeClass == .compact }
+        private var stacksMetricsVertically: Bool { isCompact && showsDistance }
+        private var metricSpacing: CGFloat { isCompact ? 10 : 16 }
+        private var durationFieldWidth: CGFloat { isCompact ? 50 : 54 }
+        private var distanceFieldWidth: CGFloat { isCompact ? 58 : 64 }
+
         var body: some View {
-            HStack(alignment: .center, spacing: 14) {
+            HStack(alignment: .top, spacing: isCompact ? 8 : 14) {
                 Text("\(setNumber)")
                     .font(.headline)
                     .frame(width: 28, alignment: .leading)
@@ -1289,28 +1297,25 @@ struct WorkoutSessionScreen: View {
                     .layoutPriority(2)
 
                 VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 16) {
-                        durationField
+                    metricsBlock
 
-                        if showsDistance {
-                            distanceField
-                        }
-                    }
-
-                    HStack(spacing: 14) {
-                        actionButton(system: "doc.on.doc", label: "Copy", action: onCopySet)
-                            .accessibilityIdentifier("WorkoutSetEditorRow.\(set.id.uuidString).Actions.CopyButton")
-                        actionButton(system: "plus", label: "Add", action: onAddSet)
-                            .accessibilityIdentifier("WorkoutSetEditorRow.\(set.id.uuidString).Actions.AddButton")
-                        actionButton(system: "trash", label: "Delete", action: onDeleteSet)
-                            .accessibilityIdentifier("WorkoutSetEditorRow.\(set.id.uuidString).Actions.DeleteButton")
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    SetRowActionsBar(
+                        isReadOnly: isReadOnly,
+                        onAction: { action in
+                            switch action {
+                            case .copy:
+                                onCopySet()
+                            case .add:
+                                onAddSet()
+                            case .delete:
+                                onDeleteSet()
+                            }
+                        },
+                        idPrefix: "WorkoutSetEditorRow.\(set.id.uuidString).Actions"
+                    )
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .layoutPriority(1)
-
-                Spacer(minLength: 8)
 
                 Button {
                     if !isReadOnly { onToggleComplete() }
@@ -1320,7 +1325,7 @@ struct WorkoutSessionScreen: View {
                         .foregroundStyle(set.completed ? .green : .secondary)
                 }
                 .buttonStyle(.plain)
-                .frame(width: 44, alignment: .trailing)
+                .frame(width: 36, alignment: .trailing)
                 .layoutPriority(2)
                 .accessibilityLabel(set.completed ? "Mark incomplete" : "Mark complete")
                 .accessibilityIdentifier("WorkoutSetEditorRow.\(set.id.uuidString).DoneToggle")
@@ -1330,28 +1335,49 @@ struct WorkoutSessionScreen: View {
             .contentShape(Rectangle())
         }
 
+        @ViewBuilder
+        private var metricsBlock: some View {
+            if stacksMetricsVertically {
+                VStack(alignment: .leading, spacing: 10) {
+                    durationField
+
+                    if showsDistance {
+                        distanceField
+                    }
+                }
+            } else {
+                HStack(alignment: .top, spacing: metricSpacing) {
+                    durationField
+
+                    if showsDistance {
+                        distanceField
+                    }
+                }
+            }
+        }
+
         private var durationField: some View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Time (min)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)                // ✅ don’t wrap
-                    .fixedSize(horizontal: true, vertical: false) // ✅ keep text intrinsic width
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
 
-                HStack(spacing: 8) {
+                HStack(spacing: isCompact ? 6 : 8) {
                     stepButton(system: "minus.circle") { bumpDurationMinutes(-1) }
 
                     TextField("—", text: durationMinutesBinding)
                         .multilineTextAlignment(.center)
                         .keyboardType(.numberPad)
-                        .frame(width: 54)
+                        .frame(width: durationFieldWidth)
                         .textFieldStyle(.roundedBorder)
                         .disabled(isReadOnly)
 
                     stepButton(system: "plus.circle") { bumpDurationMinutes(+1) }
                 }
             }
-            .layoutPriority(1) // ✅ resist being squeezed compared to other columns
+            .layoutPriority(1)
         }
 
         private var distanceField: some View {
@@ -1359,32 +1385,23 @@ struct WorkoutSessionScreen: View {
                 Text("Distance")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)                // ✅ don’t wrap
-                    .fixedSize(horizontal: true, vertical: false) // ✅ keep text intrinsic width
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
 
-                HStack(spacing: 8) {
+                HStack(spacing: isCompact ? 6 : 8) {
                     stepButton(system: "minus.circle") { bumpDistance(-0.1) }
 
                     TextField("—", text: distanceBinding)
                         .multilineTextAlignment(.center)
                         .keyboardType(.decimalPad)
-                        .frame(width: 64)
+                        .frame(width: distanceFieldWidth)
                         .textFieldStyle(.roundedBorder)
                         .disabled(isReadOnly)
 
                     stepButton(system: "plus.circle") { bumpDistance(+0.1) }
                 }
             }
-            .layoutPriority(1) // ✅ resist being squeezed compared to other columns
-        }
-
-        private func actionButton(system: String, label: String, action: @escaping () -> Void) -> some View {
-            Button(action: action) {
-                Image(systemName: system)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(label)
-            .disabled(isReadOnly)
+            .layoutPriority(1)
         }
 
         private func stepButton(system: String, action: @escaping () -> Void) -> some View {

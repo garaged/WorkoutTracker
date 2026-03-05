@@ -102,6 +102,8 @@ struct ActivityEditorSheet: View {
                     .onChange(of: kindRaw) { _, newRaw in
                         if newRaw.lowercased() != "workout" {
                             workoutRoutineId = nil
+                        } else {
+                            ensureDefaultWorkoutRoutineSelection()
                         }
                     }
 
@@ -112,10 +114,7 @@ struct ActivityEditorSheet: View {
                                 .foregroundStyle(.secondary)
                                 .accessibilityIdentifier("activityEditor.routineEmptyState")
                         } else {
-                            Picker("Routine", selection: Binding(
-                                get: { workoutRoutineId ?? routines.first?.id },
-                                set: { workoutRoutineId = $0 }
-                            )) {
+                            Picker("Routine", selection: $workoutRoutineId) {
                                 ForEach(routines) { r in
                                     Text(r.name).tag(Optional(r.id))
                                 }
@@ -138,6 +137,12 @@ struct ActivityEditorSheet: View {
             }
             .navigationTitle(isNew ? "New Activity" : "Edit Activity")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                ensureDefaultWorkoutRoutineSelection()
+            }
+            .onChange(of: routines.count) { _, _ in
+                ensureDefaultWorkoutRoutineSelection()
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { cancel() }
@@ -162,6 +167,12 @@ struct ActivityEditorSheet: View {
         return opts
     }
 
+    private func ensureDefaultWorkoutRoutineSelection() {
+        guard isWorkout else { return }
+        guard workoutRoutineId == nil else { return }
+        workoutRoutineId = routines.first?.id
+    }
+
     private func cancel() {
         if isNew {
             modelContext.delete(activity)
@@ -178,6 +189,10 @@ struct ActivityEditorSheet: View {
         activity.status = status
 
         activity.kindRaw = kindRaw.lowercased()
+
+        if isWorkout, workoutRoutineId == nil {
+            workoutRoutineId = routines.first?.id
+        }
         activity.workoutRoutineId = isWorkout ? workoutRoutineId : nil
         activity.dayKey = DayTimelineEntryScreen.dayKey(for: startAt)
 

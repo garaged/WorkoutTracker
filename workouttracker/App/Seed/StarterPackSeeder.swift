@@ -25,7 +25,7 @@ enum StarterPackSeeder {
 
         // Reuse your existing seeder (known to compile because your UI test boot uses it).
         do {
-            _ = try RoutineSeeder.seedDemoDataIfEmpty(context: context)
+            _ = try RoutineSeeder.seedStarterPackIfNeeded(context: context)
             try context.save()
             UserDefaults.standard.set(version, forKey: key)
         } catch {
