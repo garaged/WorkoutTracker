@@ -14,6 +14,17 @@ struct WorkoutSessionScreen: View {
 
     @StateObject private var logging = WorkoutLoggingService()
 
+    /// Display numbering for set rows.
+    ///
+    /// Historically some builders stored `WorkoutSetLog.order` as 0-based (0,1,2,...) while
+    /// others stored it as 1-based (1,2,3,...). The UI should always show sets starting at 1.
+    ///
+    /// We detect the base per-exercise by looking at the minimum order in that exercise.
+    private func displaySetNumber(for set: WorkoutSetLog, in ex: WorkoutSessionExercise) -> Int {
+        let minOrder = ex.orderedSetLogs.map(\.order).min() ?? 0
+        return (minOrder == 0) ? (set.order + 1) : set.order
+    }
+
     @State private var showFinishConfirm = false
     @State private var showAbandonConfirm = false
     @State private var showRestTimer = false
@@ -714,7 +725,7 @@ struct WorkoutSessionScreen: View {
         if isTimedSet(set) {
             TimedSetEditorRow(
                 set: set,
-                setNumber: set.order + 1,
+                setNumber: displaySetNumber(for: set, in: ex),
                 isReadOnly: isReadOnly,
                 showsDistance: (set.targetDistance != nil || set.actualDistance != nil),
                 onPersist: {
@@ -763,7 +774,7 @@ struct WorkoutSessionScreen: View {
         } else {
             WorkoutSetEditorRow(
                 set: set,
-                setNumber: set.order + 1,
+                setNumber: displaySetNumber(for: set, in: ex),
                 isReadOnly: isReadOnly,
                 onCompleted: { suggestedRest in
                     handleSetCompleted(ex: ex, set: set, suggestedRest: suggestedRest)
@@ -836,7 +847,7 @@ struct WorkoutSessionScreen: View {
                         prDetails = PRDetailsContext(
                             setId: set.id,
                             exerciseName: ex.exerciseNameSnapshot,
-                            setNumber: set.order + 1,
+                            setNumber: displaySetNumber(for: set, in: ex),
                             achievements: ach,
                             weight: set.weight,
                             reps: set.reps,
@@ -910,7 +921,7 @@ struct WorkoutSessionScreen: View {
 
         // ✅ Banner feedback (always, so user knows what happened)
         let msg = changed
-            ? bannerMessageApplied(target: target, setNumber: set.order + 1, unit: set.weightUnit.rawValue)
+            ? bannerMessageApplied(target: target, setNumber: displaySetNumber(for: set, in: ex), unit: set.weightUnit.rawValue)
             : "Target already filled — nothing changed."
 
         showTargetAppliedBanner(msg)

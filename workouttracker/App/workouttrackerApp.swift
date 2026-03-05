@@ -112,17 +112,64 @@ private func seedForUITestsIfNeeded(context: ModelContext, calendar: Calendar = 
 
     _ = try RoutineSeeder.seedDemoDataIfEmpty(context: context)
 
+    // MARK: - Extra UI-test-only routines
+
+    // Some UI regressions only reproduce with starter-pack cardio tracking (time / distance).
+    // Instead of hand-building a special routine here, reuse the app's idempotent Starter Pack import.
+    // This guarantees the routine names + tracking styles match production ("Starter — Cardio + Mobility", etc).
+    _ = try RoutineSeeder.importStarterPack(context: context)
+
+
     let todayStart = calendar.startOfDay(for: Date())
 
-    let nineAM = calendar.date(byAdding: .hour, value: 9, to: todayStart) ?? todayStart
-    let tenAM = calendar.date(byAdding: .hour, value: 10, to: todayStart) ?? nineAM
-    let timed = Activity(title: "UITest — Timed", startAt: nineAM, endAt: tenAM, laneHint: 0, kind: .generic)
+    // Place seeded blocks near "now" so the calendar view doesn't have to scroll far to find them.
+    let now = Date()
+    let hm = calendar.dateComponents([.hour, .minute], from: now)
+    let hour = hm.hour ?? 9
+    let minute = hm.minute ?? 0
+    let roundedMinute = (minute / 5) * 5
+
+    let nearNowStart = calendar.date(
+        bySettingHour: hour,
+        minute: roundedMinute,
+        second: 0,
+        of: todayStart
+    ) ?? todayStart
+
+    let genericEnd = calendar.date(byAdding: .minute, value: 60, to: nearNowStart) ?? nearNowStart
+    let timed = Activity(title: "UITest — Timed", startAt: nearNowStart, endAt: genericEnd, laneHint: 0, kind: .generic)
     context.insert(timed)
 
     let allDayEnd = calendar.date(byAdding: .day, value: 1, to: todayStart)
     let allDay = Activity(title: "UITest — All-day", startAt: todayStart, endAt: allDayEnd, laneHint: 0, kind: .generic)
     allDay.isAllDay = true
     context.insert(allDay)
+
+    // Seed one real workout activity for the starter-cardio layout smoke test.
+    // This keeps the test independent from the routine-picker path.
+    if let starterCardio = try? context.fetch(
+        FetchDescriptor<WorkoutRoutine>(
+            predicate: #Predicate<WorkoutRoutine> { routine in
+                routine.name.contains("Cardio") && routine.name.contains("Mobility")
+            }
+        )
+    ).first {
+        let start = nearNowStart
+        let end = calendar.date(byAdding: .minute, value: 45, to: start) ?? genericEnd
+        let cardioActivity = Activity(
+            title: "UITest — Seeded Starter Cardio",
+            startAt: start,
+            endAt: end,
+            laneHint: 0,
+            kind: .workout,
+            workoutRoutineId: starterCardio.id
+        )
+        cardioActivity.dayKey = DayTimelineEntryScreen.dayKey(for: start)
+        cardioActivity.status = .planned
+        cardioActivity.completedAt = nil
+        cardioActivity.isAllDay = false
+        context.insert(cardioActivity)
+    }
 
     let recurrence = RecurrenceRule(kind: .daily, startDate: todayStart, endDate: nil, interval: 1, weekdays: [])
     let template = TemplateActivity(
