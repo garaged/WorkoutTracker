@@ -28,8 +28,6 @@ struct BackupRestoreScreen: View {
     var body: some View {
         Form {
             Section("Export") {
-                // Opinionated: keep JSON because it's the safest path for restore (you already validate it).
-                // Add ZIP for real-world debugging (logs + settings + best-effort SwiftData store).
                 Button {
                     exportBackupJSON()
                 } label: {
@@ -178,11 +176,11 @@ struct BackupRestoreScreen: View {
                 .disabled(importedData == nil)
 
                 Button(role: .destructive) {
-                    attemptWorkoutRestore()
+                    restoreAllWorkoutData()
                 } label: {
-                    Label("Restore Workout Data (Not Enabled)", systemImage: "externaldrive.badge.plus")
+                    Label("Restore Workout Data", systemImage: "externaldrive.badge.plus")
                 }
-                .disabled(true)
+                .disabled(importedData == nil)
 
                 if let restoreSuccess {
                     Text(restoreSuccess)
@@ -196,7 +194,7 @@ struct BackupRestoreScreen: View {
                         .font(.footnote)
                 }
 
-                Text("Settings restore is safe. Workout-data restore will be enabled only after per-model import mapping exists.")
+                Text("Workout restore replaces the current backed-up data snapshot in this app install. Use a fresh JSON backup first if you want a rollback point.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -239,7 +237,6 @@ struct BackupRestoreScreen: View {
                 prettyPrinted: true
             )
 
-            // Filename: stable + sortable + informative.
             let info = Bundle.main.infoDictionary
             let appV = (info?["CFBundleShortVersionString"] as? String) ?? "0"
             let build = (info?["CFBundleVersion"] as? String) ?? "0"
@@ -251,8 +248,6 @@ struct BackupRestoreScreen: View {
             try data.write(to: url, options: [.atomic])
             exportURL = url
             exportError = nil
-
-            // Track last export time (for user confidence).
             prefs.lastBackupAt = Date()
         } catch {
             exportURL = nil
@@ -271,8 +266,6 @@ struct BackupRestoreScreen: View {
             let url = try exporter.exportBackup()
             fullExportURL = url
             fullExportError = nil
-
-            // Track last export time (for user confidence).
             prefs.lastBackupAt = Date()
         } catch {
             fullExportURL = nil
@@ -293,9 +286,17 @@ struct BackupRestoreScreen: View {
         }
     }
 
-    private func attemptWorkoutRestore() {
-        // Left as intentionally disabled in UI.
-        restoreError = "Workout restore is not enabled yet."
+    private func restoreAllWorkoutData() {
+        restoreError = nil
+        restoreSuccess = nil
+        guard let importedData else { return }
+
+        do {
+            try backupService.restoreWorkoutData(importedData, context: context)
+            restoreSuccess = "Workout data restored. Current backed-up entities were replaced with the imported snapshot."
+        } catch {
+            restoreError = error.localizedDescription
+        }
     }
 
     private func timestampString(_ d: Date) -> String {

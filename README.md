@@ -28,11 +28,15 @@ Non-goals:
 
 ## Changelog
 
-### DON in v1.0.1 (2) - Better communication with users
+### DONE v1.0.4 - Watch support, UI improvements
+
+- Basic Apple Watch support
+- Small UI/Usability improvements
+
+### DONE in v1.0.1 (2) - Better communication with users
 
 - Add a super easy “Feedback / Report a bug” button that actually gives useful info.
 - Make support routes obvious (Support link + a privacy-friendly way to reach out).
-
 
 ### DONE in v1.0.1 (1) - Session reflections (comments + mood)
 
@@ -54,15 +58,7 @@ Non-goals:
 
 ## Coming up
 
-### Code quality & regression prevention
-
-- Beef up automated tests, especially around data integrity + export/diagnostics.
-- CI runs tests on every PR so we don’t get “works on my machine” surprises.
-
-### Apple Watch companion (remote control)
-
-- Optional Watch app to handle the basics from your wrist (timer, next set, mark set done).
-- Goal: less phone juggling, without messing with music or anything system-level.
+### Add images to exercises (little bit more pro)
 
 
 ## Architecture (SwiftData model)

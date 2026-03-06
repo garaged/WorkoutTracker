@@ -85,5 +85,12 @@ When filing an issue, include:
 - Screenshots/screen recordings if relevant
 - Any crash logs if available
 
+## Backup contract note
+
+Workout backup/restore uses a typed backup contract for the workout graph.
+Before changing backup/export/restore behavior or persisted workout models, read `docs/backup-schema.md`.
+
+Older backups created before the typed workout export fix may not restore completely; see the compatibility note in `docs/backup-schema.md`.
+
 ## License
 By contributing, you agree that your contributions are licensed under the Apache License 2.0 (see `LICENSE`).
