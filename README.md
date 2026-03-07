@@ -28,6 +28,21 @@ Non-goals:
 
 ## Changelog
 
+### DONE in v1.0.5 Basic exercise image sets
+
+Updated files for 3 exercise illustration sets:
+
+- workouttracker/Support/ExerciseIllustrationSet.swift
+  - Added `maleV1` and user-facing labels for all three bundled illustration families.
+- workouttracker/Support/ExerciseIllustrationCatalog.swift
+  - Extended the central asset resolver so every stable exercise key can resolve to dummy, female, or male assets.
+- workouttracker/Services/Settings/UserPreferences.swift
+  - Added a persisted `exerciseIllustrationSet` preference and kept `dummyV1` as the default / reset value.
+- workouttracker/Features/Settings/ExerciseIllustrationSetPickerSection.swift
+  - Updated the Settings UI to bind to `UserPreferences` and expose all three illustration options.
+
+### DONE in v1.0.5 Backup/restore including activities
+
 ### DONE v1.0.4 - Watch support, UI improvements
 
 - Basic Apple Watch support
@@ -58,8 +73,7 @@ Non-goals:
 
 ## Coming up
 
-### Add images to exercises (little bit more pro)
-
+### Fix issues and implement feedback improvements
 
 ## Architecture (SwiftData model)
 

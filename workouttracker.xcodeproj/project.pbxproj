@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		3555D42D2F5662560014C9CB /* workouttrackerWatchApp Watch App.app in CopyFiles */ = {isa = PBXBuildFile; fileRef = 35BCA8312F509AFF00B8536A /* workouttrackerWatchApp Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		35BCA8322F509AFF00B8536A /* workouttrackerWatchApp Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 35BCA8312F509AFF00B8536A /* workouttrackerWatchApp Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,27 +31,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = 35BA2D432F11D33200EEE02C;
 			remoteInfo = workouttracker;
-		};
-		35BCA81C2F509AFF00B8536A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 35BA2D3C2F11D33200EEE02C /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 35BCA80E2F509AFD00B8536A;
-			remoteInfo = workouttrackerWatchApp;
-		};
-		35BCA8262F509AFF00B8536A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 35BA2D3C2F11D33200EEE02C /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 35BCA80E2F509AFD00B8536A;
-			remoteInfo = workouttrackerWatchApp;
-		};
-		35BCA8332F509AFF00B8536A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 35BA2D3C2F11D33200EEE02C /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 35BCA8302F509AFF00B8536A;
-			remoteInfo = "workouttrackerWatchApp Watch App";
 		};
 		35BCA8412F509B0000B8536A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -88,17 +66,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		35BCA8552F509B0000B8536A /* Embed Watch Content */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
-			dstSubfolderSpec = 16;
-			files = (
-				35BCA8322F509AFF00B8536A /* workouttrackerWatchApp Watch App.app in Embed Watch Content */,
-			);
-			name = "Embed Watch Content";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -107,9 +74,6 @@
 		35BA2D442F11D33200EEE02C /* workouttracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = workouttracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		35BA2D532F11D33300EEE02C /* workouttrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = workouttrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		35BA2D5D2F11D33300EEE02C /* workouttrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = workouttrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		35BCA80F2F509AFD00B8536A /* workouttrackerWatchApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = workouttrackerWatchApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		35BCA81B2F509AFF00B8536A /* workouttrackerWatchAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = workouttrackerWatchAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		35BCA8252F509AFF00B8536A /* workouttrackerWatchAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = workouttrackerWatchAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		35BCA8312F509AFF00B8536A /* workouttrackerWatchApp Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "workouttrackerWatchApp Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		35BCA8402F509B0000B8536A /* workouttrackerWatchApp Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "workouttrackerWatchApp Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		35BCA84A2F509B0000B8536A /* workouttrackerWatchApp Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "workouttrackerWatchApp Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -123,15 +87,6 @@
 				App/Seed/seed_v1.json,
 			);
 			target = 35BA2D432F11D33200EEE02C /* workouttracker */;
-		};
-		35A022F52F53375700CD2431 /* Exceptions for "workouttrackerWatchApp" folder in "workouttrackerWatchApp" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				ContentView.swift,
-				Info.plist,
-				workouttrackerWatchAppApp.swift,
-			);
-			target = 35BCA80E2F509AFD00B8536A /* workouttrackerWatchApp */;
 		};
 		35A022FE2F533D2E00CD2431 /* Exceptions for "workouttrackerWatchExtension" folder in "workouttrackerWatchApp Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -212,9 +167,6 @@
 		};
 		35BCA8102F509AFD00B8536A /* workouttrackerWatchApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				35A022F52F53375700CD2431 /* Exceptions for "workouttrackerWatchApp" folder in "workouttrackerWatchApp" target */,
-			);
 			path = workouttrackerWatchApp;
 			sourceTree = "<group>";
 		};
@@ -272,27 +224,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		35BA2D5A2F11D33300EEE02C /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		35BCA80C2F509AFD00B8536A /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		35BCA8182F509AFF00B8536A /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		35BCA8222F509AFF00B8536A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -357,9 +288,6 @@
 				35BA2D532F11D33300EEE02C /* workouttrackerTests.xctest */,
 				35BA2D5D2F11D33300EEE02C /* workouttrackerUITests.xctest */,
 				35D84B852F3C2BCE000BEFC0 /* workouttrackerUITestHost.app */,
-				35BCA80F2F509AFD00B8536A /* workouttrackerWatchApp.app */,
-				35BCA81B2F509AFF00B8536A /* workouttrackerWatchAppTests.xctest */,
-				35BCA8252F509AFF00B8536A /* workouttrackerWatchAppUITests.xctest */,
 				35BCA8312F509AFF00B8536A /* workouttrackerWatchApp Watch App.app */,
 				35BCA8402F509B0000B8536A /* workouttrackerWatchApp Watch AppTests.xctest */,
 				35BCA84A2F509B0000B8536A /* workouttrackerWatchApp Watch AppUITests.xctest */,
@@ -439,76 +367,6 @@
 			);
 			productName = workouttrackerUITests;
 			productReference = 35BA2D5D2F11D33300EEE02C /* workouttrackerUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
-		35BCA80E2F509AFD00B8536A /* workouttrackerWatchApp */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 35BCA8562F509B0000B8536A /* Build configuration list for PBXNativeTarget "workouttrackerWatchApp" */;
-			buildPhases = (
-				35BCA80B2F509AFD00B8536A /* Sources */,
-				35BCA80C2F509AFD00B8536A /* Frameworks */,
-				35BCA80D2F509AFD00B8536A /* Resources */,
-				35BCA8552F509B0000B8536A /* Embed Watch Content */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				35BCA8342F509AFF00B8536A /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				35BCA8102F509AFD00B8536A /* workouttrackerWatchApp */,
-			);
-			name = workouttrackerWatchApp;
-			packageProductDependencies = (
-			);
-			productName = workouttrackerWatchApp;
-			productReference = 35BCA80F2F509AFD00B8536A /* workouttrackerWatchApp.app */;
-			productType = "com.apple.product-type.application";
-		};
-		35BCA81A2F509AFF00B8536A /* workouttrackerWatchAppTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 35BCA8592F509B0000B8536A /* Build configuration list for PBXNativeTarget "workouttrackerWatchAppTests" */;
-			buildPhases = (
-				35BCA8172F509AFF00B8536A /* Sources */,
-				35BCA8182F509AFF00B8536A /* Frameworks */,
-				35BCA8192F509AFF00B8536A /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				35BCA81D2F509AFF00B8536A /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				35BCA81E2F509AFF00B8536A /* workouttrackerWatchAppTests */,
-			);
-			name = workouttrackerWatchAppTests;
-			packageProductDependencies = (
-			);
-			productName = workouttrackerWatchAppTests;
-			productReference = 35BCA81B2F509AFF00B8536A /* workouttrackerWatchAppTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		35BCA8242F509AFF00B8536A /* workouttrackerWatchAppUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 35BCA85C2F509B0000B8536A /* Build configuration list for PBXNativeTarget "workouttrackerWatchAppUITests" */;
-			buildPhases = (
-				35BCA8212F509AFF00B8536A /* Sources */,
-				35BCA8222F509AFF00B8536A /* Frameworks */,
-				35BCA8232F509AFF00B8536A /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				35BCA8272F509AFF00B8536A /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				35BCA8282F509AFF00B8536A /* workouttrackerWatchAppUITests */,
-			);
-			name = workouttrackerWatchAppUITests;
-			packageProductDependencies = (
-			);
-			productName = workouttrackerWatchAppUITests;
-			productReference = 35BCA8252F509AFF00B8536A /* workouttrackerWatchAppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		35BCA8302F509AFF00B8536A /* workouttrackerWatchApp Watch App */ = {
@@ -622,17 +480,6 @@
 						CreatedOnToolsVersion = 26.2;
 						TestTargetID = 35D84B842F3C2BCE000BEFC0;
 					};
-					35BCA80E2F509AFD00B8536A = {
-						CreatedOnToolsVersion = 26.2;
-					};
-					35BCA81A2F509AFF00B8536A = {
-						CreatedOnToolsVersion = 26.2;
-						TestTargetID = 35BCA80E2F509AFD00B8536A;
-					};
-					35BCA8242F509AFF00B8536A = {
-						CreatedOnToolsVersion = 26.2;
-						TestTargetID = 35BCA80E2F509AFD00B8536A;
-					};
 					35BCA8302F509AFF00B8536A = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -670,9 +517,6 @@
 				35BA2D522F11D33300EEE02C /* workouttrackerTests */,
 				35BA2D5C2F11D33300EEE02C /* workouttrackerUITests */,
 				35D84B842F3C2BCE000BEFC0 /* workouttrackerUITestHost */,
-				35BCA80E2F509AFD00B8536A /* workouttrackerWatchApp */,
-				35BCA81A2F509AFF00B8536A /* workouttrackerWatchAppTests */,
-				35BCA8242F509AFF00B8536A /* workouttrackerWatchAppUITests */,
 				35BCA8302F509AFF00B8536A /* workouttrackerWatchApp Watch App */,
 				35BCA83F2F509B0000B8536A /* workouttrackerWatchApp Watch AppTests */,
 				35BCA8492F509B0000B8536A /* workouttrackerWatchApp Watch AppUITests */,
@@ -696,27 +540,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		35BA2D5B2F11D33300EEE02C /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		35BCA80D2F509AFD00B8536A /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		35BCA8192F509AFF00B8536A /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		35BCA8232F509AFF00B8536A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -775,27 +598,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		35BCA80B2F509AFD00B8536A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		35BCA8172F509AFF00B8536A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		35BCA8212F509AFF00B8536A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		35BCA82D2F509AFF00B8536A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -841,21 +643,6 @@
 			isa = PBXTargetDependency;
 			target = 35BA2D432F11D33200EEE02C /* workouttracker */;
 			targetProxy = 35BA2D5E2F11D33300EEE02C /* PBXContainerItemProxy */;
-		};
-		35BCA81D2F509AFF00B8536A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 35BCA80E2F509AFD00B8536A /* workouttrackerWatchApp */;
-			targetProxy = 35BCA81C2F509AFF00B8536A /* PBXContainerItemProxy */;
-		};
-		35BCA8272F509AFF00B8536A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 35BCA80E2F509AFD00B8536A /* workouttrackerWatchApp */;
-			targetProxy = 35BCA8262F509AFF00B8536A /* PBXContainerItemProxy */;
-		};
-		35BCA8342F509AFF00B8536A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 35BCA8302F509AFF00B8536A /* workouttrackerWatchApp Watch App */;
-			targetProxy = 35BCA8332F509AFF00B8536A /* PBXContainerItemProxy */;
 		};
 		35BCA8422F509B0000B8536A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1189,7 +976,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.4;
-				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.watchkitapp.watchkitextension;
+				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1222,7 +1009,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0.4;
-				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.watchkitapp.watchkitextension;
+				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1234,165 +1021,6 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				WATCHOS_DEPLOYMENT_TARGET = 26.2;
-			};
-			name = Release;
-		};
-		35BCA8572F509B0000B8536A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = T3CCJTUTJ5;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = workouttrackerWatchApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = workouttrackerWatchApp;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.4;
-				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.watchkitapp.watchkitextension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		35BCA8582F509B0000B8536A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = T3CCJTUTJ5;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = workouttrackerWatchApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = workouttrackerWatchApp;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.4;
-				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.watchkitapp.watchkitextension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		35BCA85A2F509B0000B8536A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = T3CCJTUTJ5;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttrackerWatchAppTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/workouttrackerWatchApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/workouttrackerWatchApp";
-			};
-			name = Debug;
-		};
-		35BCA85B2F509B0000B8536A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = T3CCJTUTJ5;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttrackerWatchAppTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/workouttrackerWatchApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/workouttrackerWatchApp";
-			};
-			name = Release;
-		};
-		35BCA85D2F509B0000B8536A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = T3CCJTUTJ5;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttrackerWatchAppUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = workouttrackerWatchApp;
-			};
-			name = Debug;
-		};
-		35BCA85E2F509B0000B8536A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = T3CCJTUTJ5;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttrackerWatchAppUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = workouttrackerWatchApp;
 			};
 			name = Release;
 		};
@@ -1599,33 +1227,6 @@
 			buildConfigurations = (
 				35BCA8532F509B0000B8536A /* Debug */,
 				35BCA8542F509B0000B8536A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		35BCA8562F509B0000B8536A /* Build configuration list for PBXNativeTarget "workouttrackerWatchApp" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				35BCA8572F509B0000B8536A /* Debug */,
-				35BCA8582F509B0000B8536A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		35BCA8592F509B0000B8536A /* Build configuration list for PBXNativeTarget "workouttrackerWatchAppTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				35BCA85A2F509B0000B8536A /* Debug */,
-				35BCA85B2F509B0000B8536A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		35BCA85C2F509B0000B8536A /* Build configuration list for PBXNativeTarget "workouttrackerWatchAppUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				35BCA85D2F509B0000B8536A /* Debug */,
-				35BCA85E2F509B0000B8536A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

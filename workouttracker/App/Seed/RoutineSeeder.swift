@@ -6,6 +6,11 @@ import SwiftData
 /// Design goals:
 /// - **Fresh installs** get seeded automatically (only when both Exercises and Routines are empty).
 /// - **Manual import** from Settings is idempotent (adds missing items by name, won't duplicate).
+///
+/// Image set design:
+/// - We store a stable illustration key (for example: `back_squat`) in `mediaAssetName`.
+/// - The UI layer can then resolve that key against the currently selected illustration set
+///   (male / female / future neutral) instead of hardcoding one concrete asset name here.
 @MainActor
 enum RoutineSeeder {
 
@@ -23,21 +28,32 @@ enum RoutineSeeder {
         )
 
         if existingExercises.isEmpty {
-            let names = [
+            let demoExerciseNames = [
                 "Back Squat",
                 "Bench Press",
                 "Deadlift",
                 "Overhead Press",
                 "Barbell Row",
                 "Pull-Up",
-                "Dumbbell Curl",
+                "Bicep Curl",
                 "Triceps Pushdown"
             ]
 
-            for n in names {
-                let ex = Exercise(name: n, modality: .strength)
-                context.insert(ex)
-                exercisesByName[n.lowercased()] = ex
+            let starterDefsByName = Dictionary(
+                uniqueKeysWithValues: starterExercises.map { ($0.name.lowercased(), $0) }
+            )
+
+            for name in demoExerciseNames {
+                if let def = starterDefsByName[name.lowercased()] {
+                    let ex = makeSeededExercise(from: def)
+                    context.insert(ex)
+                    exercisesByName[name.lowercased()] = ex
+                } else {
+                    // Defensive fallback: should not happen, but keeps demo seeding resilient.
+                    let ex = Exercise(name: name, modality: .strength)
+                    context.insert(ex)
+                    exercisesByName[name.lowercased()] = ex
+                }
             }
         }
 
@@ -135,22 +151,7 @@ enum RoutineSeeder {
             let key = def.name.lowercased()
             if exByName[key] != nil { continue }
 
-            let ex = Exercise(
-                name: def.name,
-                modality: .strength, // safe default; we store modalityRaw below for cardio/mobility
-                instructions: def.instructions,
-                notes: def.notes,
-                mediaKind: .none,
-                mediaAssetName: nil,
-                mediaURLString: nil,
-                equipmentTagsRaw: def.equipmentTags.joined(separator: ","),
-                isArchived: false
-            )
-
-            if let raw = def.modalityRaw, !raw.isEmpty {
-                ex.modalityRaw = raw
-            }
-
+            let ex = makeSeededExercise(from: def)
             context.insert(ex)
             exByName[key] = ex
             addedExercises += 1
@@ -212,6 +213,34 @@ enum RoutineSeeder {
         return "\(prefix) Added exercises: \(addedExercises), added routines: \(addedRoutines). Totals → Exercises: \(totalExercises), Routines: \(totalRoutines)."
     }
 
+    /// Centralized constructor for seeded exercises.
+    ///
+    /// Why this helper matters:
+    /// - keeps demo seeding and starter-pack seeding consistent
+    /// - stores one stable illustration key, not a concrete male/female asset filename
+    /// - makes future packs (neutral, premium, themed, etc.) a UI concern instead of a data migration
+    private static func makeSeededExercise(from def: SeedExerciseDef) -> Exercise {
+        let hasIllustration = !(def.illustrationKey?.isEmpty ?? true)
+
+        let ex = Exercise(
+            name: def.name,
+            modality: .strength, // safe default; we store modalityRaw below for cardio/mobility
+            instructions: def.instructions,
+            notes: def.notes,
+            mediaKind: hasIllustration ? .bundledAsset : .none,
+            mediaAssetName: def.illustrationKey,
+            mediaURLString: nil,
+            equipmentTagsRaw: def.equipmentTags.joined(separator: ","),
+            isArchived: false
+        )
+
+        if let raw = def.modalityRaw, !raw.isEmpty {
+            ex.modalityRaw = raw
+        }
+
+        return ex
+    }
+
     // MARK: - Starter definitions (v1)
 
     private struct SeedExerciseDef {
@@ -220,6 +249,7 @@ enum RoutineSeeder {
         let equipmentTags: [String]
         let instructions: String?
         let notes: String?
+        let illustrationKey: String?
     }
 
     private struct SeedPlanDef {
@@ -247,19 +277,19 @@ enum RoutineSeeder {
 
     /// Keep v1 small and high-quality; easy to expand later.
     private static let starterExercises: [SeedExerciseDef] = [
-        .init(name: "Back Squat", modalityRaw: nil, equipmentTags: ["barbell"], instructions: nil, notes: nil),
-        .init(name: "Bench Press", modalityRaw: nil, equipmentTags: ["barbell","bench"], instructions: nil, notes: nil),
-        .init(name: "Deadlift", modalityRaw: nil, equipmentTags: ["barbell"], instructions: nil, notes: nil),
-        .init(name: "Overhead Press", modalityRaw: nil, equipmentTags: ["barbell"], instructions: nil, notes: nil),
-        .init(name: "Barbell Row", modalityRaw: nil, equipmentTags: ["barbell"], instructions: nil, notes: nil),
-        .init(name: "Lat Pulldown", modalityRaw: nil, equipmentTags: ["machine"], instructions: nil, notes: nil),
-        .init(name: "Pull-Up", modalityRaw: nil, equipmentTags: ["bodyweight","bar"], instructions: nil, notes: nil),
-        .init(name: "Bicep Curl", modalityRaw: nil, equipmentTags: ["dumbbell"], instructions: nil, notes: nil),
-        .init(name: "Triceps Pushdown", modalityRaw: nil, equipmentTags: ["cable"], instructions: nil, notes: nil),
-        .init(name: "Plank", modalityRaw: nil, equipmentTags: ["bodyweight","mat"], instructions: nil, notes: "Timed hold."),
-        .init(name: "Running", modalityRaw: "cardio", equipmentTags: ["cardio"], instructions: nil, notes: nil),
-        .init(name: "Walking", modalityRaw: "cardio", equipmentTags: ["cardio"], instructions: nil, notes: nil),
-        .init(name: "Mobility Flow", modalityRaw: "mobility", equipmentTags: ["mat"], instructions: nil, notes: "Light stretching and joint prep.")
+        .init(name: "Back Squat",       modalityRaw: nil,        equipmentTags: ["barbell"],         instructions: nil, notes: nil,                                        illustrationKey: "back_squat"),
+        .init(name: "Bench Press",      modalityRaw: nil,        equipmentTags: ["barbell","bench"], instructions: nil, notes: nil,                                        illustrationKey: "bench_press"),
+        .init(name: "Deadlift",         modalityRaw: nil,        equipmentTags: ["barbell"],         instructions: nil, notes: nil,                                        illustrationKey: "deadlift"),
+        .init(name: "Overhead Press",   modalityRaw: nil,        equipmentTags: ["barbell"],         instructions: nil, notes: nil,                                        illustrationKey: "overhead_press"),
+        .init(name: "Barbell Row",      modalityRaw: nil,        equipmentTags: ["barbell"],         instructions: nil, notes: nil,                                        illustrationKey: "barbell_row"),
+        .init(name: "Lat Pulldown",     modalityRaw: nil,        equipmentTags: ["machine"],         instructions: nil, notes: nil,                                        illustrationKey: "lat_pulldown"),
+        .init(name: "Pull-Up",          modalityRaw: nil,        equipmentTags: ["bodyweight","bar"],instructions: nil, notes: nil,                                        illustrationKey: "pull_up"),
+        .init(name: "Bicep Curl",       modalityRaw: nil,        equipmentTags: ["dumbbell"],        instructions: nil, notes: nil,                                        illustrationKey: "bicep_curl"),
+        .init(name: "Triceps Pushdown", modalityRaw: nil,        equipmentTags: ["cable"],           instructions: nil, notes: nil,                                        illustrationKey: "triceps_pushdown"),
+        .init(name: "Plank",            modalityRaw: nil,        equipmentTags: ["bodyweight","mat"],instructions: nil, notes: "Timed hold.",                              illustrationKey: "plank"),
+        .init(name: "Running",          modalityRaw: "cardio",   equipmentTags: ["cardio"],          instructions: nil, notes: nil,                                        illustrationKey: "running"),
+        .init(name: "Walking",          modalityRaw: "cardio",   equipmentTags: ["cardio"],          instructions: nil, notes: nil,                                        illustrationKey: "walking"),
+        .init(name: "Mobility Flow",    modalityRaw: "mobility", equipmentTags: ["mat"],             instructions: nil, notes: "Light stretching and joint prep.",         illustrationKey: "mobility_flow")
     ]
 
     private static let starterRoutines: [SeedRoutineDef] = [

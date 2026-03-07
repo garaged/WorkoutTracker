@@ -18,6 +18,7 @@ final class UserPreferences: ObservableObject {
         static let confirmDestructiveActions = "prefs.confirmDestructiveActions"
         static let lastBackupAt = "prefs.lastBackupAt"
         static let diagnosticsVerboseLoggingEnabled = "prefs.diagnosticsVerboseLoggingEnabled"
+        static let exerciseIllustrationSet = "exerciseIllustrationSet"
     }
 
     private let defaults: UserDefaults
@@ -42,6 +43,14 @@ final class UserPreferences: ObservableObject {
 
     @Published var confirmDestructiveActions: Bool {
         didSet { defaults.set(confirmDestructiveActions, forKey: Keys.confirmDestructiveActions) }
+    }
+
+    /// Selected bundled illustration family for exercise artwork.
+    ///
+    /// Stored as a raw value so the app can swap between neutral / female / male
+    /// asset catalogs without rewriting Exercise records.
+    @Published var exerciseIllustrationSet: ExerciseIllustrationSet {
+        didSet { defaults.set(exerciseIllustrationSet.rawValue, forKey: Keys.exerciseIllustrationSet) }
     }
 
     /// When enabled, the app writes extra debug logs.
@@ -80,6 +89,14 @@ final class UserPreferences: ObservableObject {
         self.autoStartRest = defaults.object(forKey: Keys.autoStartRest) as? Bool ?? true
         self.confirmDestructiveActions = defaults.object(forKey: Keys.confirmDestructiveActions) as? Bool ?? true
 
+        // Exercise illustration set
+        if let raw = defaults.string(forKey: Keys.exerciseIllustrationSet),
+           let set = ExerciseIllustrationSet(rawValue: raw) {
+            self.exerciseIllustrationSet = set
+        } else {
+            self.exerciseIllustrationSet = .dummyV1
+        }
+
         // Last backup
         if defaults.object(forKey: Keys.lastBackupAt) != nil {
             let ts = defaults.double(forKey: Keys.lastBackupAt)
@@ -111,6 +128,7 @@ final class UserPreferences: ObservableObject {
         hapticsEnabled = true
         autoStartRest = true
         confirmDestructiveActions = true
+        exerciseIllustrationSet = .dummyV1
         diagnosticsVerboseLoggingEnabled = false
         lastBackupAt = nil
     }

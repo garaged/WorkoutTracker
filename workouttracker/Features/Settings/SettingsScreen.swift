@@ -55,7 +55,9 @@ struct SettingsScreen: View {
                 .accessibilityLabel(AccessibilityLabels.Toggles.verboseLogging)
                 .accessibilityHint(AccessibilityLabels.Toggles.verboseLoggingHint)
             }
-
+            
+            ExerciseIllustrationSetPickerSection()
+            
             Section("About") {
                 HStack {
                     Text("Version")

@@ -94,6 +94,12 @@ struct AppRootView: View {
 
             StarterPackSeeder.seedIfNeeded(context: modelContext)
             didSeed = true
+            
+            do {
+                _ = try ExerciseIllustrationBackfill.migrateIfNeeded(context: modelContext)
+            } catch {
+                assertionFailure("Exercise illustration migration failed: \(error)")
+            }
         }
     }
 

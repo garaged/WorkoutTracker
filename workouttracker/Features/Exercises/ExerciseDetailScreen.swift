@@ -7,6 +7,9 @@ struct ExerciseDetailScreen: View {
     @EnvironmentObject private var goalPrefill: GoalPrefillStore
     @AppStorage("profile.equipment.custom.v1") private var customEquipmentJSON: String = "[]"
     
+    @AppStorage("exerciseIllustrationSet")
+    private var selectedIllustrationSetRaw: String = ExerciseIllustrationSet.dummyV1.rawValue
+    
     let exercise: Exercise
     let startWorkoutAction: ((Exercise) -> Void)?
 
@@ -140,43 +143,57 @@ struct ExerciseDetailScreen: View {
 
     @ViewBuilder
     private var mediaPreview: some View {
-        switch exercise.mediaKind {
-        case .none:
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.secondary.opacity(0.08))
-                .frame(height: 180)
-                .overlay {
-                    ContentUnavailableView(
-                        "No media",
-                        systemImage: "photo",
-                        description: Text("Add an asset name later (Phase D+).")
-                    )
-                }
+        if let name = resolvedIllustrationAssetName, !name.isEmpty {
+            ZStack {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.secondary.opacity(0.06))
 
-        case .bundledAsset:
-            if let name = exercise.mediaAssetName, !name.isEmpty {
                 Image(name)
                     .resizable()
-                    .scaledToFill()
-                    .frame(height: 180)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-            } else {
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(12)
+            }
+            .frame(height: 220)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        } else {
+            switch exercise.mediaKind {
+            case .none:
                 RoundedRectangle(cornerRadius: 16)
                     .fill(.secondary.opacity(0.08))
-                    .frame(height: 180)
-            }
+                    .frame(height: 220)
+                    .overlay {
+                        ContentUnavailableView(
+                            "No media",
+                            systemImage: "photo",
+                            description: Text("Add an asset name later.")
+                        )
+                    }
 
-        case .remoteURL:
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.secondary.opacity(0.08))
-                .frame(height: 180)
-                .overlay {
-                    ContentUnavailableView(
-                        "Remote media",
-                        systemImage: "link",
-                        description: Text("We’ll support loading remote video/GIF later.")
-                    )
-                }
+            case .bundledAsset:
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.secondary.opacity(0.08))
+                    .frame(height: 220)
+                    .overlay {
+                        ContentUnavailableView(
+                            "Missing illustration",
+                            systemImage: "photo",
+                            description: Text("No illustration asset could be resolved for this exercise.")
+                        )
+                    }
+
+            case .remoteURL:
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.secondary.opacity(0.08))
+                    .frame(height: 220)
+                    .overlay {
+                        ContentUnavailableView(
+                            "Remote media",
+                            systemImage: "link",
+                            description: Text("We’ll support loading remote video/GIF later.")
+                        )
+                    }
+            }
         }
     }
 
@@ -409,6 +426,49 @@ struct ExerciseDetailScreen: View {
             .padding(.vertical, 6)
             .background(.thinMaterial, in: Capsule())
         }
+    }
+    
+    private var selectedIllustrationSet: ExerciseIllustrationSet {
+        ExerciseIllustrationSet(rawValue: selectedIllustrationSetRaw) ?? .dummyV1
+    }
+
+    private var resolvedBundledAssetName: String? {
+        let raw = exercise.mediaAssetName?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        // No stored value: try resolving by exercise display name.
+        if raw.isEmpty {
+            return ExerciseIllustrationCatalog.assetName(
+                for: exercise.name,
+                set: selectedIllustrationSet
+            )
+        }
+
+        // New model: stored stable key like "back_squat".
+        if let resolved = ExerciseIllustrationCatalog.assetName(
+            forExerciseKey: raw,
+            set: selectedIllustrationSet
+        ) {
+            return resolved
+        }
+
+        // Legacy/manual fallback:
+        // if the stored value is already a concrete asset name, keep using it.
+        return raw
+    }
+    
+    private var resolvedIllustrationAssetName: String? {
+        guard let stableKey = ExerciseIllustrationCatalog.stableKey(
+            fromStoredMediaAssetName: exercise.mediaAssetName,
+            exerciseName: exercise.name
+        ) else {
+            return nil
+        }
+
+        return ExerciseIllustrationCatalog.assetName(
+            forExerciseKey: stableKey,
+            set: selectedIllustrationSet
+        )
     }
 }
 
@@ -666,5 +726,4 @@ private struct EquipmentTagsEditorSheet: View {
             .buttonStyle(.plain)
         }
     }
-
 }
