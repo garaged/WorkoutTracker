@@ -398,7 +398,7 @@
 			);
 			productName = "workouttrackerWatchApp Watch App";
 			productReference = 35BCA8312F509AFF00B8536A /* workouttrackerWatchApp Watch App.app */;
-			productType = "com.apple.product-type.application";
+			productType = "com.apple.product-type.application.watchapp2";
 		};
 		35BCA83F2F509B0000B8536A /* workouttrackerWatchApp Watch AppTests */ = {
 			isa = PBXNativeTarget;
