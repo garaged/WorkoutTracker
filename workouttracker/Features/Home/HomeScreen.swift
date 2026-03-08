@@ -35,6 +35,8 @@ struct HomeScreen: View {
                     VStack(alignment: .leading, spacing: 14) {
                         header
 
+                        ActiveSessionsSection()
+
                         LazyVGrid(columns: columns, spacing: 14) {
                             ForEach(tiles) { tile in
                                 NavigationLink {

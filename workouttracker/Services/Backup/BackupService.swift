@@ -95,6 +95,7 @@ final class BackupService {
 
     struct PreferencesSnapshot: Codable {
         let weightUnitRaw: String?
+        let distanceUnitRaw: String?
         let defaultRestSeconds: Int?
         let hapticsEnabled: Bool?
         let autoStartRest: Bool?
@@ -541,6 +542,7 @@ final class BackupService {
     private func snapPreferences(_ prefs: UserPreferences) -> PreferencesSnapshot {
         PreferencesSnapshot(
             weightUnitRaw: prefs.weightUnit.rawValue,
+            distanceUnitRaw: prefs.distanceUnit.rawValue,
             defaultRestSeconds: prefs.defaultRestSeconds,
             hapticsEnabled: prefs.hapticsEnabled,
             autoStartRest: prefs.autoStartRest,
@@ -551,6 +553,9 @@ final class BackupService {
     private func applyPreferencesSnapshot(_ snap: PreferencesSnapshot, to prefs: UserPreferences) {
         if let raw = snap.weightUnitRaw, let u = WeightUnit(rawValue: raw) {
             prefs.weightUnit = u
+        }
+        if let raw = snap.distanceUnitRaw, let u = DistanceUnit(rawValue: raw) {
+            prefs.distanceUnit = u
         }
         if let v = snap.defaultRestSeconds { prefs.defaultRestSeconds = v }
         if let v = snap.hapticsEnabled { prefs.hapticsEnabled = v }

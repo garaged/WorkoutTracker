@@ -27,11 +27,24 @@ struct workouttrackerUITestHostApp: App {
         do {
             let c = try ModelContainerFactory.makeInMemoryContainer()
 
-            // Calendar-style UI tests expect data seeded up-front. DayTimelineScreen intentionally
-            // does NOT auto-seed on the "calendar" route (to avoid hijacking navigation).
-            if env["UITESTS"] == "1", env["UITESTS_SEED"] == "1" {
+            if env["UITESTS"] == "1" {
                 let context = ModelContext(c)
-                try seedCalendarUITestDataIfNeeded(context: context)
+
+                // Calendar-style UI tests expect data seeded up-front. DayTimelineScreen intentionally
+                // does NOT auto-seed on the "calendar" route (to avoid hijacking navigation).
+                if env["UITESTS_SEED"] == "1" {
+                    try seedCalendarUITestDataIfNeeded(context: context)
+                }
+
+                if env["UITESTS_ACTIVE_SESSIONS"] == "1" {
+                    try seedHomeActiveSessionsUITestDataIfNeeded(context: context)
+
+                    let sessions = try context.fetch(FetchDescriptor<WorkoutSession>())
+                    let activeCount = sessions.filter { $0.status == .inProgress && $0.endedAt == nil }.count
+                    if activeCount < 2 {
+                        fatalError("UITESTS assertion failed: Expected at least 2 active WorkoutSession records for Home active-session tests.")
+                    }
+                }
             }
 
             self.container = c
@@ -137,6 +150,35 @@ private func seedCalendarUITestDataIfNeeded(context: ModelContext, calendar: Cal
         )
         context.insert(template)
     }
+
+    try context.save()
+}
+
+// MARK: - Home active-session UITest seed
+@MainActor
+private func seedHomeActiveSessionsUITestDataIfNeeded(context: ModelContext, calendar: Calendar = .current) throws {
+    let existing = try context.fetch(FetchDescriptor<WorkoutSession>())
+    if existing.contains(where: { $0.sourceRoutineNameSnapshot == "UITest — Active Today" || $0.sourceRoutineNameSnapshot == "UITest — Active Previous Day" }) {
+        return
+    }
+
+    let now = Date()
+    let today = WorkoutSession(
+        startedAt: calendar.date(byAdding: .minute, value: -35, to: now) ?? now,
+        sourceRoutineNameSnapshot: "UITest — Active Today"
+    )
+    today.status = .inProgress
+
+    let yesterdayBase = calendar.date(byAdding: .day, value: -1, to: now) ?? now
+    let yesterdayStart = calendar.date(bySettingHour: 18, minute: 10, second: 0, of: yesterdayBase) ?? yesterdayBase
+    let previousDay = WorkoutSession(
+        startedAt: yesterdayStart,
+        sourceRoutineNameSnapshot: "UITest — Active Previous Day"
+    )
+    previousDay.status = .inProgress
+
+    context.insert(today)
+    context.insert(previousDay)
 
     try context.save()
 }

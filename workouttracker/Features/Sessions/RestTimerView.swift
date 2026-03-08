@@ -9,8 +9,10 @@ struct RestTimerView: View {
     @State private var totalSeconds: Int
     @State private var remainingSeconds: Int
     @State private var isRunning: Bool
+    @State private var announcedCountdownSeconds: Set<Int> = []
 
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    private let cuePlayer = WorkoutCuePlayer.shared
 
     init(
         initialSeconds: Int = 90,
@@ -22,9 +24,10 @@ struct RestTimerView: View {
         self.autostart = autostart
         self.onFinish = onFinish
 
-        _totalSeconds = State(initialValue: max(1, initialSeconds))
-        _remainingSeconds = State(initialValue: max(1, initialSeconds))
-        _isRunning = State(initialValue: autostart)
+        let clamped = max(1, initialSeconds)
+        _totalSeconds = State(initialValue: clamped)
+        _remainingSeconds = State(initialValue: clamped)
+        _isRunning = State(initialValue: false)
     }
 
     var body: some View {
@@ -41,7 +44,13 @@ struct RestTimerView: View {
                     Button {
                         totalSeconds = s
                         remainingSeconds = s
-                        isRunning = autostart
+                        announcedCountdownSeconds.removeAll()
+
+                        if autostart {
+                            startFreshRun(playStartCue: true)
+                        } else {
+                            isRunning = false
+                        }
                     } label: {
                         Text(labelForPreset(s))
                             .font(.subheadline)
@@ -55,8 +64,21 @@ struct RestTimerView: View {
 
             HStack(spacing: 10) {
                 Button {
-                    if remainingSeconds <= 0 { remainingSeconds = totalSeconds }
-                    isRunning.toggle()
+                    if isRunning {
+                        isRunning = false
+                    } else {
+                        if remainingSeconds <= 0 {
+                            remainingSeconds = totalSeconds
+                        }
+
+                        let isFreshStart = remainingSeconds == totalSeconds
+                        isRunning = true
+
+                        if isFreshStart {
+                            announcedCountdownSeconds.removeAll()
+                            cuePlayer.play(.restStart)
+                        }
+                    }
                 } label: {
                     Label(isRunning ? "Pause" : "Start",
                           systemImage: isRunning ? "pause.fill" : "play.fill")
@@ -67,6 +89,7 @@ struct RestTimerView: View {
                 Button {
                     isRunning = false
                     remainingSeconds = totalSeconds
+                    announcedCountdownSeconds.removeAll()
                 } label: {
                     Label("Reset", systemImage: "arrow.counterclockwise")
                         .frame(maxWidth: .infinity)
@@ -77,14 +100,47 @@ struct RestTimerView: View {
         .padding(12)
         .background(.thinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .onAppear {
+            if autostart {
+                startFreshRun(playStartCue: true)
+            }
+        }
         .onReceive(tick) { _ in
             guard isRunning else { return }
-            if remainingSeconds > 0 {
-                remainingSeconds -= 1
-            } else {
-                isRunning = false
-                onFinish?()
-            }
+            advanceOneSecond()
+        }
+    }
+
+    private func startFreshRun(playStartCue: Bool) {
+        remainingSeconds = totalSeconds
+        isRunning = true
+        announcedCountdownSeconds.removeAll()
+
+        if playStartCue {
+            cuePlayer.play(.restStart)
+        }
+    }
+
+    private func advanceOneSecond() {
+        guard remainingSeconds > 0 else {
+            isRunning = false
+            return
+        }
+
+        if remainingSeconds == 1 {
+            remainingSeconds = 0
+            isRunning = false
+            cuePlayer.play(.restEnd)
+            onFinish?()
+            return
+        }
+
+        let nextValue = remainingSeconds - 1
+        remainingSeconds = nextValue
+
+        if nextValue == 3, !announcedCountdownSeconds.contains(nextValue) {
+            announcedCountdownSeconds.insert(nextValue)
+            cuePlayer.play(.restCountdown)
         }
     }
 

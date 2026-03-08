@@ -28,9 +28,13 @@ Non-goals:
 
 ## Changelog
 
-### DONE in v1.0.5 Basic exercise image sets
+### v1.0.5 Basic exercise image sets, backup/restore including activities
 
-Updated files for 3 exercise illustration sets:
+Implement unit selection in Settings.
+
+Sound for rest time: Makes it easy to follow up without keeping an eye on the phone.
+
+Exercise illustration sets:
 
 - workouttracker/Support/ExerciseIllustrationSet.swift
   - Added `maleV1` and user-facing labels for all three bundled illustration families.
@@ -41,7 +45,7 @@ Updated files for 3 exercise illustration sets:
 - workouttracker/Features/Settings/ExerciseIllustrationSetPickerSection.swift
   - Updated the Settings UI to bind to `UserPreferences` and expose all three illustration options.
 
-### DONE in v1.0.5 Backup/restore including activities
+Backup/restore supporting activities.
 
 ### DONE v1.0.4 - Watch support, UI improvements
 

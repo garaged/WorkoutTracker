@@ -162,7 +162,15 @@ struct RoutineItemEditorScreen: View {
 
 private struct SetPlanRow: View {
     @Bindable var plan: WorkoutSetPlan
+
+    @AppStorage(UnitPreferences.Keys.distanceUnitRaw)
+    private var preferredDistanceUnitRaw: String = DistanceUnit.km.rawValue
+
     let style: ExerciseTrackingStyle
+
+    private var preferredDistanceUnit: DistanceUnit {
+        DistanceUnit(rawValue: preferredDistanceUnitRaw) ?? .km
+    }
 
     private var repsBinding: Binding<String> {
         Binding(
@@ -218,13 +226,18 @@ private struct SetPlanRow: View {
     private var distanceBinding: Binding<String> {
         Binding(
             get: {
-                guard let d = plan.targetDistance else { return "" }
-                return d.rounded() == d ? String(Int(d)) : String(d)
+                guard let d = plan.targetDistance(in: preferredDistanceUnit) else { return "" }
+                let rounded = (d * 10).rounded() / 10
+                return rounded.rounded() == rounded ? String(Int(rounded)) : String(format: "%.1f", rounded)
             },
             set: {
                 let t = $0.trimmingCharacters(in: .whitespacesAndNewlines)
-                if t.isEmpty { plan.targetDistance = nil; return }
-                plan.targetDistance = Double(t.replacingOccurrences(of: ",", with: "."))
+                if t.isEmpty {
+                    plan.setTargetDistance(nil, preferredUnit: preferredDistanceUnit)
+                    return
+                }
+                let parsed = Double(t.replacingOccurrences(of: ",", with: ".")) ?? 0
+                plan.setTargetDistance(parsed == 0 ? nil : parsed, preferredUnit: preferredDistanceUnit)
             }
         )
     }
@@ -286,11 +299,17 @@ private struct SetPlanRow: View {
                     }
                     if style.showsDistance {
                         LabeledContent("Distance") {
-                            TextField("—", text: distanceBinding)
-                                .multilineTextAlignment(.trailing)
-                                .keyboardType(.decimalPad)
-                                .frame(width: 90)
-                                .textFieldStyle(.roundedBorder)
+                            HStack(spacing: 6) {
+                                TextField("—", text: distanceBinding)
+                                    .multilineTextAlignment(.trailing)
+                                    .keyboardType(.decimalPad)
+                                    .frame(width: 90)
+                                    .textFieldStyle(.roundedBorder)
+
+                                Text(preferredDistanceUnit.symbol)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
                 }

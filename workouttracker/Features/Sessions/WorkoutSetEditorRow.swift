@@ -65,23 +65,6 @@ struct WorkoutSetEditorRow: View {
         preferredWeightBinding(for: set)
     }
 
-
-//    private var weightBinding: Binding<String> {
-//        Binding<String>(
-//            get: {
-//                guard let w = set.weight else { return "" }
-//                if w.rounded() == w { return String(Int(w)) }
-//                return String(w)
-//            },
-//            set: { newValue in
-//                let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-//                if trimmed.isEmpty { set.weight = nil; schedulePersist(); return }
-//                let normalized = trimmed.replacingOccurrences(of: ",", with: ".")
-//                set.weight = Double(normalized)
-//                schedulePersist()
-//            }
-//        )
-//    }
     private func preferredWeightBinding(for set: WorkoutSetLog) -> Binding<String> {
         Binding(
             get: {

@@ -33,6 +33,7 @@ enum WorkoutRoutineMapper {
                     exerciseId: ex.id,
                     nameSnapshot: ex.name,
                     notes: item.notes,
+                    trackingStyle: item.trackingStyle,
                     sets: sets
                 )
             )

@@ -1,4 +1,4 @@
-// File: Services/WorkoutSessionStarter.swift
+// File: workouttracker/Services/WorkoutSessionStarter.swift
 import Foundation
 import SwiftData
 
@@ -31,7 +31,7 @@ enum WorkoutSessionStarter {
             let desc = FetchDescriptor<WorkoutRoutine>(predicate: #Predicate { $0.id == rid })
             if let routine = try context.fetch(desc).first {
                 routineName = routine.name
-                templates = exerciseTemplates(from: routine)
+                templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
             } else {
                 routineId = nil
             }
@@ -54,35 +54,5 @@ enum WorkoutSessionStarter {
 
         try context.save()
         return session
-    }
-
-    private static func exerciseTemplates(from routine: WorkoutRoutine) -> [WorkoutSessionFactory.ExerciseTemplate] {
-        let items = routine.items.sorted { $0.order < $1.order }
-
-        return items.compactMap { item in
-            guard let ex = item.exercise else { return nil }
-
-            let setPlans = item.setPlans.sorted { $0.order < $1.order }
-            let sets: [WorkoutSessionFactory.SetTemplate] = (setPlans.isEmpty ? [WorkoutSetPlan(order: 0, routineItem: item)] : setPlans)
-                .enumerated()
-                .map { idx, p in
-                    WorkoutSessionFactory.SetTemplate(
-                        order: idx,
-                        targetReps: p.targetReps,
-                        targetWeight: p.targetWeight,
-                        targetWeightUnit: p.weightUnit,
-                        targetRPE: p.targetRPE,
-                        targetRestSeconds: p.restSeconds
-                    )
-                }
-
-            return WorkoutSessionFactory.ExerciseTemplate(
-                order: item.order,
-                exerciseId: ex.id,
-                nameSnapshot: ex.name,
-                notes: item.notes,
-                sets: sets
-            )
-        }
     }
 }

@@ -19,7 +19,17 @@ final class WorkoutReopenAndNewSessionLinkingIntegrationTests: XCTestCase {
             exerciseId: UUID(),
             nameSnapshot: "Bench",
             notes: nil,
-            sets: [.init(order: 0, targetReps: 10, targetWeight: 100, targetWeightUnit: .kg, targetRPE: nil, targetRestSeconds: 60)]
+            trackingStyle: .strength,
+            sets: [
+                .init(
+                    order: 0,
+                    targetReps: 10,
+                    targetWeight: 100,
+                    targetWeightUnit: .kg,
+                    targetRPE: nil,
+                    targetRestSeconds: 60
+                )
+            ]
         )
         let s = WorkoutSessionFactory.makeSession(
             linkedActivityId: a.id,

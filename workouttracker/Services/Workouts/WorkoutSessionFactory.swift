@@ -18,6 +18,7 @@ enum WorkoutSessionFactory {
         var exerciseId: UUID
         var nameSnapshot: String
         var notes: String?
+        var trackingStyle: ExerciseTrackingStyle
         var sets: [SetTemplate]
     }
 
@@ -44,6 +45,7 @@ enum WorkoutSessionFactory {
                 exerciseId: ex.exerciseId,
                 exerciseNameSnapshot: ex.nameSnapshot,
                 notes: ex.notes,
+                trackingStyle: ex.trackingStyle,
                 session: session
             )
 

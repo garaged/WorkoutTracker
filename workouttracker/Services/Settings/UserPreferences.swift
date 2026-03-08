@@ -12,9 +12,11 @@ final class UserPreferences: ObservableObject {
 
     private enum Keys {
         static let weightUnit = UnitPreferences.Keys.weightUnitRaw
+        static let distanceUnit = UnitPreferences.Keys.distanceUnitRaw
         static let defaultRestSeconds = "prefs.defaultRestSeconds"
         static let hapticsEnabled = "prefs.hapticsEnabled"
         static let autoStartRest = "prefs.autoStartRest"
+        static let restSoundCuesEnabled = "prefs.restSoundCuesEnabled"
         static let confirmDestructiveActions = "prefs.confirmDestructiveActions"
         static let lastBackupAt = "prefs.lastBackupAt"
         static let diagnosticsVerboseLoggingEnabled = "prefs.diagnosticsVerboseLoggingEnabled"
@@ -29,6 +31,10 @@ final class UserPreferences: ObservableObject {
         didSet { defaults.set(weightUnit.rawValue, forKey: Keys.weightUnit) }
     }
 
+    @Published var distanceUnit: DistanceUnit {
+        didSet { defaults.set(distanceUnit.rawValue, forKey: Keys.distanceUnit) }
+    }
+
     @Published var defaultRestSeconds: Int {
         didSet { defaults.set(defaultRestSeconds, forKey: Keys.defaultRestSeconds) }
     }
@@ -39,6 +45,10 @@ final class UserPreferences: ObservableObject {
 
     @Published var autoStartRest: Bool {
         didSet { defaults.set(autoStartRest, forKey: Keys.autoStartRest) }
+    }
+    
+    @Published var restSoundCuesEnabled: Bool {
+        didSet { defaults.set(restSoundCuesEnabled, forKey: Keys.restSoundCuesEnabled) }
     }
 
     @Published var confirmDestructiveActions: Bool {
@@ -72,12 +82,20 @@ final class UserPreferences: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        self.restSoundCuesEnabled = defaults.object(forKey: Keys.restSoundCuesEnabled) as? Bool ?? true
 
         // Weight unit
         if let raw = defaults.string(forKey: Keys.weightUnit), let u = WeightUnit(rawValue: raw) {
             self.weightUnit = u
         } else {
             self.weightUnit = .kg
+        }
+
+        // Distance unit
+        if let raw = defaults.string(forKey: Keys.distanceUnit), let u = DistanceUnit(rawValue: raw) {
+            self.distanceUnit = u
+        } else {
+            self.distanceUnit = .km
         }
 
         // Rest seconds
@@ -124,9 +142,11 @@ final class UserPreferences: ObservableObject {
 
     func resetToDefaults() {
         weightUnit = .kg
+        distanceUnit = .km
         defaultRestSeconds = 120
         hapticsEnabled = true
         autoStartRest = true
+        restSoundCuesEnabled = true
         confirmDestructiveActions = true
         exerciseIllustrationSet = .dummyV1
         diagnosticsVerboseLoggingEnabled = false

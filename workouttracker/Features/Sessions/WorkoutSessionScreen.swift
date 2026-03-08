@@ -13,6 +13,8 @@ struct WorkoutSessionScreen: View {
     @Bindable var session: WorkoutSession
 
     @StateObject private var logging = WorkoutLoggingService()
+    @StateObject private var prefs = UserPreferences.shared
+    @State private var restTimerRunID = UUID()
 
     /// Display numbering for set rows.
     ///
@@ -392,6 +394,7 @@ struct WorkoutSessionScreen: View {
 
         // Start rest timer using coach suggestion
         restSecondsToStart = max(1, prompt.suggestedRestSeconds)
+        restTimerRunID = UUID()
         withAnimation { showRestTimer = true }
     }
 
@@ -585,6 +588,7 @@ struct WorkoutSessionScreen: View {
                         onApplyReps: ctx.prompt.repsDelta == nil ? nil : { applyCoachReps(ctx, proxy: proxy) },
                         onStartRest: {
                             restSecondsToStart = max(1, ctx.prompt.suggestedRestSeconds)
+                            restTimerRunID = UUID()
                             withAnimation { showRestTimer = true }
                         },
                         onDismiss: { withAnimation { coachPrompt = nil } }
@@ -592,9 +596,13 @@ struct WorkoutSessionScreen: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
-                RestTimerView(initialSeconds: restSecondsToStart) {
+                RestTimerView(
+                    initialSeconds: restSecondsToStart,
+                    autostart: prefs.autoStartRest
+                ) {
                     withAnimation { showRestTimer = false }
                 }
+                .id(restTimerRunID)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
@@ -653,10 +661,21 @@ struct WorkoutSessionScreen: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             if isInProgress {
-                Button { withAnimation { showRestTimer.toggle() } } label: {
-                    Image(systemName: "timer")
+                Button {
+                    if showRestTimer {
+                        withAnimation { showRestTimer = false }
+                    } else {
+                        restSecondsToStart = max(1, prefs.defaultRestSeconds)
+                        restTimerRunID = UUID()
+                        withAnimation { showRestTimer = true }
+                    }
+                } label: {
+                    Label(
+                        showRestTimer ? "Hide Rest" : "Rest",
+                        systemImage: showRestTimer ? "timer.circle.fill" : "timer.circle"
+                    )
                 }
-                .disabled(session.isPaused)
+                .accessibilityIdentifier("WorkoutSession.RestTimerButton")
             }
         }
 
@@ -722,12 +741,12 @@ struct WorkoutSessionScreen: View {
     
     @ViewBuilder
     private func setRow(ex: WorkoutSessionExercise, set: WorkoutSetLog, proxy: ScrollViewProxy) -> some View {
-        if isTimedSet(set) {
+        if WorkoutSetRowRouting.shouldUseTimedRow(for: ex, set: set) {
             TimedSetEditorRow(
                 set: set,
                 setNumber: displaySetNumber(for: set, in: ex),
                 isReadOnly: isReadOnly,
-                showsDistance: (set.targetDistance != nil || set.actualDistance != nil),
+                showsDistance: (ex.trackingStyle.showsDistance || set.targetDistance != nil || set.actualDistance != nil),
                 onPersist: {
                     markActive(exerciseID: ex.id, setID: set.id)
                     saveOrAssert("set edit")
@@ -1281,6 +1300,8 @@ struct WorkoutSessionScreen: View {
 
     private struct TimedSetEditorRow: View {
         @Bindable var set: WorkoutSetLog
+        @AppStorage(UnitPreferences.Keys.distanceUnitRaw)
+        private var preferredDistanceUnitRaw: String = DistanceUnit.km.rawValue
         @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
         var setNumber: Int
@@ -1292,6 +1313,10 @@ struct WorkoutSessionScreen: View {
         var onCopySet: () -> Void
         var onAddSet: () -> Void
         var onDeleteSet: () -> Void
+
+        private var preferredDistanceUnit: DistanceUnit {
+            DistanceUnit(rawValue: preferredDistanceUnitRaw) ?? .km
+        }
 
         private var isCompact: Bool { horizontalSizeClass == .compact }
         private var stacksMetricsVertically: Bool { isCompact && showsDistance }
@@ -1393,14 +1418,14 @@ struct WorkoutSessionScreen: View {
 
         private var distanceField: some View {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Distance")
+                Text(isCompact ? "Dist (\(preferredDistanceUnit.symbol))" : "Distance (\(preferredDistanceUnit.symbol))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
 
                 HStack(spacing: isCompact ? 6 : 8) {
-                    stepButton(system: "minus.circle") { bumpDistance(-0.1) }
+                    stepButton(system: "minus.circle") { bumpDistance(-preferredDistanceUnit.stepSize) }
 
                     TextField("—", text: distanceBinding)
                         .multilineTextAlignment(.center)
@@ -1409,7 +1434,7 @@ struct WorkoutSessionScreen: View {
                         .textFieldStyle(.roundedBorder)
                         .disabled(isReadOnly)
 
-                    stepButton(system: "plus.circle") { bumpDistance(+0.1) }
+                    stepButton(system: "plus.circle") { bumpDistance(+preferredDistanceUnit.stepSize) }
                 }
             }
             .layoutPriority(1)
@@ -1455,20 +1480,20 @@ struct WorkoutSessionScreen: View {
         private var distanceBinding: Binding<String> {
             Binding(
                 get: {
-                    let v = set.actualDistance ?? set.targetDistance
-                    guard let v else { return "" }
+                    guard let v = set.editableDistance(in: preferredDistanceUnit) else { return "" }
                     let rounded = (v * 10).rounded() / 10
                     return rounded == 0 ? "" : String(format: "%.1f", rounded)
                 },
                 set: { newValue in
                     guard !isReadOnly else { return }
                     let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard let d = Double(trimmed), d >= 0 else {
-                        set.actualDistance = nil
+                    let normalized = trimmed.replacingOccurrences(of: ",", with: ".")
+                    guard let d = Double(normalized), d >= 0 else {
+                        set.setActualDistance(nil, preferredUnit: preferredDistanceUnit)
                         onPersist()
                         return
                     }
-                    set.actualDistance = d
+                    set.setActualDistance(d == 0 ? nil : d, preferredUnit: preferredDistanceUnit)
                     onPersist()
                 }
             )
@@ -1482,9 +1507,9 @@ struct WorkoutSessionScreen: View {
         }
 
         private func bumpDistance(_ delta: Double) {
-            let current = set.actualDistance ?? set.targetDistance ?? 0
+            let current = set.editableDistance(in: preferredDistanceUnit) ?? 0
             let next = max(0, current + delta)
-            set.actualDistance = next
+            set.setActualDistance(next == 0 ? nil : next, preferredUnit: preferredDistanceUnit)
         }
     }
 

@@ -1,8 +1,8 @@
 import Foundation
 
-enum WeightUnit: String, Codable, CaseIterable, Identifiable {
-    case kg
-    case lb
+enum DistanceUnit: String, Codable, CaseIterable, Identifiable {
+    case km
+    case mi
 
     /// Stable identity for SwiftUI `ForEach` / `Picker` rendering.
     var id: String { rawValue }
@@ -10,12 +10,12 @@ enum WeightUnit: String, Codable, CaseIterable, Identifiable {
     /// User-facing name for settings and labels.
     var title: String {
         switch self {
-        case .kg: return "Kilograms"
-        case .lb: return "Pounds"
+        case .km: return "Kilometers"
+        case .mi: return "Miles"
         }
     }
 
-    /// Localized-friendly short symbol for compact UI.
+    /// Compact suffix for fields and summaries.
     var symbol: String { rawValue }
 
     /// Combined label for pickers where both name and symbol help clarity.

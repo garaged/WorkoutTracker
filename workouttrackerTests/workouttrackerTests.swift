@@ -193,6 +193,7 @@ final class WorkoutSessionFactoryTests: XCTestCase {
             exerciseId: UUID(),
             nameSnapshot: "B",
             notes: nil,
+            trackingStyle: .strength,
             sets: [
                 .init(order: 1, targetReps: 8, targetWeight: 100, targetWeightUnit: .kg, targetRPE: 7.5, targetRestSeconds: 120),
                 .init(order: 0, targetReps: 10, targetWeight: 90, targetWeightUnit: .kg, targetRPE: 7.0, targetRestSeconds: 120)
@@ -204,6 +205,7 @@ final class WorkoutSessionFactoryTests: XCTestCase {
             exerciseId: UUID(),
             nameSnapshot: "A",
             notes: nil,
+            trackingStyle: .strength,
             sets: [
                 .init(order: 0, targetReps: 5, targetWeight: 120, targetWeightUnit: .kg, targetRPE: 8.0, targetRestSeconds: 180)
             ]
@@ -417,6 +419,7 @@ final class ProgressSummaryServiceIntegrationTests: XCTestCase {
                 exerciseId: UUID(),
                 nameSnapshot: "Bench",
                 notes: nil,
+                trackingStyle: .strength,
                 sets: (0..<completedSets).map { idx in
                     .init(order: idx, targetReps: 10, targetWeight: 100, targetWeightUnit: .kg, targetRPE: nil, targetRestSeconds: nil)
                 }
