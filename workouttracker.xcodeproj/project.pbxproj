@@ -81,6 +81,22 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		352415B02F5D3170004A4FC4 /* Exceptions for "workouttrackerWatchApp" folder in "workouttrackerWatchApp Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				workouttrackerWatchAppApp.swift,
+			);
+			target = 35BCA8302F509AFF00B8536A /* workouttrackerWatchApp Watch App */;
+		};
+		352415B22F5D31A4004A4FC4 /* Exceptions for "workouttrackerWatchApp Watch App" folder in "workouttrackerWatchApp Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				workouttrackerWatchAppApp.swift,
+			);
+			target = 35BCA8302F509AFF00B8536A /* workouttrackerWatchApp Watch App */;
+		};
 		353429C72F47E79400FFEE78 /* Exceptions for "workouttracker" folder in "workouttracker" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -126,16 +142,6 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		35A0230C2F53CACB00CD2431 /* Exceptions for "workouttrackerWatchApp Watch App" folder in "Copy Bundle Resources" phase from "workouttracker" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 35BA2D422F11D33200EEE02C /* Resources */;
-			membershipExceptions = (
-				workouttrackerWatchAppApp.swift,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		357B69E12F4F97FE00998420 /* workouttrackerWatchExtension */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -167,6 +173,9 @@
 		};
 		35BCA8102F509AFD00B8536A /* workouttrackerWatchApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				352415B02F5D3170004A4FC4 /* Exceptions for "workouttrackerWatchApp" folder in "workouttrackerWatchApp Watch App" target */,
+			);
 			path = workouttrackerWatchApp;
 			sourceTree = "<group>";
 		};
@@ -183,7 +192,7 @@
 		35BCA8352F509AFF00B8536A /* workouttrackerWatchApp Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				35A0230C2F53CACB00CD2431 /* Exceptions for "workouttrackerWatchApp Watch App" folder in "Copy Bundle Resources" phase from "workouttracker" target */,
+				352415B22F5D31A4004A4FC4 /* Exceptions for "workouttrackerWatchApp Watch App" folder in "workouttrackerWatchApp Watch App" target */,
 			);
 			path = "workouttrackerWatchApp Watch App";
 			sourceTree = "<group>";

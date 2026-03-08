@@ -1,10 +1,88 @@
 {
   "images" : [
     {
+      "filename" : "WatchNotificationCenter38.png",
+      "idiom" : "watch",
+      "role" : "notificationCenter",
+      "subtype" : "38mm",
+      "size" : "24x24",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "WatchNotificationCenter42.png",
+      "idiom" : "watch",
+      "role" : "notificationCenter",
+      "subtype" : "42mm",
+      "size" : "27.5x27.5",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "WatchCompanionSettings@2x.png",
+      "idiom" : "watch",
+      "role" : "companionSettings",
+      "size" : "29x29",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "WatchCompanionSettings@3x.png",
+      "idiom" : "watch",
+      "role" : "companionSettings",
+      "size" : "29x29",
+      "scale" : "3x"
+    },
+    {
+      "filename" : "WatchAppLauncher38.png",
+      "idiom" : "watch",
+      "role" : "appLauncher",
+      "subtype" : "38mm",
+      "size" : "40x40",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "WatchAppLauncher40.png",
+      "idiom" : "watch",
+      "role" : "appLauncher",
+      "subtype" : "40mm",
+      "size" : "44x44",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "WatchAppLauncher44.png",
+      "idiom" : "watch",
+      "role" : "appLauncher",
+      "subtype" : "44mm",
+      "size" : "50x50",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "WatchQuickLook38.png",
+      "idiom" : "watch",
+      "role" : "quickLook",
+      "subtype" : "38mm",
+      "size" : "86x86",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "WatchQuickLook42.png",
+      "idiom" : "watch",
+      "role" : "quickLook",
+      "subtype" : "42mm",
+      "size" : "98x98",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "WatchQuickLook44.png",
+      "idiom" : "watch",
+      "role" : "quickLook",
+      "subtype" : "44mm",
+      "size" : "108x108",
+      "scale" : "2x"
+    },
+    {
       "filename" : "AppIcon1024x1024.png",
-      "idiom" : "universal",
-      "platform" : "watchos",
-      "size" : "1024x1024"
+      "idiom" : "watch-marketing",
+      "size" : "1024x1024",
+      "scale" : "1x"
     }
   ],
   "info" : {
