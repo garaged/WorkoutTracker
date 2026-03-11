@@ -34,7 +34,10 @@ jobs:
       - name: Select Xcode (latest stable)
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: '26.3'
+
+      - name: Confirm selected Xcode
+        run: xcodebuild -version
 
       - name: Preflight (ensure project exists)
         shell: bash
