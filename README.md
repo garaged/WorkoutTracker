@@ -172,3 +172,7 @@ Open `workouttracker.xcodeproj` (or `.xcworkspace`) and run the `workouttracker`
 ## License
 
 Licensed under the Apache License 2.0. See `LICENSE` and `NOTICE`.
+
+## Sponsor
+
+If you like the project and want to support maintenance and new features you can do it at https://github.com/sponsors/garaged

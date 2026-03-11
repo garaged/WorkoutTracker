@@ -1,5 +1,11 @@
 import SwiftUI
 
+// File: workouttracker/Features/Routines/RoutineRow/RoutineRow.swift
+//
+// Why this update lives here:
+// This is the shared row chrome for routines, so the visual cue that the row
+// can be opened for editing belongs here.
+
 struct RoutineRow: View {
     let title: String
     let onStartNow: () -> Void
@@ -17,10 +23,22 @@ struct RoutineRow: View {
                     .symbolRenderingMode(.hierarchical)
             }
 
-            Text(title)
-                .font(.body.weight(.semibold))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.body.weight(.semibold))
+                    .lineLimit(1)
+
+                Text("Tap to edit")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
             Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
 
             Button(action: onScheduleToday) {
                 Image(systemName: "calendar.badge.plus")

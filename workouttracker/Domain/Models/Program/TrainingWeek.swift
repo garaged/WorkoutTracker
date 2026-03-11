@@ -1,6 +1,6 @@
 import Foundation
 
-public struct TrainingWeek: Identifiable, Codable, Hashable {
+public struct TrainingWeek: Identifiable, Codable, Hashable, Sendable {
     public var id: UUID
     /// 1-based index
     public var index: Int

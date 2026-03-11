@@ -1,7 +1,7 @@
 import Foundation
 
-public struct TrainingProgram: Identifiable, Codable, Hashable {
-    public enum Level: String, Codable, CaseIterable, Hashable {
+public struct TrainingProgram: Identifiable, Codable, Hashable, Sendable {
+    public enum Level: String, Codable, CaseIterable, Hashable, Sendable {
         case beginner
         case intermediate
         case advanced

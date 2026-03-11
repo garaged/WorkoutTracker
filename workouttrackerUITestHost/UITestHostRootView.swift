@@ -20,6 +20,8 @@ struct UITestHostRootView: View {
                 SettingsScreen()
             case "home":
                 AppRootView()
+            case "routines":
+                RoutinesScreen()
             case "calendar", "":
                 DayTimelineEntryScreen()
             default:

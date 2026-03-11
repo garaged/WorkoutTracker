@@ -97,6 +97,15 @@ struct SettingsScreen: View {
             
             ExerciseIllustrationSetPickerSection()
             
+            Section("Support") {
+                NavigationLink {
+                    SupportTipJarView()
+                } label: {
+                    Label("Tip Jar", systemImage: "heart")
+                }
+                .accessibilityIdentifier("settings.tipJarLink")
+            }
+            
             Section("About") {
                 HStack {
                     Text("Version")

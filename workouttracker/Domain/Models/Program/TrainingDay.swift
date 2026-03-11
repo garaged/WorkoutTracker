@@ -1,8 +1,8 @@
 import Foundation
 
-public struct TrainingDay: Identifiable, Codable, Hashable {
-    public struct TrainingBlock: Identifiable, Codable, Hashable {
-        public enum Kind: String, Codable, CaseIterable, Hashable {
+public struct TrainingDay: Identifiable, Codable, Hashable, Sendable {
+    public struct TrainingBlock: Identifiable, Codable, Hashable, Sendable {
+        public enum Kind: String, Codable, CaseIterable, Hashable, Sendable {
             case workout
             case accessories
             case cardio
@@ -11,8 +11,8 @@ public struct TrainingDay: Identifiable, Codable, Hashable {
             case notes
         }
 
-        public struct Reference: Codable, Hashable {
-            public enum RefKind: String, Codable, CaseIterable, Hashable {
+        public struct Reference: Codable, Hashable, Sendable {
+            public enum RefKind: String, Codable, CaseIterable, Hashable, Sendable {
                 /// Later: link to your WorkoutRoutine entity (UUID in your store)
                 case routine
                 /// Later: link to a template activity (UUID in your store)

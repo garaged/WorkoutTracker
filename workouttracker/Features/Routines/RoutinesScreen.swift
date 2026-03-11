@@ -27,13 +27,35 @@ struct RoutinesScreen: View {
     @State private var navToCalendar: Bool = false
     @State private var calendarInitialDay: Date = Date()
 
-    // Full routine editor (name + exercises + tracking styles)
-    @State private var showRoutineEditor: Bool = false
-    @State private var routineEditorMode: RoutineEditorScreen.Mode = .create
+    // Canonical routine editor presentation
+    @State private var presentedEditor: PresentedRoutineEditor? = nil
 
-    private var isCreatingRoutine: Bool {
-        if case .create = routineEditorMode { return true }
-        return false
+    private enum PresentedRoutineEditor: Identifiable {
+        case create
+        case edit(WorkoutRoutine)
+
+        var id: String {
+            switch self {
+            case .create:
+                return "create"
+            case .edit(let routine):
+                return "edit-\(routine.id.uuidString)"
+            }
+        }
+
+        var mode: RoutineEditorScreen.Mode {
+            switch self {
+            case .create:
+                return .create
+            case .edit(let routine):
+                return .edit(routine)
+            }
+        }
+
+        var interactiveDismissDisabled: Bool {
+            if case .create = self { return true }
+            return false
+        }
     }
 
     private var filteredRoutines: [WorkoutRoutine] {
@@ -62,7 +84,7 @@ struct RoutinesScreen: View {
                         badgeText: starterBadgeText(for: routine),
                         onStartNow: { startRoutineNow(routine) },
                         onScheduleToday: { scheduleForToday(routine) },
-                        onRename: { openEditor(for: routine) },
+                        onEdit: { openEditor(for: routine) },
                         onDelete: { confirmDelete(routine) }
                     )
                 }
@@ -113,11 +135,11 @@ struct RoutinesScreen: View {
                 }
             }
         }
-        .sheet(isPresented: $showRoutineEditor) {
+        .sheet(item: $presentedEditor) { editor in
             NavigationStack {
-                RoutineEditorScreen(mode: routineEditorMode)
+                RoutineEditorScreen(mode: editor.mode)
             }
-            .interactiveDismissDisabled(isCreatingRoutine)
+            .interactiveDismissDisabled(editor.interactiveDismissDisabled)
         }
     }
 
@@ -132,8 +154,7 @@ struct RoutinesScreen: View {
             .accessibilityLabel("Templates")
 
             Button {
-                routineEditorMode = .create
-                showRoutineEditor = true
+                presentedEditor = .create
             } label: {
                 Image(systemName: "plus")
             }
@@ -142,8 +163,7 @@ struct RoutinesScreen: View {
     }
 
     private func openEditor(for routine: WorkoutRoutine) {
-        routineEditorMode = .edit(routine)
-        showRoutineEditor = true
+        presentedEditor = .edit(routine)
     }
 
     private func starterBadgeText(for routine: WorkoutRoutine) -> String? {
@@ -175,7 +195,7 @@ struct RoutinesScreen: View {
             kind: .workout,
             workoutRoutineId: routine.id
         )
-        activity.dayKey = dayKey(for: start)
+        activity.dayKey = start.dayKey()
 
         do {
             modelContext.insert(activity)
@@ -218,7 +238,7 @@ struct RoutinesScreen: View {
             kind: .workout,
             workoutRoutineId: routine.id
         )
-        a.dayKey = dayKey(for: start)
+        a.dayKey = start.dayKey()
         a.status = .planned
         a.completedAt = nil
         a.isAllDay = false
@@ -239,19 +259,5 @@ struct RoutinesScreen: View {
         let rem = minute % step
         let add = (rem == 0) ? 0 : (step - rem)
         return cal.date(byAdding: .minute, value: add, to: base) ?? date
-    }
-
-    private static let dayKeyFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.calendar = Calendar.current
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone.current
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
-
-    private func dayKey(for date: Date) -> String {
-        let start = Calendar.current.startOfDay(for: date)
-        return Self.dayKeyFormatter.string(from: start)
     }
 }
