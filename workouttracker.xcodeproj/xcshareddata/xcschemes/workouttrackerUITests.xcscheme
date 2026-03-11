@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2620"
+   LastUpgradeVersion = "2630"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -9,7 +9,7 @@
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
-            buildForRunning = "YES"
+            buildForRunning = "NO"
             buildForProfiling = "YES"
             buildForArchiving = "YES"
             buildForAnalyzing = "YES">
@@ -18,6 +18,20 @@
                BlueprintIdentifier = "35BA2D432F11D33200EEE02C"
                BuildableName = "workouttracker.app"
                BlueprintName = "workouttracker"
+               ReferencedContainer = "container:workouttracker.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "35D84B842F3C2BCE000BEFC0"
+               BuildableName = "workouttrackerUITestHost.app"
+               BlueprintName = "workouttrackerUITestHost"
                ReferencedContainer = "container:workouttracker.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -105,16 +119,6 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <BuildableProductRunnable
-         runnableDebuggingMode = "0">
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "35BA2D432F11D33200EEE02C"
-            BuildableName = "workouttracker.app"
-            BlueprintName = "workouttracker"
-            ReferencedContainer = "container:workouttracker.xcodeproj">
-         </BuildableReference>
-      </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
             argument = "-com.apple.CoreData.SQLDebug 1"
