@@ -107,6 +107,22 @@ jobs:
             -scheme "${SCHEME_UNIT}" \
             -resolvePackageDependencies
 
+      - name: Dump watch target build settings
+        run: |
+          set -euo pipefail
+          xcodebuild -project "${XCODE_PROJECT}" \
+            -target "watchkitapp Watch App" \
+            -showBuildSettings \
+            | grep -E "PRODUCT_NAME|PRODUCT_BUNDLE_IDENTIFIER|SDKROOT|SUPPORTED_PLATFORMS|TARGETED_DEVICE_FAMILY|RESOURCES_TARGETED_DEVICE_FAMILY|WKApplication" || true
+
+      - name: Show valid destinations for unit-test scheme
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project "${XCODE_PROJECT}" \
+            -scheme "${SCHEME_UNIT}" \
+            -showdestinations
+
       - name: Run unit tests (skip UI tests)
         shell: bash
         run: |
@@ -116,7 +132,6 @@ jobs:
           xcodebuild -project "${XCODE_PROJECT}" \
             -scheme "${SCHEME_UNIT}" \
             -configuration "${CONFIGURATION}" \
-            -sdk iphonesimulator \
             -destination "${{ steps.sim.outputs.destination }}" \
             -parallel-testing-enabled NO \
             -enableCodeCoverage YES \
