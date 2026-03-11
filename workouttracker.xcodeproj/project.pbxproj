@@ -112,22 +112,7 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		35A0230C2F53CACB00CD2431 /* Exceptions for "workouttrackerWatchApp Watch App" folder in "Copy Bundle Resources" phase from "workouttracker" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 35BA2D422F11D33200EEE02C /* Resources */;
-			membershipExceptions = (
-				workouttrackerWatchAppApp.swift,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		357B69E12F4F97FE00998420 /* workouttrackerWatchExtension */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = workouttrackerWatchExtension;
-			sourceTree = "<group>";
-		};
 		35A4C07B2F5E174800F30117 /* watchkitapp Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "watchkitapp Watch App";
@@ -151,39 +136,6 @@
 		35BA2D602F11D33300EEE02C /* workouttrackerUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = workouttrackerUITests;
-			sourceTree = "<group>";
-		};
-		35BCA8102F509AFD00B8536A /* workouttrackerWatchApp */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = workouttrackerWatchApp;
-			sourceTree = "<group>";
-		};
-		35BCA81E2F509AFF00B8536A /* workouttrackerWatchAppTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = workouttrackerWatchAppTests;
-			sourceTree = "<group>";
-		};
-		35BCA8282F509AFF00B8536A /* workouttrackerWatchAppUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = workouttrackerWatchAppUITests;
-			sourceTree = "<group>";
-		};
-		35BCA8352F509AFF00B8536A /* workouttrackerWatchApp Watch App */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				35A0230C2F53CACB00CD2431 /* Exceptions for "workouttrackerWatchApp Watch App" folder in "Copy Bundle Resources" phase from "workouttracker" target */,
-			);
-			path = "workouttrackerWatchApp Watch App";
-			sourceTree = "<group>";
-		};
-		35BCA8432F509B0000B8536A /* workouttrackerWatchApp Watch AppTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "workouttrackerWatchApp Watch AppTests";
-			sourceTree = "<group>";
-		};
-		35BCA84D2F509B0000B8536A /* workouttrackerWatchApp Watch AppUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "workouttrackerWatchApp Watch AppUITests";
 			sourceTree = "<group>";
 		};
 		35D84B2E2F32EB85000BEFC0 /* workouttrackerUITestHost */ = {
@@ -238,7 +190,6 @@
 		35BA2D3B2F11D33200EEE02C = {
 			isa = PBXGroup;
 			children = (
-				357B69E12F4F97FE00998420 /* workouttrackerWatchExtension */,
 				350B861C2F25BE6B00E7C785 /* workouttrackerUITests.xctestplan */,
 				350B85372F232D7900E7C785 /* workouttrackerTest.xctestplan */,
 				35BA2D462F11D33200EEE02C /* workouttracker */,
