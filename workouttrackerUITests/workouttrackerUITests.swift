@@ -32,12 +32,12 @@ final class workouttrackerUITests: XCTestCase {
         app.launch()
 
         let templatesTile = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Templates"))
+            .matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Schedule"))
             .firstMatch
 
         XCTAssertTrue(templatesTile.waitForExistence(timeout: 6.0))
         templatesTile.tap()
 
-        XCTAssertTrue(app.navigationBars["Templates"].waitForExistence(timeout: 6.0))
+        XCTAssertTrue(app.navigationBars["Schedule Templates"].waitForExistence(timeout: 6.0))
     }
 }

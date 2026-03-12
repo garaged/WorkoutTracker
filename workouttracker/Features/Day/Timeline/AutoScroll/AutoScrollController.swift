@@ -34,10 +34,10 @@ final class AutoScrollController: ObservableObject {
         scrollView = sv
 
         // ✅ Swift 6-safe: don't unwrap or touch `self` outside the MainActor task
-        offsetObs = sv.observe(\.contentOffset, options: [.initial, .new]) { [weak self] sv, _ in
-            Task { @MainActor in
-                guard let self else { return }
-                self.offsetY = sv.contentOffset.y
+        offsetObs = sv.observe(\.contentOffset, options: [.initial, .new]) { [weak self] observedScrollView, _ in
+            let newOffsetY = observedScrollView.contentOffset.y
+            Task { @MainActor [weak self] in
+                self?.offsetY = newOffsetY
             }
         }
     }

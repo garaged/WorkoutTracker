@@ -202,8 +202,8 @@ struct AppRootView: View {
                 destination: { AnyView(RoutinesScreen()) }
             ),
             HomeTile(
-                title: "Templates",
-                subtitle: "Auto-preload your day",
+                title: "Schedule templates",
+                subtitle: "Plans that auto-preload your day",
                 systemImage: "wand.and.stars",
                 tint: .indigo,
                 destination: { AnyView(TemplatesScreen(applyDay: applyDay)) }

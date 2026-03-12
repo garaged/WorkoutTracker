@@ -14,7 +14,7 @@ struct WorkoutSessionScreen: View {
 
     @StateObject private var logging = WorkoutLoggingService()
     @StateObject private var prefs = UserPreferences.shared
-    @State private var restTimerRunID = UUID()
+    @ObservedObject private var restTimer = RestTimerController.shared
 
     /// Display numbering for set rows.
     ///
@@ -30,7 +30,6 @@ struct WorkoutSessionScreen: View {
     @State private var showFinishConfirm = false
     @State private var showAbandonConfirm = false
     @State private var showRestTimer = false
-    @State private var restSecondsToStart = 90
     @State private var activeExerciseID: UUID? = nil
     @State private var activeSetID: UUID? = nil
     @State private var targetAppliedBanner: TargetAppliedBanner? = nil
@@ -155,6 +154,18 @@ struct WorkoutSessionScreen: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("WorkoutSession.Screen")
+        .onAppear { syncRestTimerVisibility() }
+        .onChange(of: restTimer.isRunning, initial: false) { _, isRunning in
+            if isRunning {
+                withAnimation { showRestTimer = true }
+            } else if !restTimer.hasConfiguredTimer {
+                withAnimation { showRestTimer = false }
+            }
+        }
+        .onChange(of: restTimer.didFinishToken, initial: false) { _, token in
+            guard token != nil else { return }
+            withAnimation { showRestTimer = false }
+        }
     }
 
     private func sessionList(proxy: ScrollViewProxy) -> some View {
@@ -393,8 +404,11 @@ struct WorkoutSessionScreen: View {
         )
 
         // Start rest timer using coach suggestion
-        restSecondsToStart = max(1, prompt.suggestedRestSeconds)
-        restTimerRunID = UUID()
+        restTimer.configure(
+            seconds: max(1, prompt.suggestedRestSeconds),
+            startImmediately: prefs.autoStartRest,
+            playStartCue: prefs.autoStartRest
+        )
         withAnimation { showRestTimer = true }
     }
 
@@ -587,8 +601,11 @@ struct WorkoutSessionScreen: View {
                         onApplyWeight: ctx.prompt.weightDelta == nil ? nil : { applyCoachWeight(ctx, proxy: proxy) },
                         onApplyReps: ctx.prompt.repsDelta == nil ? nil : { applyCoachReps(ctx, proxy: proxy) },
                         onStartRest: {
-                            restSecondsToStart = max(1, ctx.prompt.suggestedRestSeconds)
-                            restTimerRunID = UUID()
+                            restTimer.configure(
+                                seconds: max(1, ctx.prompt.suggestedRestSeconds),
+                                startImmediately: prefs.autoStartRest,
+                                playStartCue: prefs.autoStartRest
+                            )
                             withAnimation { showRestTimer = true }
                         },
                         onDismiss: { withAnimation { coachPrompt = nil } }
@@ -596,13 +613,9 @@ struct WorkoutSessionScreen: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
-                RestTimerView(
-                    initialSeconds: restSecondsToStart,
-                    autostart: prefs.autoStartRest
-                ) {
+                RestTimerView {
                     withAnimation { showRestTimer = false }
                 }
-                .id(restTimerRunID)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
@@ -630,6 +643,7 @@ struct WorkoutSessionScreen: View {
                     if !session.isPaused {
                         Button {
                             session.pause()
+                            restTimer.stop()
                             withAnimation { showRestTimer = false }
                             saveOrAssert("pause")
                         } label: {
@@ -665,8 +679,11 @@ struct WorkoutSessionScreen: View {
                     if showRestTimer {
                         withAnimation { showRestTimer = false }
                     } else {
-                        restSecondsToStart = max(1, prefs.defaultRestSeconds)
-                        restTimerRunID = UUID()
+                        restTimer.configure(
+                            seconds: max(1, prefs.defaultRestSeconds),
+                            startImmediately: prefs.autoStartRest,
+                            playStartCue: prefs.autoStartRest
+                        )
                         withAnimation { showRestTimer = true }
                     }
                 } label: {
@@ -695,10 +712,20 @@ struct WorkoutSessionScreen: View {
         }
     }
 
+    private func syncRestTimerVisibility() {
+        if restTimer.isRunning || restTimer.hasConfiguredTimer {
+            showRestTimer = true
+        } else {
+            showRestTimer = false
+        }
+    }
+
+
     // MARK: Finish/abandon
 
     private func finish() {
         if session.isPaused { session.resume() }
+        restTimer.stop()
         session.endedAt = Date()
         session.status = .completed
         saveOrAssert("finish")
@@ -715,6 +742,7 @@ struct WorkoutSessionScreen: View {
 
     private func abandon() {
         if session.isPaused { session.resume() }
+        restTimer.stop()
         session.endedAt = Date()
         session.status = .abandoned
         saveOrAssert("abandon")
@@ -1512,13 +1540,20 @@ struct WorkoutSessionScreen: View {
             set.setActualDistance(next == 0 ? nil : next, preferredUnit: preferredDistanceUnit)
         }
     }
+    
+    @MainActor
+    private static func playRestFinishedHaptic() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(.success)
+    }
 
     private enum Haptics {
         static func success() {
     #if canImport(UIKit)
-            let g = UINotificationFeedbackGenerator()
-            g.prepare()
-            g.notificationOccurred(.success)
+        Task { @MainActor in
+            WorkoutSessionScreen.playRestFinishedHaptic()
+        }
     #endif
         }
     }

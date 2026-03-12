@@ -34,6 +34,8 @@ struct WatchNowPlayingState: Codable, Equatable {
 
     var isRestRunning: Bool
     var restRemainingSeconds: Int?
+    /// Absolute end timestamp used by the watch to derive its own countdown.
+    var restEndsAtEpochSeconds: TimeInterval?
 
     var canGoPrevious: Bool
     var canGoNext: Bool
@@ -48,6 +50,7 @@ struct WatchNowPlayingState: Codable, Equatable {
         setDetail: nil,
         isRestRunning: false,
         restRemainingSeconds: nil,
+        restEndsAtEpochSeconds: nil,
         canGoPrevious: false,
         canGoNext: false,
         sessionID: nil,

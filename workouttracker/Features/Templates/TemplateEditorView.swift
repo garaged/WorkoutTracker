@@ -68,7 +68,7 @@ struct TemplateEditorView: View {
 
     var body: some View {
         Form {
-            Section("Template") {
+            Section("Schedule Template") {
                 TextField("Title", text: $title)
 
                 Toggle("Enabled", isOn: $isEnabled)
@@ -96,7 +96,7 @@ struct TemplateEditorView: View {
                 Section("Workout") {
                     RoutinePickerField(routineId: $template.workoutRoutineId)
 
-                    Text("This routine will be attached to every generated workout activity from this template.")
+                    Text("This routine will be attached to every generated workout activity from this schedule template.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -165,7 +165,7 @@ struct TemplateEditorView: View {
                     Button(role: .destructive) {
                         deleteTemplate()
                     } label: {
-                        Label("Delete template", systemImage: "trash")
+                        Label("Delete schedule template", systemImage: "trash")
                     }
                 }
             }
@@ -197,8 +197,8 @@ struct TemplateEditorView: View {
 
     private var modeTitle: String {
         switch mode {
-        case .create: return "New Template"
-        case .edit: return "Edit Template"
+        case .create: return "New Schedule Template"
+        case .edit: return "Edit Schedule Template"
         }
     }
 

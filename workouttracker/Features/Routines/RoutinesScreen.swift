@@ -151,7 +151,7 @@ struct RoutinesScreen: View {
             } label: {
                 Image(systemName: "wand.and.stars")
             }
-            .accessibilityLabel("Templates")
+            .accessibilityLabel("Schedule Templates")
 
             Button {
                 presentedEditor = .create

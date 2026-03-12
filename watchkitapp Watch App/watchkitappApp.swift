@@ -9,6 +9,10 @@ import SwiftUI
 
 @main
 struct watchkitapp_Watch_AppApp: App {
+    init() {
+        WatchConnectivityClient.shared.start()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()

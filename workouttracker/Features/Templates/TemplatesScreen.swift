@@ -24,9 +24,9 @@ struct TemplatesScreen: View {
         List {
             if templates.isEmpty {
                 ContentUnavailableView(
-                    "No templates",
+                    "No schedule templates",
                     systemImage: "wand.and.stars",
-                    description: Text("Create templates so Today is preloaded automatically.")
+                    description: Text("Create schedule templates so Today is preloaded automatically.")
                 )
             } else {
                 ForEach(orderedTemplates) { t in
@@ -39,7 +39,7 @@ struct TemplatesScreen: View {
                 .onDelete(perform: deleteTemplates)
             }
         }
-        .navigationTitle("Templates")
+        .navigationTitle("Schedule Templates")
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 NavigationLink {
