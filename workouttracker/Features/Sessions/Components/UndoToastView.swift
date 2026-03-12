@@ -7,28 +7,35 @@ struct UndoToastView: View {
     var onUndo: () -> Void
     var onDismiss: () -> Void
 
+    private let cornerRadius: CGFloat = 14
+
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "arrow.uturn.backward")
-                .font(.subheadline)
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
+                .frame(width: 24, height: 24)
+                .background(Color.secondary.opacity(0.08), in: Circle())
 
             Text(message)
                 .font(.subheadline)
-                .lineLimit(2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
 
-            Spacer()
+            Spacer(minLength: 8)
 
             Button("Undo") { onUndo() }
                 .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.accentColor)
+                .buttonStyle(.plain)
                 .accessibilityIdentifier("UndoToastView.UndoButton")
 
-            Button {
-                onDismiss()
-            } label: {
+            Button(action: onDismiss) {
                 Image(systemName: "xmark")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
+                    .frame(width: 24, height: 24)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Dismiss undo")
@@ -36,12 +43,12 @@ struct UndoToastView: View {
         }
         .accessibilityIdentifier("UndoToastView.Container")
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(.separator.opacity(0.35), lineWidth: 1)
-        )
-        .shadow(radius: 8, y: 3)
+        .padding(.vertical, 9)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .stroke(Color(uiColor: .separator).opacity(0.30), lineWidth: 1)
+        }
+        .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 4)
     }
 }

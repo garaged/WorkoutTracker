@@ -8,6 +8,7 @@ struct WorkoutSessionScreen: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var goalPrefill: GoalPrefillStore
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
 
     @Bindable var session: WorkoutSession
@@ -74,6 +75,26 @@ struct WorkoutSessionScreen: View {
 
     private var isReadOnly: Bool { session.status != .inProgress }
     private var isInProgress: Bool { session.status == .inProgress }
+    
+    private var prefersSideBySideBottomOverlays: Bool {
+        verticalSizeClass == .compact
+    }
+
+    private var bottomOverlayCardMaxWidth: CGFloat {
+        prefersSideBySideBottomOverlays ? 320 : 440
+    }
+
+    private var bottomControlsMaxWidth: CGFloat {
+        prefersSideBySideBottomOverlays ? 430 : 520
+    }
+
+    private var shouldShowCoachPrompt: Bool {
+        showRestTimer && isInProgress && !session.isPaused && coachPrompt != nil
+    }
+
+    private var shouldShowRestTimerCard: Bool {
+        showRestTimer && isInProgress && !session.isPaused
+    }
 
     var body: some View {
         ZStack {
@@ -590,33 +611,30 @@ struct WorkoutSessionScreen: View {
     @ViewBuilder
     private func bottomInset(proxy: ScrollViewProxy) -> some View {
         VStack(spacing: 10) {
-            if showRestTimer && isInProgress && !session.isPaused {
-                if let ctx = coachPrompt, isInProgress && !session.isPaused {
-                    CoachPromptCardView(
-                        title: ctx.prompt.title,
-                        message: ctx.prompt.message,
-                        suggestedRestSeconds: ctx.prompt.suggestedRestSeconds,
-                        weightActionTitle: ctx.prompt.weightLabel.map { "\($0) next set" },
-                        repsActionTitle: ctx.prompt.repsLabel.map { "\($0) next set" },
-                        onApplyWeight: ctx.prompt.weightDelta == nil ? nil : { applyCoachWeight(ctx, proxy: proxy) },
-                        onApplyReps: ctx.prompt.repsDelta == nil ? nil : { applyCoachReps(ctx, proxy: proxy) },
-                        onStartRest: {
-                            restTimer.configure(
-                                seconds: max(1, ctx.prompt.suggestedRestSeconds),
-                                startImmediately: prefs.autoStartRest,
-                                playStartCue: prefs.autoStartRest
-                            )
-                            withAnimation { showRestTimer = true }
-                        },
-                        onDismiss: { withAnimation { coachPrompt = nil } }
-                    )
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
+            if shouldShowCoachPrompt || shouldShowRestTimerCard {
+                if prefersSideBySideBottomOverlays && shouldShowCoachPrompt && shouldShowRestTimerCard {
+                    HStack(alignment: .bottom, spacing: 10) {
+                        if let ctx = coachPrompt {
+                            coachPromptOverlay(ctx, proxy: proxy, paired: true)
+                                .zIndex(3)
+                        }
 
-                RestTimerView {
-                    withAnimation { showRestTimer = false }
+                        restTimerOverlay(paired: true)
+                            .zIndex(3)
+                    }
+                } else {
+                    VStack(spacing: 10) {
+                        if let ctx = coachPrompt, shouldShowCoachPrompt {
+                            coachPromptOverlay(ctx, proxy: proxy, paired: false)
+                                .zIndex(3)
+                        }
+
+                        if shouldShowRestTimerCard {
+                            restTimerOverlay(paired: false)
+                                .zIndex(3)
+                        }
+                    }
                 }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
             if let toast = logging.undoToast, isInProgress {
@@ -625,50 +643,105 @@ struct WorkoutSessionScreen: View {
                     onUndo: { logging.undoLast(context: modelContext) },
                     onDismiss: { logging.clearUndoToast() }
                 )
+                .frame(maxWidth: 560)
+                .frame(maxWidth: .infinity)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
+                .zIndex(2)
             }
 
             if isInProgress {
-                HStack(spacing: 10) {
-                    Button {
-                        continueLogging(proxy: proxy)
-                    } label: {
-                        Label(session.isPaused ? "Resume" : "Continue",
-                              systemImage: session.isPaused ? "play.fill" : "arrow.down.to.line")
-                    }
-                    .accessibilityIdentifier("WorkoutSession.ContinueButton")
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-
-                    if !session.isPaused {
-                        Button {
-                            session.pause()
-                            restTimer.stop()
-                            withAnimation { showRestTimer = false }
-                            saveOrAssert("pause")
-                        } label: {
-                            Image(systemName: "pause.fill")
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
-                        .accessibilityLabel("Pause")
-                    }
-
-                    Button {
-                        showFinishConfirm = true
-                    } label: {
-                        Label("Finish", systemImage: "checkmark.circle")
-                    }
-                    .accessibilityIdentifier("WorkoutSession.FinishButton")
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                }
-                .padding(.top, 2)
+                bottomActionBar(proxy: proxy)
+                    .zIndex(1)
             }
         }
         .padding(.horizontal, 12)
         .padding(.bottom, 10)
-        .background(.ultraThinMaterial)
+    }
+    
+    @ViewBuilder
+    private func coachPromptOverlay(
+        _ ctx: CoachPromptContext,
+        proxy: ScrollViewProxy,
+        paired: Bool
+    ) -> some View {
+        CoachPromptCardView(
+            title: ctx.prompt.title,
+            message: ctx.prompt.message,
+            suggestedRestSeconds: ctx.prompt.suggestedRestSeconds,
+            weightActionTitle: ctx.prompt.weightLabel.map { "\($0) next set" },
+            repsActionTitle: ctx.prompt.repsLabel.map { "\($0) next set" },
+            onApplyWeight: ctx.prompt.weightDelta == nil ? nil : { applyCoachWeight(ctx, proxy: proxy) },
+            onApplyReps: ctx.prompt.repsDelta == nil ? nil : { applyCoachReps(ctx, proxy: proxy) },
+            onStartRest: {
+                restTimer.configure(
+                    seconds: max(1, ctx.prompt.suggestedRestSeconds),
+                    startImmediately: prefs.autoStartRest,
+                    playStartCue: prefs.autoStartRest
+                )
+                withAnimation { showRestTimer = true }
+            },
+            onDismiss: { withAnimation { coachPrompt = nil } }
+        )
+        .frame(maxWidth: bottomOverlayCardMaxWidth, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: paired ? .leading : .center)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+
+    private func restTimerOverlay(paired: Bool) -> some View {
+        RestTimerView {
+            withAnimation { showRestTimer = false }
+        }
+        .frame(maxWidth: bottomOverlayCardMaxWidth)
+        .frame(maxWidth: .infinity, alignment: paired ? .trailing : .center)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+    
+    private func bottomActionBar(proxy: ScrollViewProxy) -> some View {
+        HStack(spacing: 8) {
+            Button {
+                continueLogging(proxy: proxy)
+            } label: {
+                Label(
+                    session.isPaused ? "Resume" : "Continue",
+                    systemImage: session.isPaused ? "play.fill" : "arrow.down.to.line"
+                )
+            }
+            .accessibilityIdentifier("WorkoutSession.ContinueButton")
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+
+            if !session.isPaused {
+                Button {
+                    session.pause()
+                    restTimer.stop()
+                    withAnimation { showRestTimer = false }
+                    saveOrAssert("pause")
+                } label: {
+                    Image(systemName: "pause.fill")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                .accessibilityLabel("Pause")
+            }
+
+            Button {
+                showFinishConfirm = true
+            } label: {
+                Label("Finish", systemImage: "checkmark.circle")
+            }
+            .accessibilityIdentifier("WorkoutSession.FinishButton")
+            .buttonStyle(.bordered)
+            .controlSize(.regular)
+        }
+        .frame(maxWidth: bottomControlsMaxWidth)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(.secondary.opacity(0.12), lineWidth: 1)
+        )
     }
 
     @ToolbarContentBuilder

@@ -86,7 +86,7 @@ enum WatchMessageCodec {
         return try? JSONDecoder().decode(WatchCommand.self, from: data)
     }
 
-    static func decodeState(from message: [String: Any]) -> WatchNowPlayingState? {
+    nonisolated static func decodeState(from message: [String: Any]) -> WatchNowPlayingState? {
         guard (message[WatchWireKey.type] as? String) == WatchWireKey.state,
               let data = message[WatchWireKey.data] as? Data
         else { return nil }

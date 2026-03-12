@@ -28,6 +28,14 @@ Non-goals:
 
 ## Changelog
 
+### v1.0.7
+
+Misc. fixes (no more warnings). Rest time counter improvements for full robustness.
+
+### v1.0.6
+
+Routine editing, improving watch sync.
+
 ### v1.0.5 Basic exercise image sets, backup/restore including activities
 
 Implement unit selection in Settings.
