@@ -10,36 +10,36 @@ struct SettingsScreen: View {
 
     var body: some View {
         List {
-            Section("Backup") {
+            Section(String(localized: "settings.section.backup")) {
                 NavigationLink {
                     BackupRestoreScreen()
                         .environment(\.backupExporter, backupExporter)
                 } label: {
-                    Label("Backup & Restore", systemImage: "externaldrive")
+                    Label(String(localized: "settings.backup.restore"), systemImage: "externaldrive")
                 }
             }
 
             StarterPackSettingsSection()
 
             // ✅ NEW
-            Section("Programs") {
+            Section(String(localized: "settings.section.programs")) {
                 NavigationLink {
                     ProgramsLibraryScreen()
                 } label: {
-                    Label("Programs", systemImage: "books.vertical")
+                    Label(String(localized: "settings.programs.library"), systemImage: "books.vertical")
                 }
                 .accessibilityIdentifier("settings.programsLink")
                 
                 NavigationLink {
                     ProgramAssetsScreen()
                 } label: {
-                    Label("Program Assets", systemImage: "wrench.and.screwdriver")
+                    Label(String(localized: "settings.programs.assets"), systemImage: "wrench.and.screwdriver")
                 }
                 .accessibilityIdentifier("settings.programAssetsLink")
             }
 
-            Section("Units") {
-                Picker("Weight unit", selection: $prefs.weightUnit) {
+            Section(String(localized: "settings.section.units")) {
+                Picker(String(localized: "settings.units.weight"), selection: $prefs.weightUnit) {
                     ForEach(WeightUnit.allCases) { unit in
                         Text(unit.pickerLabel)
                             .tag(unit)
@@ -48,7 +48,7 @@ struct SettingsScreen: View {
                 .pickerStyle(.menu)
                 .accessibilityIdentifier("settings.weightUnitPicker")
 
-                Picker("Distance unit", selection: $prefs.distanceUnit) {
+                Picker(String(localized: "settings.units.distance"), selection: $prefs.distanceUnit) {
                     ForEach(DistanceUnit.allCases) { unit in
                         Text(unit.pickerLabel)
                             .tag(unit)
@@ -57,35 +57,35 @@ struct SettingsScreen: View {
                 .pickerStyle(.menu)
                 .accessibilityIdentifier("settings.distanceUnitPicker")
 
-                Text("Weight is converted for display and entry using your selected unit. Cardio distance is stored internally in kilometers and converted in routine planning and workout logging when needed.")
+                Text(String(localized: "settings.units.help"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
             
-            Section("Workout cues") {
-                Toggle("Rest sound cues", isOn: $prefs.restSoundCuesEnabled)
+            Section(String(localized: "settings.section.workout_cues")) {
+                Toggle(String(localized: "settings.workout_cues.rest_sound"), isOn: $prefs.restSoundCuesEnabled)
                     .accessibilityIdentifier("settings.restSoundCuesToggle")
 
-                Toggle("Haptics", isOn: $prefs.hapticsEnabled)
+                Toggle(String(localized: "settings.workout_cues.haptics"), isOn: $prefs.hapticsEnabled)
                     .accessibilityIdentifier("settings.hapticsToggle")
 
-                Toggle("Auto-start rest timer", isOn: $prefs.autoStartRest)
+                Toggle(String(localized: "settings.workout_cues.auto_start_rest"), isOn: $prefs.autoStartRest)
                     .accessibilityIdentifier("settings.autoStartRestToggle")
 
-                Text("Rest sound cues play at rest start, at 3, 2, and 1 seconds remaining, and again when rest finishes. They obey silent mode and should not interrupt music.")
+                Text(String(localized: "settings.workout_cues.help"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
-            Section("Diagnostics") {
+            Section(String(localized: "settings.section.diagnostics")) {
                 NavigationLink {
                     FeedbackScreen()
                 } label: {
-                    Label("Feedback", systemImage: "ladybug")
+                    Label(String(localized: "settings.feedback"), systemImage: "ladybug")
                 }
 
                 HStack {
-                    Text("Verbose logging")
+                    Text(String(localized: "settings.verbose_logging"))
                     Spacer()
                     Toggle("", isOn: $prefs.diagnosticsVerboseLoggingEnabled)
                         .labelsHidden()
@@ -97,25 +97,25 @@ struct SettingsScreen: View {
             
             ExerciseIllustrationSetPickerSection()
             
-            Section("Support") {
+            Section(String(localized: "settings.section.support")) {
                 NavigationLink {
                     SupportTipJarView()
                 } label: {
-                    Label("Tip Jar", systemImage: "heart")
+                    Label(String(localized: "settings.tip_jar"), systemImage: "heart")
                 }
                 .accessibilityIdentifier("settings.tipJarLink")
             }
             
-            Section("About") {
+            Section(String(localized: "settings.section.about")) {
                 HStack {
-                    Text("Version")
+                    Text(String(localized: "settings.about.version"))
                     Spacer()
                     Text(appVersionLabel)
                         .foregroundStyle(.secondary)
                 }
 
                 HStack {
-                    Text("Last backup")
+                    Text(String(localized: "settings.about.last_backup"))
                     Spacer()
                     Text(lastBackupLabel)
                         .foregroundStyle(.secondary)
@@ -123,7 +123,7 @@ struct SettingsScreen: View {
             }
         }
         .readableWidth()
-        .navigationTitle("Settings")
+        .navigationTitle(String(localized: "settings.title"))
         .scrollDismissesKeyboard(.interactively)
     }
 
@@ -135,7 +135,7 @@ struct SettingsScreen: View {
     }
 
     private var lastBackupLabel: String {
-        guard let d = prefs.lastBackupAt else { return "Never" }
-        return d.formatted(date: .abbreviated, time: .shortened)
+        guard let d = prefs.lastBackupAt else { return String(localized: "settings.about.never") }
+        return AppFormatting.dateTime(d)
     }
 }

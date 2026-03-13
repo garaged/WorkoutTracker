@@ -1,0 +1,2539 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    " " : {
+
+    },
+    "-15s" : {
+
+    },
+    "—" : {
+
+    },
+    "%@ %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "%@ mood" : {
+
+    },
+    "%@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
+    },
+    "%@. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@. %2$@"
+          }
+        }
+      }
+    },
+    "%lld" : {
+
+    },
+    "%lld exercises • %lld sets" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld exercises • %2$lld sets"
+          }
+        }
+      }
+    },
+    "%lld min" : {
+
+    },
+    "%lld selected" : {
+
+    },
+    "%lld sets" : {
+
+    },
+    "%lld weeks • %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld weeks • %2$@"
+          }
+        }
+      }
+    },
+    "%lld workouts" : {
+
+    },
+    "%lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
+    "%lldm" : {
+
+    },
+    "%llds" : {
+
+    },
+    "•" : {
+
+    },
+    "+" : {
+
+    },
+    "+15s" : {
+
+    },
+    "0" : {
+
+    },
+    "4w" : {
+
+    },
+    "12w" : {
+
+    },
+    "24w" : {
+
+    },
+    "A" : {
+
+    },
+    "A: %@" : {
+
+    },
+    "a11y.action.edit_routine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit routine"
+          }
+        }
+      }
+    },
+    "a11y.button.clear_logs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear logs"
+          }
+        }
+      }
+    },
+    "a11y.button.clear_logs_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deletes the current log file and starts a new one."
+          }
+        }
+      }
+    },
+    "a11y.button.close_workout" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close workout"
+          }
+        }
+      }
+    },
+    "a11y.button.copy_diagnostics" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy diagnostic info"
+          }
+        }
+      }
+    },
+    "a11y.button.copy_diagnostics_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copies app and device info to the clipboard."
+          }
+        }
+      }
+    },
+    "a11y.button.create_routine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create routine"
+          }
+        }
+      }
+    },
+    "a11y.button.export_backup" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export backup"
+          }
+        }
+      }
+    },
+    "a11y.button.export_backup_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Creates a backup file you can share or restore later."
+          }
+        }
+      }
+    },
+    "a11y.button.mark_complete" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark complete"
+          }
+        }
+      }
+    },
+    "a11y.button.mark_incomplete" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark incomplete"
+          }
+        }
+      }
+    },
+    "a11y.button.pause_workout" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause workout"
+          }
+        }
+      }
+    },
+    "a11y.button.schedule_for_today" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schedule for today"
+          }
+        }
+      }
+    },
+    "a11y.button.schedule_templates" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schedule templates"
+          }
+        }
+      }
+    },
+    "a11y.button.share_logs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share logs"
+          }
+        }
+      }
+    },
+    "a11y.button.share_logs_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens a share sheet with a text file containing recent app logs."
+          }
+        }
+      }
+    },
+    "a11y.button.show_pr_details" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show PR details"
+          }
+        }
+      }
+    },
+    "a11y.button.start_now" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start now"
+          }
+        }
+      }
+    },
+    "a11y.empty_state.generic.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add your first item to get started."
+          }
+        }
+      }
+    },
+    "a11y.empty_state.generic.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing here yet"
+          }
+        }
+      }
+    },
+    "a11y.empty_state.week_progress.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log a session to see trends, streaks, and insights."
+          }
+        }
+      }
+    },
+    "a11y.empty_state.week_progress.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No progress yet"
+          }
+        }
+      }
+    },
+    "a11y.hint.open_routine_editor" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the routine editor"
+          }
+        }
+      }
+    },
+    "a11y.picker.progress_window" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progress window"
+          }
+        }
+      }
+    },
+    "a11y.picker.progress_window_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changes how many weeks of data are shown."
+          }
+        }
+      }
+    },
+    "a11y.toggle.verbose_logging" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbose logging"
+          }
+        }
+      }
+    },
+    "a11y.toggle.verbose_logging_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When enabled, the app writes extra debug logs to help troubleshoot issues."
+          }
+        }
+      }
+    },
+    "Abandoned workout. View summary, start again (clone) or reopen." : {
+
+    },
+    "Actions" : {
+
+    },
+    "Actions for this activity (template instance)." : {
+
+    },
+    "Actions for this activity." : {
+
+    },
+    "Active Sessions" : {
+
+    },
+    "Activities" : {
+
+    },
+    "Activities: %lld" : {
+
+    },
+    "Activity" : {
+
+    },
+    "Activity actions (drag to resize)" : {
+
+    },
+    "Add" : {
+
+    },
+    "Add an asset name later." : {
+
+    },
+    "Add an item, pick an exercise, then set planned reps/weight/rest." : {
+
+    },
+    "Add Custom Equipment" : {
+
+    },
+    "Add Equipment" : {
+
+    },
+    "Add exercise" : {
+
+    },
+    "Add Exercise" : {
+
+    },
+    "Add exercises so this routine can generate sessions." : {
+
+    },
+    "Add items you have at home or at your gym." : {
+
+    },
+    "Add measurement" : {
+
+    },
+    "Add planned rows for this exercise." : {
+
+    },
+    "Add program to installed" : {
+
+    },
+    "Add program_catalog.json to your app bundle (Copy Bundle Resources)." : {
+
+    },
+    "Add set" : {
+
+    },
+    "Add tag" : {
+
+    },
+    "Add your first entry to start tracking trends." : {
+
+    },
+    "After scheduling, open start day in timeline" : {
+
+    },
+    "All" : {
+
+    },
+    "All required routines are installed." : {
+
+    },
+    "All-day" : {
+
+    },
+    "App: %@" : {
+
+    },
+    "App: %@ (%@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "App: %1$@ (%2$@)"
+          }
+        }
+      }
+    },
+    "Apply for next workout" : {
+
+    },
+    "Apply scope" : {
+
+    },
+    "Apply target for next workout" : {
+
+    },
+    "Archive" : {
+
+    },
+    "Archived" : {
+
+    },
+    "Attach Routine" : {
+
+    },
+    "Author" : {
+
+    },
+    "B" : {
+
+    },
+    "B: %@" : {
+
+    },
+    "Backup & Restore" : {
+
+    },
+    "Backup found" : {
+
+    },
+    "Best set" : {
+
+    },
+    "By Type" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Catalog" : {
+
+    },
+    "Catalog Empty" : {
+
+    },
+    "Changes which bundled exercise art set is shown for seeded and catalog exercises. Default uses the neutral dummy artwork." : {
+
+    },
+    "Checking requirements…" : {
+
+    },
+    "Choose…" : {
+
+    },
+    "Clear" : {
+
+    },
+    "Clear all" : {
+
+    },
+    "Clear Reflection" : {
+
+    },
+    "Close" : {
+
+    },
+    "Common" : {
+
+    },
+    "common.apply" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply"
+          }
+        }
+      }
+    },
+    "common.cancel" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "common.close" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        }
+      }
+    },
+    "common.delete" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "common.done" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "common.edit" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        }
+      }
+    },
+    "common.ok" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
+    },
+    "common.pause" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause"
+          }
+        }
+      }
+    },
+    "common.reset" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        }
+      }
+    },
+    "common.save" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        }
+      }
+    },
+    "common.search.routines" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search routines"
+          }
+        }
+      }
+    },
+    "common.start" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        }
+      }
+    },
+    "Compare" : {
+
+    },
+    "Complete a few sessions with this exercise to see a timeline." : {
+
+    },
+    "Complete a workout to populate exercises here." : {
+
+    },
+    "Complete sets in a workout session to see history here." : {
+
+    },
+    "Complete workouts to see them here." : {
+
+    },
+    "Completed only" : {
+
+    },
+    "Completed workout. View summary, start again (clone) or reopen." : {
+
+    },
+    "Conflicts" : {
+
+    },
+    "Contact" : {
+
+    },
+    "Copied" : {
+
+    },
+    "Copied to clipboard." : {
+
+    },
+    "Copy" : {
+
+    },
+    "Copy set" : {
+
+    },
+    "Copy support email" : {
+
+    },
+    "Copy/paste this into an issue or email. It’s generated locally on your device." : {
+
+    },
+    "Couldn’t load progress" : {
+
+    },
+    "Couldn’t load reflection stats" : {
+
+    },
+    "Couldn’t Save" : {
+
+    },
+    "Couldn't start workout" : {
+
+    },
+    "Couldn’t start workout" : {
+
+    },
+    "Create a routine first to use Workout activities." : {
+
+    },
+    "Create a routine to attach workouts to this template." : {
+
+    },
+    "Create an exercise to add it to routines." : {
+
+    },
+    "Create Rest between training days" : {
+
+    },
+    "Create schedule templates so Today is preloaded automatically." : {
+
+    },
+    "Create your first exercise to start building routines and tracking history." : {
+
+    },
+    "Created: %@" : {
+
+    },
+    "Custom" : {
+
+    },
+    "Daily" : {
+
+    },
+    "Database" : {
+
+    },
+    "Date" : {
+
+    },
+    "Day %lld" : {
+
+    },
+    "Days" : {
+
+    },
+    "Default start time" : {
+
+    },
+    "Delete" : {
+
+    },
+    "Delete activity" : {
+
+    },
+    "Delete schedule template" : {
+
+    },
+    "Delete set" : {
+
+    },
+    "Describe what happened (optional)" : {
+
+    },
+    "Details" : {
+
+    },
+    "Device: %@ • iOS %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Device: %1$@ • iOS %2$@"
+          }
+        }
+      }
+    },
+    "Dismiss coach suggestion" : {
+
+    },
+    "Dismiss undo" : {
+
+    },
+    "Dist (%@)" : {
+
+    },
+    "Distance" : {
+
+    },
+    "Distance (%@)" : {
+
+    },
+    "Done" : {
+
+    },
+    "Duration" : {
+
+    },
+    "Duration (min)" : {
+
+    },
+    "Duration: %@" : {
+
+    },
+    "e.g. Dip Station" : {
+
+    },
+    "Edit" : {
+
+    },
+    "Edit Activity" : {
+
+    },
+    "Edit Details" : {
+
+    },
+    "Edit Routine" : {
+
+    },
+    "Email Support" : {
+
+    },
+    "Enabled" : {
+
+    },
+    "End" : {
+
+    },
+    "End date" : {
+
+    },
+    "End date is inclusive (Calendar-style)." : {
+
+    },
+    "End date is inclusive (like Calendar)." : {
+
+    },
+    "End rest" : {
+
+    },
+    "Equipment" : {
+
+    },
+    "Error" : {
+
+    },
+    "Exercise" : {
+
+    },
+    "Exercise Images" : {
+
+    },
+    "Exercises" : {
+
+    },
+    "Export" : {
+
+    },
+    "Export produces a V2 pack (programs + routines + exercises). Scheduling is disabled unless routines exist." : {
+
+    },
+    "FAQ" : {
+
+    },
+    "Filter by equipment" : {
+
+    },
+    "Finish" : {
+
+    },
+    "format.duration.short.hours_minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@h %@m"
+          }
+        }
+      }
+    },
+    "format.duration.short.hours_minutes_seconds" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@h %@m %@s"
+          }
+        }
+      }
+    },
+    "format.duration.short.minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@m"
+          }
+        }
+      }
+    },
+    "format.duration.short.minutes_seconds" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@m %@s"
+          }
+        }
+      }
+    },
+    "format.duration.short.seconds" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@s"
+          }
+        }
+      }
+    },
+    "Full backup export isn’t configured yet. Add an exporter in SettingsScreen via .environment(\\.backupExporter, AppBackupExporter())." : {
+
+    },
+    "General" : {
+
+    },
+    "Generate Full Backup (ZIP)" : {
+
+    },
+    "Generate JSON Backup" : {
+
+    },
+    "Generated" : {
+
+    },
+    "Generic" : {
+
+    },
+    "Go to today" : {
+
+    },
+    "Has end time" : {
+
+    },
+    "Help & links" : {
+
+    },
+    "History" : {
+
+    },
+    "History for this day" : {
+
+    },
+    "How did it go?" : {
+
+    },
+    "Illustration Set" : {
+
+    },
+    "Import" : {
+
+    },
+    "Import a curated set of common exercises and a few starter routines. Safe to run multiple times." : {
+
+    },
+    "Import a program pack, or add one from the Catalog tab." : {
+
+    },
+    "Import Preview" : {
+
+    },
+    "Import Starter Pack" : {
+
+    },
+    "Import Starter Pack?" : {
+
+    },
+    "In progress since %@." : {
+
+    },
+    "Includes routines/exercises" : {
+
+    },
+    "Insights" : {
+
+    },
+    "Install required assets" : {
+
+    },
+    "Install the missing routines to enable scheduling." : {
+
+    },
+    "Installed" : {
+
+    },
+    "Installing..." : {
+
+    },
+    "Instructions" : {
+
+    },
+    "Interval" : {
+
+    },
+    "Issue description" : {
+
+    },
+    "Item notes (optional)" : {
+
+    },
+    "JSON is best for restore. ZIP is best for debugging (logs + settings + data snapshot)." : {
+
+    },
+    "Jump to the current day" : {
+
+    },
+    "kg" : {
+
+    },
+    "Kind" : {
+
+    },
+    "Lane" : {
+
+    },
+    "Lane %lld" : {
+
+    },
+    "Lane affects which column the block prefers when activities overlap." : {
+
+    },
+    "Latest" : {
+
+    },
+    "Level" : {
+
+    },
+    "Loading…" : {
+
+    },
+    "Log" : {
+
+    },
+    "Log a few sets and you’ll see trends here." : {
+
+    },
+    "Mappings" : {
+
+    },
+    "Mark as done" : {
+
+    },
+    "Mark as not done" : {
+
+    },
+    "Mark set completed" : {
+
+    },
+    "Mark set not completed" : {
+
+    },
+    "Measurement" : {
+
+    },
+    "Measurements" : {
+
+    },
+    "Metric" : {
+
+    },
+    "Missing illustration" : {
+
+    },
+    "Missing routine slugs:" : {
+
+    },
+    "Missing routines" : {
+
+    },
+    "Modality" : {
+
+    },
+    "Mode" : {
+
+    },
+    "Mood" : {
+
+    },
+    "Mood breakdown" : {
+
+    },
+    "Move" : {
+
+    },
+    "Name" : {
+
+    },
+    "New" : {
+
+    },
+    "New activity" : {
+
+    },
+    "New Activity" : {
+
+    },
+    "New Exercise" : {
+
+    },
+    "New Routine" : {
+
+    },
+    "Next day" : {
+
+    },
+    "Next target" : {
+
+    },
+    "Next up" : {
+
+    },
+    "No blocks" : {
+
+    },
+    "No Custom Equipment" : {
+
+    },
+    "No equipment tags yet." : {
+
+    },
+    "No exercise selected" : {
+
+    },
+    "No exercises" : {
+
+    },
+    "No exercises yet" : {
+
+    },
+    "No history yet" : {
+
+    },
+    "No illustration asset could be resolved for this exercise." : {
+
+    },
+    "No logged sets yet" : {
+
+    },
+    "No Measurements Yet" : {
+
+    },
+    "No media" : {
+
+    },
+    "No moods recorded in this window yet." : {
+
+    },
+    "No planned rows" : {
+
+    },
+    "No Programs Yet" : {
+
+    },
+    "No routine attached. Quick start or attach a routine." : {
+
+    },
+    "No routines yet" : {
+
+    },
+    "No routines yet. Create one in Routines first." : {
+
+    },
+    "No routines yet. Create one in Routines." : {
+
+    },
+    "No schedule templates" : {
+
+    },
+    "No sessions logged for this day." : {
+
+    },
+    "No sessions yet" : {
+
+    },
+    "No sets planned." : {
+
+    },
+    "No workouts" : {
+
+    },
+    "None" : {
+
+    },
+    "Not enough data" : {
+
+    },
+    "Not now" : {
+
+    },
+    "Note" : {
+
+    },
+    "Notes" : {
+
+    },
+    "Notes (optional)" : {
+
+    },
+    "Nothing is sent automatically. These options open your browser or mail app only when you tap them." : {
+
+    },
+    "OK" : {
+
+    },
+    "On conflict" : {
+
+    },
+    "One-time" : {
+
+    },
+    "Open" : {
+
+    },
+    "Open GitHub Issue" : {
+
+    },
+    "Optional" : {
+
+    },
+    "Optional. A quick mood + note makes it fun to look back later." : {
+
+    },
+    "Options" : {
+
+    },
+    "Overview" : {
+
+    },
+    "Overwrite actual fields" : {
+
+    },
+    "Pack" : {
+
+    },
+    "Pause" : {
+
+    },
+    "Pause workout" : {
+
+    },
+    "Personal Records" : {
+
+    },
+    "Pick 2 sessions to compare." : {
+
+    },
+    "Pick a routine so tapping this block can Start/Resume a session." : {
+
+    },
+    "Pick an exercise to see PRs, trends, and history." : {
+
+    },
+    "Pick Exercise" : {
+
+    },
+    "Pick Routine" : {
+
+    },
+    "Planned" : {
+
+    },
+    "Planned sets" : {
+
+    },
+    "Preferences snapshot: %@" : {
+
+    },
+    "Preparing starter pack…" : {
+
+    },
+    "Preview" : {
+
+    },
+    "Previous day" : {
+
+    },
+    "Privacy policy" : {
+
+    },
+    "Program" : {
+
+    },
+    "Program assets" : {
+
+    },
+    "Program Assets" : {
+
+    },
+    "Programs" : {
+
+    },
+    "Programs (%lld)" : {
+
+    },
+    "Progress" : {
+
+    },
+    "Quick Start" : {
+
+    },
+    "Range" : {
+
+    },
+    "Ready to start this routine." : {
+
+    },
+    "Recent" : {
+
+    },
+    "Recurrence" : {
+
+    },
+    "Reflection" : {
+
+    },
+    "Reflection rate" : {
+
+    },
+    "Reflections" : {
+
+    },
+    "Reinstall Catalog Assets" : {
+
+    },
+    "Reinstall is idempotent: it creates missing routines/exercises and refreshes the slug mapping without overwriting your custom routines." : {
+
+    },
+    "Reload tip options" : {
+
+    },
+    "Remote media" : {
+
+    },
+    "Reopen" : {
+
+    },
+    "Repeats" : {
+
+    },
+    "Report a bug" : {
+
+    },
+    "Reps" : {
+
+    },
+    "Required routines not installed" : {
+
+    },
+    "Reset and Reinstall Catalog Assets" : {
+
+    },
+    "Reset clears the slug → UUID mapping file. After reset, Programs may appear “not schedulable” until you reinstall catalog assets (this screen will do it for you)." : {
+
+    },
+    "Reset Program Asset Map" : {
+
+    },
+    "Reset Program Asset Map?" : {
+
+    },
+    "Resize" : {
+
+    },
+    "Rest" : {
+
+    },
+    "Restore" : {
+
+    },
+    "Restore Settings From Backup" : {
+
+    },
+    "Restore Workout Data" : {
+
+    },
+    "Resume" : {
+
+    },
+    "Resume current workout" : {
+
+    },
+    "Resume current workout?" : {
+
+    },
+    "Resume unfinished workouts here. Sessions from previous days can be finished quickly so they stop appearing on Home." : {
+
+    },
+    "Resume workout" : {
+
+    },
+    "Routine" : {
+
+    },
+    "Routines" : {
+
+    },
+    "routines.context.start" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        }
+      }
+    },
+    "routines.delete.confirmation.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This cannot be undone."
+          }
+        }
+      }
+    },
+    "routines.delete.confirmation.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete routine?"
+          }
+        }
+      }
+    },
+    "routines.empty.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create your first routine to reuse it in your calendar or start it instantly."
+          }
+        }
+      }
+    },
+    "routines.empty.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No routines yet"
+          }
+        }
+      }
+    },
+    "routines.row.starter_badge" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Starter"
+          }
+        }
+      }
+    },
+    "routines.row.tap_to_edit" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to edit"
+          }
+        }
+      }
+    },
+    "routines.schedule.confirmation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” scheduled for %@."
+          }
+        }
+      }
+    },
+    "routines.scheduled.open_calendar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Calendar"
+          }
+        }
+      }
+    },
+    "routines.scheduled.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scheduled"
+          }
+        }
+      }
+    },
+    "routines.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routines"
+          }
+        }
+      }
+    },
+    "Row" : {
+
+    },
+    "RPE" : {
+
+    },
+    "Save" : {
+
+    },
+    "Schedulable" : {
+
+    },
+    "Schedule" : {
+
+    },
+    "Schedule Program" : {
+
+    },
+    "Schedule Template" : {
+
+    },
+    "Schedule Templates" : {
+
+    },
+    "Schedule this program" : {
+
+    },
+    "Schema v%lld" : {
+
+    },
+    "Scope" : {
+
+    },
+    "Search routines or exercises" : {
+
+    },
+    "See all" : {
+
+    },
+    "Select 2 sessions to compare." : {
+
+    },
+    "Select JSON Backup File" : {
+
+    },
+    "session.abandon_workout.action" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abandon"
+          }
+        }
+      }
+    },
+    "session.abandon_workout.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This will mark the session as abandoned (not completed)."
+          }
+        }
+      }
+    },
+    "session.abandon_workout.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abandon session?"
+          }
+        }
+      }
+    },
+    "session.coach.next_set" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ next set"
+          }
+        }
+      }
+    },
+    "session.continue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        }
+      }
+    },
+    "session.empty.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create routines later. For now you can Quick Start and finish the session."
+          }
+        }
+      }
+    },
+    "session.empty.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No exercises yet"
+          }
+        }
+      }
+    },
+    "session.finish_workout.action" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish & Save"
+          }
+        }
+      }
+    },
+    "session.finish_workout.cancel" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep Logging"
+          }
+        }
+      }
+    },
+    "session.finish_workout.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This will mark the session as completed."
+          }
+        }
+      }
+    },
+    "session.finish_workout.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish workout?"
+          }
+        }
+      }
+    },
+    "session.finish.button" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish"
+          }
+        }
+      }
+    },
+    "session.next_target" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next: %@"
+          }
+        }
+      }
+    },
+    "session.pr.badge" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PR"
+          }
+        }
+      }
+    },
+    "session.pr.reps" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d reps"
+          }
+        }
+      }
+    },
+    "session.pr.section_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personal Records"
+          }
+        }
+      }
+    },
+    "session.pr.set_number" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set %d"
+          }
+        }
+      }
+    },
+    "session.pr.sheet_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PR"
+          }
+        }
+      }
+    },
+    "session.pr.toast_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PR!"
+          }
+        }
+      }
+    },
+    "session.progress.sets_value" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d/%d sets"
+          }
+        }
+      }
+    },
+    "session.progress.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progress"
+          }
+        }
+      }
+    },
+    "session.reflection.add" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Reflection"
+          }
+        }
+      }
+    },
+    "session.reflection.edit" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Reflection"
+          }
+        }
+      }
+    },
+    "session.reflection.mood" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mood"
+          }
+        }
+      }
+    },
+    "session.reflection.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reflection"
+          }
+        }
+      }
+    },
+    "session.rest.hide" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide Rest"
+          }
+        }
+      }
+    },
+    "session.rest.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest"
+          }
+        }
+      }
+    },
+    "session.resume" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        }
+      }
+    },
+    "session.status.abandoned" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abandoned"
+          }
+        }
+      }
+    },
+    "session.status.completed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed"
+          }
+        }
+      }
+    },
+    "session.status.in_progress" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In progress"
+          }
+        }
+      }
+    },
+    "session.summary.elapsed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elapsed"
+          }
+        }
+      }
+    },
+    "session.summary.ended" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ended"
+          }
+        }
+      }
+    },
+    "session.summary.paused" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused"
+          }
+        }
+      }
+    },
+    "session.summary.sets" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sets"
+          }
+        }
+      }
+    },
+    "session.summary.started" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Started"
+          }
+        }
+      }
+    },
+    "session.summary.status" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        }
+      }
+    },
+    "session.summary.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Summary"
+          }
+        }
+      }
+    },
+    "session.summary.volume" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume"
+          }
+        }
+      }
+    },
+    "session.target_prefill.applied_set" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Target applied to Set %d."
+          }
+        }
+      }
+    },
+    "session.target_prefill.applied_set_details" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Target applied to Set %d: %@"
+          }
+        }
+      }
+    },
+    "session.target_prefill.no_change" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Target already filled — nothing changed."
+          }
+        }
+      }
+    },
+    "session.time.minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time (min)"
+          }
+        }
+      }
+    },
+    "session.title.fallback" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout"
+          }
+        }
+      }
+    },
+    "Sessions" : {
+
+    },
+    "Set %lld" : {
+
+    },
+    "Set end time" : {
+
+    },
+    "Set plans" : {
+
+    },
+    "Settings" : {
+
+    },
+    "settings.about.last_backup" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last backup"
+          }
+        }
+      }
+    },
+    "settings.about.never" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Never"
+          }
+        }
+      }
+    },
+    "settings.about.version" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version"
+          }
+        }
+      }
+    },
+    "settings.backup.restore" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup & Restore"
+          }
+        }
+      }
+    },
+    "settings.feedback" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback"
+          }
+        }
+      }
+    },
+    "settings.programs.assets" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Program Assets"
+          }
+        }
+      }
+    },
+    "settings.programs.library" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programs"
+          }
+        }
+      }
+    },
+    "settings.section.about" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About"
+          }
+        }
+      }
+    },
+    "settings.section.backup" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup"
+          }
+        }
+      }
+    },
+    "settings.section.diagnostics" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnostics"
+          }
+        }
+      }
+    },
+    "settings.section.programs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programs"
+          }
+        }
+      }
+    },
+    "settings.section.support" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support"
+          }
+        }
+      }
+    },
+    "settings.section.units" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Units"
+          }
+        }
+      }
+    },
+    "settings.section.workout_cues" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout cues"
+          }
+        }
+      }
+    },
+    "settings.tip_jar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tip Jar"
+          }
+        }
+      }
+    },
+    "settings.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        }
+      }
+    },
+    "settings.units.distance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance unit"
+          }
+        }
+      }
+    },
+    "settings.units.help" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weight is converted for display and entry using your selected unit. Cardio distance is stored internally in kilometers and converted in routine planning and workout logging when needed."
+          }
+        }
+      }
+    },
+    "settings.units.weight" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weight unit"
+          }
+        }
+      }
+    },
+    "settings.verbose_logging" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbose logging"
+          }
+        }
+      }
+    },
+    "settings.workout_cues.auto_start_rest" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto-start rest timer"
+          }
+        }
+      }
+    },
+    "settings.workout_cues.haptics" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptics"
+          }
+        }
+      }
+    },
+    "settings.workout_cues.help" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest sound cues play at rest start, at 3, 2, and 1 seconds remaining, and again when rest finishes. They obey silent mode and should not interrupt music."
+          }
+        }
+      }
+    },
+    "settings.workout_cues.rest_sound" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest sound cues"
+          }
+        }
+      }
+    },
+    "Share" : {
+
+    },
+    "Share Full Backup" : {
+
+    },
+    "Share JSON Backup" : {
+
+    },
+    "Skip today" : {
+
+    },
+    "Skipped" : {
+
+    },
+    "Sleep, energy, what felt strong, what to fix next time…" : {
+
+    },
+    "Start" : {
+
+    },
+    "Start a routine to create your first session." : {
+
+    },
+    "Start date" : {
+
+    },
+    "Start new session" : {
+
+    },
+    "Start Quick Workout" : {
+
+    },
+    "Start time" : {
+
+    },
+    "Start workout and apply target" : {
+
+    },
+    "Start workout with this exercise" : {
+
+    },
+    "Starter Pack" : {
+
+    },
+    "Status" : {
+
+    },
+    "Stop" : {
+
+    },
+    "Stop workout" : {
+
+    },
+    "Style" : {
+
+    },
+    "Summary" : {
+
+    },
+    "Support" : {
+
+    },
+    "Support page" : {
+
+    },
+    "Support summary" : {
+
+    },
+    "Tags" : {
+
+    },
+    "Tags are stored as canonical keys (letters/numbers only)." : {
+
+    },
+    "Tap + to add" : {
+
+    },
+    "Tap a point to open that session." : {
+
+    },
+    "Template activity" : {
+
+    },
+    "Thank you!" : {
+
+    },
+    "This does not delete routines or exercises from the database — it only clears the mapping file. We will reinstall catalog assets immediately after." : {
+
+    },
+    "This exercise is notes-only." : {
+
+    },
+    "This installs routines/exercises from the bundled catalog (if available). Imported packs should be re-imported if their assets are missing." : {
+
+    },
+    "This only happens on first launch so Workout activities have routines ready immediately." : {
+
+    },
+    "This program can’t be scheduled until its routines exist in your library (V2 rule)." : {
+
+    },
+    "This routine will be attached to every generated workout activity from this schedule template." : {
+
+    },
+    "Time" : {
+
+    },
+    "Timeline" : {
+
+    },
+    "Tip Jar" : {
+
+    },
+    "Tip: include steps to reproduce, what you expected, and what happened instead." : {
+
+    },
+    "Tip: Long-press tiles later for quick actions (e.g., “Start workout”, “Add exercise”)." : {
+
+    },
+    "Title" : {
+
+    },
+    "Today" : {
+
+    },
+    "Total" : {
+
+    },
+    "Totals" : {
+
+    },
+    "Track %@ as" : {
+
+    },
+    "Tracking" : {
+
+    },
+    "Training days" : {
+
+    },
+    "Trend" : {
+
+    },
+    "Type" : {
+
+    },
+    "UITest: Set Workout kind" : {
+
+    },
+    "Unarchive" : {
+
+    },
+    "Undo" : {
+
+    },
+    "Unit" : {
+
+    },
+    "Value" : {
+
+    },
+    "Version" : {
+
+    },
+    "View full history" : {
+
+    },
+    "View Summary" : {
+
+    },
+    "Volume uses your preferred unit (%@)." : {
+
+    },
+    "Volume: %@ %@·reps" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Volume: %1$@ %2$@·reps"
+          }
+        }
+      }
+    },
+    "Warnings" : {
+
+    },
+    "We’ll support loading remote video/GIF later." : {
+
+    },
+    "Weekly" : {
+
+    },
+    "Weeks" : {
+
+    },
+    "Weight" : {
+
+    },
+    "When" : {
+
+    },
+    "Window" : {
+
+    },
+    "Window: %@" : {
+
+    },
+    "Wire your existing History screen here." : {
+
+    },
+    "Workout" : {
+
+    },
+    "Workout restore replaces the current backed-up data snapshot in this app install. Use a fresh JSON backup first if you want a rollback point." : {
+
+    },
+    "Workout Tracker" : {
+
+    },
+    "Workouts" : {
+
+    },
+    "Workouts: %lld" : {
+
+    },
+    "WorkoutTracker is free and open-source. If you want to support ongoing development, you can leave a tip here. Nothing is locked behind payment." : {
+
+    },
+    "You already have an in-progress workout (%@)." : {
+
+    },
+    "Your support helps keep the project healthy." : {
+
+    },
+    "Δ" : {
+
+    }
+  },
+  "version" : "1.0"
+}

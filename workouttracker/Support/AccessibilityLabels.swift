@@ -10,35 +10,50 @@ import Foundation
 /// Tip: Keep these short and action-oriented.
 enum AccessibilityLabels {
     enum Toggles {
-        static let verboseLogging = "Verbose logging"
-        static let verboseLoggingHint = "When enabled, the app writes extra debug logs to help troubleshoot issues."
+        static var verboseLogging: String { String(localized: "a11y.toggle.verbose_logging") }
+        static var verboseLoggingHint: String { String(localized: "a11y.toggle.verbose_logging_hint") }
     }
 
-
     enum EmptyStates {
-        static let weekProgressTitle = "No progress yet"
-        static let weekProgressMessage = "Log a session to see trends, streaks, and insights."
+        static var weekProgressTitle: String { String(localized: "a11y.empty_state.week_progress.title") }
+        static var weekProgressMessage: String { String(localized: "a11y.empty_state.week_progress.message") }
 
-        static let genericTitle = "Nothing here yet"
-        static let genericMessage = "Add your first item to get started."
+        static var genericTitle: String { String(localized: "a11y.empty_state.generic.title") }
+        static var genericMessage: String { String(localized: "a11y.empty_state.generic.message") }
     }
 
     enum Buttons {
-        static let shareLogs = "Share logs"
-        static let shareLogsHint = "Opens a share sheet with a text file containing recent app logs."
+        static var shareLogs: String { String(localized: "a11y.button.share_logs") }
+        static var shareLogsHint: String { String(localized: "a11y.button.share_logs_hint") }
 
-        static let exportBackup = "Export backup"
-        static let exportBackupHint = "Creates a backup file you can share or restore later."
+        static var exportBackup: String { String(localized: "a11y.button.export_backup") }
+        static var exportBackupHint: String { String(localized: "a11y.button.export_backup_hint") }
 
-        static let copyDiagnostics = "Copy diagnostic info"
-        static let copyDiagnosticsHint = "Copies app and device info to the clipboard."
+        static var copyDiagnostics: String { String(localized: "a11y.button.copy_diagnostics") }
+        static var copyDiagnosticsHint: String { String(localized: "a11y.button.copy_diagnostics_hint") }
 
-        static let clearLogs = "Clear logs"
-        static let clearLogsHint = "Deletes the current log file and starts a new one."
+        static var clearLogs: String { String(localized: "a11y.button.clear_logs") }
+        static var clearLogsHint: String { String(localized: "a11y.button.clear_logs_hint") }
+
+        static var scheduleForToday: String { String(localized: "a11y.button.schedule_for_today") }
+        static var startNow: String { String(localized: "a11y.button.start_now") }
+        static var closeWorkout: String { String(localized: "a11y.button.close_workout") }
+        static var createRoutine: String { String(localized: "a11y.button.create_routine") }
+        static var scheduleTemplates: String { String(localized: "a11y.button.schedule_templates") }
+        static var pauseWorkout: String { String(localized: "a11y.button.pause_workout") }
+        static var showPRDetails: String { String(localized: "a11y.button.show_pr_details") }
+    }
+
+    enum Hints {
+        static var openRoutineEditor: String { String(localized: "a11y.hint.open_routine_editor") }
+    }
+
+    enum Actions {
+        static var editRoutine: String { String(localized: "a11y.action.edit_routine") }
     }
 
     enum Pickers {
-        static let progressWindow = "Progress window"
-        static let progressWindowHint = "Changes how many weeks of data are shown."
+        static var progressWindow: String { String(localized: "a11y.picker.progress_window") }
+        static var progressWindowHint: String { String(localized: "a11y.picker.progress_window_hint") }
     }
 }

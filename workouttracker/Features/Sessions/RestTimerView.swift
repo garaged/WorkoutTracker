@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 struct RestTimerView: View {
     let presets: [Int]
@@ -65,10 +66,10 @@ struct RestTimerView: View {
 
     private var titleAndTimer: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text("Rest")
+            Text(String(localized: "session.rest.title"))
                 .font(.subheadline.weight(.semibold))
 
-            Text(timeString(timer.remainingSeconds))
+            Text(AppFormatting.duration(seconds: timer.remainingSeconds))
                 .font(
                     .system(
                         isCompactLayout ? .title3 : .title2,
@@ -110,7 +111,7 @@ struct RestTimerView: View {
                 playStartCue: UserPreferences.shared.autoStartRest
             )
         } label: {
-            Text(labelForPreset(seconds))
+            Text(AppFormatting.shortDuration(seconds: seconds))
                 .font(.caption.weight(.semibold))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
@@ -130,7 +131,7 @@ struct RestTimerView: View {
             }
         } label: {
             Label(
-                timer.isRunning ? "Pause" : "Start",
+                timer.isRunning ? String(localized: "common.pause") : String(localized: "common.start"),
                 systemImage: timer.isRunning ? "pause.fill" : "play.fill"
             )
             .font(.subheadline.weight(.semibold))
@@ -143,7 +144,7 @@ struct RestTimerView: View {
         Button {
             timer.reset()
         } label: {
-            Label("Reset", systemImage: "arrow.counterclockwise")
+            Label(String(localized: "common.reset"), systemImage: "arrow.counterclockwise")
                 .font(.subheadline.weight(.semibold))
         }
         .buttonStyle(.bordered)
@@ -151,15 +152,4 @@ struct RestTimerView: View {
         .disabled(timer.totalSeconds <= 0)
     }
 
-    private func timeString(_ s: Int) -> String {
-        let m = s / 60
-        let r = s % 60
-        return String(format: "%d:%02d", m, r)
-    }
-
-    private func labelForPreset(_ s: Int) -> String {
-        if s < 60 { return "\(s)s" }
-        if s % 60 == 0 { return "\(s / 60)m" }
-        return "\(s / 60)m \(s % 60)s"
-    }
 }

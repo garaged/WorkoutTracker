@@ -70,9 +70,9 @@ struct RoutinesScreen: View {
         List {
             if data.isEmpty {
                 ContentUnavailableView(
-                    "No routines yet",
+                    String(localized: "routines.empty.title"),
                     systemImage: "list.bullet.rectangle.portrait",
-                    description: Text("Create your first routine to reuse it in your calendar or start it instantly.")
+                    description: Text(String(localized: "routines.empty.message"))
                 )
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
@@ -92,28 +92,28 @@ struct RoutinesScreen: View {
         }
         .readableWidth()
         .platformListChrome(platform)
-        .navigationTitle("Routines")
+        .navigationTitle(String(localized: "routines.title"))
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, prompt: "Search routines")
+        .searchable(text: $searchText, prompt: String(localized: "common.search.routines"))
         .toolbar { toolbarContent }
         .navigationDestination(isPresented: $navToCalendar) {
             DayTimelineEntryScreen(initialDay: calendarInitialDay)
         }
-        .alert("Scheduled", isPresented: $showScheduledAlert) {
-            Button("Open Calendar") { navToCalendar = true }
-            Button("OK", role: .cancel) {}
+        .alert(String(localized: "routines.scheduled.title"), isPresented: $showScheduledAlert) {
+            Button(String(localized: "routines.scheduled.open_calendar")) { navToCalendar = true }
+            Button(String(localized: "common.ok"), role: .cancel) {}
         } message: {
             Text(scheduledMessage)
         }
         .confirmationDialog(
-            "Delete routine?",
+            String(localized: "routines.delete.confirmation.title"),
             isPresented: $showDeleteConfirm,
             titleVisibility: .visible
         ) {
-            Button("Delete", role: .destructive) { deleteConfirmed() }
-            Button("Cancel", role: .cancel) {}
+            Button(String(localized: "common.delete"), role: .destructive) { deleteConfirmed() }
+            Button(String(localized: "common.cancel"), role: .cancel) {}
         } message: {
-            Text("This cannot be undone.")
+            Text(String(localized: "routines.delete.confirmation.message"))
         }
         .fullScreenCover(isPresented: $showSessionCover) {
             NavigationStack {
@@ -127,7 +127,7 @@ struct RoutinesScreen: View {
                                 } label: {
                                     Image(systemName: "xmark")
                                 }
-                                .accessibilityLabel("Close workout")
+                                .accessibilityLabel(AccessibilityLabels.Buttons.closeWorkout)
                             }
                         }
                 } else {
@@ -151,14 +151,14 @@ struct RoutinesScreen: View {
             } label: {
                 Image(systemName: "wand.and.stars")
             }
-            .accessibilityLabel("Schedule Templates")
+            .accessibilityLabel(AccessibilityLabels.Buttons.scheduleTemplates)
 
             Button {
                 presentedEditor = .create
             } label: {
                 Image(systemName: "plus")
             }
-            .accessibilityLabel("Create routine")
+            .accessibilityLabel(AccessibilityLabels.Buttons.createRoutine)
         }
     }
 
@@ -167,7 +167,7 @@ struct RoutinesScreen: View {
     }
 
     private func starterBadgeText(for routine: WorkoutRoutine) -> String? {
-        routine.name.hasPrefix("Starter —") ? "Starter" : nil
+        routine.name.hasPrefix("Starter —") ? String(localized: "routines.row.starter_badge") : nil
     }
 
     private func confirmDelete(_ routine: WorkoutRoutine) {
@@ -246,7 +246,7 @@ struct RoutinesScreen: View {
         modelContext.insert(a)
         try? modelContext.save()
 
-        scheduledMessage = "“\(routine.name)” scheduled for \(start.formatted(.dateTime.hour().minute()))."
+        scheduledMessage = String(format: String(localized: "routines.schedule.confirmation"), routine.name, AppFormatting.time(start))
         showScheduledAlert = true
         calendarInitialDay = todayStart
     }

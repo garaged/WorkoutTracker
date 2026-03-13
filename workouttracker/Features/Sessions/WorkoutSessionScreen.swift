@@ -105,7 +105,7 @@ struct WorkoutSessionScreen: View {
                     exercisesSection(proxy: proxy)
                 }
                 .accessibilityIdentifier("WorkoutSession.Screen")
-                .navigationTitle(session.sourceRoutineNameSnapshot ?? "Workout")
+                .navigationTitle(session.sourceRoutineNameSnapshot ?? String(localized: "session.title.fallback"))
                 .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
@@ -122,24 +122,24 @@ struct WorkoutSessionScreen: View {
                 }
                 .toolbar { toolbarContent }
                 .confirmationDialog(
-                    "Finish workout?",
+                    String(localized: "session.finish_workout.title"),
                     isPresented: $showFinishConfirm,
                     titleVisibility: .visible
                 ) {
-                    Button("Finish & Save", role: .destructive) { finish() }
-                    Button("Keep Logging", role: .cancel) { }
+                    Button(String(localized: "session.finish_workout.action"), role: .destructive) { finish() }
+                    Button(String(localized: "session.finish_workout.cancel"), role: .cancel) { }
                 } message: {
-                    Text("This will mark the session as completed.")
+                    Text(String(localized: "session.finish_workout.message"))
                 }
                 .confirmationDialog(
-                    "Abandon session?",
+                    String(localized: "session.abandon_workout.title"),
                     isPresented: $showAbandonConfirm,
                     titleVisibility: .visible
                 ) {
-                    Button("Abandon", role: .destructive) { abandon() }
-                    Button("Cancel", role: .cancel) { }
+                    Button(String(localized: "session.abandon_workout.action"), role: .destructive) { abandon() }
+                    Button(String(localized: "common.cancel"), role: .cancel) { }
                 } message: {
-                    Text("This will mark the session as abandoned (not completed).")
+                    Text(String(localized: "session.abandon_workout.message"))
                 }
                 .task(id: session.id) {
                     await applyGoalPrefillIfNeeded()
@@ -196,7 +196,7 @@ struct WorkoutSessionScreen: View {
             exercisesSection(proxy: proxy)
         }
         .accessibilityIdentifier("WorkoutSession.Screen.List")
-        .navigationTitle(session.sourceRoutineNameSnapshot ?? "Workout")
+        .navigationTitle(session.sourceRoutineNameSnapshot ?? String(localized: "session.title.fallback"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
@@ -204,24 +204,24 @@ struct WorkoutSessionScreen: View {
         .safeAreaInset(edge: .bottom) { bottomInset(proxy: proxy) }
         .toolbar { toolbarContent }
         .confirmationDialog(
-            "Finish workout?",
+            String(localized: "session.finish_workout.title"),
             isPresented: $showFinishConfirm,
             titleVisibility: .visible
         ) {
-            Button("Finish & Save", role: .destructive) { finish() }
-            Button("Keep Logging", role: .cancel) { }
+            Button(String(localized: "session.finish_workout.action"), role: .destructive) { finish() }
+            Button(String(localized: "session.finish_workout.cancel"), role: .cancel) { }
         } message: {
-            Text("This will mark the session as completed.")
+            Text(String(localized: "session.finish_workout.message"))
         }
         .confirmationDialog(
-            "Abandon session?",
+            String(localized: "session.abandon_workout.title"),
             isPresented: $showAbandonConfirm,
             titleVisibility: .visible
         ) {
-            Button("Abandon", role: .destructive) { abandon() }
-            Button("Cancel", role: .cancel) { }
+            Button(String(localized: "session.abandon_workout.action"), role: .destructive) { abandon() }
+            Button(String(localized: "common.cancel"), role: .cancel) { }
         } message: {
-            Text("This will mark the session as abandoned (not completed).")
+            Text(String(localized: "session.abandon_workout.message"))
         }
         .task(id: session.id) {
             await applyGoalPrefillIfNeeded()
@@ -257,24 +257,24 @@ struct WorkoutSessionScreen: View {
     private var headerSection: some View {
         Section {
             HStack {
-                LabeledContent("Started") {
-                    Text(session.startedAt, format: .dateTime.hour().minute())
+                LabeledContent(String(localized: "session.summary.started")) {
+                    Text(AppFormatting.time(session.startedAt))
                 }
                 Spacer()
-                LabeledContent("Status") {
+                LabeledContent(String(localized: "session.summary.status")) {
                     Text(statusLabel)
                         .foregroundStyle(session.status == .inProgress ? .secondary : .primary)
                 }
             }
 
             HStack {
-                LabeledContent("Elapsed") {
-                    Text(timeString(session.elapsedSeconds()))
+                LabeledContent(String(localized: "session.summary.elapsed")) {
+                    Text(AppFormatting.duration(seconds: session.elapsedSeconds()))
                         .monospacedDigit()
                 }
                 Spacer()
                 if session.isPaused {
-                    Text("Paused").font(.caption).foregroundStyle(.secondary)
+                    Text(String(localized: "session.summary.paused")).font(.caption).foregroundStyle(.secondary)
                 }
             }
 
@@ -282,9 +282,9 @@ struct WorkoutSessionScreen: View {
             let totalSets = allSets.count
 
             ProgressView(value: totalSets == 0 ? 0 : Double(completedSets) / Double(totalSets)) {
-                Text("Progress")
+                Text(String(localized: "session.progress.title"))
             } currentValueLabel: {
-                Text("\(completedSets)/\(max(totalSets, 1)) sets")
+                Text(String(format: String(localized: "session.progress.sets_value"), completedSets, max(totalSets, 1)))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -294,7 +294,7 @@ struct WorkoutSessionScreen: View {
     private var summarySectionIfReadOnly: some View {
         Group {
             if isReadOnly {
-                Section("Summary") {
+                Section(String(localized: "session.summary.title")) {
                     let completedSets = allSets.filter(\.completed).count
                     let totalSets = allSets.count
 
@@ -305,23 +305,23 @@ struct WorkoutSessionScreen: View {
                         return acc + (reps * w)
                     }
 
-                    LabeledContent("Sets") { Text("\(completedSets)/\(totalSets)") }
+                    LabeledContent(String(localized: "session.summary.sets")) { Text("\(completedSets)/\(totalSets)") }
 
-                    LabeledContent("Volume") {
-                        Text(String(format: "%.0f", volume))
+                    LabeledContent(String(localized: "session.summary.volume")) {
+                        Text(AppFormatting.decimal(volume, maxFractionDigits: 0))
                             .foregroundStyle(.secondary)
                     }
 
                     if let endedAt = session.endedAt {
-                        LabeledContent("Ended") {
-                            Text(endedAt, format: .dateTime.hour().minute())
+                        LabeledContent(String(localized: "session.summary.ended")) {
+                            Text(AppFormatting.time(endedAt))
                         }
                     }
                 }
 
-                Section("Reflection") {
+                Section(String(localized: "session.reflection.title")) {
                     if let mood = session.reflectionMood {
-                        LabeledContent("Mood") {
+                        LabeledContent(String(localized: "session.reflection.mood")) {
                             Text(mood.displayText)
                         }
                     }
@@ -333,7 +333,7 @@ struct WorkoutSessionScreen: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    Button(hasReflection ? "Edit Reflection" : "Add Reflection") {
+                    Button(hasReflection ? String(localized: "session.reflection.edit") : String(localized: "session.reflection.add")) {
                         dismissAfterReflectionSheet = false
                         showReflectionSheet = true
                     }
@@ -359,9 +359,9 @@ struct WorkoutSessionScreen: View {
 
     private var statusLabel: String {
         switch session.status {
-        case .inProgress: return "In progress"
-        case .completed: return "Completed"
-        case .abandoned: return "Abandoned"
+        case .inProgress: return String(localized: "session.status.in_progress")
+        case .completed: return String(localized: "session.status.completed")
+        case .abandoned: return String(localized: "session.status.abandoned")
         }
     }
     
@@ -449,9 +449,9 @@ struct WorkoutSessionScreen: View {
     private var emptyExercisesSection: some View {
         Section {
             ContentUnavailableView(
-                "No exercises yet",
+                String(localized: "session.empty.title"),
                 systemImage: "dumbbell",
-                description: Text("Create routines later. For now you can Quick Start and finish the session.")
+                description: Text(String(localized: "session.empty.message"))
             )
         }
     }
@@ -480,14 +480,14 @@ struct WorkoutSessionScreen: View {
 
             if isInProgress, let t = nextTargets[ex.exerciseId] {
                 HStack(spacing: 8) {
-                    Text("Next: \(t.text)")
+                    Text(String(format: String(localized: "session.next_target"), t.text))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
 
                     Spacer(minLength: 8)
 
-                    Button("Apply") {
+                    Button(String(localized: "common.apply")) {
                         applyPinnedTarget(for: ex)
                     }
                     .font(.caption.weight(.semibold))
@@ -668,8 +668,8 @@ struct WorkoutSessionScreen: View {
             title: ctx.prompt.title,
             message: ctx.prompt.message,
             suggestedRestSeconds: ctx.prompt.suggestedRestSeconds,
-            weightActionTitle: ctx.prompt.weightLabel.map { "\($0) next set" },
-            repsActionTitle: ctx.prompt.repsLabel.map { "\($0) next set" },
+            weightActionTitle: ctx.prompt.weightLabel.map { String(format: String(localized: "session.coach.next_set"), $0) },
+            repsActionTitle: ctx.prompt.repsLabel.map { String(format: String(localized: "session.coach.next_set"), $0) },
             onApplyWeight: ctx.prompt.weightDelta == nil ? nil : { applyCoachWeight(ctx, proxy: proxy) },
             onApplyReps: ctx.prompt.repsDelta == nil ? nil : { applyCoachReps(ctx, proxy: proxy) },
             onStartRest: {
@@ -702,7 +702,7 @@ struct WorkoutSessionScreen: View {
                 continueLogging(proxy: proxy)
             } label: {
                 Label(
-                    session.isPaused ? "Resume" : "Continue",
+                    session.isPaused ? String(localized: "session.resume") : String(localized: "session.continue"),
                     systemImage: session.isPaused ? "play.fill" : "arrow.down.to.line"
                 )
             }
@@ -721,13 +721,13 @@ struct WorkoutSessionScreen: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
-                .accessibilityLabel("Pause")
+                .accessibilityLabel(AccessibilityLabels.Buttons.pauseWorkout)
             }
 
             Button {
                 showFinishConfirm = true
             } label: {
-                Label("Finish", systemImage: "checkmark.circle")
+                Label(String(localized: "session.finish.button"), systemImage: "checkmark.circle")
             }
             .accessibilityIdentifier("WorkoutSession.FinishButton")
             .buttonStyle(.bordered)
@@ -761,7 +761,7 @@ struct WorkoutSessionScreen: View {
                     }
                 } label: {
                     Label(
-                        showRestTimer ? "Hide Rest" : "Rest",
+                        showRestTimer ? String(localized: "session.rest.hide") : String(localized: "session.rest.title"),
                         systemImage: showRestTimer ? "timer.circle.fill" : "timer.circle"
                     )
                 }
@@ -772,14 +772,14 @@ struct WorkoutSessionScreen: View {
         ToolbarItem(placement: .topBarTrailing) {
             if isInProgress {
                 Menu {
-                    Button("Abandon", systemImage: "xmark.circle", role: .destructive) {
+                    Button(String(localized: "session.abandon_workout.action"), systemImage: "xmark.circle", role: .destructive) {
                         showAbandonConfirm = true
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
             } else {
-                Button("Close") { dismiss() }
+                Button(String(localized: "common.close")) { dismiss() }
                     .fontWeight(.semibold)
             }
         }
@@ -829,11 +829,6 @@ struct WorkoutSessionScreen: View {
         catch { assertionFailure("Failed to save (\(label)): \(error)") }
     }
 
-    private func timeString(_ s: Int) -> String {
-        let m = s / 60
-        let r = s % 60
-        return String(format: "%d:%02d", m, r)
-    }
     
     private func markActive(exerciseID: UUID, setID: UUID?) {
         activeExerciseID = exerciseID
@@ -974,7 +969,7 @@ struct WorkoutSessionScreen: View {
                             unit: set.weightUnit.rawValue
                         )
                     } label: {
-                        Text("PR")
+                        Text(String(localized: "session.pr.badge"))
                             .font(.caption2.weight(.bold))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
@@ -983,7 +978,7 @@ struct WorkoutSessionScreen: View {
                     }
                     .buttonStyle(.plain)
                     .padding(.top, 6)
-                    .accessibilityLabel("Show PR details")
+                    .accessibilityLabel(AccessibilityLabels.Buttons.showPRDetails)
                 }
             }
         }
@@ -1042,7 +1037,7 @@ struct WorkoutSessionScreen: View {
         // ✅ Banner feedback (always, so user knows what happened)
         let msg = changed
             ? bannerMessageApplied(target: target, setNumber: displaySetNumber(for: set, in: ex), unit: set.weightUnit.rawValue)
-            : "Target already filled — nothing changed."
+            : String(localized: "session.target_prefill.no_change")
 
         showTargetAppliedBanner(msg)
     }
@@ -1069,18 +1064,18 @@ struct WorkoutSessionScreen: View {
     private func bannerMessageApplied(target: GoalPrefillStore.Prefill, setNumber: Int, unit: String) -> String {
         var parts: [String] = []
         if let w = target.weight { parts.append("\(formatWeight(w)) \(unit)") }
-        if let r = target.reps { parts.append("\(r) reps") }
+        if let r = target.reps { parts.append(String(format: String(localized: "session.pr.reps"), r)) }
 
         if parts.isEmpty {
-            return "Target applied to Set \(setNumber)."
+            return String(format: String(localized: "session.target_prefill.applied_set"), setNumber)
         } else {
-            return "Target applied to Set \(setNumber): " + parts.joined(separator: " • ")
+            return String(format: String(localized: "session.target_prefill.applied_set_details"), setNumber, parts.joined(separator: " • "))
         }
     }
 
     private func formatWeight(_ w: Double) -> String {
-        if w.rounded() == w { return String(Int(w)) }
-        return String(format: "%.1f", w)
+        if w.rounded() == w { return AppFormatting.decimal(w, maxFractionDigits: 0) }
+        return AppFormatting.decimal(w, maxFractionDigits: 1)
     }
 
     private struct TargetAppliedBannerView: View {
@@ -1289,7 +1284,7 @@ struct WorkoutSessionScreen: View {
         prBadgesBySetId[set.id] = achievements
 
         // 2) Toast message
-        let headline = "PR!"
+        let headline = String(localized: "session.pr.toast_title")
         let subtitle = achievements
             .map { "\($0.kind.rawValue): \($0.valueText)" }
             .joined(separator: " • ")
@@ -1324,18 +1319,18 @@ struct WorkoutSessionScreen: View {
                                 .font(.headline)
 
                             HStack(spacing: 10) {
-                                Text("Set \(ctx.setNumber)")
+                                Text(String(format: String(localized: "session.pr.set_number"), ctx.setNumber))
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
 
                                 Spacer()
 
                                 if let w = ctx.weight {
-                                    Text("\(formatWeight(w)) \(ctx.unit)")
+                                    Text("\(AppFormatting.decimal(w, maxFractionDigits: 1)) \(ctx.unit)")
                                         .font(.subheadline.weight(.semibold))
                                 }
                                 if let r = ctx.reps {
-                                    Text("\(r) reps")
+                                    Text(String(format: String(localized: "session.pr.reps"), r))
                                         .font(.subheadline.weight(.semibold))
                                 }
                             }
@@ -1343,7 +1338,7 @@ struct WorkoutSessionScreen: View {
                         .padding(.vertical, 4)
                     }
 
-                    Section("Personal Records") {
+                    Section(String(localized: "session.pr.section_title")) {
                         ForEach(Array(ctx.achievements.enumerated()), id: \.offset) { _, a in
                             HStack(spacing: 10) {
                                 Image(systemName: "trophy.fill")
@@ -1363,21 +1358,18 @@ struct WorkoutSessionScreen: View {
                         }
                     }
                 }
-                .navigationTitle("PR")
+                .navigationTitle(String(localized: "session.pr.sheet_title"))
                 .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Done") { dismiss() }
+                        Button(String(localized: "common.done")) { dismiss() }
                     }
                 }
             }
         }
 
-        private func formatWeight(_ w: Double) -> String {
-            w.rounded() == w ? String(Int(w)) : String(format: "%.1f", w)
-        }
     }
 
     @MainActor
@@ -1464,7 +1456,7 @@ struct WorkoutSessionScreen: View {
                 .buttonStyle(.plain)
                 .frame(width: 36, alignment: .trailing)
                 .layoutPriority(2)
-                .accessibilityLabel(set.completed ? "Mark incomplete" : "Mark complete")
+                .accessibilityLabel(set.completed ? String(localized: "a11y.button.mark_incomplete") : String(localized: "a11y.button.mark_complete"))
                 .accessibilityIdentifier("WorkoutSetEditorRow.\(set.id.uuidString).DoneToggle")
                 .disabled(isReadOnly)
             }
@@ -1495,7 +1487,7 @@ struct WorkoutSessionScreen: View {
 
         private var durationField: some View {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Time (min)")
+                Text(String(localized: "session.time.minutes"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

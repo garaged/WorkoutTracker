@@ -28,7 +28,7 @@ struct RoutineRow: View {
                     .font(.body.weight(.semibold))
                     .lineLimit(1)
 
-                Text("Tap to edit")
+                Text(String(localized: "routines.row.tap_to_edit"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -45,14 +45,14 @@ struct RoutineRow: View {
                     .symbolRenderingMode(.hierarchical)
             }
             .buttonStyle(.borderless)
-            .accessibilityLabel("Schedule for today")
+            .accessibilityLabel(AccessibilityLabels.Buttons.scheduleForToday)
 
             Button(action: onStartNow) {
                 Image(systemName: "play.fill")
                     .symbolRenderingMode(.hierarchical)
             }
             .buttonStyle(.borderless)
-            .accessibilityLabel("Start now")
+            .accessibilityLabel(AccessibilityLabels.Buttons.startNow)
         }
         .padding(.vertical, 4)
     }

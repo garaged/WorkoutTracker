@@ -49,23 +49,23 @@ struct RoutineListItem: View {
         .onTapGesture(perform: onEdit)
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isButton)
-        .accessibilityHint("Opens the routine editor")
-        .accessibilityAction(named: "Edit routine", onEdit)
+        .accessibilityHint(AccessibilityLabels.Hints.openRoutineEditor)
+        .accessibilityAction(named: AccessibilityLabels.Actions.editRoutine, onEdit)
         .contextMenu {
-            Button(action: onEdit) { Label("Edit", systemImage: "pencil") }
-            Button(action: onStartNow) { Label("Start now", systemImage: "play.fill") }
-            Button(action: onScheduleToday) { Label("Schedule for today", systemImage: "calendar.badge.plus") }
-            Button(role: .destructive, action: onDelete) { Label("Delete", systemImage: "trash") }
+            Button(action: onEdit) { Label(String(localized: "common.edit"), systemImage: "pencil") }
+            Button(action: onStartNow) { Label(AccessibilityLabels.Buttons.startNow, systemImage: "play.fill") }
+            Button(action: onScheduleToday) { Label(AccessibilityLabels.Buttons.scheduleForToday, systemImage: "calendar.badge.plus") }
+            Button(role: .destructive, action: onDelete) { Label(String(localized: "common.delete"), systemImage: "trash") }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
-            Button(action: onStartNow) { Label("Start", systemImage: "play.fill") }
+            Button(action: onStartNow) { Label(String(localized: "routines.context.start"), systemImage: "play.fill") }
                 .tint(.green)
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button(action: onEdit) { Label("Edit", systemImage: "pencil") }
+            Button(action: onEdit) { Label(String(localized: "common.edit"), systemImage: "pencil") }
                 .tint(.blue)
 
-            Button(role: .destructive, action: onDelete) { Label("Delete", systemImage: "trash") }
+            Button(role: .destructive, action: onDelete) { Label(String(localized: "common.delete"), systemImage: "trash") }
         }
     }
 }
