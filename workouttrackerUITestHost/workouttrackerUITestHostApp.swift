@@ -24,6 +24,13 @@ struct workouttrackerUITestHostApp: App {
             UserDefaults.standard.synchronize()
         }
 
+        if env["UITESTS"] == "1", env["UITESTS_REST_TIMER_SHORT"] == "1" {
+            UserDefaults.standard.set(2, forKey: "prefs.defaultRestSeconds")
+            UserDefaults.standard.set(true, forKey: "prefs.autoStartRest")
+            UserDefaults.standard.set(true, forKey: "prefs.restTimerCueEnabled")
+            UserDefaults.standard.set(true, forKey: "prefs.restTimerShowOverdue")
+        }
+
         do {
             let c = try ModelContainerFactory.makeInMemoryContainer()
 

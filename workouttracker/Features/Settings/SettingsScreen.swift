@@ -63,14 +63,19 @@ struct SettingsScreen: View {
             }
             
             Section(String(localized: "settings.section.workout_cues")) {
-                Toggle(String(localized: "settings.workout_cues.rest_sound"), isOn: $prefs.restSoundCuesEnabled)
-                    .accessibilityIdentifier("settings.restSoundCuesToggle")
+                Toggle(String(localized: "settings.workout_cues.completion_cue"), isOn: $prefs.restTimerCueEnabled)
+                    .accessibilityIdentifier("settings.restTimerCueToggle")
+                    .accessibilityLabel(AccessibilityLabels.Toggles.restTimerCue)
 
                 Toggle(String(localized: "settings.workout_cues.haptics"), isOn: $prefs.hapticsEnabled)
                     .accessibilityIdentifier("settings.hapticsToggle")
 
                 Toggle(String(localized: "settings.workout_cues.auto_start_rest"), isOn: $prefs.autoStartRest)
                     .accessibilityIdentifier("settings.autoStartRestToggle")
+
+                Toggle(String(localized: "settings.workout_cues.show_overdue"), isOn: $prefs.restTimerShowOverdue)
+                    .accessibilityIdentifier("settings.restTimerShowOverdueToggle")
+                    .accessibilityLabel(AccessibilityLabels.Toggles.showOverdue)
 
                 Text(String(localized: "settings.workout_cues.help"))
                     .font(.footnote)

@@ -7,9 +7,6 @@
     " " : {
 
     },
-    "-15s" : {
-
-    },
     "—" : {
 
     },
@@ -103,7 +100,7 @@
     "+" : {
 
     },
-    "+15s" : {
+    "+%@" : {
 
     },
     "0" : {
@@ -210,6 +207,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Creates a backup file you can share or restore later."
+          }
+        }
+      }
+    },
+    "a11y.button.extend_rest_15" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add 15 seconds to rest timer"
+          }
+        }
+      }
+    },
+    "a11y.button.extend_rest_30" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add 30 seconds to rest timer"
+          }
+        }
+      }
+    },
+    "a11y.button.extend_rest_60" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add 60 seconds to rest timer"
           }
         }
       }
@@ -370,6 +397,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Changes how many weeks of data are shown."
+          }
+        }
+      }
+    },
+    "a11y.toggle.rest_timer_cue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest completion cue"
+          }
+        }
+      }
+    },
+    "a11y.toggle.show_overdue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show overdue timer"
           }
         }
       }
@@ -723,9 +770,6 @@
     "Copy" : {
 
     },
-    "Copy set" : {
-
-    },
     "Copy support email" : {
 
     },
@@ -796,9 +840,6 @@
 
     },
     "Delete schedule template" : {
-
-    },
-    "Delete set" : {
 
     },
     "Describe what happened (optional)" : {
@@ -875,9 +916,6 @@
 
     },
     "End date is inclusive (like Calendar)." : {
-
-    },
-    "End rest" : {
 
     },
     "Equipment" : {
@@ -1861,6 +1899,36 @@
         }
       }
     },
+    "session.rest.overdue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overdue"
+          }
+        }
+      }
+    },
+    "session.rest.paused" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused"
+          }
+        }
+      }
+    },
+    "session.rest.ready" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready"
+          }
+        }
+      }
+    },
     "session.rest.title" : {
       "localizations" : {
         "en" : {
@@ -2266,6 +2334,16 @@
         }
       }
     },
+    "settings.workout_cues.completion_cue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest completion cue"
+          }
+        }
+      }
+    },
     "settings.workout_cues.haptics" : {
       "localizations" : {
         "en" : {
@@ -2281,17 +2359,28 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rest sound cues play at rest start, at 3, 2, and 1 seconds remaining, and again when rest finishes. They obey silent mode and should not interrupt music."
+            "value" : "Completion cue plays when rest finishes. Auto-start begins rest right after a set is completed. Show overdue keeps the timer visible after zero so you can track extra recovery."
           }
         }
       }
     },
     "settings.workout_cues.rest_sound" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rest sound cues"
+          }
+        }
+      }
+    },
+    "settings.workout_cues.show_overdue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show overdue timer"
           }
         }
       }

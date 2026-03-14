@@ -87,13 +87,12 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertTrue(repsField.waitForExistence(timeout: 10), "Expected reps field.")
         XCTAssertTrue(weightField.waitForExistence(timeout: 10), "Expected weight field.")
 
-        replaceText(in: repsField, with: "10")
-        replaceText(in: weightField, with: "100")
-
+        // Important: this is an add/copy semantics test, not a text-entry test.
+        // Use the seeded source values directly so the next tap is not fighting text-field focus.
         let sourceReps = normalizedTextFieldValue(repsField)
         let sourceWeight = normalizedTextFieldValue(weightField)
-        XCTAssertFalse(sourceReps.isEmpty, "Expected source reps to have a value before Add.")
-        XCTAssertFalse(sourceWeight.isEmpty, "Expected source weight to have a value before Add.")
+        XCTAssertFalse(sourceReps.isEmpty, "Expected source reps to have a seeded value before Add.")
+        XCTAssertFalse(sourceWeight.isEmpty, "Expected source weight to have a seeded value before Add.")
 
         let before = setToggleIDs(in: app)
 
@@ -123,7 +122,6 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         let repsValue = normalizedTextFieldValue(newReps)
         let weightValue = normalizedTextFieldValue(newWeight)
 
-        // Practical contract: Add should create a fresh row, not a clone of the source actuals.
         XCTAssertNotEqual(repsValue, sourceReps, "Expected added set reps to differ from the source actuals.")
         XCTAssertNotEqual(weightValue, sourceWeight, "Expected added set weight to differ from the source actuals.")
     }
@@ -140,13 +138,12 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertTrue(repsField.waitForExistence(timeout: 10), "Expected reps field.")
         XCTAssertTrue(weightField.waitForExistence(timeout: 10), "Expected weight field.")
 
-        replaceText(in: repsField, with: "10")
-        replaceText(in: weightField, with: "100")
-
+        // Important: keep this test focused on copy semantics.
+        // Editing the fields here makes the next copy-button tap flaky because focus can still be in the text field.
         let sourceReps = normalizedTextFieldValue(repsField)
         let sourceWeight = normalizedTextFieldValue(weightField)
-        XCTAssertFalse(sourceReps.isEmpty, "Expected source reps to have a value before Copy.")
-        XCTAssertFalse(sourceWeight.isEmpty, "Expected source weight to have a value before Copy.")
+        XCTAssertFalse(sourceReps.isEmpty, "Expected source reps to have a seeded value before Copy.")
+        XCTAssertFalse(sourceWeight.isEmpty, "Expected source weight to have a seeded value before Copy.")
 
         let before = setToggleIDs(in: app)
 
@@ -173,34 +170,28 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         let repsValue = normalizedTextFieldValue(newReps)
         let weightValue = normalizedTextFieldValue(newWeight)
 
-        // Contract: Copy should mirror the *source row’s current values*, whatever exact formatting the field reports.
         XCTAssertEqual(repsValue, sourceReps, "Expected copied set reps to match source.")
         XCTAssertEqual(weightValue, sourceWeight, "Expected copied set weight to match source.")
     }
 
     // MARK: - Navigation to Session
 
-    private func startFirstRoutineSessionIfNeeded(_ app: XCUIApplication) {
-        if waitForSessionScreen(app: app, timeout: 1.0) { return }
+    private func startFirstRoutineSessionIfNeeded(
+        _ app: XCUIApplication,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        if waitForSessionScreen(app: app, timeout: 8.0) { return }
 
-        if app.tables.cells.firstMatch.waitForExistence(timeout: 2) {
-            app.tables.cells.firstMatch.tap()
-        } else if app.collectionViews.cells.firstMatch.waitForExistence(timeout: 2) {
-            app.collectionViews.cells.firstMatch.tap()
-        }
-
-        let startCandidates: [XCUIElement] = [
-            app.buttons.matching(NSPredicate(format: "label == %@", "Start Now")).firstMatch,
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Start")).firstMatch,
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Begin")).firstMatch,
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Continue")).firstMatch,
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Resume")).firstMatch
-        ]
-
-        for b in startCandidates where b.exists {
-            b.tap()
-            break
-        }
+        attachUITestDebug(app, name: "SessionRouteBootstrapFailed", file: file, line: line)
+        XCTFail(
+            """
+            Expected UITESTS_START=session to bootstrap directly into a seeded workout session.
+            The UITestHost session route did not reach the session screen.
+            """,
+            file: file,
+            line: line
+        )
     }
     
     func test_continue_centersActionableSet() {

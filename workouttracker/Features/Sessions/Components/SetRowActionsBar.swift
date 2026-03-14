@@ -19,33 +19,51 @@ struct SetRowActionsBar: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Button {
+            actionButton(
+                systemName: "doc.on.doc",
+                accessibilityLabel: "Copy set",
+                accessibilityIdentifier: "\(idPrefix).CopyButton"
+            ) {
                 onAction(.copy)
-            } label: {
-                Image(systemName: "doc.on.doc")
             }
-            .accessibilityLabel("Copy set")
-            .accessibilityIdentifier("\(idPrefix).CopyButton")
 
-            Button {
+            actionButton(
+                systemName: "plus.circle",
+                accessibilityLabel: "Add set",
+                accessibilityIdentifier: "\(idPrefix).AddButton"
+            ) {
                 onAction(.add)
-            } label: {
-                Image(systemName: "plus.circle")
             }
-            .accessibilityLabel("Add set")
-            .accessibilityIdentifier("\(idPrefix).AddButton")
 
-            Button(role: .destructive) {
+            actionButton(
+                systemName: "trash",
+                accessibilityLabel: "Delete set",
+                accessibilityIdentifier: "\(idPrefix).DeleteButton",
+                role: .destructive
+            ) {
                 onAction(.delete)
-            } label: {
-                Image(systemName: "trash")
             }
-            .accessibilityLabel("Delete set")
-            .accessibilityIdentifier("\(idPrefix).DeleteButton")
         }
         .font(.caption)
         .foregroundStyle(.secondary)
-        .buttonStyle(.plain)
         .disabled(isReadOnly)
+    }
+
+    @ViewBuilder
+    private func actionButton(
+        systemName: String,
+        accessibilityLabel: String,
+        accessibilityIdentifier: String,
+        role: ButtonRole? = nil,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(role: role, action: action) {
+            Image(systemName: systemName)
+                .frame(width: 28, height: 28)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityIdentifier(accessibilityIdentifier)
     }
 }

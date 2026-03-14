@@ -16,7 +16,8 @@ final class UserPreferences: ObservableObject {
         static let defaultRestSeconds = "prefs.defaultRestSeconds"
         static let hapticsEnabled = "prefs.hapticsEnabled"
         static let autoStartRest = "prefs.autoStartRest"
-        static let restSoundCuesEnabled = "prefs.restSoundCuesEnabled"
+        static let restTimerCueEnabled = "prefs.restTimerCueEnabled"
+        static let restTimerShowOverdue = "prefs.restTimerShowOverdue"
         static let confirmDestructiveActions = "prefs.confirmDestructiveActions"
         static let lastBackupAt = "prefs.lastBackupAt"
         static let diagnosticsVerboseLoggingEnabled = "prefs.diagnosticsVerboseLoggingEnabled"
@@ -46,9 +47,13 @@ final class UserPreferences: ObservableObject {
     @Published var autoStartRest: Bool {
         didSet { defaults.set(autoStartRest, forKey: Keys.autoStartRest) }
     }
-    
-    @Published var restSoundCuesEnabled: Bool {
-        didSet { defaults.set(restSoundCuesEnabled, forKey: Keys.restSoundCuesEnabled) }
+
+    @Published var restTimerCueEnabled: Bool {
+        didSet { defaults.set(restTimerCueEnabled, forKey: Keys.restTimerCueEnabled) }
+    }
+
+    @Published var restTimerShowOverdue: Bool {
+        didSet { defaults.set(restTimerShowOverdue, forKey: Keys.restTimerShowOverdue) }
     }
 
     @Published var confirmDestructiveActions: Bool {
@@ -82,7 +87,8 @@ final class UserPreferences: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.restSoundCuesEnabled = defaults.object(forKey: Keys.restSoundCuesEnabled) as? Bool ?? true
+        self.restTimerCueEnabled = defaults.object(forKey: Keys.restTimerCueEnabled) as? Bool ?? true
+        self.restTimerShowOverdue = defaults.object(forKey: Keys.restTimerShowOverdue) as? Bool ?? true
 
         // Weight unit
         if let raw = defaults.string(forKey: Keys.weightUnit), let u = WeightUnit(rawValue: raw) {
@@ -127,6 +133,13 @@ final class UserPreferences: ObservableObject {
         self.diagnosticsVerboseLoggingEnabled = defaults.bool(forKey: Keys.diagnosticsVerboseLoggingEnabled)
     }
 
+    /// Temporary compatibility alias while older call sites are migrated.
+    /// Prefer `restTimerCueEnabled` for new work.
+    var restSoundCuesEnabled: Bool {
+        get { restTimerCueEnabled }
+        set { restTimerCueEnabled = newValue }
+    }
+
     // MARK: - Derived labels
 
     var defaultRestLabel: String {
@@ -146,7 +159,8 @@ final class UserPreferences: ObservableObject {
         defaultRestSeconds = 120
         hapticsEnabled = true
         autoStartRest = true
-        restSoundCuesEnabled = true
+        restTimerCueEnabled = true
+        restTimerShowOverdue = true
         confirmDestructiveActions = true
         exerciseIllustrationSet = .dummyV1
         diagnosticsVerboseLoggingEnabled = false

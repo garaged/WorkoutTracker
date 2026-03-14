@@ -15,7 +15,7 @@ struct WorkoutSessionScreen: View {
 
     @StateObject private var logging = WorkoutLoggingService()
     @StateObject private var prefs = UserPreferences.shared
-    @ObservedObject private var restTimer = RestTimerController.shared
+    @ObservedObject private var restTimer = SessionRestTimerController.shared
 
     /// Display numbering for set rows.
     ///
@@ -92,8 +92,20 @@ struct WorkoutSessionScreen: View {
         showRestTimer && isInProgress && !session.isPaused && coachPrompt != nil
     }
 
+    private var restTimerSnapshot: RestTimerSnapshot {
+        restTimer.snapshot
+    }
+
     private var shouldShowRestTimerCard: Bool {
-        showRestTimer && isInProgress && !session.isPaused
+        guard showRestTimer, isInProgress, !session.isPaused, restTimerSnapshot.shouldShow else {
+            return false
+        }
+
+        if !prefs.restTimerShowOverdue, (restTimerSnapshot.isReady || restTimerSnapshot.isOverdue) {
+            return false
+        }
+
+        return true
     }
 
     var body: some View {
@@ -177,6 +189,9 @@ struct WorkoutSessionScreen: View {
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("WorkoutSession.Screen")
         .onAppear { syncRestTimerVisibility() }
+        .onChange(of: restTimer.hasConfiguredTimer, initial: false) { _, hasConfiguredTimer in
+            withAnimation { showRestTimer = hasConfiguredTimer ? showRestTimer || hasConfiguredTimer : false }
+        }
         .onChange(of: restTimer.isRunning, initial: false) { _, isRunning in
             if isRunning {
                 withAnimation { showRestTimer = true }
@@ -184,9 +199,14 @@ struct WorkoutSessionScreen: View {
                 withAnimation { showRestTimer = false }
             }
         }
+        .onChange(of: restTimer.snapshot, initial: false) { _, snapshot in
+            if !prefs.restTimerShowOverdue, (snapshot.isReady || snapshot.isOverdue) {
+                withAnimation { showRestTimer = false }
+            }
+        }
         .onChange(of: restTimer.didFinishToken, initial: false) { _, token in
-            guard token != nil else { return }
-            withAnimation { showRestTimer = false }
+            guard token != nil, prefs.restTimerCueEnabled, prefs.hapticsEnabled else { return }
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
         }
     }
 
@@ -398,8 +418,15 @@ struct WorkoutSessionScreen: View {
             exercises: exercises,
             activeExerciseID: activeExerciseID,
             activeSetID: activeSetID
-        ) else {
-            return nil
+        ) else { return }
+
+        restTimer.resolveForNextAction()
+
+        // Update cursor so repeated Continue advances predictably.
+        if let owningExercise = exercises.first(where: { ex in
+            ex.setLogs.contains(where: { $0.id == targetID })
+        }) {
+            activeExerciseID = owningExercise.id
         }
 
         guard let owningExercise = exercises.first(where: { ex in
@@ -459,7 +486,7 @@ struct WorkoutSessionScreen: View {
         restTimer.configure(
             seconds: max(1, prompt.suggestedRestSeconds),
             startImmediately: prefs.autoStartRest,
-            playStartCue: prefs.autoStartRest
+            playStartCue: prefs.restTimerCueEnabled
         )
         withAnimation { showRestTimer = true }
     }
@@ -723,7 +750,7 @@ struct WorkoutSessionScreen: View {
                 restTimer.configure(
                     seconds: max(1, ctx.prompt.suggestedRestSeconds),
                     startImmediately: prefs.autoStartRest,
-                    playStartCue: prefs.autoStartRest
+                    playStartCue: prefs.restTimerCueEnabled
                 )
                 withAnimation { showRestTimer = true }
             },
@@ -760,7 +787,7 @@ struct WorkoutSessionScreen: View {
             if !session.isPaused {
                 Button {
                     session.pause()
-                    restTimer.stop()
+                    restTimer.resolveForNextAction()
                     withAnimation { showRestTimer = false }
                     saveOrAssert("pause")
                 } label: {
@@ -802,7 +829,7 @@ struct WorkoutSessionScreen: View {
                         restTimer.configure(
                             seconds: max(1, prefs.defaultRestSeconds),
                             startImmediately: prefs.autoStartRest,
-                            playStartCue: prefs.autoStartRest
+                            playStartCue: prefs.restTimerCueEnabled
                         )
                         withAnimation { showRestTimer = true }
                     }
@@ -834,7 +861,11 @@ struct WorkoutSessionScreen: View {
 
     private func syncRestTimerVisibility() {
         if restTimer.isRunning || restTimer.hasConfiguredTimer {
-            showRestTimer = true
+            if !prefs.restTimerShowOverdue, (restTimerSnapshot.isReady || restTimerSnapshot.isOverdue) {
+                showRestTimer = false
+            } else {
+                showRestTimer = true
+            }
         } else {
             showRestTimer = false
         }
@@ -845,7 +876,7 @@ struct WorkoutSessionScreen: View {
 
     private func finish() {
         if session.isPaused { session.resume() }
-        restTimer.stop()
+        restTimer.resolveForNextAction()
         session.endedAt = Date()
         session.status = .completed
         saveOrAssert("finish")
@@ -862,7 +893,7 @@ struct WorkoutSessionScreen: View {
 
     private func abandon() {
         if session.isPaused { session.resume() }
-        restTimer.stop()
+        restTimer.resolveForNextAction()
         session.endedAt = Date()
         session.status = .abandoned
         saveOrAssert("abandon")
