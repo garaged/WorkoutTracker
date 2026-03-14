@@ -34,9 +34,66 @@ enum WorkoutRoutineMapper {
                     nameSnapshot: ex.name,
                     notes: item.notes,
                     trackingStyle: item.trackingStyle,
-                    sets: sets
+                    sets: sets,
+                    segmentKind: .main
                 )
             )
+        }
+
+        return out
+    }
+
+    static func toExecutionSegments(routine: WorkoutRoutine) -> [RoutineExecutionSegment] {
+        RoutineLinkPlanner.buildExecutionSegments(for: routine)
+    }
+
+    static func toExerciseTemplates(executionSegments: [RoutineExecutionSegment]) -> [WorkoutSessionFactory.ExerciseTemplate] {
+        var out: [WorkoutSessionFactory.ExerciseTemplate] = []
+        var nextOrder = 0
+
+        for segment in executionSegments {
+            let items = segment.exerciseItems.sorted { lhs, rhs in
+                if lhs.order != rhs.order { return lhs.order < rhs.order }
+                return lhs.id.uuidString < rhs.id.uuidString
+            }
+
+            for item in items {
+                guard let ex = item.exercise else { continue }
+
+                let plans = item.setPlans.sorted { lhs, rhs in
+                    if lhs.order != rhs.order { return lhs.order < rhs.order }
+                    return lhs.id.uuidString < rhs.id.uuidString
+                }
+
+                let sets: [WorkoutSessionFactory.SetTemplate] =
+                    plans.isEmpty
+                    ? [defaultSet(order: 0, style: item.trackingStyle)]
+                    : plans.map { p in
+                        WorkoutSessionFactory.SetTemplate(
+                            order: p.order,
+                            targetReps: p.targetReps,
+                            targetWeight: p.targetWeight,
+                            targetWeightUnit: p.weightUnit,
+                            targetRPE: p.targetRPE,
+                            targetRestSeconds: p.restSeconds,
+                            targetDurationSeconds: p.targetDurationSeconds,
+                            targetDistance: p.targetDistance
+                        )
+                    }
+
+                out.append(
+                    WorkoutSessionFactory.ExerciseTemplate(
+                        order: nextOrder,
+                        exerciseId: ex.id,
+                        nameSnapshot: ex.name,
+                        notes: item.notes,
+                        trackingStyle: item.trackingStyle,
+                        sets: sets,
+                        segmentKind: segment.kind
+                    )
+                )
+                nextOrder += 1
+            }
         }
 
         return out

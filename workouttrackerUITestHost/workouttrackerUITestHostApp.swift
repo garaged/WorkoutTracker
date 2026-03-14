@@ -41,6 +41,11 @@ struct workouttrackerUITestHostApp: App {
                 // does NOT auto-seed on the "calendar" route (to avoid hijacking navigation).
                 if env["UITESTS_SEED"] == "1" {
                     try seedCalendarUITestDataIfNeeded(context: context)
+
+                    if env["UITESTS_LINKED_FLOW"] == "1" {
+                        try seedLinkedRoutineUITestDataIfNeeded(context: context)
+                        try assertLinkedRoutineUITestSeed(context: context)
+                    }
                 }
 
                 if env["UITESTS_ACTIVE_SESSIONS"] == "1" {
@@ -261,6 +266,84 @@ private func seedHomeActiveSessionsScrollUITestDataIfNeeded(context: ModelContex
     try context.save()
 }
 
+// MARK: - Linked routine UITest seed
+@MainActor
+private func seedLinkedRoutineUITestDataIfNeeded(context: ModelContext) throws {
+    let mainName = "UITest — Linked Main"
+
+    let existingMain = try context.fetch(
+        FetchDescriptor<WorkoutRoutine>(
+            predicate: #Predicate<WorkoutRoutine> { routine in
+                routine.name == mainName
+            }
+        )
+    ).first
+
+    if existingMain != nil {
+        return
+    }
+
+    let warmExercise = Exercise(name: "UITest Warm-up Press")
+    let mainExercise = Exercise(name: "UITest Main Bench")
+    let coolExercise = Exercise(name: "UITest Cool-down Press")
+
+    let warmRoutine = WorkoutRoutine(name: "UITest — Linked Warm-up")
+    let mainRoutine = WorkoutRoutine(name: mainName)
+    let coolRoutine = WorkoutRoutine(name: "UITest — Linked Cool-down")
+
+    let warmItem = WorkoutRoutineItem(
+        order: 0,
+        routine: warmRoutine,
+        exercise: warmExercise,
+        trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue
+    )
+    let mainItem = WorkoutRoutineItem(
+        order: 0,
+        routine: mainRoutine,
+        exercise: mainExercise,
+        trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue
+    )
+    let coolItem = WorkoutRoutineItem(
+        order: 0,
+        routine: coolRoutine,
+        exercise: coolExercise,
+        trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue
+    )
+
+    let warmPlan = WorkoutSetPlan(order: 0, targetReps: 12, targetWeight: 20, weightUnit: .kg, targetRPE: nil, restSeconds: 30, routineItem: warmItem)
+    let mainPlan = WorkoutSetPlan(order: 0, targetReps: 5, targetWeight: 60, weightUnit: .kg, targetRPE: nil, restSeconds: 60, routineItem: mainItem)
+    let coolPlan = WorkoutSetPlan(order: 0, targetReps: 10, targetWeight: 15, weightUnit: .kg, targetRPE: nil, restSeconds: 30, routineItem: coolItem)
+
+    warmRoutine.items = [warmItem]
+    mainRoutine.items = [mainItem]
+    coolRoutine.items = [coolItem]
+
+    warmItem.setPlans = [warmPlan]
+    mainItem.setPlans = [mainPlan]
+    coolItem.setPlans = [coolPlan]
+
+    mainRoutine.warmUpRoutine = warmRoutine
+    mainRoutine.coolDownRoutine = coolRoutine
+
+    context.insert(warmExercise)
+    context.insert(mainExercise)
+    context.insert(coolExercise)
+
+    context.insert(warmRoutine)
+    context.insert(mainRoutine)
+    context.insert(coolRoutine)
+
+    context.insert(warmItem)
+    context.insert(mainItem)
+    context.insert(coolItem)
+
+    context.insert(warmPlan)
+    context.insert(mainPlan)
+    context.insert(coolPlan)
+
+    try context.save()
+}
+
 @MainActor
 private func assertHomeActiveSessionsScrollSeed(context: ModelContext) throws {
     let sessions = try context.fetch(
@@ -313,5 +396,41 @@ private func assertHomeActiveSessionsScrollSeed(context: ModelContext) throws {
 
     guard targetExists else {
         fatalError("UITESTS assertion failed: Computed actionable target set does not belong to the seeded session.")
+    }
+}
+
+@MainActor
+private func assertLinkedRoutineUITestSeed(context: ModelContext) throws {
+    let routines = try context.fetch(
+        FetchDescriptor<WorkoutRoutine>(
+            predicate: #Predicate<WorkoutRoutine> { routine in
+                routine.name == "UITest — Linked Main" ||
+                routine.name == "UITest — Linked Warm-up" ||
+                routine.name == "UITest — Linked Cool-down"
+            }
+        )
+    )
+
+    let byName = Dictionary(uniqueKeysWithValues: routines.map { ($0.name, $0) })
+
+    guard let main = byName["UITest — Linked Main"],
+          let warm = byName["UITest — Linked Warm-up"],
+          let cool = byName["UITest — Linked Cool-down"] else {
+        fatalError("UITESTS assertion failed: linked-flow seed expected warm-up, main, and cool-down routines to exist.")
+    }
+
+    guard main.warmUpRoutine?.id == warm.id, main.coolDownRoutine?.id == cool.id else {
+        fatalError("UITESTS assertion failed: linked-flow seed expected UITest — Linked Main to be linked to warm-up and cool-down routines.")
+    }
+
+    let segments = WorkoutRoutineMapper.toExecutionSegments(routine: main)
+    let kinds = segments.map(\.kind)
+
+    guard kinds == [.warmUp, .main, .coolDown] else {
+        fatalError("UITESTS assertion failed: linked-flow seed expected warm-up -> main -> cool-down execution order.")
+    }
+
+    guard !segments.contains(where: { $0.exerciseItems.isEmpty }) else {
+        fatalError("UITESTS assertion failed: linked-flow seed expected each execution segment to contain at least one routine item.")
     }
 }

@@ -19,6 +19,11 @@ struct RoutineDetailScreen: View {
                 ), axis: .vertical)
             }
 
+            Section("Linked routines") {
+                linkedRoutineRow(title: "Warm-up", routine: routine.warmUpRoutine)
+                linkedRoutineRow(title: "Cool-down", routine: routine.coolDownRoutine)
+            }
+
             Section("Exercises") {
                 if sortedItems.isEmpty {
                     ContentUnavailableView(
@@ -61,6 +66,25 @@ struct RoutineDetailScreen: View {
             }
         }
         .onDisappear { touchUpdatedAndSave() }
+    }
+
+    @ViewBuilder
+    private func linkedRoutineRow(title: LocalizedStringKey, routine linkedRoutine: WorkoutRoutine?) -> some View {
+        if let linkedRoutine {
+            NavigationLink {
+                RoutineDetailScreen(routine: linkedRoutine)
+            } label: {
+                HStack {
+                    Text(title)
+                    Spacer()
+                    Text(linkedRoutine.name)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+        } else {
+            LabeledContent(title, value: "None")
+        }
     }
 
     private var sortedItems: [WorkoutRoutineItem] {

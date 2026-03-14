@@ -200,18 +200,11 @@ struct RoutinesScreen: View {
         do {
             modelContext.insert(activity)
 
-            let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
-            let session = WorkoutSessionFactory.makeSession(
-                linkedActivityId: activity.id,
-                sourceRoutineId: routine.id,
-                sourceRoutineNameSnapshot: routine.name,
-                exercises: templates,
-                prefillActualsFromTargets: true
+            let session = try WorkoutSessionStarter.startOrResumeSession(
+                for: activity,
+                context: modelContext,
+                now: start
             )
-
-            modelContext.insert(session)
-            activity.workoutSessionId = session.id
-            try modelContext.save()
 
             launchedSession = session
             showSessionCover = true

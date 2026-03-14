@@ -16,6 +16,7 @@ struct RoutineEditorScreen: View {
 
     @State private var routine: WorkoutRoutine? = nil
     @State private var showExercisePicker = false
+    @State private var validationMessage: String? = nil
 
     @State private var pendingExerciseToAdd: Exercise? = nil
     @State private var pendingTrackingStyle: ExerciseTrackingStyle = .strength
@@ -43,7 +44,7 @@ struct RoutineEditorScreen: View {
                     ExercisePickerSheet { picked in
                         guard let picked else { return }
                         pendingExerciseToAdd = picked
-                        pendingTrackingStyle = .strength
+                        pendingTrackingStyle = defaultTrackingStyle(for: picked)
                         showExercisePicker = false
                         showTrackingStylePicker = true
                     }
@@ -57,6 +58,17 @@ struct RoutineEditorScreen: View {
                         addExercise(ex, tracking: pendingTrackingStyle, to: routine)
                         pendingExerciseToAdd = nil
                     }
+                }
+                .alert(
+                    "Linked routines",
+                    isPresented: Binding(
+                        get: { validationMessage != nil },
+                        set: { if !$0 { validationMessage = nil } }
+                    )
+                ) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text(validationMessage ?? "")
                 }
             } else {
                 ProgressView()
@@ -122,6 +134,14 @@ struct RoutineEditorScreen: View {
 
     private func saveAndDismiss() {
         guard let r = routine else { return }
+
+        switch RoutineLinkPlanner.validate(mainRoutine: r) {
+        case .valid:
+            break
+        case .invalid(let message):
+            validationMessage = message
+            return
+        }
 
         r.name = cleanName(for: r)
         r.notes = cleanNotes(for: r)
@@ -195,6 +215,17 @@ struct RoutineEditorScreen: View {
         for (idx, it) in sorted.enumerated() { it.order = idx }
     }
 
+    private func defaultTrackingStyle(for exercise: Exercise) -> ExerciseTrackingStyle {
+        switch exercise.modality {
+        case .strength:
+            return .strength
+        case .timed, .mobility:
+            return .timeOnly
+        case .cardio:
+            return .timeDistance
+        }
+    }
+
     private func cleanName(for routine: WorkoutRoutine) -> String {
         routine.name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -224,6 +255,36 @@ private struct RoutineEditorDetail: View {
                     set: { routine.notes = $0.isEmpty ? nil : $0; routine.updatedAt = Date() }
                 ), axis: .vertical)
                 .lineLimit(2...6)
+            }
+
+            Section("Linked routines") {
+                LinkedRoutinePickerView(
+                    role: .warmUp,
+                    mainRoutineID: routine.id,
+                    currentRoutine: routine.warmUpRoutine,
+                    onSelect: { picked in
+                        routine.warmUpRoutine = picked
+                        routine.updatedAt = Date()
+                    },
+                    onClear: {
+                        routine.warmUpRoutine = nil
+                        routine.updatedAt = Date()
+                    }
+                )
+
+                LinkedRoutinePickerView(
+                    role: .coolDown,
+                    mainRoutineID: routine.id,
+                    currentRoutine: routine.coolDownRoutine,
+                    onSelect: { picked in
+                        routine.coolDownRoutine = picked
+                        routine.updatedAt = Date()
+                    },
+                    onClear: {
+                        routine.coolDownRoutine = nil
+                        routine.updatedAt = Date()
+                    }
+                )
             }
 
             Section("Exercises") {

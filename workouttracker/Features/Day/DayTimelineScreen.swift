@@ -1244,7 +1244,10 @@ struct DayTimelineScreen: View {
                 return
             }
 
-            let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
+            // Linked-flow aware validation path.
+            let executionSegments = WorkoutRoutineMapper.toExecutionSegments(routine: routine)
+            let templates = WorkoutRoutineMapper.toExerciseTemplates(executionSegments: executionSegments)
+
             guard !templates.isEmpty else {
                 workoutStartErrorMessage = "Routine “\(routine.name)” has no linked exercises. Reinstall the pack or fix the routine."
                 return
@@ -1265,6 +1268,12 @@ struct DayTimelineScreen: View {
             activity.workoutSessionId = session.id
 
             try modelContext.save()
+
+            // Keep returned relationship arrays normalized for immediate UI rendering.
+            session.exercises.sort { $0.order < $1.order }
+            for ex in session.exercises {
+                ex.setLogs.sort { $0.order < $1.order }
+            }
 
             presentedSession = session
             workoutLaunchState = .inProgress(session)

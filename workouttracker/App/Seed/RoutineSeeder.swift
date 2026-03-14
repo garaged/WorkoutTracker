@@ -6,6 +6,7 @@ import SwiftData
 /// Design goals:
 /// - **Fresh installs** get seeded automatically (only when both Exercises and Routines are empty).
 /// - **Manual import** from Settings is idempotent (adds missing items by name, won't duplicate).
+/// - **Catalog upgrades** can enrich existing stores with better starter-exercise metadata without UI-owned seeding.
 ///
 /// Image set design:
 /// - We store a stable illustration key (for example: `back_squat`) in `mediaAssetName`.
@@ -60,21 +61,17 @@ enum RoutineSeeder {
         let existingRoutines = try context.fetch(FetchDescriptor<WorkoutRoutine>())
         guard existingRoutines.isEmpty else {
             try context.save()
-            // Avoid nested quotes inside string interpolation to keep parsing robust.
             let exStatus = existingExercises.isEmpty ? "seeded" : "already exist"
             return "Exercises: \(exStatus). Routines already exist — nothing else added."
         }
 
-        // Build a demo routine
         let routine = WorkoutRoutine(name: "Demo — Full Body A", notes: "Seeded demo routine with planned sets.")
         context.insert(routine)
 
-        // Helper to lookup exercise by name (should exist after seeding)
         func ex(_ name: String) -> Exercise {
             exercisesByName[name.lowercased()]!
         }
 
-        // Items: (order, exercise, default reps, rest)
         let items: [(Int, Exercise, Int, Int)] = [
             (0, ex("Back Squat"), 5, 150),
             (1, ex("Bench Press"), 8, 120),
@@ -87,7 +84,6 @@ enum RoutineSeeder {
             context.insert(item)
             routine.items.append(item)
 
-            // 3 planned sets per exercise
             for setOrder in 0..<3 {
                 let plan = WorkoutSetPlan(
                     order: setOrder,
@@ -130,26 +126,35 @@ enum RoutineSeeder {
     }
 
     /// Manual import from Settings.
-    /// Idempotent: adds missing starter exercises/routines by name.
+    /// Idempotent: adds missing starter exercises/routines by name, and refreshes starter metadata.
     static func importStarterPack(context: ModelContext) throws -> String {
         try importStarterPackInternal(context: context, mode: .manual)
     }
 
-    // MARK: - Private
-
-    private enum ImportMode { case freshInstall, manual }
-
-    private static func importStarterPackInternal(context: ModelContext, mode: ImportMode) throws -> String {
-        // 1) Exercises
+    /// Lightweight catalog reconciliation for existing stores.
+    ///
+    /// Why this exists:
+    /// - moves warm-up / cool-down starter exercises into the real seed path
+    /// - updates starter exercise metadata without relying on UI-owned lazy insertion
+    /// - can safely add newly introduced starter exercises to an existing library
+    @discardableResult
+    static func reconcileStarterExerciseCatalog(context: ModelContext) throws -> String {
         let existingExercises = try context.fetch(FetchDescriptor<Exercise>())
         var exByName: [String: Exercise] = Dictionary(
             uniqueKeysWithValues: existingExercises.map { ($0.name.lowercased(), $0) }
         )
 
         var addedExercises = 0
+        var updatedExercises = 0
+
         for def in starterExercises {
             let key = def.name.lowercased()
-            if exByName[key] != nil { continue }
+            if let existing = exByName[key] {
+                if applyStarterMetadata(def, to: existing) {
+                    updatedExercises += 1
+                }
+                continue
+            }
 
             let ex = makeSeededExercise(from: def)
             context.insert(ex)
@@ -157,7 +162,41 @@ enum RoutineSeeder {
             addedExercises += 1
         }
 
-        // 2) Routines
+        if addedExercises > 0 || updatedExercises > 0 {
+            try context.save()
+        }
+
+        return "Starter exercise catalog reconciled ✅ Added: \(addedExercises), updated: \(updatedExercises)."
+    }
+
+    // MARK: - Private
+
+    private enum ImportMode { case freshInstall, manual }
+
+    private static func importStarterPackInternal(context: ModelContext, mode: ImportMode) throws -> String {
+        let existingExercises = try context.fetch(FetchDescriptor<Exercise>())
+        var exByName: [String: Exercise] = Dictionary(
+            uniqueKeysWithValues: existingExercises.map { ($0.name.lowercased(), $0) }
+        )
+
+        var addedExercises = 0
+        var updatedExercises = 0
+
+        for def in starterExercises {
+            let key = def.name.lowercased()
+            if let existing = exByName[key] {
+                if applyStarterMetadata(def, to: existing) {
+                    updatedExercises += 1
+                }
+                continue
+            }
+
+            let ex = makeSeededExercise(from: def)
+            context.insert(ex)
+            exByName[key] = ex
+            addedExercises += 1
+        }
+
         let existingRoutines = try context.fetch(FetchDescriptor<WorkoutRoutine>())
         let existingRoutineNames = Set(existingRoutines.map { $0.name.lowercased() })
 
@@ -191,7 +230,6 @@ enum RoutineSeeder {
                         restSeconds: p.restSeconds,
                         routineItem: item
                     )
-                    // Optional cardio/time fields exist as stored properties in your model
                     plan.targetDurationSeconds = p.targetDurationSeconds
                     plan.targetDistance = p.targetDistance
 
@@ -210,7 +248,60 @@ enum RoutineSeeder {
         let totalRoutines  = try context.fetch(FetchDescriptor<WorkoutRoutine>()).count
 
         let prefix = (mode == .freshInstall) ? "Starter Pack ✅" : "Imported Starter Pack ✅"
-        return "\(prefix) Added exercises: \(addedExercises), added routines: \(addedRoutines). Totals → Exercises: \(totalExercises), Routines: \(totalRoutines)."
+        return "\(prefix) Added exercises: \(addedExercises), updated exercises: \(updatedExercises), added routines: \(addedRoutines). Totals → Exercises: \(totalExercises), Routines: \(totalRoutines)."
+    }
+
+    /// Applies starter metadata without stomping on likely user-authored text.
+    ///
+    /// We do update structural catalog fields that affect picker quality:
+    /// - modality
+    /// - equipment tags
+    /// - illustration key when missing
+    /// - routine role suggestions
+    ///
+    /// For notes/instructions, we only fill gaps to avoid overwriting user edits by name.
+    @discardableResult
+    private static func applyStarterMetadata(_ def: SeedExerciseDef, to exercise: Exercise) -> Bool {
+        var changed = false
+
+        if let raw = def.modalityRaw, !raw.isEmpty, exercise.modalityRaw != raw {
+            exercise.modalityRaw = raw
+            changed = true
+        }
+
+        let normalizedEquipment = def.equipmentTags.joined(separator: ",")
+        if !normalizedEquipment.isEmpty && exercise.equipmentTagsRaw != normalizedEquipment {
+            exercise.equipmentTagsRaw = normalizedEquipment
+            changed = true
+        }
+
+        let desiredRolesRaw = joinedRoutineRoles(def.routineRoles)
+        if exercise.routineRolesRaw != desiredRolesRaw {
+            exercise.routineRolesRaw = desiredRolesRaw
+            changed = true
+        }
+
+        if exercise.instructions == nil, let instructions = def.instructions, !instructions.isEmpty {
+            exercise.instructions = instructions
+            changed = true
+        }
+
+        if exercise.notes == nil, let notes = def.notes, !notes.isEmpty {
+            exercise.notes = notes
+            changed = true
+        }
+
+        if exercise.mediaAssetName == nil, let illustrationKey = def.illustrationKey, !illustrationKey.isEmpty {
+            exercise.mediaKind = .bundledAsset
+            exercise.mediaAssetName = illustrationKey
+            changed = true
+        }
+
+        if changed {
+            exercise.updatedAt = Date()
+        }
+
+        return changed
     }
 
     /// Centralized constructor for seeded exercises.
@@ -231,6 +322,7 @@ enum RoutineSeeder {
             mediaAssetName: def.illustrationKey,
             mediaURLString: nil,
             equipmentTagsRaw: def.equipmentTags.joined(separator: ","),
+            routineRolesRaw: joinedRoutineRoles(def.routineRoles),
             isArchived: false
         )
 
@@ -241,7 +333,12 @@ enum RoutineSeeder {
         return ex
     }
 
-    // MARK: - Starter definitions (v1)
+    private static func joinedRoutineRoles(_ roles: Set<ExerciseRoutineRole>) -> String? {
+        let values = roles.sorted { $0.rawValue < $1.rawValue }.map(\.rawValue)
+        return values.isEmpty ? nil : values.joined(separator: ",")
+    }
+
+    // MARK: - Starter definitions (v2)
 
     private struct SeedExerciseDef {
         let name: String
@@ -250,6 +347,7 @@ enum RoutineSeeder {
         let instructions: String?
         let notes: String?
         let illustrationKey: String?
+        let routineRoles: Set<ExerciseRoutineRole>
     }
 
     private struct SeedPlanDef {
@@ -275,21 +373,29 @@ enum RoutineSeeder {
         let items: [SeedRoutineItemDef]
     }
 
-    /// Keep v1 small and high-quality; easy to expand later.
+    /// Keep the starter pack small and high-quality; easy to expand later.
+    ///
+    /// Warm-up / cool-down friendly exercises now live here so the picker can rely on
+    /// seeded catalog data instead of lazily creating exercises inside the UI layer.
     private static let starterExercises: [SeedExerciseDef] = [
-        .init(name: "Back Squat",       modalityRaw: nil,        equipmentTags: ["barbell"],         instructions: nil, notes: nil,                                        illustrationKey: "back_squat"),
-        .init(name: "Bench Press",      modalityRaw: nil,        equipmentTags: ["barbell","bench"], instructions: nil, notes: nil,                                        illustrationKey: "bench_press"),
-        .init(name: "Deadlift",         modalityRaw: nil,        equipmentTags: ["barbell"],         instructions: nil, notes: nil,                                        illustrationKey: "deadlift"),
-        .init(name: "Overhead Press",   modalityRaw: nil,        equipmentTags: ["barbell"],         instructions: nil, notes: nil,                                        illustrationKey: "overhead_press"),
-        .init(name: "Barbell Row",      modalityRaw: nil,        equipmentTags: ["barbell"],         instructions: nil, notes: nil,                                        illustrationKey: "barbell_row"),
-        .init(name: "Lat Pulldown",     modalityRaw: nil,        equipmentTags: ["machine"],         instructions: nil, notes: nil,                                        illustrationKey: "lat_pulldown"),
-        .init(name: "Pull-Up",          modalityRaw: nil,        equipmentTags: ["bodyweight","bar"],instructions: nil, notes: nil,                                        illustrationKey: "pull_up"),
-        .init(name: "Bicep Curl",       modalityRaw: nil,        equipmentTags: ["dumbbell"],        instructions: nil, notes: nil,                                        illustrationKey: "bicep_curl"),
-        .init(name: "Triceps Pushdown", modalityRaw: nil,        equipmentTags: ["cable"],           instructions: nil, notes: nil,                                        illustrationKey: "triceps_pushdown"),
-        .init(name: "Plank",            modalityRaw: nil,        equipmentTags: ["bodyweight","mat"],instructions: nil, notes: "Timed hold.",                              illustrationKey: "plank"),
-        .init(name: "Running",          modalityRaw: "cardio",   equipmentTags: ["cardio"],          instructions: nil, notes: nil,                                        illustrationKey: "running"),
-        .init(name: "Walking",          modalityRaw: "cardio",   equipmentTags: ["cardio"],          instructions: nil, notes: nil,                                        illustrationKey: "walking"),
-        .init(name: "Mobility Flow",    modalityRaw: "mobility", equipmentTags: ["mat"],             instructions: nil, notes: "Light stretching and joint prep.",         illustrationKey: "mobility_flow")
+        .init(name: "Back Squat",       modalityRaw: nil,        equipmentTags: ["barbell"],          instructions: nil, notes: nil,                                         illustrationKey: "back_squat",     routineRoles: []),
+        .init(name: "Bench Press",      modalityRaw: nil,        equipmentTags: ["barbell","bench"],  instructions: nil, notes: nil,                                         illustrationKey: "bench_press",    routineRoles: []),
+        .init(name: "Deadlift",         modalityRaw: nil,        equipmentTags: ["barbell"],          instructions: nil, notes: nil,                                         illustrationKey: "deadlift",       routineRoles: []),
+        .init(name: "Overhead Press",   modalityRaw: nil,        equipmentTags: ["barbell"],          instructions: nil, notes: nil,                                         illustrationKey: "overhead_press", routineRoles: []),
+        .init(name: "Barbell Row",      modalityRaw: nil,        equipmentTags: ["barbell"],          instructions: nil, notes: nil,                                         illustrationKey: "barbell_row",    routineRoles: []),
+        .init(name: "Lat Pulldown",     modalityRaw: nil,        equipmentTags: ["machine"],          instructions: nil, notes: nil,                                         illustrationKey: "lat_pulldown",   routineRoles: []),
+        .init(name: "Pull-Up",          modalityRaw: nil,        equipmentTags: ["bodyweight","bar"], instructions: nil, notes: nil,                                        illustrationKey: "pull_up",        routineRoles: []),
+        .init(name: "Bicep Curl",       modalityRaw: nil,        equipmentTags: ["dumbbell"],         instructions: nil, notes: nil,                                         illustrationKey: "bicep_curl",     routineRoles: []),
+        .init(name: "Triceps Pushdown", modalityRaw: nil,        equipmentTags: ["cable"],            instructions: nil, notes: nil,                                         illustrationKey: "triceps_pushdown", routineRoles: []),
+        .init(name: "Plank",            modalityRaw: nil,        equipmentTags: ["bodyweight","mat"], instructions: nil, notes: "Timed hold.",                            illustrationKey: "plank",          routineRoles: []),
+
+        .init(name: "Running",          modalityRaw: "cardio",   equipmentTags: ["cardio"],           instructions: nil, notes: nil,                                        illustrationKey: "running",        routineRoles: []),
+        .init(name: "Walking",          modalityRaw: "cardio",   equipmentTags: ["cardio"],           instructions: "Use an easy conversational pace.", notes: "Good default for both warm-up and cool-down routines.", illustrationKey: "walking", routineRoles: [.warmUp, .coolDown]),
+        .init(name: "Mobility Flow",    modalityRaw: "mobility", equipmentTags: ["mat"],              instructions: "Move through a short sequence of controlled mobility drills.", notes: "Useful before lifting and as a light cool-down finisher.", illustrationKey: "mobility_flow", routineRoles: [.warmUp, .coolDown]),
+        .init(name: "Easy Run",         modalityRaw: "cardio",   equipmentTags: ["cardio"],           instructions: "Keep the pace easy and smooth. This should raise temperature, not create fatigue.", notes: "Use for warm-up routines when a longer cardio ramp is helpful.", illustrationKey: "running", routineRoles: [.warmUp]),
+        .init(name: "Dynamic Stretching", modalityRaw: "mobility", equipmentTags: [],                  instructions: "Perform dynamic reps, not long static holds.", notes: "Better suited for warm-up than cool-down.", illustrationKey: nil, routineRoles: [.warmUp]),
+        .init(name: "Stretching Flow",  modalityRaw: "mobility", equipmentTags: ["mat"],              instructions: "Use slower breathing and longer, comfortable positions.", notes: "A simple post-workout option for cool-down routines.", illustrationKey: nil, routineRoles: [.coolDown]),
+        .init(name: "Breathing Reset",  modalityRaw: "mobility", equipmentTags: [],                    instructions: "Focus on nasal breathing and a gradual heart-rate drop.", notes: "Pairs well with stretching or a short walk after training.", illustrationKey: nil, routineRoles: [.coolDown])
     ]
 
     private static let starterRoutines: [SeedRoutineDef] = [

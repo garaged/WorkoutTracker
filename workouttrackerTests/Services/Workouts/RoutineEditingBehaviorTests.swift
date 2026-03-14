@@ -193,6 +193,136 @@ final class RoutineEditingBehaviorTests: XCTestCase {
         XCTAssertEqual(orderedExerciseNames(in: secondSession), ["Barbell Row", "Bench Press"])
     }
 
+    func test_attachingWarmUp_preservesExistingRoutineItems() throws {
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
+
+        let bench = Exercise(name: "Bench Press")
+        let bike = Exercise(name: "Bike")
+        context.insert(bench)
+        context.insert(bike)
+
+        let main = WorkoutRoutine(name: "Upper A")
+        let warmUp = WorkoutRoutine(name: "Warm-Up")
+        context.insert(main)
+        context.insert(warmUp)
+
+        let mainItem = WorkoutRoutineItem(
+            order: 0,
+            routine: main,
+            exercise: bench,
+            trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue
+        )
+        let mainPlan = WorkoutSetPlan(order: 0, targetReps: 8, targetWeight: 80, weightUnit: .kg, targetRPE: nil, restSeconds: 120, routineItem: mainItem)
+        let warmItem = WorkoutRoutineItem(
+            order: 0,
+            routine: warmUp,
+            exercise: bike,
+            trackingStyleRaw: ExerciseTrackingStyle.timeOnly.rawValue
+        )
+
+        context.insert(mainItem)
+        context.insert(mainPlan)
+        context.insert(warmItem)
+        main.items = [mainItem]
+        mainItem.setPlans = [mainPlan]
+        warmUp.items = [warmItem]
+        try context.save()
+
+        main.warmUpRoutine = warmUp
+        main.updatedAt = Date()
+        try context.save()
+
+        let fetched = try fetchRoutine(id: main.id, context: context)
+        XCTAssertEqual(fetched.warmUpRoutine?.id, warmUp.id)
+        XCTAssertEqual(fetched.items.count, 1)
+        XCTAssertEqual(fetched.items.first?.exercise?.name, "Bench Press")
+        XCTAssertEqual(fetched.items.first?.setPlans.first?.targetReps, 8)
+    }
+
+    func test_attachingCoolDown_persistsWithoutChangingRoutineItems() throws {
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
+
+        let bench = Exercise(name: "Bench Press")
+        let walk = Exercise(name: "Walk")
+        context.insert(bench)
+        context.insert(walk)
+
+        let main = WorkoutRoutine(name: "Upper A")
+        let coolDown = WorkoutRoutine(name: "Cool-Down")
+        context.insert(main)
+        context.insert(coolDown)
+
+        let mainItem = WorkoutRoutineItem(
+            order: 0,
+            routine: main,
+            exercise: bench,
+            trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue
+        )
+        let coolItem = WorkoutRoutineItem(
+            order: 0,
+            routine: coolDown,
+            exercise: walk,
+            trackingStyleRaw: ExerciseTrackingStyle.timeOnly.rawValue
+        )
+        context.insert(mainItem)
+        context.insert(coolItem)
+        main.items = [mainItem]
+        coolDown.items = [coolItem]
+        try context.save()
+
+        main.coolDownRoutine = coolDown
+        main.updatedAt = Date()
+        try context.save()
+
+        let fetched = try fetchRoutine(id: main.id, context: context)
+        XCTAssertEqual(fetched.coolDownRoutine?.id, coolDown.id)
+        XCTAssertEqual(fetched.items.first?.exercise?.name, "Bench Press")
+    }
+
+    func test_replacingWarmUp_updatesLinkedRoutine() throws {
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
+
+        let firstWarmUp = WorkoutRoutine(name: "Bike Warm-Up")
+        let replacementWarmUp = WorkoutRoutine(name: "Band Warm-Up")
+        let main = WorkoutRoutine(name: "Upper A")
+        [firstWarmUp, replacementWarmUp, main].forEach(context.insert)
+        main.warmUpRoutine = firstWarmUp
+        try context.save()
+
+        main.warmUpRoutine = replacementWarmUp
+        main.updatedAt = Date()
+        try context.save()
+
+        let fetched = try fetchRoutine(id: main.id, context: context)
+        XCTAssertEqual(fetched.warmUpRoutine?.name, "Band Warm-Up")
+    }
+
+    func test_clearingCoolDown_removesLinkedRoutine() throws {
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
+
+        let coolDown = WorkoutRoutine(name: "Walk")
+        let main = WorkoutRoutine(name: "Upper A")
+        [coolDown, main].forEach(context.insert)
+        main.coolDownRoutine = coolDown
+        try context.save()
+
+        main.coolDownRoutine = nil
+        main.updatedAt = Date()
+        try context.save()
+
+        let fetched = try fetchRoutine(id: main.id, context: context)
+        XCTAssertNil(fetched.coolDownRoutine)
+    }
+
+    private func fetchRoutine(id: UUID, context: ModelContext) throws -> WorkoutRoutine {
+        let descriptor = FetchDescriptor<WorkoutRoutine>(predicate: #Predicate { $0.id == id })
+        return try XCTUnwrap(context.fetch(descriptor).first)
+    }
+
     private func orderedExerciseNames(in session: WorkoutSession) -> [String] {
         session.exercises
             .sorted { $0.order < $1.order }

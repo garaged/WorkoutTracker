@@ -81,7 +81,13 @@ private struct UITestStrengthSessionBootstrapView: View {
             )
         }
 
+        let wantsLinkedFlow = env["UITESTS_LINKED_FLOW"] == "1"
+
         let preferred = routines.sorted { lhs, rhs in
+            let lhsIsPreferredLinked = wantsLinkedFlow && lhs.name == "UITest — Linked Main"
+            let rhsIsPreferredLinked = wantsLinkedFlow && rhs.name == "UITest — Linked Main"
+            if lhsIsPreferredLinked != rhsIsPreferredLinked { return lhsIsPreferredLinked }
+
             let lhsIsUITest = lhs.name == "UITest Routine"
             let rhsIsUITest = rhs.name == "UITest Routine"
             if lhsIsUITest != rhsIsUITest { return lhsIsUITest }
@@ -95,6 +101,20 @@ private struct UITestStrengthSessionBootstrapView: View {
                 containing a strength-style editable set row (Reps/Weight fields).
                 """
             )
+        }
+
+        if wantsLinkedFlow {
+            guard chosen.routine.name == "UITest — Linked Main" else {
+                fatalError("UITESTS assertion failed: linked-flow route expected UITest — Linked Main to be selected first.")
+            }
+
+            let segmentKinds = chosen.session.exercises
+                .sorted { $0.order < $1.order }
+                .map(\.segmentKind)
+
+            guard segmentKinds == [.warmUp, .main, .coolDown] else {
+                fatalError("UITESTS assertion failed: linked-flow route expected warm-up -> main -> cool-down session segments.")
+            }
         }
 
         let session = chosen.session
@@ -146,7 +166,8 @@ private struct UITestStrengthSessionBootstrapView: View {
         from routines: [WorkoutRoutine]
     ) -> (routine: WorkoutRoutine, session: WorkoutSession)? {
         for routine in routines {
-            let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
+            let executionSegments = WorkoutRoutineMapper.toExecutionSegments(routine: routine)
+            let templates = WorkoutRoutineMapper.toExerciseTemplates(executionSegments: executionSegments)
             let session = WorkoutSessionFactory.makeSession(
                 linkedActivityId: nil,
                 sourceRoutineId: routine.id,

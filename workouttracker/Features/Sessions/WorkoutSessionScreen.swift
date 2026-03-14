@@ -33,6 +33,7 @@ struct WorkoutSessionScreen: View {
     @State private var showRestTimer = false
     @State private var activeExerciseID: UUID? = nil
     @State private var activeSetID: UUID? = nil
+    @State private var skippedSegmentKinds: Set<SessionSegmentKind> = []
     @State private var targetAppliedBanner: TargetAppliedBanner? = nil
     
     @State private var coachPrompt: CoachPromptContext? = nil
@@ -114,6 +115,7 @@ struct WorkoutSessionScreen: View {
                 List {
                     headerSection
                     summarySectionIfReadOnly
+                    segmentSummarySectionIfReadOnly
                     exercisesSection(proxy: proxy)
                 }
                 .accessibilityIdentifier("WorkoutSession.Screen")
@@ -214,6 +216,7 @@ struct WorkoutSessionScreen: View {
         List {
             headerSection
             summarySectionIfReadOnly
+            segmentSummarySectionIfReadOnly
             exercisesSection(proxy: proxy)
         }
         .accessibilityIdentifier("WorkoutSession.Screen.List")
@@ -365,10 +368,32 @@ struct WorkoutSessionScreen: View {
         }
     }
 
+    private var segmentSummarySectionIfReadOnly: some View {
+        Group {
+            if isReadOnly && sessionHasMultipleSegments {
+                Section("Segments") {
+                    ForEach(orderedVisibleSegmentKinds, id: \.self) { kind in
+                        LabeledContent(segmentTitle(for: kind)) {
+                            Text(segmentProgressText(for: kind) ?? "0/0 sets")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: Data helpers
 
+    private var allOrderedExercises: [WorkoutSessionExercise] {
+        session.exercises.sorted { lhs, rhs in
+            if lhs.order != rhs.order { return lhs.order < rhs.order }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
+    }
+
     private var sortedExercises: [WorkoutSessionExercise] {
-        session.exercises.sorted { $0.order < $1.order }
+        allOrderedExercises.filter { !skippedSegmentKinds.contains($0.segmentKind) }
     }
 
     private var allSets: [WorkoutSetLog] {
@@ -376,7 +401,96 @@ struct WorkoutSessionScreen: View {
     }
 
     private func sortedSets(for ex: WorkoutSessionExercise) -> [WorkoutSetLog] {
-        ex.setLogs.sorted { $0.order < $1.order }
+        ex.setLogs.sorted { lhs, rhs in
+            if lhs.order != rhs.order { return lhs.order < rhs.order }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
+    }
+
+    private var orderedVisibleSegmentKinds: [SessionSegmentKind] {
+        var seen: Set<SessionSegmentKind> = []
+        var ordered: [SessionSegmentKind] = []
+
+        for ex in sortedExercises {
+            let kind = ex.segmentKind
+            if seen.insert(kind).inserted {
+                ordered.append(kind)
+            }
+        }
+
+        return ordered
+    }
+
+    private var sessionHasMultipleSegments: Bool {
+        Set(allOrderedExercises.map(\.segmentKind)).count > 1
+    }
+
+    private var currentSegmentKind: SessionSegmentKind? {
+        for ex in sortedExercises {
+            if sortedSets(for: ex).contains(where: { !$0.completed }) {
+                return ex.segmentKind
+            }
+        }
+
+        return sortedExercises.last?.segmentKind
+    }
+
+    private func segmentTitle(for kind: SessionSegmentKind) -> String {
+        switch kind {
+        case .warmUp: return "Warm-up"
+        case .main: return "Workout"
+        case .coolDown: return "Cool-down"
+        }
+    }
+
+    private func segmentProgressText(for kind: SessionSegmentKind) -> String? {
+        let exercises = sortedExercises.filter { $0.segmentKind == kind }
+        guard !exercises.isEmpty else { return nil }
+
+        let sets = exercises.flatMap { sortedSets(for: $0) }
+        let total = sets.count
+        let completed = sets.filter(\.completed).count
+        return "\(completed)/\(max(total, 1)) sets"
+    }
+
+    private func isStartOfSegment(at index: Int) -> Bool {
+        guard index < sortedExercises.count else { return false }
+        guard index > 0 else { return true }
+        return sortedExercises[index - 1].segmentKind != sortedExercises[index].segmentKind
+    }
+
+    private func canSkipSegment(_ kind: SessionSegmentKind) -> Bool {
+        isInProgress && !session.isPaused && kind == currentSegmentKind && (kind == .warmUp || kind == .coolDown)
+    }
+
+    private func firstIncompleteVisibleTarget() -> (exercise: WorkoutSessionExercise, set: WorkoutSetLog)? {
+        for ex in sortedExercises {
+            if let set = sortedSets(for: ex).first(where: { !$0.completed }) {
+                return (ex, set)
+            }
+        }
+        return nil
+    }
+
+    private func skipCurrentSegment() {
+        guard let kind = currentSegmentKind, canSkipSegment(kind) else { return }
+
+        withAnimation(.snappy) {
+            skippedSegmentKinds.insert(kind)
+            coachPrompt = nil
+            showRestTimer = false
+        }
+        restTimer.resolveForNextAction()
+
+        if let target = firstIncompleteVisibleTarget() {
+            markActive(exerciseID: target.exercise.id, setID: target.set.id)
+        } else {
+            activeExerciseID = nil
+            activeSetID = nil
+            if kind == .coolDown {
+                finish()
+            }
+        }
     }
 
     private var statusLabel: String {
@@ -498,7 +612,20 @@ struct WorkoutSessionScreen: View {
         if sortedExercises.isEmpty {
             emptyExercisesSection
         } else {
-            ForEach(sortedExercises, id: \.id) { ex in
+            ForEach(Array(sortedExercises.enumerated()), id: \.element.id) { index, ex in
+                if isStartOfSegment(at: index) {
+                    SessionSegmentHeaderView(
+                        kind: ex.segmentKind,
+                        progressText: segmentProgressText(for: ex.segmentKind),
+                        isCurrent: ex.segmentKind == currentSegmentKind,
+                        showsSkipAction: canSkipSegment(ex.segmentKind),
+                        onSkip: canSkipSegment(ex.segmentKind) ? { skipCurrentSegment() } : nil
+                    )
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 0, trailing: 16))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                }
+
                 exerciseSection(ex, proxy: proxy)
             }
         }

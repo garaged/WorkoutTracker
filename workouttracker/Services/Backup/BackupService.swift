@@ -69,7 +69,10 @@ final class BackupService {
     /// v3 adds explicit Data support in JSON export/restore so models like
     /// TemplateActivity can round-trip reliably instead of falling back to
     /// String(describing: Data).
-    private let schemaVersion = 3
+    ///
+    /// v4 adds optional linked routine references and session segment metadata.
+    /// Older backup files still restore because missing fields default safely.
+    private let schemaVersion = 4
 
     struct BackupFile: Codable {
         let schemaVersion: Int
@@ -305,6 +308,12 @@ final class BackupService {
             routineByID[raw.id] = model
         }
 
+        for raw in routines {
+            guard let model = routineByID[raw.id] else { continue }
+            model.warmUpRoutine = raw.warmUpRoutineID.flatMap { routineByID[$0] }
+            model.coolDownRoutine = raw.coolDownRoutineID.flatMap { routineByID[$0] }
+        }
+
         var sessionByID: [UUID: WorkoutSession] = [:]
         for raw in sessions {
             let model = WorkoutSession(
@@ -371,6 +380,7 @@ final class BackupService {
                 session: raw.sessionID.flatMap { sessionByID[$0] },
                 setLogsStorage: []
             )
+            model.segmentKindRaw = raw.segmentKindRaw
             model.targetDurationSeconds = raw.targetDurationSeconds
             model.actualDurationSeconds = raw.actualDurationSeconds
             model.targetDistance = raw.targetDistance
@@ -623,7 +633,19 @@ final class BackupService {
                 "notes": model.notes.map(JSONValue.string) ?? .null,
                 "isArchived": .bool(model.isArchived),
                 "createdAt": .string(Self.iso8601.string(from: model.createdAt)),
-                "updatedAt": .string(Self.iso8601.string(from: model.updatedAt))
+                "updatedAt": .string(Self.iso8601.string(from: model.updatedAt)),
+                "warmUpRoutine": model.warmUpRoutine.map { routine in
+                    .object([
+                        "$ref": .string(routine.id.uuidString),
+                        "$type": .string(String(describing: type(of: routine)))
+                    ])
+                } ?? .null,
+                "coolDownRoutine": model.coolDownRoutine.map { routine in
+                    .object([
+                        "$ref": .string(routine.id.uuidString),
+                        "$type": .string(String(describing: type(of: routine)))
+                    ])
+                } ?? .null
             ]
         }
 
@@ -694,6 +716,7 @@ final class BackupService {
                 "exerciseNameSnapshot": .string(model.exerciseNameSnapshot),
                 "notes": model.notes.map(JSONValue.string) ?? .null,
                 "trackingStyleRaw": .string(model.trackingStyleRaw),
+                "segmentKindRaw": model.segmentKindRaw.map(JSONValue.string) ?? .null,
                 "session": model.session.map { session in
                     .object([
                         "$ref": .string(session.id.uuidString),
@@ -909,6 +932,8 @@ final class BackupService {
         let isArchived: Bool
         let createdAt: Date
         let updatedAt: Date
+        let warmUpRoutineID: UUID?
+        let coolDownRoutineID: UUID?
     }
 
     private struct WorkoutRoutineItemRecord {
@@ -956,6 +981,7 @@ final class BackupService {
         let exerciseNameSnapshot: String
         let notes: String?
         let trackingStyleRaw: String
+        let segmentKindRaw: String?
         let sessionID: UUID?
         let targetDurationSeconds: Int?
         let actualDurationSeconds: Int?
@@ -1067,7 +1093,9 @@ final class BackupService {
                 notes: string("notes", in: e),
                 isArchived: bool("isArchived", in: e) ?? false,
                 createdAt: date("createdAt", in: e) ?? Date(),
-                updatedAt: date("updatedAt", in: e) ?? Date()
+                updatedAt: date("updatedAt", in: e) ?? Date(),
+                warmUpRoutineID: refUUID("warmUpRoutine", in: e),
+                coolDownRoutineID: refUUID("coolDownRoutine", in: e)
             )
         }
     }
@@ -1131,6 +1159,7 @@ final class BackupService {
                 exerciseNameSnapshot: string("exerciseNameSnapshot", in: e) ?? "Exercise",
                 notes: string("notes", in: e),
                 trackingStyleRaw: string("trackingStyleRaw", in: e) ?? ExerciseTrackingStyle.strength.rawValue,
+                segmentKindRaw: string("segmentKindRaw", in: e),
                 sessionID: refUUID("session", in: e),
                 targetDurationSeconds: int("targetDurationSeconds", in: e),
                 actualDurationSeconds: int("actualDurationSeconds", in: e),

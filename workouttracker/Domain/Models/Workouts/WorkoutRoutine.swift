@@ -1,12 +1,6 @@
 import Foundation
 import SwiftData
 
-// File: workouttracker/Domain/Models/Workouts/WorkoutRoutine.swift
-//
-// Patch:
-// - Restores missing imports so SwiftData macros compile.
-// - Keeps a simple model shape (id/name/notes/items) that matches your existing UI.
-
 @Model
 final class WorkoutRoutine {
     @Attribute(.unique) var id: UUID
@@ -18,9 +12,19 @@ final class WorkoutRoutine {
     var createdAt: Date
     var updatedAt: Date
 
-    // Parent -> children. Cascade delete so removing a routine removes its items.
     @Relationship(deleteRule: .cascade)
     var items: [WorkoutRoutineItem] = []
+
+    // Annotate only this side.
+    @Relationship(deleteRule: .nullify, inverse: \WorkoutRoutine.usedAsWarmUpBy)
+    var warmUpRoutine: WorkoutRoutine?
+
+    @Relationship(deleteRule: .nullify, inverse: \WorkoutRoutine.usedAsCoolDownBy)
+    var coolDownRoutine: WorkoutRoutine?
+
+    // Let SwiftData infer these as the inverse side.
+    var usedAsWarmUpBy: [WorkoutRoutine] = []
+    var usedAsCoolDownBy: [WorkoutRoutine] = []
 
     init(
         id: UUID = UUID(),
@@ -34,5 +38,7 @@ final class WorkoutRoutine {
         self.isArchived = isArchived
         self.createdAt = Date()
         self.updatedAt = Date()
+        self.warmUpRoutine = nil
+        self.coolDownRoutine = nil
     }
 }

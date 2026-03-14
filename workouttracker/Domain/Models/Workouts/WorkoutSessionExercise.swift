@@ -19,6 +19,12 @@ final class WorkoutSessionExercise {
     /// (We keep the typed computed property below.)
     var trackingStyleRaw: String = "strength"
 
+    /// Optional persisted segment identity.
+    ///
+    /// We intentionally treat `nil` as `.main` so v1 stores and older backup files
+    /// continue behaving like a normal main-work session without any backfill.
+    var segmentKindRaw: String? = nil
+
     // Explicit relationship (no inverse to avoid macro circular-reference issues)
     @Relationship(deleteRule: .nullify)
     var session: WorkoutSession?
@@ -53,6 +59,7 @@ final class WorkoutSessionExercise {
         exerciseNameSnapshot: String,
         notes: String? = nil,
         trackingStyle: ExerciseTrackingStyle = .strength,
+        segmentKind: SessionSegmentKind = .main,
         session: WorkoutSession? = nil,
         setLogsStorage: [WorkoutSetLog] = []
     ) {
@@ -62,6 +69,7 @@ final class WorkoutSessionExercise {
         self.exerciseNameSnapshot = exerciseNameSnapshot
         self.notes = notes
         self.trackingStyleRaw = trackingStyle.rawValue
+        self.segmentKindRaw = segmentKind == .main ? nil : segmentKind.rawValue
         self.session = session
 
         self.setLogsStorage = setLogsStorage
@@ -75,6 +83,11 @@ final class WorkoutSessionExercise {
     var trackingStyle: ExerciseTrackingStyle {
         get { ExerciseTrackingStyle(rawValue: trackingStyleRaw) ?? .strength }
         set { trackingStyleRaw = newValue.rawValue }
+    }
+
+    var segmentKind: SessionSegmentKind {
+        get { SessionSegmentKind(rawValue: segmentKindRaw ?? "") ?? .main }
+        set { segmentKindRaw = newValue == .main ? nil : newValue.rawValue }
     }
 
     @Transient

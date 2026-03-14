@@ -522,6 +522,9 @@
     "All" : {
 
     },
+    "All exercises" : {
+
+    },
     "All required routines are installed." : {
 
     },
@@ -589,10 +592,22 @@
     "Catalog Empty" : {
 
     },
+    "Change" : {
+
+    },
     "Changes which bundled exercise art set is shown for seeded and catalog exercises. Default uses the neutral dummy artwork." : {
 
     },
     "Checking requirements…" : {
+
+    },
+    "Choose" : {
+
+    },
+    "Choose a reusable routine that should run after the main work." : {
+
+    },
+    "Choose a reusable routine that should run before the main work." : {
 
     },
     "Choose…" : {
@@ -761,6 +776,9 @@
     "Contact" : {
 
     },
+    "Cool-down" : {
+
+    },
     "Copied" : {
 
     },
@@ -794,10 +812,7 @@
     "Create a routine first to use Workout activities." : {
 
     },
-    "Create a routine to attach workouts to this template." : {
-
-    },
-    "Create an exercise to add it to routines." : {
+    "Create another routine to pick it from the list." : {
 
     },
     "Create Rest between training days" : {
@@ -928,6 +943,9 @@
 
     },
     "Exercise Images" : {
+
+    },
+    "Exercise scope" : {
 
     },
     "Exercises" : {
@@ -1115,6 +1133,9 @@
     "Level" : {
 
     },
+    "Linked routines" : {
+
+    },
     "Loading…" : {
 
     },
@@ -1202,6 +1223,9 @@
     "No blocks" : {
 
     },
+    "No cool-down linked" : {
+
+    },
     "No Custom Equipment" : {
 
     },
@@ -1244,7 +1268,7 @@
     "No routine attached. Quick start or attach a routine." : {
 
     },
-    "No routines yet" : {
+    "No routines available" : {
 
     },
     "No routines yet. Create one in Routines first." : {
@@ -1263,6 +1287,9 @@
 
     },
     "No sets planned." : {
+
+    },
+    "No warm-up linked" : {
 
     },
     "No workouts" : {
@@ -1340,12 +1367,6 @@
     "Pick an exercise to see PRs, trends, and history." : {
 
     },
-    "Pick Exercise" : {
-
-    },
-    "Pick Routine" : {
-
-    },
     "Planned" : {
 
     },
@@ -1419,6 +1440,12 @@
 
     },
     "Remote media" : {
+
+    },
+    "Remove cool-down link" : {
+
+    },
+    "Remove warm-up link" : {
 
     },
     "Reopen" : {
@@ -1631,6 +1658,9 @@
 
     },
     "See all" : {
+
+    },
+    "Segments" : {
 
     },
     "Select 2 sessions to compare." : {
@@ -2394,7 +2424,13 @@
     "Share JSON Backup" : {
 
     },
+    "Skip cool-down" : {
+
+    },
     "Skip today" : {
+
+    },
+    "Skip warm-up" : {
 
     },
     "Skipped" : {
@@ -2440,6 +2476,9 @@
 
     },
     "Style" : {
+
+    },
+    "Suggested for %@" : {
 
     },
     "Summary" : {
@@ -2568,6 +2607,9 @@
           }
         }
       }
+    },
+    "Warm-up" : {
+
     },
     "Warnings" : {
 

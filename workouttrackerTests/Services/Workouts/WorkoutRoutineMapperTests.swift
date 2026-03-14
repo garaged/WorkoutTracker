@@ -19,6 +19,7 @@ final class WorkoutRoutineMapperTests: XCTestCase {
 
         let exerciseTemplate = try XCTUnwrap(templates.first)
         XCTAssertEqual(exerciseTemplate.nameSnapshot, "Walking")
+        XCTAssertEqual(exerciseTemplate.segmentKind, .main)
         XCTAssertEqual(exerciseTemplate.sets.count, 1)
 
         let set = try XCTUnwrap(exerciseTemplate.sets.first)
@@ -31,6 +32,59 @@ final class WorkoutRoutineMapperTests: XCTestCase {
 
         let distance = try XCTUnwrap(set.targetDistance)
         XCTAssertEqual(distance, 3.25, accuracy: 0.000_1)
+    }
+
+    func test_toExecutionSegments_buildsWarmUpMainCoolDownChainInOrder() throws {
+        let context = try makeInMemoryContext()
+
+        let warmUpExercise = Exercise(name: "Bike")
+        let mainExercise = Exercise(name: "Bench Press")
+        let coolDownExercise = Exercise(name: "Walk")
+
+        let warmUp = WorkoutRoutine(name: "Warm-Up")
+        let main = WorkoutRoutine(name: "Push Day")
+        let coolDown = WorkoutRoutine(name: "Cool-Down")
+
+        let warmItem = WorkoutRoutineItem(
+            order: 0,
+            routine: warmUp,
+            exercise: warmUpExercise,
+            trackingStyleRaw: ExerciseTrackingStyle.timeOnly.rawValue
+        )
+        let mainItem = WorkoutRoutineItem(
+            order: 0,
+            routine: main,
+            exercise: mainExercise,
+            trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue
+        )
+        let coolItem = WorkoutRoutineItem(
+            order: 0,
+            routine: coolDown,
+            exercise: coolDownExercise,
+            trackingStyleRaw: ExerciseTrackingStyle.timeOnly.rawValue
+        )
+
+        warmUp.items = [warmItem]
+        main.items = [mainItem]
+        coolDown.items = [coolItem]
+        main.warmUpRoutine = warmUp
+        main.coolDownRoutine = coolDown
+
+        [warmUpExercise, mainExercise, coolDownExercise].forEach { context.insert($0) }
+        [warmUp, main, coolDown].forEach { context.insert($0) }
+        [warmItem, mainItem, coolItem].forEach { context.insert($0) }
+        try context.save()
+
+        let segments = WorkoutRoutineMapper.toExecutionSegments(routine: main)
+
+        XCTAssertEqual(segments.map(\.kind), [.warmUp, .main, .coolDown])
+        XCTAssertEqual(segments.map(\.routineName), ["Warm-Up", "Push Day", "Cool-Down"])
+        XCTAssertEqual(segments.flatMap(\.exerciseItems).compactMap { $0.exercise?.name }, ["Bike", "Bench Press", "Walk"])
+
+        let flattened = WorkoutRoutineMapper.toExerciseTemplates(executionSegments: segments)
+        XCTAssertEqual(flattened.map(\.segmentKind), [.warmUp, .main, .coolDown])
+        XCTAssertEqual(flattened.map(\.nameSnapshot), ["Bike", "Bench Press", "Walk"])
+        XCTAssertEqual(flattened.map(\.order), [0, 1, 2])
     }
 
     func test_startOrResumeSession_copiesTimeDistanceTargetsIntoSessionLogs() throws {
@@ -58,8 +112,9 @@ final class WorkoutRoutineMapperTests: XCTestCase {
             context: context,
             now: start
         )
-        
+
         XCTAssertEqual(session.exercises.first?.trackingStyle, .timeDistance)
+        XCTAssertEqual(session.exercises.first?.segmentKind, .main)
         XCTAssertEqual(session.linkedActivityId, activity.id)
         XCTAssertEqual(session.sourceRoutineId, routine.id)
         XCTAssertEqual(activity.workoutSessionId, session.id)
@@ -88,6 +143,106 @@ final class WorkoutRoutineMapperTests: XCTestCase {
 
         let actualDistance = try XCTUnwrap(log.actualDistance)
         XCTAssertEqual(actualDistance, 2.4, accuracy: 0.000_1)
+    }
+
+    func test_startOrResumeSession_includesLinkedSegments_andPersistsSegmentKind() throws {
+        let context = try makeInMemoryContext()
+        let start = Date(timeIntervalSince1970: 1_700_000_500)
+
+        let warmUpExercise = Exercise(name: "Bike")
+        let mainExercise = Exercise(name: "Bench Press")
+        let coolDownExercise = Exercise(name: "Walk")
+
+        let warmUp = WorkoutRoutine(name: "Warm-Up")
+        let main = WorkoutRoutine(name: "Push Day")
+        let coolDown = WorkoutRoutine(name: "Cool-Down")
+
+        let warmItem = WorkoutRoutineItem(
+            order: 0,
+            routine: warmUp,
+            exercise: warmUpExercise,
+            trackingStyleRaw: ExerciseTrackingStyle.timeOnly.rawValue
+        )
+        let mainItem = WorkoutRoutineItem(
+            order: 0,
+            routine: main,
+            exercise: mainExercise,
+            trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue
+        )
+        let coolItem = WorkoutRoutineItem(
+            order: 0,
+            routine: coolDown,
+            exercise: coolDownExercise,
+            trackingStyleRaw: ExerciseTrackingStyle.timeOnly.rawValue
+        )
+
+        let warmPlan = WorkoutSetPlan(
+            order: 0,
+            targetReps: nil,
+            targetWeight: nil,
+            weightUnit: .kg,
+            targetDurationSeconds: 5 * 60,
+            targetDistance: nil,
+            targetRPE: nil,
+            restSeconds: nil,
+            routineItem: warmItem
+        )
+        let mainPlan = WorkoutSetPlan(
+            order: 0,
+            targetReps: 5,
+            targetWeight: 100,
+            weightUnit: .kg,
+            targetRPE: 8,
+            restSeconds: 180,
+            routineItem: mainItem
+        )
+        let coolPlan = WorkoutSetPlan(
+            order: 0,
+            targetReps: nil,
+            targetWeight: nil,
+            weightUnit: .kg,
+            targetDurationSeconds: 8 * 60,
+            targetDistance: 1.0,
+            targetRPE: nil,
+            restSeconds: nil,
+            routineItem: coolItem
+        )
+
+        warmUp.items = [warmItem]
+        main.items = [mainItem]
+        coolDown.items = [coolItem]
+        warmItem.setPlans = [warmPlan]
+        mainItem.setPlans = [mainPlan]
+        coolItem.setPlans = [coolPlan]
+        main.warmUpRoutine = warmUp
+        main.coolDownRoutine = coolDown
+
+        [warmUpExercise, mainExercise, coolDownExercise].forEach { context.insert($0) }
+        [warmUp, main, coolDown].forEach { context.insert($0) }
+        [warmItem, mainItem, coolItem].forEach { context.insert($0) }
+        [warmPlan, mainPlan, coolPlan].forEach { context.insert($0) }
+
+        let activity = Activity(
+            title: "Push Session",
+            startAt: start,
+            endAt: start.addingTimeInterval(60 * 60),
+            kind: .workout,
+            workoutRoutineId: main.id
+        )
+        context.insert(activity)
+        try context.save()
+
+        let session = try WorkoutSessionStarter.startOrResumeSession(
+            for: activity,
+            context: context,
+            now: start
+        )
+
+        XCTAssertEqual(session.exercises.map(\.exerciseNameSnapshot), ["Bike", "Bench Press", "Walk"])
+        XCTAssertEqual(session.exercises.map(\.segmentKind), [.warmUp, .main, .coolDown])
+        XCTAssertNil(session.exercises[1].segmentKindRaw, "Main segment should normalize to nil for backward-safe storage.")
+        XCTAssertEqual(session.exercises[0].segmentKindRaw, SessionSegmentKind.warmUp.rawValue)
+        XCTAssertEqual(session.exercises[2].segmentKindRaw, SessionSegmentKind.coolDown.rawValue)
     }
 
     // MARK: - Helpers

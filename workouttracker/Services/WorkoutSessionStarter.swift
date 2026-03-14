@@ -11,18 +11,20 @@ enum WorkoutSessionStarter {
         now: Date = Date()
     ) throws -> WorkoutSession {
 
-        // If already linked, resume that session
         if let sid = activity.workoutSessionId {
             let desc = FetchDescriptor<WorkoutSession>(predicate: #Predicate { $0.id == sid })
             if let existing = try context.fetch(desc).first {
+                // Normalize relationship ordering on resume too.
+                existing.exercises.sort { $0.order < $1.order }
+                for ex in existing.exercises {
+                    ex.setLogs.sort { $0.order < $1.order }
+                }
                 return existing
             } else {
-                // dangling link – clear it
                 activity.workoutSessionId = nil
             }
         }
 
-        // Build templates from routine if present
         var templates: [WorkoutSessionFactory.ExerciseTemplate] = []
         var routineName: String? = nil
         var routineId: UUID? = activity.workoutRoutineId
@@ -31,7 +33,8 @@ enum WorkoutSessionStarter {
             let desc = FetchDescriptor<WorkoutRoutine>(predicate: #Predicate { $0.id == rid })
             if let routine = try context.fetch(desc).first {
                 routineName = routine.name
-                templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
+                let executionSegments = WorkoutRoutineMapper.toExecutionSegments(routine: routine)
+                templates = WorkoutRoutineMapper.toExerciseTemplates(executionSegments: executionSegments)
             } else {
                 routineId = nil
             }
@@ -48,11 +51,18 @@ enum WorkoutSessionStarter {
 
         context.insert(session)
 
-        // Link Activity <-> Session
         activity.kind = .workout
         activity.workoutSessionId = session.id
 
         try context.save()
+
+        // Important: SwiftData relationship arrays are not guaranteed to stay
+        // in insertion order after save, so normalize before returning.
+        session.exercises.sort { $0.order < $1.order }
+        for ex in session.exercises {
+            ex.setLogs.sort { $0.order < $1.order }
+        }
+
         return session
     }
 }
