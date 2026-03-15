@@ -141,4 +141,15 @@ final class WorkoutLoggingServiceTests: XCTestCase {
         svc.undoLast(context: context) // undo +2
         XCTAssertEqual(logs[0].reps, 0)
     }
+    
+    func test_copySet_setsUndoToast() throws {
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
+        let (_, ex, logs) = try makeSession(context: context)
+
+        let svc = WorkoutLoggingService()
+        _ = svc.copySet(logs[0], in: ex, context: context)
+
+        XCTAssertEqual(svc.undoToast?.message, "Copied set")
+    }
 }

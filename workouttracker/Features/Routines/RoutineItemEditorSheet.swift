@@ -19,6 +19,19 @@ struct RoutineItemEditorScreen: View {
             }
 
             Section("Tracking") {
+                Picker("Segment", selection: Binding(
+                    get: { item.segment },
+                    set: {
+                        item.segment = $0
+                        try? modelContext.save()
+                    }
+                )) {
+                    ForEach(WorkoutExerciseSegment.allCases, id: \.self) { segment in
+                        Text(segment.displayName).tag(segment)
+                    }
+                }
+                .pickerStyle(.segmented)
+
                 Picker("Style", selection: Binding(
                     get: { item.trackingStyle },
                     set: {

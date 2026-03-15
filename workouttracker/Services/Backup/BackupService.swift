@@ -69,9 +69,8 @@ final class BackupService {
     /// v3 adds explicit Data support in JSON export/restore so models like
     /// TemplateActivity can round-trip reliably instead of falling back to
     /// String(describing: Data).
-    ///
-    /// v4 adds optional linked routine references and session segment metadata.
-    /// Older backup files still restore because missing fields default safely.
+    /// v4 adds routine/session exercise segment persistence so analytics can
+    /// distinguish warm-up, main, and cool-down work after restore.
     private let schemaVersion = 4
 
     struct BackupFile: Codable {
@@ -344,7 +343,8 @@ final class BackupService {
                 routine: raw.routineID.flatMap { routineByID[$0] },
                 exercise: raw.exerciseID.flatMap { exerciseByID[$0] },
                 notes: raw.notes,
-                trackingStyleRaw: raw.trackingStyleRaw
+                trackingStyleRaw: raw.trackingStyleRaw,
+                segmentRaw: raw.segmentRaw
             )
             context.insert(model)
             routineItemByID[raw.id] = model
@@ -377,6 +377,7 @@ final class BackupService {
                 exerciseNameSnapshot: raw.exerciseNameSnapshot,
                 notes: raw.notes,
                 trackingStyle: ExerciseTrackingStyle(rawValue: raw.trackingStyleRaw) ?? .strength,
+                segment: WorkoutExerciseSegment(rawValue: raw.segmentRaw) ?? .main,
                 session: raw.sessionID.flatMap { sessionByID[$0] },
                 setLogsStorage: []
             )
@@ -655,6 +656,7 @@ final class BackupService {
                 "order": .number(Double(model.order)),
                 "notes": model.notes.map(JSONValue.string) ?? .null,
                 "trackingStyleRaw": .string(model.trackingStyleRaw),
+                "segmentRaw": .string(model.segmentRaw),
                 "routine": model.routine.map { routine in
                     .object([
                         "$ref": .string(routine.id.uuidString),
@@ -716,7 +718,7 @@ final class BackupService {
                 "exerciseNameSnapshot": .string(model.exerciseNameSnapshot),
                 "notes": model.notes.map(JSONValue.string) ?? .null,
                 "trackingStyleRaw": .string(model.trackingStyleRaw),
-                "segmentKindRaw": model.segmentKindRaw.map(JSONValue.string) ?? .null,
+                "segmentRaw": .string(model.segmentRaw),
                 "session": model.session.map { session in
                     .object([
                         "$ref": .string(session.id.uuidString),
@@ -943,6 +945,7 @@ final class BackupService {
         let routineID: UUID?
         let exerciseID: UUID?
         let trackingStyleRaw: String
+        let segmentRaw: String
     }
 
     private struct WorkoutSetPlanRecord {
@@ -981,7 +984,7 @@ final class BackupService {
         let exerciseNameSnapshot: String
         let notes: String?
         let trackingStyleRaw: String
-        let segmentKindRaw: String?
+        let segmentRaw: String
         let sessionID: UUID?
         let targetDurationSeconds: Int?
         let actualDurationSeconds: Int?
@@ -1108,7 +1111,8 @@ final class BackupService {
                 notes: string("notes", in: e),
                 routineID: refUUID("routine", in: e),
                 exerciseID: refUUID("exercise", in: e),
-                trackingStyleRaw: string("trackingStyleRaw", in: e) ?? ExerciseTrackingStyle.strength.rawValue
+                trackingStyleRaw: string("trackingStyleRaw", in: e) ?? ExerciseTrackingStyle.strength.rawValue,
+                segmentRaw: string("segmentRaw", in: e) ?? WorkoutExerciseSegment.main.rawValue
             )
         }
     }
@@ -1159,7 +1163,7 @@ final class BackupService {
                 exerciseNameSnapshot: string("exerciseNameSnapshot", in: e) ?? "Exercise",
                 notes: string("notes", in: e),
                 trackingStyleRaw: string("trackingStyleRaw", in: e) ?? ExerciseTrackingStyle.strength.rawValue,
-                segmentKindRaw: string("segmentKindRaw", in: e),
+                segmentRaw: string("segmentRaw", in: e) ?? WorkoutExerciseSegment.main.rawValue,
                 sessionID: refUUID("session", in: e),
                 targetDurationSeconds: int("targetDurationSeconds", in: e),
                 actualDurationSeconds: int("actualDurationSeconds", in: e),

@@ -19,6 +19,7 @@ enum WorkoutSessionFactory {
         var nameSnapshot: String
         var notes: String?
         var trackingStyle: ExerciseTrackingStyle
+        var segment: WorkoutExerciseSegment = .main
         var sets: [SetTemplate]
         var segmentKind: SessionSegmentKind = .main
     }
@@ -56,7 +57,7 @@ enum WorkoutSessionFactory {
                 exerciseNameSnapshot: ex.nameSnapshot,
                 notes: ex.notes,
                 trackingStyle: ex.trackingStyle,
-                segmentKind: ex.segmentKind,
+                segment: ex.segment,
                 session: session
             )
 

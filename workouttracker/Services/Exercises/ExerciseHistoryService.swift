@@ -36,9 +36,10 @@ final class ExerciseHistoryService {
             context: context
         )
 
-        // Filter to the exercise (assumes WorkoutSessionExercise has `exercise: Exercise?`)
+        // Filter to the exercise and default core-progress view (.main only).
         let filtered = logs.filter { log in
-            log.sessionExercise?.exerciseId == exerciseId
+            log.sessionExercise?.exerciseId == exerciseId &&
+            log.sessionExercise?.segment == .main
         }
 
         // Group by day
@@ -76,33 +77,35 @@ final class ExerciseHistoryService {
     private func compute(metric: Metric, logs: [WorkoutSetLog]) -> Double {
         switch metric {
         case .bestWeight:
-            return logs.map { $0.weight ?? $0.targetWeight ?? 0 }.max() ?? 0
+            return logs.compactMap { positiveDouble($0.weight) }.max() ?? 0
 
         case .totalVolume:
-            return logs.reduce(0) { $0 + $1.volumeEstimate }
+            return logs.reduce(0) { $0 + volumeEstimate(for: $1) }
 
         case .estimated1RM:
             // Best estimated 1RM for the day (Epley)
-            return logs.map { $0.estimated1RM }.max() ?? 0
+            return logs.compactMap(estimated1RM).max() ?? 0
         }
     }
-}
 
-// MARK: helpers
+    private func positiveDouble(_ value: Double?) -> Double? {
+        guard let value, value > 0 else { return nil }
+        return value
+    }
 
-private extension WorkoutSetLog {
-    var repsValue: Double { Double(reps ?? targetReps ?? 0) }
-    var weightValue: Double { weight ?? targetWeight ?? 0 }
+    private func positiveInt(_ value: Int?) -> Int? {
+        guard let value, value > 0 else { return nil }
+        return value
+    }
 
-    var volumeEstimate: Double {
-        max(0, repsValue) * max(0, weightValue)
+    private func volumeEstimate(for log: WorkoutSetLog) -> Double {
+        guard let reps = positiveInt(log.reps), let weight = positiveDouble(log.weight) else { return 0 }
+        return weight * Double(reps)
     }
 
     /// Epley formula: 1RM = w * (1 + reps/30)
-    var estimated1RM: Double {
-        let r = repsValue
-        let w = weightValue
-        guard r > 0, w > 0 else { return 0 }
-        return w * (1.0 + r / 30.0)
+    private func estimated1RM(for log: WorkoutSetLog) -> Double? {
+        guard let reps = positiveInt(log.reps), let weight = positiveDouble(log.weight) else { return nil }
+        return weight * (1.0 + Double(reps) / 30.0)
     }
 }

@@ -87,8 +87,15 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertTrue(repsField.waitForExistence(timeout: 10), "Expected reps field.")
         XCTAssertTrue(weightField.waitForExistence(timeout: 10), "Expected weight field.")
 
-        // Important: this is an add/copy semantics test, not a text-entry test.
-        // Use the seeded source values directly so the next tap is not fighting text-field focus.
+        replaceText(in: repsField, with: "10")
+        replaceText(in: weightField, with: "100")
+        dismissInlineEditor(in: app)
+
+        XCTAssertTrue(waitForTextFieldValue(repsField, equals: "10", timeout: 5),
+                      "Expected reps field to commit to 10 before Add.")
+        XCTAssertTrue(waitForTextFieldValue(weightField, equals: "100", timeout: 5),
+                      "Expected weight field to commit to 100 before Add.")
+
         let sourceReps = normalizedTextFieldValue(repsField)
         let sourceWeight = normalizedTextFieldValue(weightField)
         XCTAssertFalse(sourceReps.isEmpty, "Expected source reps to have a seeded value before Add.")
@@ -138,8 +145,15 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertTrue(repsField.waitForExistence(timeout: 10), "Expected reps field.")
         XCTAssertTrue(weightField.waitForExistence(timeout: 10), "Expected weight field.")
 
-        // Important: keep this test focused on copy semantics.
-        // Editing the fields here makes the next copy-button tap flaky because focus can still be in the text field.
+        replaceText(in: repsField, with: "10")
+        replaceText(in: weightField, with: "100")
+        dismissInlineEditor(in: app)
+
+        XCTAssertTrue(waitForTextFieldValue(repsField, equals: "10", timeout: 5),
+                      "Expected reps field to commit to 10 before Copy.")
+        XCTAssertTrue(waitForTextFieldValue(weightField, equals: "100", timeout: 5),
+                      "Expected weight field to commit to 100 before Copy.")
+
         let sourceReps = normalizedTextFieldValue(repsField)
         let sourceWeight = normalizedTextFieldValue(weightField)
         XCTAssertFalse(sourceReps.isEmpty, "Expected source reps to have a seeded value before Copy.")
@@ -149,10 +163,24 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
 
         let copyBtn = app.buttons["WorkoutSetEditorRow.\(uuid).Actions.CopyButton"]
         XCTAssertTrue(copyBtn.waitForExistence(timeout: 10), "Expected Copy button for the selected set row.")
-        copyBtn.tap()
 
-        XCTAssertTrue(firstUndoButton(in: app).waitForExistence(timeout: 10),
-                      "Expected Undo toast after copying a set.")
+        // Important: after editing SwiftUI text fields, the first tap on another control can just end editing.
+        // Dismiss first, then tap copy. If needed, retry once.
+        dismissInlineEditor(in: app)
+        waitForKeyboardToDisappear(in: app, timeout: 3)
+
+        tapReliably(copyBtn)
+
+        let undoBtn = firstUndoButton(in: app)
+        if !undoBtn.waitForExistence(timeout: 2) {
+            // Common SwiftUI/UI test edge case: first tap after editing only resigns focus.
+            tapReliably(copyBtn)
+        }
+
+        if !undoBtn.waitForExistence(timeout: 10) {
+            attachUITestDebug(app, name: "Phase1_CopySet_UndoMissing_AfterEdit")
+        }
+        XCTAssertTrue(undoBtn.exists, "Expected Undo toast after copying a set.")
 
         guard let newToggleID = waitForNewSetToggleID(after: before, timeout: 10),
               let newUUID = uuidFromDoneToggleIdentifier(newToggleID)
@@ -361,24 +389,88 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
     }
 
     private func replaceText(in field: XCUIElement, with newValue: String) {
-        XCTAssertTrue(field.exists, "Field does not exist: \(field)")
-
-        // UI text fields in SwiftUI can be stubborn about where the cursor lands.
-        // Clear multiple times, then type the desired value, and retry once if the final value is still empty.
-        field.tap()
-        field.tap()
+        XCTAssertTrue(field.waitForExistence(timeout: 5), "Field does not exist: \(field)")
 
         for _ in 0..<3 {
-            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 24))
-            if normalizedTextFieldValue(field).isEmpty { break }
+            focusTextField(field)
+
+            if clearTextField(field) {
+                field.typeText(newValue)
+            } else {
+                // Fallback: try select-all context menu, then delete.
+                focusTextField(field)
+                field.press(forDuration: 1.0)
+
+                if let selectAll = selectAllMenuItem(), selectAll.waitForExistence(timeout: 1) {
+                    selectAll.tap()
+                    field.typeText(XCUIKeyboardKey.delete.rawValue)
+                }
+
+                field.typeText(newValue)
+            }
+
+            dismissInlineEditor(in: app)
+
+            if waitForTextFieldValue(field, equals: newValue, timeout: 2) {
+                return
+            }
         }
 
-        field.typeText(newValue)
+        XCTFail("Expected field \(field.identifier) to become \(newValue), found \(normalizedTextFieldValue(field))")
+    }
+    
+    private func focusTextField(_ field: XCUIElement) {
+        // Tap near the trailing edge to place the caret at the end of the value.
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+    }
 
-        if normalizedTextFieldValue(field).isEmpty {
-            field.tap()
-            field.typeText(newValue)
+    private func clearTextField(_ field: XCUIElement) -> Bool {
+        let current = normalizedTextFieldValue(field)
+        if current.isEmpty { return true }
+
+        focusTextField(field)
+
+        // Delete the known current length, plus a little extra padding.
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count + 4))
+
+        return normalizedTextFieldValue(field).isEmpty
+    }
+
+    private func selectAllMenuItem() -> XCUIElement? {
+        let candidates = [
+            app.menuItems["Select All"],
+            app.menuItems["Select all"],
+            app.menuItems["Seleccionar todo"]
+        ]
+
+        for item in candidates where item.exists {
+            return item
         }
+        return candidates.first
+    }
+
+    private func dismissInlineEditor(in app: XCUIApplication) {
+        let navBar = app.navigationBars.firstMatch
+        if navBar.exists {
+            navBar.tap()
+            RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+            return
+        }
+
+        let screen = app.otherElements["WorkoutSession.Screen"]
+        if screen.exists {
+            screen.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.05)).tap()
+            RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+        }
+    }
+
+    private func waitForTextFieldValue(_ field: XCUIElement, equals expected: String, timeout: TimeInterval) -> Bool {
+        let start = Date()
+        while Date().timeIntervalSince(start) < timeout {
+            if normalizedTextFieldValue(field) == expected { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        }
+        return normalizedTextFieldValue(field) == expected
     }
 
     private func normalizedTextFieldValue(_ field: XCUIElement) -> String {
@@ -387,5 +479,22 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
 
         if raw == "—" { return "" }
         return raw
+    }
+    
+    private func tapReliably(_ element: XCUIElement) {
+        XCTAssertTrue(element.waitForExistence(timeout: 5), "Element does not exist: \(element)")
+        if element.isHittable {
+            element.tap()
+        } else {
+            element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
+    }
+
+    private func waitForKeyboardToDisappear(in app: XCUIApplication, timeout: TimeInterval) {
+        let start = Date()
+        while Date().timeIntervalSince(start) < timeout {
+            if app.keyboards.count == 0 { return }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        }
     }
 }

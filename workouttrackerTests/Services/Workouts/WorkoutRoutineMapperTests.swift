@@ -19,10 +19,10 @@ final class WorkoutRoutineMapperTests: XCTestCase {
 
         let exerciseTemplate = try XCTUnwrap(templates.first)
         XCTAssertEqual(exerciseTemplate.nameSnapshot, "Walking")
-        XCTAssertEqual(exerciseTemplate.segmentKind, .main)
+        XCTAssertEqual(exerciseTemplate.segment, .main)
         XCTAssertEqual(exerciseTemplate.sets.count, 1)
 
-        let set = try XCTUnwrap(exerciseTemplate.sets.first)
+        let set = try XCTUnwrap(setsOrFirst(from: exerciseTemplate))
         XCTAssertNil(set.targetReps)
         XCTAssertNil(set.targetWeight)
         XCTAssertNil(set.targetRPE)
@@ -82,9 +82,24 @@ final class WorkoutRoutineMapperTests: XCTestCase {
         XCTAssertEqual(segments.flatMap(\.exerciseItems).compactMap { $0.exercise?.name }, ["Bike", "Bench Press", "Walk"])
 
         let flattened = WorkoutRoutineMapper.toExerciseTemplates(executionSegments: segments)
-        XCTAssertEqual(flattened.map(\.segmentKind), [.warmUp, .main, .coolDown])
+        XCTAssertEqual(flattened.map(\.segment), [.warmUp, .main, .coolDown])
         XCTAssertEqual(flattened.map(\.nameSnapshot), ["Bike", "Bench Press", "Walk"])
         XCTAssertEqual(flattened.map(\.order), [0, 1, 2])
+    }
+
+    func test_toExerciseTemplates_preservesRoutineItemSegment() throws {
+        let context = try makeInMemoryContext()
+        let (_, routine, _, _) = try makeWalkingRoutine(
+            context: context,
+            durationSeconds: 10 * 60,
+            distance: 1.2,
+            segment: .warmUp
+        )
+
+        let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
+        let template = try XCTUnwrap(templates.first)
+
+        XCTAssertEqual(template.segment, .warmUp)
     }
 
     func test_startOrResumeSession_copiesTimeDistanceTargetsIntoSessionLogs() throws {
@@ -114,7 +129,7 @@ final class WorkoutRoutineMapperTests: XCTestCase {
         )
 
         XCTAssertEqual(session.exercises.first?.trackingStyle, .timeDistance)
-        XCTAssertEqual(session.exercises.first?.segmentKind, .main)
+        XCTAssertEqual(session.exercises.first?.segment, .main)
         XCTAssertEqual(session.linkedActivityId, activity.id)
         XCTAssertEqual(session.sourceRoutineId, routine.id)
         XCTAssertEqual(activity.workoutSessionId, session.id)
@@ -145,7 +160,37 @@ final class WorkoutRoutineMapperTests: XCTestCase {
         XCTAssertEqual(actualDistance, 2.4, accuracy: 0.000_1)
     }
 
-    func test_startOrResumeSession_includesLinkedSegments_andPersistsSegmentKind() throws {
+    func test_startOrResumeSession_persistsRoutineItemSegmentIntoSessionExercise() throws {
+        let context = try makeInMemoryContext()
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+
+        let (_, routine, _, _) = try makeWalkingRoutine(
+            context: context,
+            durationSeconds: 12 * 60,
+            distance: 1.5,
+            segment: .coolDown
+        )
+
+        let activity = Activity(
+            title: "Cool Down Walk",
+            startAt: start,
+            endAt: start.addingTimeInterval(12 * 60),
+            kind: .workout,
+            workoutRoutineId: routine.id
+        )
+        context.insert(activity)
+        try context.save()
+
+        let session = try WorkoutSessionStarter.startOrResumeSession(
+            for: activity,
+            context: context,
+            now: start
+        )
+
+        XCTAssertEqual(session.exercises.first?.segment, .coolDown)
+    }
+
+    func test_startOrResumeSession_includesLinkedSegments_andPersistsSegment() throws {
         let context = try makeInMemoryContext()
         let start = Date(timeIntervalSince1970: 1_700_000_500)
 
@@ -239,10 +284,7 @@ final class WorkoutRoutineMapperTests: XCTestCase {
         )
 
         XCTAssertEqual(session.exercises.map(\.exerciseNameSnapshot), ["Bike", "Bench Press", "Walk"])
-        XCTAssertEqual(session.exercises.map(\.segmentKind), [.warmUp, .main, .coolDown])
-        XCTAssertNil(session.exercises[1].segmentKindRaw, "Main segment should normalize to nil for backward-safe storage.")
-        XCTAssertEqual(session.exercises[0].segmentKindRaw, SessionSegmentKind.warmUp.rawValue)
-        XCTAssertEqual(session.exercises[2].segmentKindRaw, SessionSegmentKind.coolDown.rawValue)
+        XCTAssertEqual(session.exercises.map(\.segment), [.warmUp, .main, .coolDown])
     }
 
     // MARK: - Helpers
@@ -266,7 +308,8 @@ final class WorkoutRoutineMapperTests: XCTestCase {
     private func makeWalkingRoutine(
         context: ModelContext,
         durationSeconds: Int,
-        distance: Double
+        distance: Double,
+        segment: WorkoutExerciseSegment = .main
     ) throws -> (Exercise, WorkoutRoutine, WorkoutRoutineItem, WorkoutSetPlan) {
         let exercise = Exercise(name: "Walking", modality: .cardio)
         let routine = WorkoutRoutine(name: "Neighborhood Walk")
@@ -274,7 +317,8 @@ final class WorkoutRoutineMapperTests: XCTestCase {
             order: 0,
             routine: routine,
             exercise: exercise,
-            trackingStyleRaw: ExerciseTrackingStyle.timeDistance.rawValue
+            trackingStyleRaw: ExerciseTrackingStyle.timeDistance.rawValue,
+            segmentRaw: segment.rawValue
         )
         let plan = WorkoutSetPlan(
             order: 0,
@@ -298,5 +342,9 @@ final class WorkoutRoutineMapperTests: XCTestCase {
         try context.save()
 
         return (exercise, routine, item, plan)
+    }
+
+    private func setsOrFirst(from template: WorkoutExerciseTemplate) -> WorkoutExerciseTemplate.SetTemplate {
+        template.sets[0]
     }
 }

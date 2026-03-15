@@ -177,7 +177,8 @@ struct RoutineEditorScreen: View {
             routine: routine,
             exercise: ex,
             notes: nil,
-            trackingStyleRaw: style.rawValue
+            trackingStyleRaw: style.rawValue,
+            segmentRaw: WorkoutExerciseSegment.main.rawValue
         )
 
         let count = style.defaultPlannedRows
@@ -370,10 +371,20 @@ private struct RoutineItemRow: View {
     let item: WorkoutRoutineItem
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(item.exercise?.name ?? "Unknown Exercise")
-                .font(.headline)
-                .lineLimit(1)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Text(item.exercise?.name ?? "Unknown Exercise")
+                    .font(.headline)
+                    .lineLimit(1)
+
+                if item.segment != .main {
+                    Text(item.segment.displayName)
+                        .font(.caption.weight(.semibold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(.thinMaterial, in: Capsule())
+                }
+            }
 
             Text(summaryText)
                 .font(.subheadline)

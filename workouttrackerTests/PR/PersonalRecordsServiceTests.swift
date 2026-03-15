@@ -77,9 +77,66 @@ final class PersonalRecordsServiceTests: XCTestCase {
         let bestReps = try XCTUnwrap(records.bestReps?.value, "Expected bestReps to be present")
         XCTAssertEqual(bestReps, 5)
 
-
         let trend = try svc.trend(for: exId, limit: 10, context: ctx)
         XCTAssertEqual(trend.map(\.id), [s0.id, s1.id]) // chronological
+    }
+
+    func testRecords_ignoreWarmUpAndCoolDownByDefault() throws {
+        let ctx = try makeContext()
+        let svc = PersonalRecordsService()
+        let exId = UUID()
+        let t0 = Date(timeIntervalSince1970: 1_700_000_000)
+
+        let session = WorkoutSession(startedAt: t0)
+        session.status = .completed
+
+        let warmUpExercise = WorkoutSessionExercise(
+            order: 0,
+            exerciseId: exId,
+            exerciseNameSnapshot: "Bench",
+            segment: .warmUp,
+            session: session
+        )
+        warmUpExercise.setLogs = [
+            WorkoutSetLog(order: 0, reps: 12, weight: 140, weightUnit: .kg, completed: true, completedAt: t0)
+        ]
+
+        let mainExercise = WorkoutSessionExercise(
+            order: 1,
+            exerciseId: exId,
+            exerciseNameSnapshot: "Bench",
+            segment: .main,
+            session: session
+        )
+        mainExercise.setLogs = [
+            WorkoutSetLog(order: 0, reps: 5, weight: 100, weightUnit: .kg, completed: true, completedAt: t0.addingTimeInterval(120))
+        ]
+
+        session.exercises = [warmUpExercise, mainExercise]
+        try insert([session], into: ctx)
+
+        let records = try svc.records(for: exId, context: ctx)
+        XCTAssertEqual(try XCTUnwrap(records.bestWeight).value, 100, accuracy: 0.0001)
+        XCTAssertEqual(records.bestReps?.value, 5)
+    }
+
+    func testRecords_treatMissingSegmentAsMainForOlderData() throws {
+        let ctx = try makeContext()
+        let svc = PersonalRecordsService()
+        let exId = UUID()
+        let t0 = Date(timeIntervalSince1970: 1_700_000_000)
+
+        let session = WorkoutSession(startedAt: t0)
+        session.status = .completed
+        let ex = WorkoutSessionExercise(order: 0, exerciseId: exId, exerciseNameSnapshot: "Bench", session: session)
+        ex.setLogs = [WorkoutSetLog(order: 0, reps: 5, weight: 100, weightUnit: .kg, completed: true, completedAt: t0)]
+        session.exercises = [ex]
+
+        try insert([session], into: ctx)
+
+        let records = try svc.records(for: exId, context: ctx)
+        XCTAssertEqual(try XCTUnwrap(records.bestWeight).value, 100, accuracy: 0.0001)
+        XCTAssertEqual(records.bestReps?.value, 5)
     }
 
     func testNextTargetText_prefersWeightAndUsesUnitIncrement() throws {

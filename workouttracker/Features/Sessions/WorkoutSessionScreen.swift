@@ -1064,13 +1064,14 @@ struct WorkoutSessionScreen: View {
                 },
                 onCopySet: {
                     markActive(exerciseID: ex.id, setID: set.id)
+                    dismissKeyboard()
+
                     if !isReadOnly, let newSet = logging.copySet(set, in: ex, context: modelContext) {
                         applyTimedTemplate(from: set, to: newSet, prefillActuals: true)
                         markActive(exerciseID: ex.id, setID: newSet.id)
                         saveOrAssert("copy set")
                         scrollToExercise(newSet.id, proxy: proxy)
                     }
-                    saveOrAssert("copy set")
                 },
                 onAddSet: {
                     markActive(exerciseID: ex.id, setID: set.id)
@@ -1128,11 +1129,13 @@ struct WorkoutSessionScreen: View {
                 },
                 onCopySet: {
                     markActive(exerciseID: ex.id, setID: set.id)
+                    dismissKeyboard()
+
                     if !isReadOnly, let newSet = logging.copySet(set, in: ex, context: modelContext) {
                         markActive(exerciseID: ex.id, setID: newSet.id)
+                        saveOrAssert("copy set")
                         scrollToExercise(newSet.id, proxy: proxy)
                     }
-                    saveOrAssert("copy set")
                 },
                 onAddSet: {
                     markActive(exerciseID: ex.id, setID: set.id)

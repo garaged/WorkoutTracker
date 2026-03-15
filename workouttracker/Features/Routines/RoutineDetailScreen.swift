@@ -94,7 +94,7 @@ struct RoutineDetailScreen: View {
     @MainActor
     private func addItem() {
         let nextOrder = (sortedItems.last?.order ?? -1) + 1
-        let item = WorkoutRoutineItem(order: nextOrder, routine: routine, exercise: nil)
+        let item = WorkoutRoutineItem(order: nextOrder, routine: routine, exercise: nil, segmentRaw: WorkoutExerciseSegment.main.rawValue)
         modelContext.insert(item)
 
         routine.items.append(item)
@@ -181,6 +181,19 @@ private struct RoutineItemCard: View {
                 set: { item.notes = $0.isEmpty ? nil : $0 }
             ), axis: .vertical)
             .font(.caption)
+
+            Picker("Segment", selection: Binding(
+                get: { item.segment },
+                set: {
+                    item.segment = $0
+                    onPlanChanged()
+                }
+            )) {
+                ForEach(WorkoutExerciseSegment.allCases, id: \.self) { segment in
+                    Text(segment.displayName).tag(segment)
+                }
+            }
+            .pickerStyle(.segmented)
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
