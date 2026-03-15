@@ -13,53 +13,51 @@ struct HomeTile: Identifiable {
 
 struct HomeScreen: View {
     let tiles: [HomeTile]
-
+    var onResumeSession: (WorkoutSession) -> Void = { _ in }
+    
     private let columns: [GridItem] = [
         GridItem(.adaptive(minimum: 160), spacing: 14)
     ]
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                LinearGradient(
-                    colors: [
-                        Color(.systemBackground),
-                        Color(.secondarySystemBackground)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(.systemBackground),
+                    Color(.secondarySystemBackground)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 14) {
-                        header
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    header
 
-                        ActiveSessionsSection()
+                    ActiveSessionsSection(onResume: onResumeSession)
 
-                        LazyVGrid(columns: columns, spacing: 14) {
-                            ForEach(tiles) { tile in
-                                NavigationLink {
-                                    tile.destination()
-                                } label: {
-                                    HomeTileCard(tile: tile)
-                                }
-                                .buttonStyle(.plain)
+                    LazyVGrid(columns: columns, spacing: 14) {
+                        ForEach(tiles) { tile in
+                            NavigationLink {
+                                tile.destination()
+                            } label: {
+                                HomeTileCard(tile: tile)
                             }
+                            .buttonStyle(.plain)
                         }
-                        .padding(.top, 4)
-
-                        Text("Tip: Long-press tiles later for quick actions (e.g., “Start workout”, “Add exercise”).")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 6)
                     }
-                    .padding(16)
+                    .padding(.top, 4)
+
+                    Text("Tip: Long-press tiles later for quick actions (e.g., “Start workout”, “Add exercise”).")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 6)
                 }
+                .padding(16)
             }
-            // ✅ Key change: Home uses a custom header, so hide the nav bar entirely.
-            .toolbar(.hidden, for: .navigationBar)
         }
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     private var header: some View {

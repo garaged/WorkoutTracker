@@ -70,3 +70,53 @@ func tapNewActivityButton(_ app: XCUIApplication, timeout: TimeInterval = 6.0) -
 
     return false
 }
+
+func assertApproximatelyVerticallyCentered(
+    _ element: XCUIElement,
+    in app: XCUIApplication,
+    tolerance: CGFloat = 140,
+    debugName: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    XCTAssertTrue(
+        element.waitForExistence(timeout: 6),
+        "Expected element '\(debugName)' to exist before checking centering.",
+        file: file,
+        line: line
+    )
+
+    let window = app.windows.firstMatch
+    XCTAssertTrue(
+        window.waitForExistence(timeout: 2),
+        "Expected app window for centering check.",
+        file: file,
+        line: line
+    )
+
+    let delta = abs(element.frame.midY - window.frame.midY)
+
+    if delta > tolerance {
+        let shot = XCUIScreen.main.screenshot()
+        let screenshotAttachment = XCTAttachment(screenshot: shot)
+        screenshotAttachment.name = "\(debugName) not centered screenshot"
+        screenshotAttachment.lifetime = .keepAlways
+
+        let hierarchyAttachment = XCTAttachment(string: app.debugDescription)
+        hierarchyAttachment.name = "\(debugName) hierarchy"
+        hierarchyAttachment.lifetime = .keepAlways
+
+        XCTContext.runActivity(named: "Centering failure debug") { activity in
+            activity.add(screenshotAttachment)
+            activity.add(hierarchyAttachment)
+        }
+    }
+
+    XCTAssertLessThanOrEqual(
+        delta,
+        tolerance,
+        "Expected '\(debugName)' to be vertically near the middle of the screen. delta=\(delta), tolerance=\(tolerance)",
+        file: file,
+        line: line
+    )
+}

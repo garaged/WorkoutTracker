@@ -38,7 +38,8 @@ struct AppRootView: View {
     @AppStorage("workouttracker.starterPackVersion") private var starterPackVersion = 0
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var selection: RootDestination? = .home
-    
+    @State private var presentedSession: WorkoutSession? = nil
+
     @State private var timelineJump: TimelineJump? = nil
 
     private struct TimelineJump: Identifiable {
@@ -55,17 +56,9 @@ struct AppRootView: View {
             } else if let start = uiTestStartRoute {
                 uiTestRoot(for: start)
             } else if platform.prefersSplitNavigation {
-                NavigationSplitView(columnVisibility: $columnVisibility) {
-                    sidebar
-                } detail: {
-                    NavigationStack {
-                        detail(for: selection ?? .home)
-                    }
-                }
+                splitRoot
             } else {
-                NavigationStack {
-                    HomeScreen(tiles: tiles)
-                }
+                compactRoot
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("workouttracker.openTimelineForDate"))) { note in
@@ -83,10 +76,8 @@ struct AppRootView: View {
             }
         }
         .task {
-            // Seed once, across iPhone + iPad paths.
             guard !didSeed else { return }
 
-            // Don’t mutate persistent store during UITests.
             guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else {
                 didSeed = true
                 return
@@ -94,7 +85,7 @@ struct AppRootView: View {
 
             StarterPackSeeder.seedIfNeeded(context: modelContext)
             didSeed = true
-            
+
             do {
                 _ = try ExerciseIllustrationBackfill.migrateIfNeeded(context: modelContext)
             } catch {
@@ -142,7 +133,10 @@ struct AppRootView: View {
     private func detail(for dest: RootDestination) -> some View {
         switch dest {
         case .home:
-            HomeScreen(tiles: tiles)
+            HomeScreen(
+                tiles: tiles,
+                onResumeSession: openSession
+            )
         case .routines:
             RoutinesScreen()
         case .history:
@@ -169,8 +163,14 @@ struct AppRootView: View {
             NavigationStack { SettingsScreen() }
         case "session":
             NavigationStack { DayTimelineEntryScreen() }
+        case "routines":
+            NavigationStack { RoutinesScreen() }
+        case "workouts":
+            NavigationStack { WorkoutSessionsScreen() }
+        case "home":
+            compactRoot
         default:
-            NavigationStack { HomeScreen(tiles: tiles) }
+            compactRoot
         }
     }
 
@@ -247,6 +247,44 @@ struct AppRootView: View {
                 description: Text("Wire your existing History screen here.")
             )
             .navigationTitle("History")
+        }
+    }
+    
+    private var compactRoot: some View {
+        NavigationStack {
+            HomeScreen(
+                tiles: tiles,
+                onResumeSession: openSession
+            )
+            .navigationDestination(item: $presentedSession) { session in
+                WorkoutSessionScreen(session: session)
+            }
+        }
+    }
+
+    private var splitRoot: some View {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
+            sidebar
+        } detail: {
+            NavigationStack {
+                detail(for: selection ?? .home)
+                    .navigationDestination(item: $presentedSession) { session in
+                        WorkoutSessionScreen(session: session)
+                    }
+            }
+        }
+    }
+
+    private func openSession(_ session: WorkoutSession) {
+        let sameSession = presentedSession?.persistentModelID == session.persistentModelID
+
+        if sameSession {
+            presentedSession = nil
+            Task { @MainActor in
+                presentedSession = session
+            }
+        } else {
+            presentedSession = session
         }
     }
 }

@@ -14,10 +14,8 @@ final class RoutineEditorSmokeUITests: XCTestCase {
         app = UITestLaunch.app(start: "routines", reset: true, seed: true)
         app.launch()
 
-        XCTAssertTrue(app.navigationBars["Routines"].waitForExistence(timeout: t(8)), "Expected Routines screen")
-
         let createButton = app.buttons["Create routine"]
-        XCTAssertTrue(createButton.waitForExistence(timeout: t(6)), "Expected Create routine toolbar button")
+        XCTAssertTrue(createButton.waitForExistence(timeout: t(8)), "Expected Routines screen")
 
         let beforeCount = waitForStableRoutineRowCount(in: app, minimum: 1, timeout: t(8))
         XCTAssertGreaterThan(beforeCount, 0, "Expected at least one seeded routine row before opening create")
@@ -30,7 +28,7 @@ final class RoutineEditorSmokeUITests: XCTestCase {
         XCTAssertTrue(cancelButton.waitForExistence(timeout: t(4)), "Expected Cancel button in New Routine editor")
         tapSafely(cancelButton)
 
-        XCTAssertTrue(app.navigationBars["Routines"].waitForExistence(timeout: t(6)), "Expected to return to Routines screen after cancel")
+        XCTAssertTrue(createButton.waitForExistence(timeout: t(6)), "Expected to return to Routines screen after cancel")
 
         let afterCount = waitForStableRoutineRowCount(in: app, minimum: 1, timeout: t(8))
 

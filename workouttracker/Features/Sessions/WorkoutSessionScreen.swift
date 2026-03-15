@@ -144,6 +144,7 @@ struct WorkoutSessionScreen: View {
                 .task(id: session.id) {
                     await applyGoalPrefillIfNeeded()
                     await reloadPinnedTargets()
+                    await centerActionableSetOnOpen(proxy: proxy)
                 }
                 .safeAreaInset(edge: .top) {
                     if let prToast {
@@ -226,6 +227,7 @@ struct WorkoutSessionScreen: View {
         .task(id: session.id) {
             await applyGoalPrefillIfNeeded()
             await reloadPinnedTargets()
+            await centerActionableSetOnOpen(proxy: proxy)
         }
     }
 
@@ -380,24 +382,48 @@ struct WorkoutSessionScreen: View {
             saveOrAssert("resume")
         }
 
-        let exercises = sortedExercises
-        guard !exercises.isEmpty else { return }
+        guard let target = nextActionableTarget() else { return }
 
-        guard let targetID = continueNav.nextTargetSetID(
+        activeExerciseID = target.exerciseID
+        activeSetID = target.setID
+
+        scrollToExercise(target.exerciseID, proxy: proxy)
+    }
+    
+    private func nextActionableTarget() -> ActionableSetTarget? {
+        let exercises = sortedExercises
+        guard !exercises.isEmpty else { return nil }
+
+        guard let targetSetID = continueNav.nextTargetSetID(
             exercises: exercises,
             activeExerciseID: activeExerciseID,
             activeSetID: activeSetID
-        ) else { return }
-
-        // Update cursor so repeated Continue advances predictably.
-        if let owningExercise = exercises.first(where: { ex in
-            ex.setLogs.contains(where: { $0.id == targetID })
-        }) {
-            activeExerciseID = owningExercise.id
+        ) else {
+            return nil
         }
-        activeSetID = targetID
 
-        scrollToSet(targetID, proxy: proxy)
+        guard let owningExercise = exercises.first(where: { ex in
+            ex.setLogs.contains(where: { $0.id == targetSetID })
+        }) else {
+            return nil
+        }
+
+        return ActionableSetTarget(
+            exerciseID: owningExercise.id,
+            setID: targetSetID
+        )
+    }
+
+    private func centerActionableSetOnOpen(proxy: ScrollViewProxy) async {
+        guard isInProgress else { return }
+        guard let target = nextActionableTarget() else { return }
+
+        activeExerciseID = target.exerciseID
+        activeSetID = target.setID
+
+        // Let List + bottom safe-area content settle before the initial scroll.
+        try? await Task.sleep(nanoseconds: 150_000_000)
+        scrollToExercise(target.exerciseID, proxy: proxy)
     }
 
     private func handleSetCompleted(
@@ -406,6 +432,11 @@ struct WorkoutSessionScreen: View {
         suggestedRest: Int?
     ) {
         guard isInProgress, !session.isPaused else { return }
+
+        // This is critical: Continue navigation uses the active exercise/set cursor.
+        // Without updating it here, Continue can look like it does nothing because it
+        // falls back to a generic first-incomplete lookup.
+        markActive(exerciseID: ex.id, setID: set.id)
 
         let prompt = coachService.makePrompt(
             completedWeight: set.weight,
@@ -464,6 +495,13 @@ struct WorkoutSessionScreen: View {
                 setsList(for: ex, proxy: proxy)
             }
         }
+        .id(ex.id)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(
+            activeExerciseID == ex.id
+            ? "WorkoutSession.ActionableExerciseCard"
+            : "WorkoutSession.ExerciseCard.\(ex.id.uuidString)"
+        )
         .padding(14)
         .background(exerciseCardBackground)
         .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -520,6 +558,8 @@ struct WorkoutSessionScreen: View {
                     .padding(.vertical, 10)
                     .background(setRowChrome(state: state))
                     .contentShape(Rectangle())
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier(setRowAccessibilityIdentifier(for: set, state: state))
                     .simultaneousGesture(
                         TapGesture().onEnded {
                             markActive(exerciseID: ex.id, setID: set.id)
@@ -531,7 +571,7 @@ struct WorkoutSessionScreen: View {
 
     // MARK: - Row styling
 
-    private enum SetRowVisualState {
+    private enum SetRowVisualState: Equatable {
         case pending
         case current
         case done
@@ -543,6 +583,13 @@ struct WorkoutSessionScreen: View {
         if set.completed { return .done }
         if isBehind(set) { return .behind }
         return .pending
+    }
+    
+    private func setRowAccessibilityIdentifier(for set: WorkoutSetLog, state: SetRowVisualState) -> String {
+        if state == .current {
+            return "WorkoutSession.ActionableSetRow"
+        }
+        return "WorkoutSession.SetRow.\(set.id.uuidString)"
     }
 
     private var behindSetIDs: Set<UUID> {
@@ -835,6 +882,11 @@ struct WorkoutSessionScreen: View {
         activeSetID = setID
     }
     
+    private struct ActionableSetTarget {
+        let exerciseID: UUID
+        let setID: UUID
+    }
+    
     @ViewBuilder
     private func setRow(ex: WorkoutSessionExercise, set: WorkoutSetLog, proxy: ScrollViewProxy) -> some View {
         if WorkoutSetRowRouting.shouldUseTimedRow(for: ex, set: set) {
@@ -858,7 +910,7 @@ struct WorkoutSessionScreen: View {
                         applyTimedTemplate(from: set, to: newSet, prefillActuals: true)
                         markActive(exerciseID: ex.id, setID: newSet.id)
                         saveOrAssert("copy set")
-                        scrollToSet(newSet.id, proxy: proxy)
+                        scrollToExercise(newSet.id, proxy: proxy)
                     }
                     saveOrAssert("copy set")
                 },
@@ -874,7 +926,7 @@ struct WorkoutSessionScreen: View {
 
                         markActive(exerciseID: ex.id, setID: newSet.id)
                         saveOrAssert("add set")
-                        scrollToSet(newSet.id, proxy: proxy)
+                        scrollToExercise(newSet.id, proxy: proxy)
                     }
                 },
                 onDeleteSet: {
@@ -920,7 +972,7 @@ struct WorkoutSessionScreen: View {
                     markActive(exerciseID: ex.id, setID: set.id)
                     if !isReadOnly, let newSet = logging.copySet(set, in: ex, context: modelContext) {
                         markActive(exerciseID: ex.id, setID: newSet.id)
-                        scrollToSet(newSet.id, proxy: proxy)
+                        scrollToExercise(newSet.id, proxy: proxy)
                     }
                     saveOrAssert("copy set")
                 },
@@ -935,7 +987,7 @@ struct WorkoutSessionScreen: View {
 
                         markActive(exerciseID: ex.id, setID: newSet.id)
                         saveOrAssert("add set")
-                        scrollToSet(newSet.id, proxy: proxy)
+                        scrollToExercise(newSet.id, proxy: proxy)
                     }
                 },
                 onDeleteSet: {
@@ -1134,10 +1186,20 @@ struct WorkoutSessionScreen: View {
     #endif
     }
     
-    private func scrollToSet(_ id: UUID, proxy: ScrollViewProxy) {
+    private func scrollToExercise(_ id: UUID, proxy: ScrollViewProxy) {
         dismissKeyboard()
-        DispatchQueue.main.async {
-            withAnimation(.snappy) { proxy.scrollTo(id, anchor: .center) }
+
+        Task { @MainActor in
+            withAnimation(.snappy) {
+                proxy.scrollTo(id, anchor: .center)
+            }
+
+            // Second pass helps after List/layout/bottom-inset settling.
+            try? await Task.sleep(nanoseconds: 120_000_000)
+
+            withAnimation(.snappy) {
+                proxy.scrollTo(id, anchor: .center)
+            }
         }
     }
     
@@ -1213,7 +1275,7 @@ struct WorkoutSessionScreen: View {
 
         saveOrAssert("coach apply weight")
         coachPrompt = nil
-        scrollToSet(next.id, proxy: proxy)
+        scrollToExercise(next.id, proxy: proxy)
     }
 
     @MainActor
@@ -1230,7 +1292,7 @@ struct WorkoutSessionScreen: View {
 
         saveOrAssert("coach apply reps")
         coachPrompt = nil
-        scrollToSet(next.id, proxy: proxy)
+        scrollToExercise(next.id, proxy: proxy)
     }
 
     @MainActor

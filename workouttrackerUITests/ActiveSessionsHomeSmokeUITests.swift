@@ -110,8 +110,79 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
             "Expected no stale-session Finish buttons after the only past-day session is completed."
         )
     }
+    
+    func test_homeResume_survivesRotation_andStaysOnSessionScreen() {
+        let app = makeApp()
+        app.launch()
+
+        let resume = app.buttons.matching(identifier: "Home.ActiveSessions.Resume").element(boundBy: 0)
+        if !resume.waitForExistence(timeout: t(4)) {
+            attachUITestDebug(app, name: "ActiveSessions_Rotation_ResumeMissing")
+        }
+        XCTAssertTrue(resume.exists, "Expected at least one Resume button on Home.")
+        tapSafely(resume)
+
+        let sessionScreen = app.el("WorkoutSession.Screen")
+        if !sessionScreen.waitForExistence(timeout: t(8)) {
+            attachUITestDebug(app, name: "ActiveSessions_Rotation_SessionMissingBeforeRotate")
+        }
+        XCTAssertTrue(sessionScreen.exists, "Expected to be on WorkoutSession screen before rotation.")
+
+        XCUIDevice.shared.orientation = .landscapeLeft
+        defer { XCUIDevice.shared.orientation = .portrait }
+
+        let continueButton = app.buttons["WorkoutSession.ContinueButton"]
+        if !continueButton.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "ActiveSessions_Rotation_SessionLostAfterRotate")
+        }
+
+        XCTAssertTrue(
+            sessionScreen.exists || continueButton.exists,
+            "Expected active session to remain visible after rotation instead of dropping back to Home."
+        )
+    }
+    
+    func test_homeResume_centersActionableSet() {
+        let app = makeScrollableResumeApp()
+        app.launch()
+
+        let resume = app.buttons.matching(identifier: "Home.ActiveSessions.Resume").element(boundBy: 0)
+        if !resume.waitForExistence(timeout: t(4)) {
+            attachUITestDebug(app, name: "ActiveSessions_Centering_ResumeMissing")
+        }
+        XCTAssertTrue(resume.exists, "Expected Resume button on Home.")
+        tapSafely(resume)
+
+        let sessionScreen = app.el("WorkoutSession.Screen")
+        if !sessionScreen.waitForExistence(timeout: t(8)) {
+            attachUITestDebug(app, name: "ActiveSessions_Centering_SessionMissing")
+        }
+        XCTAssertTrue(sessionScreen.exists, "Expected resumed session screen.")
+
+        let focusedCard = app.otherElements["WorkoutSession.ActionableExerciseCard"]
+        if !focusedCard.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "ActiveSessions_Centering_ActionableRowMissing")
+        }
+
+        assertApproximatelyVerticallyCentered(
+            focusedCard,
+            in: app,
+            debugName: "Resume actionable row"
+        )
+    }
 
     // MARK: - Helpers
+    
+    private func makeScrollableResumeApp() -> XCUIApplication {
+        UITestLaunch.app(
+            start: "home",
+            reset: true,
+            seed: false,
+            extraEnv: [
+                "UITESTS_ACTIVE_SESSIONS_SCROLL": "1"
+            ]
+        )
+    }
 
     private func makeApp() -> XCUIApplication {
         UITestLaunch.app(

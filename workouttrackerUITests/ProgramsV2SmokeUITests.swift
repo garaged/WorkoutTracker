@@ -11,7 +11,10 @@ final class ProgramsV2SmokeUITests: XCTestCase {
         let app = UITestLaunch.app(start: "settings", reset: true, seed: true)
         app.launch()
 
-        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 10), "Expected Settings screen.")
+        XCTAssertTrue(
+            app.el("settings.programsLink").waitForExistence(timeout: 10),
+            "Expected Settings screen."
+        )
 
         // Open Programs using the same resilient pattern as ProgramsSettingsSmokeUITests.
         let programsLink = app.el("settings.programsLink")

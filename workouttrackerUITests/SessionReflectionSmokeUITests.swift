@@ -44,9 +44,22 @@ final class SessionReflectionSmokeUITests: XCTestCase {
     }
 
     private func confirmFinishAndSave(_ app: XCUIApplication) {
-        let finishAndSave = app.buttons["Finish & Save"]
-        XCTAssertTrue(finishAndSave.waitForExistence(timeout: 4), "Expected Finish confirmation alert.\nUI tree:\n\(app.debugDescription)")
-        finishAndSave.tap()
+        let candidates: [XCUIElement] = [
+            app.buttons["WorkoutSession.FinishConfirmButton"],
+            app.buttons["Finish & Save"],
+            app.buttons["session.finish_workout.action"],
+            app.descendants(matching: .button)
+                .matching(NSPredicate(format: "label CONTAINS[c] %@", "finish_workout.action"))
+                .firstMatch
+        ]
+
+        if let button = waitAny(candidates, timeout: 4) {
+            button.tap()
+            return
+        }
+
+        attachUITestDebug(app, name: "SessionReflection_FinishConfirmMissing")
+        XCTFail("Expected Finish confirmation action.")
     }
 
     // MARK: - Reflection sheet detection/dismiss
@@ -147,5 +160,17 @@ final class SessionReflectionSmokeUITests: XCTestCase {
         add(treeAttachment)
 
         XCTFail("Expected to land on session screen.", file: file, line: line)
+    }
+    
+    private func waitAny(_ candidates: [XCUIElement], timeout: TimeInterval) -> XCUIElement? {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            for c in candidates where c.exists { return c }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        }
+        for c in candidates {
+            if c.waitForExistence(timeout: 0.5) { return c }
+        }
+        return nil
     }
 }

@@ -28,6 +28,11 @@ Non-goals:
 
 ## Changelog
 
+### v1.0.8
+
+- Fixed a UI-test launch regression where Home Resume no longer opened the active workout session
+- Restored test routing to use the same root session-presentation path as the production Home flow
+
 ### v1.0.7
 
 Misc. fixes (no more warnings). Rest time counter improvements for full robustness.
