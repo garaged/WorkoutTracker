@@ -45,6 +45,11 @@ struct workouttrackerUITestHostApp: App {
                         fatalError("UITESTS assertion failed: Expected at least 2 active WorkoutSession records for Home active-session tests.")
                     }
                 }
+
+                if env["UITESTS_ACTIVE_SESSIONS_SCROLL"] == "1" {
+                    try seedHomeActiveSessionsScrollUITestDataIfNeeded(context: context)
+                    try assertHomeActiveSessionsScrollSeed(context: context)
+                }
             }
 
             self.container = c
@@ -181,4 +186,125 @@ private func seedHomeActiveSessionsUITestDataIfNeeded(context: ModelContext, cal
     context.insert(previousDay)
 
     try context.save()
+}
+
+// MARK: - Home active-session scroll UITest seed
+@MainActor
+private func seedHomeActiveSessionsScrollUITestDataIfNeeded(context: ModelContext, calendar: Calendar = .current) throws {
+    // Reuse the real starter-pack → routine → template → session flow so the seeded
+    // session behaves like a real workout session, including Continue targeting.
+    _ = try RoutineSeeder.importStarterPack(context: context)
+
+    let existing = try context.fetch(FetchDescriptor<WorkoutSession>())
+    if existing.contains(where: { $0.sourceRoutineNameSnapshot == "UITest — Active Scroll" }) {
+        return
+    }
+
+    let routines = try context.fetch(FetchDescriptor<WorkoutRoutine>())
+    guard !routines.isEmpty else {
+        fatalError("UITESTS assertion failed: Expected Starter Pack routines before seeding scrollable active session.")
+    }
+
+    let rankedRoutines: [(routine: WorkoutRoutine, templateCount: Int)] = routines.compactMap { routine in
+        let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
+        guard !templates.isEmpty else { return nil }
+        return (routine, templates.count)
+    }
+    .sorted { lhs, rhs in
+        if lhs.templateCount != rhs.templateCount { return lhs.templateCount > rhs.templateCount }
+        return lhs.routine.name.localizedStandardCompare(rhs.routine.name) == .orderedAscending
+    }
+
+    guard let chosen = rankedRoutines.first else {
+        fatalError("UITESTS assertion failed: Could not find any routine with exercise templates for scrollable active-session seed.")
+    }
+
+    let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: chosen.routine)
+    guard !templates.isEmpty else {
+        fatalError("UITESTS assertion failed: Chosen routine '\(chosen.routine.name)' produced 0 exercise templates.")
+    }
+
+    let session = WorkoutSessionFactory.makeSession(
+        linkedActivityId: nil,
+        sourceRoutineId: chosen.routine.id,
+        sourceRoutineNameSnapshot: "UITest — Active Scroll",
+        exercises: templates,
+        prefillActualsFromTargets: true
+    )
+    session.status = .inProgress
+
+    let orderedExercises = session.exercises.sorted { $0.order < $1.order }
+    let orderedSets = orderedExercises.flatMap { ex in
+        ex.setLogs.sorted { $0.order < $1.order }
+    }
+
+    // We intentionally complete a couple of early sets so Resume/Continue has a meaningful
+    // actionable target that is not the first row in the session.
+    guard orderedSets.count >= 4 else {
+        fatalError("UITESTS assertion failed: Scrollable active-session seed produced only \(orderedSets.count) set rows. Expected at least 4 for a meaningful centering test.")
+    }
+
+    let completedAt = calendar.date(byAdding: .minute, value: -15, to: Date()) ?? Date()
+    for set in orderedSets.prefix(2) {
+        set.completed = true
+        set.completedAt = completedAt
+    }
+
+    context.insert(session)
+    try context.save()
+}
+
+@MainActor
+private func assertHomeActiveSessionsScrollSeed(context: ModelContext) throws {
+    let sessions = try context.fetch(
+        FetchDescriptor<WorkoutSession>(
+            predicate: #Predicate<WorkoutSession> { s in
+                s.sourceRoutineNameSnapshot == "UITest — Active Scroll"
+            }
+        )
+    )
+
+    guard let session = sessions.first else {
+        fatalError("UITESTS assertion failed: Expected scrollable active session named 'UITest — Active Scroll'.")
+    }
+
+    guard session.status == .inProgress, session.endedAt == nil else {
+        fatalError("UITESTS assertion failed: Scrollable active session must be in-progress and not ended.")
+    }
+
+    let orderedExercises = session.exercises.sorted { $0.order < $1.order }
+    guard !orderedExercises.isEmpty else {
+        fatalError("UITESTS assertion failed: Scrollable active session has 0 exercises.")
+    }
+
+    let orderedSets = orderedExercises.flatMap { ex in
+        ex.setLogs.sorted { $0.order < $1.order }
+    }
+
+    guard orderedSets.count >= 4 else {
+        fatalError("UITESTS assertion failed: Scrollable active session has only \(orderedSets.count) set rows. Expected at least 4.")
+    }
+
+    let incompleteCount = orderedSets.filter { !$0.completed }.count
+    guard incompleteCount >= 1 else {
+        fatalError("UITESTS assertion failed: Scrollable active session has no incomplete set rows to focus.")
+    }
+
+    let targetID = WorkoutContinueNavigator().nextTargetSetID(
+        exercises: orderedExercises,
+        activeExerciseID: nil,
+        activeSetID: nil
+    )
+
+    guard let targetID else {
+        fatalError("UITESTS assertion failed: Scrollable active session did not produce a Continue/Resume target set.")
+    }
+
+    let targetExists = orderedExercises.contains { ex in
+        ex.setLogs.contains(where: { $0.id == targetID })
+    }
+
+    guard targetExists else {
+        fatalError("UITESTS assertion failed: Computed actionable target set does not belong to the seeded session.")
+    }
 }

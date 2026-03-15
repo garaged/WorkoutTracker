@@ -24,7 +24,10 @@ final class ProgramsSettingsSmokeUITests: XCTestCase {
             anySettings.tap()
         }
 
-        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 8), "Expected Settings screen.")
+        XCTAssertTrue(
+            app.el("settings.programsLink").waitForExistence(timeout: 8),
+            "Expected Settings screen."
+        )
 
         // Prefer the identifier you added
         let programs = app.el("settings.programsLink")

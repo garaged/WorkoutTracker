@@ -101,8 +101,11 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertTrue(addBtn.waitForExistence(timeout: 10), "Expected Add button for the selected set row.")
         addBtn.tap()
 
-        XCTAssertTrue(firstUndoButton(in: app).waitForExistence(timeout: 10),
-                      "Expected Undo toast after adding a set.")
+        let undo = firstUndoButton(in: app)
+        if !undo.waitForExistence(timeout: 10) {
+            attachUITestDebug(app, name: "Phase1_AddSet_UndoMissing")
+        }
+        XCTAssertTrue(undo.exists, "Expected Undo toast after adding a set.")
 
         guard let newToggleID = waitForNewSetToggleID(after: before, timeout: 10),
               let newUUID = uuidFromDoneToggleIdentifier(newToggleID)
@@ -199,6 +202,26 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
             break
         }
     }
+    
+    func test_continue_centersActionableSet() {
+        let continueButton = app.buttons["WorkoutSession.ContinueButton"]
+        if !continueButton.waitForExistence(timeout: 6) {
+            attachUITestDebug(app, name: "Phase1_ContinueButtonMissing")
+        }
+        XCTAssertTrue(continueButton.exists, "Expected Continue button on session screen.")
+        continueButton.tap()
+
+        let focusedCard = app.otherElements["WorkoutSession.ActionableExerciseCard"]
+        if !focusedCard.waitForExistence(timeout: 6) {
+            attachUITestDebug(app, name: "Phase1_ActionableRowMissingAfterContinue")
+        }
+
+        assertApproximatelyVerticallyCentered(
+            focusedCard,
+            in: app,
+            debugName: "Continue actionable row"
+        )
+    }
 
     // MARK: - Set Row Identification
 
@@ -266,7 +289,11 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
     private func firstUndoButton(in app: XCUIApplication) -> XCUIElement {
         let byId = app.descendants(matching: .any).matching(identifier: "UndoToastView.UndoButton").firstMatch
         if byId.exists { return byId }
-        return app.buttons.matching(NSPredicate(format: "label == %@", "Undo")).firstMatch
+
+        let byToast = app.descendants(matching: .any).matching(identifier: "UndoToastView").firstMatch
+        if byToast.exists { return byToast }
+
+        return app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Undo", "common.undo")).firstMatch
     }
 
     // MARK: - Assertions / waits

@@ -10,6 +10,8 @@ struct ActiveSessionsSection: View {
     @Query
     private var activities: [Activity]
 
+    var onResume: (WorkoutSession) -> Void = { _ in }
+
     private let calendar = Calendar.current
 
     private var activityByID: [UUID: Activity] {
@@ -32,6 +34,7 @@ struct ActiveSessionsSection: View {
                         session: session,
                         isPastDay: isPastDay(session),
                         subtitle: subtitle(for: session),
+                        resumeAction: { onResume(session) },
                         finishAction: { finish(session) }
                     )
                 }
@@ -144,6 +147,7 @@ private struct ActiveSessionCard: View {
     let session: WorkoutSession
     let isPastDay: Bool
     let subtitle: String
+    let resumeAction: () -> Void
     let finishAction: () -> Void
 
     var body: some View {
@@ -179,9 +183,7 @@ private struct ActiveSessionCard: View {
             }
 
             HStack(spacing: 10) {
-                NavigationLink {
-                    WorkoutSessionScreen(session: session)
-                } label: {
+                Button(action: resumeAction) {
                     Label("Resume", systemImage: "play.circle.fill")
                         .frame(maxWidth: .infinity)
                 }

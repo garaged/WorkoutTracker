@@ -94,7 +94,6 @@
 			membershipExceptions = (
 				App/Seed/seed_v1.json,
 				App/workouttrackerApp.swift,
-				Resources/Localizable.xcstrings,
 				Resources/program_catalog.json,
 				Services/Watch/WatchConnectivityService.swift,
 				Services/Watch/WatchMessages.swift,

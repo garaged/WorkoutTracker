@@ -21,7 +21,10 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
         let app = UITestLaunch.app(start: "settings", reset: true, seed: false)
         app.launch()
 
-        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: t(6)), "Expected Settings screen.")
+        XCTAssertTrue(
+            app.el("settings.distanceUnitPicker").waitForExistence(timeout: t(6)),
+            "Expected Settings screen."
+        )
 
         XCTAssertTrue(selectDistanceUnit(.mi, in: app), "Expected to change Distance unit to miles.")
 
@@ -35,7 +38,10 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
         var app = UITestLaunch.app(start: "settings", reset: true, seed: false)
         app.launch()
 
-        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: t(6)), "Expected Settings screen.")
+        XCTAssertTrue(
+            app.el("settings.distanceUnitPicker").waitForExistence(timeout: t(6)),
+            "Expected Settings screen."
+        )
         XCTAssertTrue(selectDistanceUnit(.mi, in: app), "Expected to change Distance unit to miles.")
 
         app.terminate()
