@@ -42,8 +42,8 @@ final class ConsistencyCalculatorTests: XCTestCase {
         XCTAssertEqual(summary.dataAvailability, .insufficient)
     }
 
-    private func session(startedAt: Date, wasCompleted: Bool) -> CompletedSessionAnalyticsSample {
-        CompletedSessionAnalyticsSample(
+    private func session(startedAt: Date, wasCompleted: Bool) -> SessionAnalyticsSample {
+        SessionAnalyticsSample(
             id: UUID(),
             startedAt: startedAt,
             wasCompleted: wasCompleted,

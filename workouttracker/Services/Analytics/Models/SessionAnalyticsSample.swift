@@ -1,6 +1,6 @@
 import Foundation
 
-struct CompletedSessionAnalyticsSample: Identifiable, Hashable {
+struct SessionAnalyticsSample: Identifiable, Hashable {
     let id: UUID
     let startedAt: Date
     let endedAt: Date?

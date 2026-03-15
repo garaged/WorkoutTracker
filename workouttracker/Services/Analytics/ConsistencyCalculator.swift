@@ -8,7 +8,7 @@ struct ConsistencyCalculator {
     }
 
     func summary(
-        from sessions: [CompletedSessionAnalyticsSample],
+        from sessions: [SessionAnalyticsSample],
         window: DateInterval
     ) -> ConsistencySummary {
         let windowSessions = sessions.filter { window.contains($0.startedAt) }

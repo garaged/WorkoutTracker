@@ -15,6 +15,7 @@ final class AnalyticsHistoryAdapterTests: XCTestCase {
 
         let session = WorkoutSession(startedAt: startedAt)
         session.status = .completed
+        session.endedAt = startedAt.addingTimeInterval(1_800)
 
         let exercise = WorkoutSessionExercise(
             order: 0,
@@ -169,6 +170,7 @@ final class AnalyticsHistoryAdapterTests: XCTestCase {
 
         let session = WorkoutSession(startedAt: startedAt)
         session.status = .completed
+        session.endedAt = startedAt.addingTimeInterval(1_800)
 
         let warmUp = WorkoutSessionExercise(
             order: 0,
@@ -228,7 +230,7 @@ final class AnalyticsHistoryAdapterTests: XCTestCase {
         session.exercises = [warmUp, main, coolDown]
         try insert([session], into: context)
 
-        let samples = try adapter.loadCompletedSessionSamples(window: nil, context: context)
+        let samples = try adapter.loadSessionAnalyticsSamples(window: nil, context: context)
 
         XCTAssertEqual(samples.count, 1)
 
@@ -238,8 +240,8 @@ final class AnalyticsHistoryAdapterTests: XCTestCase {
         XCTAssertTrue(summary.wasCompleted)
         XCTAssertEqual(summary.completedExerciseCount, 2)
         XCTAssertEqual(summary.segmentsPresent, Set([.warmUp, .main, .coolDown]))
-        XCTAssertNil(summary.endedAt)
-        XCTAssertNil(summary.durationSeconds)
+        XCTAssertEqual(summary.endedAt, startedAt.addingTimeInterval(1_800))
+        XCTAssertEqual(summary.durationSeconds, 1_800)
     }
 
     func test_loadCompletedSessionSamples_respectsWindowUsingStartedAt() throws {
@@ -287,7 +289,7 @@ final class AnalyticsHistoryAdapterTests: XCTestCase {
             end: TestSupport.date(2026, 3, 31, 23, 59)
         )
 
-        let samples = try adapter.loadCompletedSessionSamples(window: window, context: context)
+        let samples = try adapter.loadSessionAnalyticsSamples(window: window, context: context)
 
         XCTAssertEqual(samples.count, 1)
         XCTAssertEqual(samples.first?.id, inWindow.id)

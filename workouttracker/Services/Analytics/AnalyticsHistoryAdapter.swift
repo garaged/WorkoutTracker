@@ -68,10 +68,10 @@ struct AnalyticsHistoryAdapter {
         return samples
     }
 
-    func loadCompletedSessionSamples(
+    func loadSessionAnalyticsSamples(
         window: DateInterval? = nil,
         context: ModelContext
-    ) throws -> [CompletedSessionAnalyticsSample] {
+    ) throws -> [SessionAnalyticsSample] {
         let fd = FetchDescriptor<WorkoutSession>(
             sortBy: [SortDescriptor(\WorkoutSession.startedAt, order: .forward)]
         )
@@ -90,14 +90,22 @@ struct AnalyticsHistoryAdapter {
 
             let segmentsPresent = Set(session.exercises.map(\.segment))
 
-            // Keep duration nil for now unless your session model has a trustworthy endedAt/finishedAt field.
-            return CompletedSessionAnalyticsSample(
+            let endedAt: Date?
+            if let rawEndedAt = session.endedAt, rawEndedAt >= session.startedAt {
+                endedAt = rawEndedAt
+            } else {
+                endedAt = nil
+            }
+
+            let durationSeconds = endedAt.map { max(0, Int($0.timeIntervalSince(session.startedAt))) }
+
+            return SessionAnalyticsSample(
                 id: session.id,
                 startedAt: session.startedAt,
-                endedAt: nil,
+                endedAt: endedAt,
                 wasCompleted: session.status == .completed,
                 completedExerciseCount: completedExerciseCount,
-                durationSeconds: nil,
+                durationSeconds: durationSeconds,
                 segmentsPresent: segmentsPresent
             )
         }
