@@ -34,6 +34,7 @@ enum WorkoutRoutineMapper {
                     nameSnapshot: ex.name,
                     notes: item.notes,
                     trackingStyle: item.trackingStyle,
+                    segment: item.segment,
                     sets: sets
                 )
             )

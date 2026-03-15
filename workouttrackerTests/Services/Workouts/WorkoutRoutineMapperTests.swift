@@ -19,6 +19,7 @@ final class WorkoutRoutineMapperTests: XCTestCase {
 
         let exerciseTemplate = try XCTUnwrap(templates.first)
         XCTAssertEqual(exerciseTemplate.nameSnapshot, "Walking")
+        XCTAssertEqual(exerciseTemplate.segment, .main)
         XCTAssertEqual(exerciseTemplate.sets.count, 1)
 
         let set = try XCTUnwrap(exerciseTemplate.sets.first)
@@ -58,8 +59,9 @@ final class WorkoutRoutineMapperTests: XCTestCase {
             context: context,
             now: start
         )
-        
+
         XCTAssertEqual(session.exercises.first?.trackingStyle, .timeDistance)
+        XCTAssertEqual(session.exercises.first?.segment, .main)
         XCTAssertEqual(session.linkedActivityId, activity.id)
         XCTAssertEqual(session.sourceRoutineId, routine.id)
         XCTAssertEqual(activity.workoutSessionId, session.id)
@@ -90,6 +92,51 @@ final class WorkoutRoutineMapperTests: XCTestCase {
         XCTAssertEqual(actualDistance, 2.4, accuracy: 0.000_1)
     }
 
+    func test_toExerciseTemplates_preservesRoutineItemSegment() throws {
+        let context = try makeInMemoryContext()
+        let (_, routine, _, _) = try makeWalkingRoutine(
+            context: context,
+            durationSeconds: 10 * 60,
+            distance: 1.2,
+            segment: .warmUp
+        )
+
+        let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
+        let template = try XCTUnwrap(templates.first)
+
+        XCTAssertEqual(template.segment, .warmUp)
+    }
+
+    func test_startOrResumeSession_persistsRoutineItemSegmentIntoSessionExercise() throws {
+        let context = try makeInMemoryContext()
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+
+        let (_, routine, _, _) = try makeWalkingRoutine(
+            context: context,
+            durationSeconds: 12 * 60,
+            distance: 1.5,
+            segment: .coolDown
+        )
+
+        let activity = Activity(
+            title: "Cool Down Walk",
+            startAt: start,
+            endAt: start.addingTimeInterval(12 * 60),
+            kind: .workout,
+            workoutRoutineId: routine.id
+        )
+        context.insert(activity)
+        try context.save()
+
+        let session = try WorkoutSessionStarter.startOrResumeSession(
+            for: activity,
+            context: context,
+            now: start
+        )
+
+        XCTAssertEqual(session.exercises.first?.segment, .coolDown)
+    }
+
     // MARK: - Helpers
 
     private func makeInMemoryContext() throws -> ModelContext {
@@ -111,7 +158,8 @@ final class WorkoutRoutineMapperTests: XCTestCase {
     private func makeWalkingRoutine(
         context: ModelContext,
         durationSeconds: Int,
-        distance: Double
+        distance: Double,
+        segment: WorkoutExerciseSegment = .main
     ) throws -> (Exercise, WorkoutRoutine, WorkoutRoutineItem, WorkoutSetPlan) {
         let exercise = Exercise(name: "Walking", modality: .cardio)
         let routine = WorkoutRoutine(name: "Neighborhood Walk")
@@ -119,7 +167,8 @@ final class WorkoutRoutineMapperTests: XCTestCase {
             order: 0,
             routine: routine,
             exercise: exercise,
-            trackingStyleRaw: ExerciseTrackingStyle.timeDistance.rawValue
+            trackingStyleRaw: ExerciseTrackingStyle.timeDistance.rawValue,
+            segmentRaw: segment.rawValue
         )
         let plan = WorkoutSetPlan(
             order: 0,

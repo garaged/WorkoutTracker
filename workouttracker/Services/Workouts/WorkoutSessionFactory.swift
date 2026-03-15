@@ -9,7 +9,7 @@ enum WorkoutSessionFactory {
         var targetWeightUnit: WeightUnit
         var targetRPE: Double?
         var targetRestSeconds: Int?
-    var targetDurationSeconds: Int? = nil
+        var targetDurationSeconds: Int? = nil
         var targetDistance: Double? = nil
     }
 
@@ -19,6 +19,7 @@ enum WorkoutSessionFactory {
         var nameSnapshot: String
         var notes: String?
         var trackingStyle: ExerciseTrackingStyle
+        var segment: WorkoutExerciseSegment = .main
         var sets: [SetTemplate]
     }
 
@@ -46,6 +47,7 @@ enum WorkoutSessionFactory {
                 exerciseNameSnapshot: ex.nameSnapshot,
                 notes: ex.notes,
                 trackingStyle: ex.trackingStyle,
+                segment: ex.segment,
                 session: session
             )
 
