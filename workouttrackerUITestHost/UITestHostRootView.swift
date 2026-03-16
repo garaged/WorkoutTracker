@@ -108,11 +108,11 @@ private struct UITestStrengthSessionBootstrapView: View {
                 fatalError("UITESTS assertion failed: linked-flow route expected UITest — Linked Main to be selected first.")
             }
 
-            let segmentKinds = chosen.session.exercises
+            let segments: [WorkoutExerciseSegment] = chosen.session.exercises
                 .sorted { $0.order < $1.order }
-                .map(\.segmentKind)
+                .map(\.segment)
 
-            guard segmentKinds == [.warmUp, .main, .coolDown] else {
+            guard segments == [.warmUp, .main, .coolDown] else {
                 fatalError("UITESTS assertion failed: linked-flow route expected warm-up -> main -> cool-down session segments.")
             }
         }

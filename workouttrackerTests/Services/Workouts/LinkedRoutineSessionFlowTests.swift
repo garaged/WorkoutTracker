@@ -27,7 +27,10 @@ final class LinkedRoutineSessionFlowTests: XCTestCase {
         )
 
         XCTAssertEqual(session.exercises.count, 3)
-        XCTAssertEqual(session.exercises.sorted { $0.order < $1.order }.map(\.segmentKind), [.warmUp, .main, .coolDown])
+        XCTAssertEqual(
+            session.exercises.sorted { $0.order < $1.order }.map(\.segment),
+            [.warmUp, .main, .coolDown]
+        )
         XCTAssertEqual(session.exercises.sorted { $0.order < $1.order }.map(\.exerciseNameSnapshot), [
             "Warm-up Press",
             "Main Bench",
@@ -69,7 +72,7 @@ final class LinkedRoutineSessionFlowTests: XCTestCase {
         )
 
         XCTAssertEqual(session.exercises.count, 1)
-        XCTAssertEqual(session.exercises.first?.segmentKind, .main)
+        XCTAssertEqual(session.exercises.first?.segment, .main)
         XCTAssertEqual(session.exercises.first?.exerciseNameSnapshot, "Bench Press")
     }
 

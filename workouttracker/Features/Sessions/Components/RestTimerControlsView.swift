@@ -40,7 +40,7 @@ struct RestTimerControlsView: View {
         case 15: return AccessibilityLabels.Buttons.extendRest15
         case 30: return AccessibilityLabels.Buttons.extendRest30
         case 60: return AccessibilityLabels.Buttons.extendRest60
-        default: return "+\(AppFormatting.shortDuration(seconds: seconds))"
+        default: return AppFormatting.shortDuration(seconds: seconds)
         }
     }
 }

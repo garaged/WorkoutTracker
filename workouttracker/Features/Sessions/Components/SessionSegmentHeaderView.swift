@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SessionSegmentHeaderView: View {
-    let kind: SessionSegmentKind
+    let kind: WorkoutExerciseSegment
     var progressText: String? = nil
     var isCurrent: Bool = false
     var showsSkipAction: Bool = false

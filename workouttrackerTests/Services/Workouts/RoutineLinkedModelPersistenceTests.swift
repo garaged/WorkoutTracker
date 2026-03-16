@@ -44,18 +44,18 @@ final class RoutineLinkedModelPersistenceTests: XCTestCase {
         XCTAssertEqual(fetched.name, "Main")
     }
 
-    func test_segmentKind_defaultsToMainWhenRawValueIsMissing() {
+    func test_segment_defaultsToMainWhenRawValueIsMissing() {
         let sessionExercise = WorkoutSessionExercise(
             order: 0,
             exerciseId: UUID(),
             exerciseNameSnapshot: "Bench Press"
         )
 
-        XCTAssertNil(sessionExercise.segmentKindRaw)
-        XCTAssertEqual(sessionExercise.segmentKind, .main)
+        XCTAssertEqual(sessionExercise.segmentRaw, WorkoutExerciseSegment.main.rawValue)
+        XCTAssertEqual(sessionExercise.segment, .main)
     }
 
-    func test_segmentKind_persistsWarmUpAndCoolDownValues() throws {
+    func test_segment_persistsWarmUpAndCoolDownValues() throws {
         let store = try TestSupport.makeInMemoryStore()
         let context = store.context
 
@@ -66,14 +66,14 @@ final class RoutineLinkedModelPersistenceTests: XCTestCase {
             order: 0,
             exerciseId: UUID(),
             exerciseNameSnapshot: "Bike",
-            segmentKind: .warmUp,
+            segment: .warmUp,
             session: session
         )
         let coolDown = WorkoutSessionExercise(
             order: 1,
             exerciseId: UUID(),
             exerciseNameSnapshot: "Walk",
-            segmentKind: .coolDown,
+            segment: .coolDown,
             session: session
         )
 
@@ -83,8 +83,11 @@ final class RoutineLinkedModelPersistenceTests: XCTestCase {
         try context.save()
 
         let reloaded = try context.fetch(FetchDescriptor<WorkoutSessionExercise>()).sorted { $0.order < $1.order }
-        XCTAssertEqual(reloaded.map(\.segmentKind), [.warmUp, .coolDown])
-        XCTAssertEqual(reloaded.map(\.segmentKindRaw), [SessionSegmentKind.warmUp.rawValue, SessionSegmentKind.coolDown.rawValue])
+        XCTAssertEqual(reloaded.map(\.segment), [.warmUp, .coolDown])
+        XCTAssertEqual(
+            reloaded.map(\.segmentRaw),
+            [WorkoutExerciseSegment.warmUp.rawValue, WorkoutExerciseSegment.coolDown.rawValue]
+        )
     }
 
     private func fetchRoutine(id: UUID, context: ModelContext) throws -> WorkoutRoutine {

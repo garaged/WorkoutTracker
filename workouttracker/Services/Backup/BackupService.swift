@@ -381,7 +381,6 @@ final class BackupService {
                 session: raw.sessionID.flatMap { sessionByID[$0] },
                 setLogsStorage: []
             )
-            model.segmentKindRaw = raw.segmentKindRaw
             model.targetDurationSeconds = raw.targetDurationSeconds
             model.actualDurationSeconds = raw.actualDurationSeconds
             model.targetDistance = raw.targetDistance
@@ -1112,7 +1111,9 @@ final class BackupService {
                 routineID: refUUID("routine", in: e),
                 exerciseID: refUUID("exercise", in: e),
                 trackingStyleRaw: string("trackingStyleRaw", in: e) ?? ExerciseTrackingStyle.strength.rawValue,
-                segmentRaw: string("segmentRaw", in: e) ?? WorkoutExerciseSegment.main.rawValue
+                segmentRaw: string("segmentRaw", in: e)
+                    ?? string("segmentKindRaw", in: e)
+                    ?? WorkoutExerciseSegment.main.rawValue,
             )
         }
     }

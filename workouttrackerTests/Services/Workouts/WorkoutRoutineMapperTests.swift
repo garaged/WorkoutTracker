@@ -22,7 +22,7 @@ final class WorkoutRoutineMapperTests: XCTestCase {
         XCTAssertEqual(exerciseTemplate.segment, .main)
         XCTAssertEqual(exerciseTemplate.sets.count, 1)
 
-        let set = try XCTUnwrap(setsOrFirst(from: exerciseTemplate))
+        let set = try XCTUnwrap(exerciseTemplate.sets.first)
         XCTAssertNil(set.targetReps)
         XCTAssertNil(set.targetWeight)
         XCTAssertNil(set.targetRPE)
@@ -342,9 +342,5 @@ final class WorkoutRoutineMapperTests: XCTestCase {
         try context.save()
 
         return (exercise, routine, item, plan)
-    }
-
-    private func setsOrFirst(from template: WorkoutExerciseTemplate) -> WorkoutExerciseTemplate.SetTemplate {
-        template.sets[0]
     }
 }

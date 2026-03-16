@@ -24,8 +24,11 @@ struct WorkoutSessionScreen: View {
     ///
     /// We detect the base per-exercise by looking at the minimum order in that exercise.
     private func displaySetNumber(for set: WorkoutSetLog, in ex: WorkoutSessionExercise) -> Int {
-        let minOrder = ex.orderedSetLogs.map(\.order).min() ?? 0
-        return (minOrder == 0) ? (set.order + 1) : set.order
+        let ordered = sortedSets(for: ex)
+        guard let index = ordered.firstIndex(where: { $0.id == set.id }) else {
+            return max(1, set.order + 1)
+        }
+        return index + 1
     }
 
     @State private var showFinishConfirm = false
@@ -33,7 +36,7 @@ struct WorkoutSessionScreen: View {
     @State private var showRestTimer = false
     @State private var activeExerciseID: UUID? = nil
     @State private var activeSetID: UUID? = nil
-    @State private var skippedSegmentKinds: Set<SessionSegmentKind> = []
+    @State private var skippedSegmentKinds: Set<WorkoutExerciseSegment> = []
     @State private var targetAppliedBanner: TargetAppliedBanner? = nil
     
     @State private var coachPrompt: CoachPromptContext? = nil
@@ -212,73 +215,6 @@ struct WorkoutSessionScreen: View {
         }
     }
 
-    private func sessionList(proxy: ScrollViewProxy) -> some View {
-        List {
-            headerSection
-            summarySectionIfReadOnly
-            segmentSummarySectionIfReadOnly
-            exercisesSection(proxy: proxy)
-        }
-        .accessibilityIdentifier("WorkoutSession.Screen.List")
-        .navigationTitle(session.sourceRoutineNameSnapshot ?? String(localized: "session.title.fallback"))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-        .safeAreaInset(edge: .top) { topInset }
-        .safeAreaInset(edge: .bottom) { bottomInset(proxy: proxy) }
-        .toolbar { toolbarContent }
-        .confirmationDialog(
-            String(localized: "session.finish_workout.title"),
-            isPresented: $showFinishConfirm,
-            titleVisibility: .visible
-        ) {
-            Button(String(localized: "session.finish_workout.action"), role: .destructive) { finish() }
-            Button(String(localized: "session.finish_workout.cancel"), role: .cancel) { }
-        } message: {
-            Text(String(localized: "session.finish_workout.message"))
-        }
-        .confirmationDialog(
-            String(localized: "session.abandon_workout.title"),
-            isPresented: $showAbandonConfirm,
-            titleVisibility: .visible
-        ) {
-            Button(String(localized: "session.abandon_workout.action"), role: .destructive) { abandon() }
-            Button(String(localized: "common.cancel"), role: .cancel) { }
-        } message: {
-            Text(String(localized: "session.abandon_workout.message"))
-        }
-        .task(id: session.id) {
-            await applyGoalPrefillIfNeeded()
-            await reloadPinnedTargets()
-            await centerActionableSetOnOpen(proxy: proxy)
-        }
-    }
-
-    @ViewBuilder
-    private var topInset: some View {
-        VStack(spacing: 8) {
-            if let prToast {
-                PRToastView(
-                    title: prToast.title,
-                    subtitle: prToast.subtitle,
-                    onDismiss: { withAnimation(.snappy) { self.prToast = nil } }
-                )
-                .transition(.move(edge: .top).combined(with: .opacity))
-            }
-
-            if let banner = targetAppliedBanner {
-                TargetAppliedBannerView(text: banner.text) {
-                    withAnimation(.snappy) { targetAppliedBanner = nil }
-                }
-                .transition(.move(edge: .top).combined(with: .opacity))
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.top, 6)
-    }
-
-    // MARK: Sections
-
     private var headerSection: some View {
         Section {
             HStack {
@@ -393,7 +329,7 @@ struct WorkoutSessionScreen: View {
     }
 
     private var sortedExercises: [WorkoutSessionExercise] {
-        allOrderedExercises.filter { !skippedSegmentKinds.contains($0.segmentKind) }
+        allOrderedExercises.filter { !skippedSegmentKinds.contains($0.segment) }
     }
 
     private var allSets: [WorkoutSetLog] {
@@ -407,12 +343,12 @@ struct WorkoutSessionScreen: View {
         }
     }
 
-    private var orderedVisibleSegmentKinds: [SessionSegmentKind] {
-        var seen: Set<SessionSegmentKind> = []
-        var ordered: [SessionSegmentKind] = []
+    private var orderedVisibleSegmentKinds: [WorkoutExerciseSegment] {
+        var seen: Set<WorkoutExerciseSegment> = []
+        var ordered: [WorkoutExerciseSegment] = []
 
         for ex in sortedExercises {
-            let kind = ex.segmentKind
+            let kind = ex.segment
             if seen.insert(kind).inserted {
                 ordered.append(kind)
             }
@@ -422,20 +358,20 @@ struct WorkoutSessionScreen: View {
     }
 
     private var sessionHasMultipleSegments: Bool {
-        Set(allOrderedExercises.map(\.segmentKind)).count > 1
+        Set(allOrderedExercises.map(\.segment)).count > 1
     }
 
-    private var currentSegmentKind: SessionSegmentKind? {
+    private var currentSegmentKind: WorkoutExerciseSegment? {
         for ex in sortedExercises {
             if sortedSets(for: ex).contains(where: { !$0.completed }) {
-                return ex.segmentKind
+                return ex.segment
             }
         }
 
-        return sortedExercises.last?.segmentKind
+        return sortedExercises.last?.segment
     }
 
-    private func segmentTitle(for kind: SessionSegmentKind) -> String {
+    private func segmentTitle(for kind: WorkoutExerciseSegment) -> String {
         switch kind {
         case .warmUp: return "Warm-up"
         case .main: return "Workout"
@@ -443,8 +379,8 @@ struct WorkoutSessionScreen: View {
         }
     }
 
-    private func segmentProgressText(for kind: SessionSegmentKind) -> String? {
-        let exercises = sortedExercises.filter { $0.segmentKind == kind }
+    private func segmentProgressText(for kind: WorkoutExerciseSegment) -> String? {
+        let exercises = sortedExercises.filter { $0.segment == kind }
         guard !exercises.isEmpty else { return nil }
 
         let sets = exercises.flatMap { sortedSets(for: $0) }
@@ -456,10 +392,10 @@ struct WorkoutSessionScreen: View {
     private func isStartOfSegment(at index: Int) -> Bool {
         guard index < sortedExercises.count else { return false }
         guard index > 0 else { return true }
-        return sortedExercises[index - 1].segmentKind != sortedExercises[index].segmentKind
+        return sortedExercises[index - 1].segment != sortedExercises[index].segment
     }
 
-    private func canSkipSegment(_ kind: SessionSegmentKind) -> Bool {
+    private func canSkipSegment(_ kind: WorkoutExerciseSegment) -> Bool {
         isInProgress && !session.isPaused && kind == currentSegmentKind && (kind == .warmUp || kind == .coolDown)
     }
 
@@ -518,10 +454,11 @@ struct WorkoutSessionScreen: View {
 
         guard let target = nextActionableTarget() else { return }
 
+        restTimer.resolveForNextAction()
         activeExerciseID = target.exerciseID
         activeSetID = target.setID
 
-        scrollToExercise(target.exerciseID, proxy: proxy)
+        scrollToExercise(target.setID, proxy: proxy)
     }
     
     private func nextActionableTarget() -> ActionableSetTarget? {
@@ -532,16 +469,7 @@ struct WorkoutSessionScreen: View {
             exercises: exercises,
             activeExerciseID: activeExerciseID,
             activeSetID: activeSetID
-        ) else { return }
-
-        restTimer.resolveForNextAction()
-
-        // Update cursor so repeated Continue advances predictably.
-        if let owningExercise = exercises.first(where: { ex in
-            ex.setLogs.contains(where: { $0.id == targetID })
-        }) {
-            activeExerciseID = owningExercise.id
-        }
+        ) else { return nil }
 
         guard let owningExercise = exercises.first(where: { ex in
             ex.setLogs.contains(where: { $0.id == targetSetID })
@@ -564,7 +492,7 @@ struct WorkoutSessionScreen: View {
 
         // Let List + bottom safe-area content settle before the initial scroll.
         try? await Task.sleep(nanoseconds: 150_000_000)
-        scrollToExercise(target.exerciseID, proxy: proxy)
+        scrollToExercise(target.setID, proxy: proxy)
     }
 
     private func handleSetCompleted(
@@ -615,11 +543,11 @@ struct WorkoutSessionScreen: View {
             ForEach(Array(sortedExercises.enumerated()), id: \.element.id) { index, ex in
                 if isStartOfSegment(at: index) {
                     SessionSegmentHeaderView(
-                        kind: ex.segmentKind,
-                        progressText: segmentProgressText(for: ex.segmentKind),
-                        isCurrent: ex.segmentKind == currentSegmentKind,
-                        showsSkipAction: canSkipSegment(ex.segmentKind),
-                        onSkip: canSkipSegment(ex.segmentKind) ? { skipCurrentSegment() } : nil
+                        kind: ex.segment,
+                        progressText: segmentProgressText(for: ex.segment),
+                        isCurrent: ex.segment == currentSegmentKind,
+                        showsSkipAction: canSkipSegment(ex.segment),
+                        onSkip: canSkipSegment(ex.segment) ? { skipCurrentSegment() } : nil
                     )
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 0, trailing: 16))
                     .listRowSeparator(.hidden)

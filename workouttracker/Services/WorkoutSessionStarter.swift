@@ -14,11 +14,6 @@ enum WorkoutSessionStarter {
         if let sid = activity.workoutSessionId {
             let desc = FetchDescriptor<WorkoutSession>(predicate: #Predicate { $0.id == sid })
             if let existing = try context.fetch(desc).first {
-                // Normalize relationship ordering on resume too.
-                existing.exercises.sort { $0.order < $1.order }
-                for ex in existing.exercises {
-                    ex.setLogs.sort { $0.order < $1.order }
-                }
                 return existing
             } else {
                 activity.workoutSessionId = nil
@@ -55,14 +50,6 @@ enum WorkoutSessionStarter {
         activity.workoutSessionId = session.id
 
         try context.save()
-
-        // Important: SwiftData relationship arrays are not guaranteed to stay
-        // in insertion order after save, so normalize before returning.
-        session.exercises.sort { $0.order < $1.order }
-        for ex in session.exercises {
-            ex.setLogs.sort { $0.order < $1.order }
-        }
-
         return session
     }
 }

@@ -230,13 +230,13 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertTrue(continueButton.exists, "Expected Continue button on session screen.")
         continueButton.tap()
 
-        let focusedCard = app.otherElements["WorkoutSession.ActionableExerciseCard"]
-        if !focusedCard.waitForExistence(timeout: 6) {
+        let focusedRow = app.otherElements["WorkoutSession.ActionableSetRow"]
+        if !focusedRow.waitForExistence(timeout: 6) {
             attachUITestDebug(app, name: "Phase1_ActionableRowMissingAfterContinue")
         }
 
         assertApproximatelyVerticallyCentered(
-            focusedCard,
+            focusedRow,
             in: app,
             debugName: "Continue actionable row"
         )
@@ -392,23 +392,19 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 5), "Field does not exist: \(field)")
 
         for _ in 0..<3 {
-            focusTextField(field)
+            dismissInlineEditor(in: app)
+            waitForKeyboardToDisappear(in: app, timeout: 1)
 
-            if clearTextField(field) {
-                field.typeText(newValue)
-            } else {
-                // Fallback: try select-all context menu, then delete.
-                focusTextField(field)
-                field.press(forDuration: 1.0)
-
-                if let selectAll = selectAllMenuItem(), selectAll.waitForExistence(timeout: 1) {
-                    selectAll.tap()
-                    field.typeText(XCUIKeyboardKey.delete.rawValue)
-                }
-
-                field.typeText(newValue)
+            guard focusTextField(field) else {
+                continue
             }
 
+            let current = normalizedTextFieldValue(field)
+            if !current.isEmpty {
+                field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count + 4))
+            }
+
+            field.typeText(newValue)
             dismissInlineEditor(in: app)
 
             if waitForTextFieldValue(field, equals: newValue, timeout: 2) {
@@ -419,18 +415,38 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTFail("Expected field \(field.identifier) to become \(newValue), found \(normalizedTextFieldValue(field))")
     }
     
-    private func focusTextField(_ field: XCUIElement) {
-        // Tap near the trailing edge to place the caret at the end of the value.
+    @discardableResult
+    private func focusTextField(_ field: XCUIElement) -> Bool {
+        XCTAssertTrue(field.waitForExistence(timeout: 2), "Field does not exist: \(field.identifier)")
+
+        func hasKeyboardFocus(_ field: XCUIElement) -> Bool {
+            field.debugDescription.contains("Keyboard Focused")
+        }
+
+        if hasKeyboardFocus(field) { return true }
+
+        field.tap()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+        if hasKeyboardFocus(field) { return true }
+
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+        if hasKeyboardFocus(field) { return true }
+
+        dismissInlineEditor(in: app)
+        waitForKeyboardToDisappear(in: app, timeout: 1)
+
         field.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+        return hasKeyboardFocus(field)
     }
 
     private func clearTextField(_ field: XCUIElement) -> Bool {
         let current = normalizedTextFieldValue(field)
         if current.isEmpty { return true }
 
-        focusTextField(field)
+        guard focusTextField(field) else { return false }
 
-        // Delete the known current length, plus a little extra padding.
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count + 4))
 
         return normalizedTextFieldValue(field).isEmpty
