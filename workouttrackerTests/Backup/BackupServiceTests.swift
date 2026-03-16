@@ -190,79 +190,6 @@ final class BackupServiceTests: XCTestCase {
         XCTAssertEqual(sigA, sigB, "Entities differ between exports; ordering/content should be deterministic for the same store state.")
     }
 
-    func testRestoreWorkoutData_restoresOlderBackupWithoutLinkedRoutineOrSegmentFields() throws {
-        let store = try TestSupport.makeInMemoryStore()
-        let context = store.context
-        let service = BackupService()
-
-        let routineID = UUID()
-        let sessionID = UUID()
-        let sessionExerciseID = UUID()
-        let exerciseID = UUID()
-
-        let file = BackupService.BackupFile(
-            schemaVersion: 3,
-            createdAtISO8601: "2026-02-10T07:00:00Z",
-            metadata: nil,
-            preferences: nil,
-            entities: [
-                BackupService.Entity(
-                    type: "WorkoutRoutine",
-                    id: routineID.uuidString,
-                    attributes: [
-                        "id": .string(routineID.uuidString),
-                        "name": .string("Recovered Routine"),
-                        "isArchived": .bool(false),
-                        "createdAt": .string("2026-02-09T07:00:00Z"),
-                        "updatedAt": .string("2026-02-09T07:00:00Z")
-                    ]
-                ),
-                BackupService.Entity(
-                    type: "WorkoutSession",
-                    id: sessionID.uuidString,
-                    attributes: [
-                        "id": .string(sessionID.uuidString),
-                        "startedAt": .string("2026-02-10T07:00:00Z"),
-                        "statusRaw": .string(WorkoutSessionStatus.inProgress.rawValue),
-                        "isPaused": .bool(false),
-                        "accumulatedPausedSeconds": .number(0)
-                    ]
-                ),
-                BackupService.Entity(
-                    type: "WorkoutSessionExercise",
-                    id: sessionExerciseID.uuidString,
-                    attributes: [
-                        "id": .string(sessionExerciseID.uuidString),
-                        "order": .number(0),
-                        "exerciseId": .string(exerciseID.uuidString),
-                        "exerciseNameSnapshot": .string("Recovered Exercise"),
-                        "trackingStyleRaw": .string(ExerciseTrackingStyle.strength.rawValue),
-                        "session": .object([
-                            "$ref": .string(sessionID.uuidString),
-                            "$type": .string("WorkoutSession")
-                        ])
-                    ]
-                )
-            ]
-        )
-
-        let data = try JSONEncoder().encode(file)
-        try service.restoreWorkoutData(data, context: context)
-
-        let sessions = try fetchAll(WorkoutSession.self, from: context)
-        XCTAssertEqual(sessions.count, 1)
-
-        let routines = try fetchAll(WorkoutRoutine.self, from: context)
-        XCTAssertEqual(routines.count, 1)
-        XCTAssertNil(routines[0].warmUpRoutine)
-        XCTAssertNil(routines[0].coolDownRoutine)
-
-        let exercises = try fetchAll(WorkoutSessionExercise.self, from: context)
-        XCTAssertEqual(exercises.count, 1)
-        XCTAssertEqual(exercises[0].segment, .main)
-        XCTAssertEqual(exercises[0].segmentRaw, WorkoutExerciseSegment.main.rawValue)
-    }
-
     func testRestoreWorkoutData_roundTripsFullWorkoutGraph() throws {
         let store = try TestSupport.makeInMemoryStore()
         let context = store.context
@@ -291,37 +218,16 @@ final class BackupServiceTests: XCTestCase {
         context.insert(bench)
         context.insert(row)
 
-        // Seed routines
-        let warmUpRoutine = WorkoutRoutine(
-            name: "Upper Warm-Up",
-            notes: "Prep shoulders",
-            isArchived: false
-        )
+        // Seed routine
         let routine = WorkoutRoutine(
             name: "Upper A",
             notes: "Primary upper day",
             isArchived: false
         )
-        let coolDownRoutine = WorkoutRoutine(
-            name: "Upper Cool-Down",
-            notes: "Bring heart rate down",
-            isArchived: false
-        )
         routine.createdAt = TestSupport.date(2026, 1, 3, 9, 0)
         routine.updatedAt = TestSupport.date(2026, 1, 4, 9, 0)
-        routine.warmUpRoutine = warmUpRoutine
-        routine.coolDownRoutine = coolDownRoutine
-        context.insert(warmUpRoutine)
         context.insert(routine)
-        context.insert(coolDownRoutine)
 
-        let warmUpItem = WorkoutRoutineItem(
-            order: 0,
-            routine: warmUpRoutine,
-            exercise: row,
-            notes: "Ramp-up rower",
-            trackingStyleRaw: ExerciseTrackingStyle.timeOnly.rawValue
-        )
         let benchItem = WorkoutRoutineItem(
             order: 0,
             routine: routine,
@@ -336,35 +242,13 @@ final class BackupServiceTests: XCTestCase {
             exercise: row,
             notes: "Back work",
             trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue,
-            segmentRaw: WorkoutExerciseSegment.main.rawValue
-        )
-        let coolDownItem = WorkoutRoutineItem(
-            order: 0,
-            routine: coolDownRoutine,
-            exercise: row,
-            notes: "Easy recovery walk",
-            trackingStyleRaw: ExerciseTrackingStyle.timeDistance.rawValue
+            segmentRaw: WorkoutExerciseSegment.coolDown.rawValue
         )
 
-        context.insert(warmUpItem)
         context.insert(benchItem)
         context.insert(rowItem)
-        context.insert(coolDownItem)
-        warmUpRoutine.items = [warmUpItem]
         routine.items = [benchItem, rowItem]
-        coolDownRoutine.items = [coolDownItem]
 
-        let warmUpPlan0 = WorkoutSetPlan(
-            order: 0,
-            targetReps: nil,
-            targetWeight: nil,
-            weightUnit: .kg,
-            targetDurationSeconds: 10 * 60,
-            targetDistance: nil,
-            targetRPE: nil,
-            restSeconds: nil,
-            routineItem: warmUpItem
-        )
         let benchPlan0 = WorkoutSetPlan(
             order: 0,
             targetReps: 5,
@@ -392,28 +276,13 @@ final class BackupServiceTests: XCTestCase {
             restSeconds: 120,
             routineItem: rowItem
         )
-        let coolDownPlan0 = WorkoutSetPlan(
-            order: 0,
-            targetReps: nil,
-            targetWeight: nil,
-            weightUnit: .kg,
-            targetDurationSeconds: 8 * 60,
-            targetDistance: 0.8,
-            targetRPE: nil,
-            restSeconds: nil,
-            routineItem: coolDownItem
-        )
 
-        context.insert(warmUpPlan0)
         context.insert(benchPlan0)
         context.insert(benchPlan1)
         context.insert(rowPlan0)
-        context.insert(coolDownPlan0)
 
-        warmUpItem.setPlans = [warmUpPlan0]
         benchItem.setPlans = [benchPlan0, benchPlan1]
         rowItem.setPlans = [rowPlan0]
-        coolDownItem.setPlans = [coolDownPlan0]
 
         // Seed session
         let session = WorkoutSession(
@@ -427,17 +296,8 @@ final class BackupServiceTests: XCTestCase {
         session.reflectionNote = "Strong day"
         context.insert(session)
 
-        let warmUpSessionExercise = WorkoutSessionExercise(
-            order: 0,
-            exerciseId: row.id,
-            exerciseNameSnapshot: row.name,
-            notes: "Easy primer",
-            trackingStyle: .timeOnly,
-            segment: .warmUp,
-            session: session
-        )
         let benchSessionExercise = WorkoutSessionExercise(
-            order: 1,
+            order: 0,
             exerciseId: bench.id,
             exerciseNameSnapshot: bench.name,
             notes: "Top sets felt good",
@@ -446,48 +306,18 @@ final class BackupServiceTests: XCTestCase {
             session: session
         )
         let rowSessionExercise = WorkoutSessionExercise(
-            order: 2,
+            order: 1,
             exerciseId: row.id,
             exerciseNameSnapshot: row.name,
             notes: "Hold peak contraction",
             trackingStyle: .strength,
-            segment: .main,
-            session: session
-        )
-        let coolDownSessionExercise = WorkoutSessionExercise(
-            order: 3,
-            exerciseId: row.id,
-            exerciseNameSnapshot: row.name,
-            notes: "Recovery walk",
-            trackingStyle: .timeDistance,
             segment: .coolDown,
             session: session
         )
 
-        context.insert(warmUpSessionExercise)
         context.insert(benchSessionExercise)
         context.insert(rowSessionExercise)
-        context.insert(coolDownSessionExercise)
-        session.exercises = [warmUpSessionExercise, benchSessionExercise, rowSessionExercise, coolDownSessionExercise]
-
-        let warmUpLog0 = WorkoutSetLog(
-            order: 0,
-            origin: .planned,
-            reps: nil,
-            weight: nil,
-            weightUnit: .kg,
-            rpe: nil,
-            completed: true,
-            completedAt: startedAt.addingTimeInterval(4 * 60),
-            targetReps: nil,
-            targetWeight: nil,
-            targetWeightUnit: .kg,
-            targetRPE: nil,
-            targetRestSeconds: nil,
-            sessionExercise: warmUpSessionExercise
-        )
-        warmUpLog0.targetDurationSeconds = 10 * 60
-        warmUpLog0.actualDurationSeconds = 10 * 60
+        session.exercises = [benchSessionExercise, rowSessionExercise]
 
         let benchLog0 = WorkoutSetLog(
             order: 0,
@@ -537,37 +367,13 @@ final class BackupServiceTests: XCTestCase {
             targetRestSeconds: 120,
             sessionExercise: rowSessionExercise
         )
-        let coolDownLog0 = WorkoutSetLog(
-            order: 0,
-            origin: .planned,
-            reps: nil,
-            weight: nil,
-            weightUnit: .kg,
-            rpe: nil,
-            completed: true,
-            completedAt: startedAt.addingTimeInterval(34 * 60),
-            targetReps: nil,
-            targetWeight: nil,
-            targetWeightUnit: .kg,
-            targetRPE: nil,
-            targetRestSeconds: nil,
-            sessionExercise: coolDownSessionExercise
-        )
-        coolDownLog0.targetDurationSeconds = 8 * 60
-        coolDownLog0.actualDurationSeconds = 8 * 60
-        coolDownLog0.targetDistance = 0.8
-        coolDownLog0.actualDistance = 0.8
 
-        context.insert(warmUpLog0)
         context.insert(benchLog0)
         context.insert(benchLog1)
         context.insert(rowLog0)
-        context.insert(coolDownLog0)
 
-        warmUpSessionExercise.setLogs = [warmUpLog0]
         benchSessionExercise.setLogs = [benchLog0, benchLog1]
         rowSessionExercise.setLogs = [rowLog0]
-        coolDownSessionExercise.setLogs = [coolDownLog0]
 
         try context.save()
 
@@ -600,15 +406,11 @@ final class BackupServiceTests: XCTestCase {
 
         // Assert routine and items
         let restoredRoutines = try fetchAll(WorkoutRoutine.self, from: context)
-        XCTAssertEqual(restoredRoutines.count, 3)
+        XCTAssertEqual(restoredRoutines.count, 1)
 
-        let restoredRoutine = try XCTUnwrap(restoredRoutines.first(where: { $0.name == "Upper A" }))
-        let restoredWarmUpRoutine = try XCTUnwrap(restoredRoutines.first(where: { $0.name == "Upper Warm-Up" }))
-        let restoredCoolDownRoutine = try XCTUnwrap(restoredRoutines.first(where: { $0.name == "Upper Cool-Down" }))
+        let restoredRoutine = try XCTUnwrap(restoredRoutines.first)
         XCTAssertEqual(restoredRoutine.name, "Upper A")
         XCTAssertEqual(restoredRoutine.notes, "Primary upper day")
-        XCTAssertEqual(restoredRoutine.warmUpRoutine?.id, restoredWarmUpRoutine.id)
-        XCTAssertEqual(restoredRoutine.coolDownRoutine?.id, restoredCoolDownRoutine.id)
         let restoredRoutineItems = restoredRoutine.items.sorted { lhs, rhs in
             if lhs.order != rhs.order { return lhs.order < rhs.order }
             return lhs.id.uuidString < rhs.id.uuidString
@@ -634,7 +436,7 @@ final class BackupServiceTests: XCTestCase {
 
         let restoredRowItem = try XCTUnwrap(restoredRoutineItems.first(where: { $0.order == 1 }))
         XCTAssertEqual(restoredRowItem.notes, "Back work")
-        XCTAssertEqual(restoredRowItem.segment, .main)
+        XCTAssertEqual(restoredRowItem.segment, .coolDown)
 
         let restoredRowPlans = restoredRowItem.setPlans.sorted { lhs, rhs in
             if lhs.order != rhs.order { return lhs.order < rhs.order }
@@ -658,16 +460,11 @@ final class BackupServiceTests: XCTestCase {
             return lhs.id.uuidString < rhs.id.uuidString
         }
 
-        XCTAssertEqual(restoredSessionExercises.count, 4)
-        XCTAssertEqual(restoredSessionExercises.map(\.order), [0, 1, 2, 3])
-        XCTAssertEqual(restoredSessionExercises.map(\.segment), [.warmUp, .main, .main, .coolDown])
-        XCTAssertEqual(restoredSessionExercises.map(\.exerciseNameSnapshot), ["Chest Supported Row", "Bench Press", "Chest Supported Row", "Chest Supported Row"])
+        XCTAssertEqual(restoredSessionExercises.count, 2)
+        XCTAssertEqual(restoredSessionExercises.map(\.order), [0, 1])
+        XCTAssertEqual(restoredSessionExercises.map(\.exerciseNameSnapshot), ["Bench Press", "Chest Supported Row"])
 
-        let restoredWarmUpSessionExercise = try XCTUnwrap(restoredSessionExercises.first(where: { $0.order == 0 }))
-        XCTAssertEqual(restoredWarmUpSessionExercise.segment, .warmUp)
-        XCTAssertEqual(restoredWarmUpSessionExercise.segmentRaw, WorkoutExerciseSegment.warmUp.rawValue)
-
-        let restoredBenchSessionExercise = try XCTUnwrap(restoredSessionExercises.first(where: { $0.order == 1 }))
+        let restoredBenchSessionExercise = try XCTUnwrap(restoredSessionExercises.first(where: { $0.order == 0 }))
         XCTAssertEqual(restoredBenchSessionExercise.exerciseId, bench.id)
         XCTAssertEqual(restoredBenchSessionExercise.notes, "Top sets felt good")
         XCTAssertEqual(restoredBenchSessionExercise.segment, .main)
@@ -684,9 +481,9 @@ final class BackupServiceTests: XCTestCase {
         XCTAssertEqual(restoredBenchLogs[0].targetWeight, 100)
         XCTAssertTrue(restoredBenchLogs[0].completed)
 
-        let restoredRowSessionExercise = try XCTUnwrap(restoredSessionExercises.first(where: { $0.order == 2 }))
+        let restoredRowSessionExercise = try XCTUnwrap(restoredSessionExercises.first(where: { $0.order == 1 }))
         XCTAssertEqual(restoredRowSessionExercise.exerciseId, row.id)
-        XCTAssertEqual(restoredRowSessionExercise.segment, .main)
+        XCTAssertEqual(restoredRowSessionExercise.segment, .coolDown)
 
         let restoredRowLogs = restoredRowSessionExercise.setLogs.sorted { lhs, rhs in
             if lhs.order != rhs.order { return lhs.order < rhs.order }
@@ -696,10 +493,5 @@ final class BackupServiceTests: XCTestCase {
         XCTAssertEqual(restoredRowLogs[0].reps, 10)
         XCTAssertEqual(restoredRowLogs[0].weight, 32.5)
         XCTAssertEqual(restoredRowLogs[0].targetRestSeconds, 120)
-
-        let restoredCoolDownSessionExercise = try XCTUnwrap(restoredSessionExercises.first(where: { $0.order == 3 }))
-        XCTAssertEqual(restoredCoolDownSessionExercise.segment, .coolDown)
-        XCTAssertEqual(restoredCoolDownSessionExercise.segmentRaw, WorkoutExerciseSegment.coolDown.rawValue)
-        XCTAssertEqual(restoredCoolDownSessionExercise.setLogs.first?.targetDistance, 0.8)
     }
 }

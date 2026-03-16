@@ -7,6 +7,9 @@
     " " : {
 
     },
+    "-15s" : {
+
+    },
     "—" : {
 
     },
@@ -101,6 +104,9 @@
 
     },
     "+%@" : {
+
+    },
+    "+15s" : {
 
     },
     "0" : {
@@ -931,6 +937,9 @@
 
     },
     "End date is inclusive (like Calendar)." : {
+
+    },
+    "End rest" : {
 
     },
     "Equipment" : {
@@ -1933,6 +1942,7 @@
       }
     },
     "session.rest.overdue" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1943,6 +1953,7 @@
       }
     },
     "session.rest.paused" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1953,6 +1964,7 @@
       }
     },
     "session.rest.ready" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

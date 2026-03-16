@@ -63,17 +63,29 @@ struct SettingsScreen: View {
             }
             
             Section(String(localized: "settings.section.workout_cues")) {
-                Toggle(String(localized: "settings.workout_cues.completion_cue"), isOn: $prefs.restTimerCueEnabled)
-                    .accessibilityIdentifier("settings.restTimerCueToggle")
-                    .accessibilityLabel(AccessibilityLabels.Toggles.restTimerCue)
+                Toggle(String(localized: "settings.workout_cues.completion_cue"), isOn: Binding(
+                    get: { prefs.restTimerCueEnabled },
+                    set: { prefs.restTimerCueEnabled = $0 }
+                    )
+                )
+                .accessibilityIdentifier("settings.restTimerCueToggle")
+                .accessibilityLabel(AccessibilityLabels.Toggles.restTimerCue)
 
                 Toggle(String(localized: "settings.workout_cues.haptics"), isOn: $prefs.hapticsEnabled)
                     .accessibilityIdentifier("settings.hapticsToggle")
 
-                Toggle(String(localized: "settings.workout_cues.auto_start_rest"), isOn: $prefs.autoStartRest)
+                Toggle(String(localized: "settings.workout_cues.auto_start_rest"), isOn: Binding(
+                    get: { prefs.restTimerCueEnabled },
+                    set: { prefs.restTimerCueEnabled = $0 }
+                    )
+                )
                     .accessibilityIdentifier("settings.autoStartRestToggle")
 
-                Toggle(String(localized: "settings.workout_cues.show_overdue"), isOn: $prefs.restTimerShowOverdue)
+                Toggle(String(localized: "settings.workout_cues.show_overdue"), isOn: Binding(
+                    get: { prefs.restTimerCueEnabled },
+                    set: { prefs.restTimerCueEnabled = $0 }
+                    )
+                )
                     .accessibilityIdentifier("settings.restTimerShowOverdueToggle")
                     .accessibilityLabel(AccessibilityLabels.Toggles.showOverdue)
 

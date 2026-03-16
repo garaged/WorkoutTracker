@@ -307,12 +307,6 @@ final class BackupService {
             routineByID[raw.id] = model
         }
 
-        for raw in routines {
-            guard let model = routineByID[raw.id] else { continue }
-            model.warmUpRoutine = raw.warmUpRoutineID.flatMap { routineByID[$0] }
-            model.coolDownRoutine = raw.coolDownRoutineID.flatMap { routineByID[$0] }
-        }
-
         var sessionByID: [UUID: WorkoutSession] = [:]
         for raw in sessions {
             let model = WorkoutSession(
@@ -633,19 +627,7 @@ final class BackupService {
                 "notes": model.notes.map(JSONValue.string) ?? .null,
                 "isArchived": .bool(model.isArchived),
                 "createdAt": .string(Self.iso8601.string(from: model.createdAt)),
-                "updatedAt": .string(Self.iso8601.string(from: model.updatedAt)),
-                "warmUpRoutine": model.warmUpRoutine.map { routine in
-                    .object([
-                        "$ref": .string(routine.id.uuidString),
-                        "$type": .string(String(describing: type(of: routine)))
-                    ])
-                } ?? .null,
-                "coolDownRoutine": model.coolDownRoutine.map { routine in
-                    .object([
-                        "$ref": .string(routine.id.uuidString),
-                        "$type": .string(String(describing: type(of: routine)))
-                    ])
-                } ?? .null
+                "updatedAt": .string(Self.iso8601.string(from: model.updatedAt))
             ]
         }
 
@@ -933,8 +915,6 @@ final class BackupService {
         let isArchived: Bool
         let createdAt: Date
         let updatedAt: Date
-        let warmUpRoutineID: UUID?
-        let coolDownRoutineID: UUID?
     }
 
     private struct WorkoutRoutineItemRecord {
@@ -1095,9 +1075,7 @@ final class BackupService {
                 notes: string("notes", in: e),
                 isArchived: bool("isArchived", in: e) ?? false,
                 createdAt: date("createdAt", in: e) ?? Date(),
-                updatedAt: date("updatedAt", in: e) ?? Date(),
-                warmUpRoutineID: refUUID("warmUpRoutine", in: e),
-                coolDownRoutineID: refUUID("coolDownRoutine", in: e)
+                updatedAt: date("updatedAt", in: e) ?? Date()
             )
         }
     }
@@ -1111,9 +1089,7 @@ final class BackupService {
                 routineID: refUUID("routine", in: e),
                 exerciseID: refUUID("exercise", in: e),
                 trackingStyleRaw: string("trackingStyleRaw", in: e) ?? ExerciseTrackingStyle.strength.rawValue,
-                segmentRaw: string("segmentRaw", in: e)
-                    ?? string("segmentKindRaw", in: e)
-                    ?? WorkoutExerciseSegment.main.rawValue,
+                segmentRaw: string("segmentRaw", in: e) ?? WorkoutExerciseSegment.main.rawValue
             )
         }
     }

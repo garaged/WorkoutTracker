@@ -18,6 +18,7 @@ final class UserPreferences: ObservableObject {
         static let autoStartRest = "prefs.autoStartRest"
         static let restTimerCueEnabled = "prefs.restTimerCueEnabled"
         static let restTimerShowOverdue = "prefs.restTimerShowOverdue"
+        static let restSoundCuesEnabled = "prefs.restSoundCuesEnabled"
         static let confirmDestructiveActions = "prefs.confirmDestructiveActions"
         static let lastBackupAt = "prefs.lastBackupAt"
         static let diagnosticsVerboseLoggingEnabled = "prefs.diagnosticsVerboseLoggingEnabled"
@@ -56,6 +57,11 @@ final class UserPreferences: ObservableObject {
         didSet { defaults.set(restTimerShowOverdue, forKey: Keys.restTimerShowOverdue) }
     }
 
+    var restSoundCuesEnabled: Bool {
+        get { restTimerCueEnabled }
+        set { restTimerCueEnabled = newValue }
+    }
+
     @Published var confirmDestructiveActions: Bool {
         didSet { defaults.set(confirmDestructiveActions, forKey: Keys.confirmDestructiveActions) }
     }
@@ -87,8 +93,6 @@ final class UserPreferences: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.restTimerCueEnabled = defaults.object(forKey: Keys.restTimerCueEnabled) as? Bool ?? true
-        self.restTimerShowOverdue = defaults.object(forKey: Keys.restTimerShowOverdue) as? Bool ?? true
 
         // Weight unit
         if let raw = defaults.string(forKey: Keys.weightUnit), let u = WeightUnit(rawValue: raw) {
@@ -105,8 +109,14 @@ final class UserPreferences: ObservableObject {
         }
 
         // Rest seconds
-        let rest = defaults.object(forKey: Keys.defaultRestSeconds) as? Int
-        self.defaultRestSeconds = rest ?? 120
+        self.defaultRestSeconds = defaults.object(forKey: Keys.defaultRestSeconds) as? Int ?? 120
+
+        self.restTimerCueEnabled =
+            defaults.object(forKey: Keys.restTimerCueEnabled) as? Bool
+            ?? defaults.object(forKey: Keys.restSoundCuesEnabled) as? Bool
+            ?? true
+
+        self.restTimerShowOverdue = defaults.object(forKey: Keys.restTimerShowOverdue) as? Bool ?? true
 
         // Behavior toggles
         self.hapticsEnabled = defaults.object(forKey: Keys.hapticsEnabled) as? Bool ?? true
@@ -131,13 +141,6 @@ final class UserPreferences: ObservableObject {
 
         // Diagnostics
         self.diagnosticsVerboseLoggingEnabled = defaults.bool(forKey: Keys.diagnosticsVerboseLoggingEnabled)
-    }
-
-    /// Temporary compatibility alias while older call sites are migrated.
-    /// Prefer `restTimerCueEnabled` for new work.
-    var restSoundCuesEnabled: Bool {
-        get { restTimerCueEnabled }
-        set { restTimerCueEnabled = newValue }
     }
 
     // MARK: - Derived labels

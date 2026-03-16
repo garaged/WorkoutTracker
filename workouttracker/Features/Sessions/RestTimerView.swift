@@ -5,11 +5,10 @@ struct RestTimerView: View {
     let presets: [Int]
     var onFinish: (() -> Void)? = nil
 
-    @ObservedObject private var timer = SessionRestTimerController.shared
-        @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @ObservedObject private var timer = RestTimerController.shared
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     private let cornerRadius: CGFloat = 16
-    private let quickExtendOptions = [15, 30, 60]
 
     init(
         presets: [Int] = [30, 60, 90, 120, 180],
@@ -23,34 +22,21 @@ struct RestTimerView: View {
         verticalSizeClass == .compact
     }
 
-    private var snapshot: RestTimerSnapshot {
-        timer.snapshot
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             topBar
-
-            if snapshot.shouldShow {
-                controlsBar
-            }
-
             presetBar
         }
         .padding(isCompactLayout ? 9 : 10)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .stroke(overlayStrokeColor, lineWidth: 1)
+                .stroke(Color(uiColor: .separator).opacity(0.30), lineWidth: 1)
         }
         .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 4)
-        .accessibilityElement(children: .contain)
-        .overlay(alignment: .topLeading) {
-            Color.clear
-                .frame(width: 1, height: 1)
-                .accessibilityElement()
-                .accessibilityLabel(String(localized: "session.rest.title"))
-                .accessibilityIdentifier("RestTimerView.Card")
+        .onChange(of: timer.didFinishToken, initial: false) { _, token in
+            guard token != nil else { return }
+            onFinish?()
         }
     }
 
@@ -79,60 +65,21 @@ struct RestTimerView: View {
     }
 
     private var titleAndTimer: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(String(localized: "session.rest.title"))
-                    .font(.subheadline.weight(.semibold))
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(String(localized: "session.rest.title"))
+                .font(.subheadline.weight(.semibold))
 
-                Text(displayDurationText)
-                    .font(
-                        .system(
-                            isCompactLayout ? .title3 : .title2,
-                            design: .rounded
-                        )
-                        .weight(.semibold)
+            Text(AppFormatting.duration(seconds: timer.remainingSeconds))
+                .font(
+                    .system(
+                        isCompactLayout ? .title3 : .title2,
+                        design: .rounded
                     )
-                    .monospacedDigit()
-                    .foregroundStyle(timerTint)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .accessibilityIdentifier("RestTimerView.TimeLabel")
-            }
-
-            if let status = statusLabelText {
-                Text(status)
-                    .font(.caption.weight(.semibold))
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 4)
-                    .background(statusBackground, in: Capsule())
-                    .foregroundStyle(statusForeground)
-                    .accessibilityIdentifier(statusIdentifier)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var controlsBar: some View {
-        HStack(spacing: 6) {
-            RestTimerControlsView(
-                options: quickExtendOptions,
-                isEnabled: snapshot.canExtend
-            ) { seconds in
-                timer.extend(by: seconds)
-            }
-
-            Spacer(minLength: 0)
-
-            Button {
-                timer.resolveForNextAction()
-                onFinish?()
-            } label: {
-                Label(String(localized: "common.done"), systemImage: "checkmark.circle")
-                    .font(.caption.weight(.semibold))
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .accessibilityIdentifier("RestTimerView.DoneButton")
+                    .weight(.semibold)
+                )
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
     }
 
@@ -161,7 +108,7 @@ struct RestTimerView: View {
             timer.configure(
                 seconds: seconds,
                 startImmediately: UserPreferences.shared.autoStartRest,
-                playStartCue: UserPreferences.shared.restTimerCueEnabled
+                playStartCue: UserPreferences.shared.autoStartRest
             )
         } label: {
             Text(AppFormatting.shortDuration(seconds: seconds))
@@ -175,26 +122,22 @@ struct RestTimerView: View {
 
     private var startPauseButton: some View {
         Button {
-            if snapshot.isRunning {
+            if timer.isRunning {
                 timer.pause()
-            } else if snapshot.isPaused {
+            } else if timer.remainingSeconds > 0 {
                 timer.resume()
-            } else if snapshot.mode == .ready || snapshot.mode == .overdue {
-                timer.reset()
             } else {
                 timer.start(seconds: max(1, timer.totalSeconds))
             }
         } label: {
             Label(
-                startPauseTitle,
-                systemImage: startPauseSystemImage
+                timer.isRunning ? String(localized: "common.pause") : String(localized: "common.start"),
+                systemImage: timer.isRunning ? "pause.fill" : "play.fill"
             )
             .font(.subheadline.weight(.semibold))
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.small)
-        .disabled(startPauseDisabled)
-        .accessibilityIdentifier("RestTimerView.PrimaryButton")
     }
 
     private var resetButton: some View {
@@ -206,112 +149,7 @@ struct RestTimerView: View {
         }
         .buttonStyle(.bordered)
         .controlSize(.small)
-        .disabled(!snapshot.canReset)
-        .accessibilityIdentifier("RestTimerView.ResetButton")
+        .disabled(timer.totalSeconds <= 0)
     }
 
-    private var displayDurationText: String {
-        if snapshot.isOverdue {
-            return "+\(AppFormatting.duration(seconds: snapshot.overdueSeconds))"
-        }
-
-        return AppFormatting.duration(seconds: snapshot.displaySeconds)
-    }
-
-    private var statusLabelText: String? {
-        if snapshot.isPaused {
-            return String(localized: "session.rest.paused")
-        }
-
-        if snapshot.isReady {
-            return String(localized: "session.rest.ready")
-        }
-
-        if snapshot.isOverdue {
-            return String(localized: "session.rest.overdue")
-        }
-
-        return nil
-    }
-
-    private var statusIdentifier: String {
-        if snapshot.isPaused { return "RestTimerView.PausedLabel" }
-        if snapshot.isReady { return "RestTimerView.ReadyLabel" }
-        if snapshot.isOverdue { return "RestTimerView.OverdueLabel" }
-        return "RestTimerView.StatusLabel"
-    }
-
-    private var timerTint: Color {
-        switch snapshot.mode {
-        case .inactive, .countdown:
-            return .primary
-        case .ready:
-            return .green
-        case .overdue:
-            return .orange
-        }
-    }
-
-    private var overlayStrokeColor: Color {
-        switch snapshot.mode {
-        case .inactive, .countdown:
-            return Color(uiColor: .separator).opacity(0.30)
-        case .ready:
-            return Color.green.opacity(0.28)
-        case .overdue:
-            return Color.orange.opacity(0.32)
-        }
-    }
-
-    private var statusBackground: Color {
-        switch snapshot.mode {
-        case .ready:
-            return Color.green.opacity(0.14)
-        case .overdue:
-            return Color.orange.opacity(0.14)
-        default:
-            return Color.secondary.opacity(0.10)
-        }
-    }
-
-    private var statusForeground: Color {
-        switch snapshot.mode {
-        case .ready:
-            return .green
-        case .overdue:
-            return .orange
-        default:
-            return .secondary
-        }
-    }
-
-    private var startPauseTitle: String {
-        if snapshot.isRunning {
-            return String(localized: "common.pause")
-        }
-
-        if snapshot.isPaused || snapshot.mode == .countdown {
-            return String(localized: "common.start")
-        }
-
-        return String(localized: "common.reset")
-    }
-
-    private var startPauseSystemImage: String {
-        if snapshot.isRunning {
-            return "pause.fill"
-        }
-
-        if snapshot.mode == .ready || snapshot.mode == .overdue {
-            return "arrow.counterclockwise"
-        }
-
-        return "play.fill"
-    }
-
-    private var startPauseDisabled: Bool {
-        if snapshot.isRunning { return false }
-        if snapshot.isPaused { return false }
-        return timer.totalSeconds <= 0
-    }
 }

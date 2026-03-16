@@ -122,25 +122,13 @@ final class RestTimerController: ObservableObject {
 
     /// Adjust remaining time while running (supports negative values).
     func extend(by seconds: Int) {
-        let delta = max(1, seconds)
-        announcedCountdownSeconds.removeAll()
-        didFinishToken = nil
+        guard isRunning, let end = endsAt else { return }
+        let newEnd = end.addingTimeInterval(TimeInterval(seconds))
 
-        if isRunning, let end = endsAt {
-            let minEnd = Date().addingTimeInterval(1)
-            endsAt = max(end.addingTimeInterval(TimeInterval(delta)), minEnd)
-            scheduleRestFinishedNotification()
-            tick()
-            return
-        }
-
-        let resumedSeconds = max(1, remainingSeconds + delta)
-        totalSeconds = max(totalSeconds, resumedSeconds)
-        remainingSeconds = resumedSeconds
-        endsAt = Date().addingTimeInterval(TimeInterval(resumedSeconds))
-        isRunning = true
+        // Clamp so it doesn't go "past" now.
+        let minEnd = Date().addingTimeInterval(1)
+        endsAt = max(newEnd, minEnd)
         scheduleRestFinishedNotification()
-        startTicking()
         tick()
     }
 
