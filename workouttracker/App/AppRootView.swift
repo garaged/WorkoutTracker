@@ -7,6 +7,7 @@ enum RootDestination: String, CaseIterable, Identifiable {
     case home
     case routines
     case history
+    case progress
     case settings
 
     var id: String { rawValue }
@@ -16,6 +17,7 @@ enum RootDestination: String, CaseIterable, Identifiable {
         case .home: "Home"
         case .routines: "Routines"
         case .history: "History"
+        case .progress: "Progress"
         case .settings: "Settings"
         }
     }
@@ -25,6 +27,7 @@ enum RootDestination: String, CaseIterable, Identifiable {
         case .home: "house"
         case .routines: "list.bullet.rectangle"
         case .history: "clock.arrow.circlepath"
+        case .progress: "chart.line.uptrend.xyaxis"
         case .settings: "gearshape"
         }
     }
@@ -141,6 +144,8 @@ struct AppRootView: View {
             RoutinesScreen()
         case .history:
             HistoryRootPlaceholder()
+        case .progress:
+            ProgressScreen()
         case .settings:
             SettingsScreen()
         }

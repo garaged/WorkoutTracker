@@ -114,6 +114,9 @@
     "A" : {
 
     },
+    "A simple dashboard for strength, volume, consistency, and session efficiency." : {
+
+    },
     "A: %@" : {
 
     },
@@ -793,6 +796,9 @@
     "Couldn’t load progress" : {
 
     },
+    "Couldn’t load Progress" : {
+
+    },
     "Couldn’t load reflection stats" : {
 
     },
@@ -1133,6 +1139,9 @@
 
     },
     "Linked routines" : {
+
+    },
+    "Loading progress…" : {
 
     },
     "Loading…" : {
@@ -2565,6 +2574,9 @@
 
     },
     "Training days" : {
+
+    },
+    "Training trends" : {
 
     },
     "Trend" : {
