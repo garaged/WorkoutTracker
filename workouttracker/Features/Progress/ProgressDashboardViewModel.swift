@@ -15,51 +15,65 @@ final class ProgressDashboardViewModel: ObservableObject {
 
     struct DashboardContent: Equatable {
         let summary: ProgressDashboardSummary
-        let cards: [InsightCard]
-        let unavailableSections: [UnavailableSection]
-        let featuredExercises: [ExerciseRow]
+        let strength: StrengthCardModel
+        let volume: VolumeCardModel
+        let consistency: ConsistencyCardModel
+        let recovery: RecoveryCardModel
         let windowTitle: String
     }
 
-    struct InsightCard: Identifiable, Equatable {
-        enum Kind: String, Equatable {
-            case strength
-            case volume
-            case consistency
-            case efficiency
+    struct StrengthCardModel: Equatable {
+        struct ExerciseHighlight: Identifiable, Equatable {
+            let exerciseID: UUID
+            let exerciseName: String
+            let badgeText: String
+            let detailText: String
+            let availability: ProgressDataAvailability
+
+            var id: UUID { exerciseID }
         }
 
-        let kind: Kind
-        let title: String
+        let availability: ProgressDataAvailability
+        let headline: String
+        let summaryText: String
+        let exercises: [ExerciseHighlight]
+        let emptyMessage: String?
+    }
+
+    struct VolumeCardModel: Equatable {
+        let availability: ProgressDataAvailability
+        let headline: String
+        let primaryValue: String
+        let supportingText: String
+        let stats: [Stat]
+        let emptyMessage: String?
+    }
+
+    struct ConsistencyCardModel: Equatable {
+        let availability: ProgressDataAvailability
+        let headline: String
+        let activeWeeksText: String
+        let averageText: String
+        let completionText: String?
+        let supportingText: String
+        let emptyMessage: String?
+    }
+
+    struct RecoveryCardModel: Equatable {
+        let availability: ProgressDataAvailability
+        let headline: String
+        let sessionDurationText: String
+        let plannedRestText: String?
+        let actualRestText: String?
+        let comparisonText: String
+        let emptyMessage: String?
+    }
+
+    struct Stat: Identifiable, Equatable {
+        let label: String
         let value: String
-        let subtitle: String
-        let availability: ProgressDataAvailability
 
-        var id: Kind { kind }
-    }
-
-    struct UnavailableSection: Identifiable, Equatable {
-        enum Kind: String, Equatable {
-            case strength
-            case volume
-            case consistency
-            case efficiency
-        }
-
-        let kind: Kind
-        let title: String
-        let message: String
-
-        var id: Kind { kind }
-    }
-
-    struct ExerciseRow: Identifiable, Equatable {
-        let exerciseID: UUID
-        let exerciseName: String
-        let highlight: String
-        let availability: ProgressDataAvailability
-
-        var id: UUID { exerciseID }
+        var id: String { label }
     }
 
     @Published private(set) var state: State = .idle
@@ -126,9 +140,10 @@ final class ProgressDashboardViewModel: ObservableObject {
 
         let content = DashboardContent(
             summary: summary,
-            cards: makeCards(from: summary),
-            unavailableSections: makeUnavailableSections(from: summary),
-            featuredExercises: makeExerciseRows(from: summary.featuredExercises),
+            strength: makeStrengthCard(from: summary),
+            volume: makeVolumeCard(from: summary),
+            consistency: makeConsistencyCard(from: summary),
+            recovery: makeRecoveryCard(from: summary),
             windowTitle: makeWindowTitle()
         )
 
@@ -161,152 +176,191 @@ final class ProgressDashboardViewModel: ObservableObject {
         return "\(startText) – \(endText)"
     }
 
-    private func makeCards(from summary: ProgressDashboardSummary) -> [InsightCard] {
-        var cards: [InsightCard] = []
+    private func makeStrengthCard(from summary: ProgressDashboardSummary) -> StrengthCardModel {
+        let featured = summary.featuredExercises
 
-        if !summary.featuredExercises.isEmpty {
-            let featured = summary.featuredExercises
-            let topName = featured.first?.exerciseName ?? "Recent work"
-            let subtitle: String
-            if featured.contains(where: { $0.personalRecords.contains(where: \.isNewRecord) }) {
-                subtitle = "Recent PR activity led by \(topName)."
-            } else {
-                subtitle = "Recent lifting history across \(featured.count) exercise\(featured.count == 1 ? "" : "s")."
-            }
-
-            cards.append(
-                InsightCard(
-                    kind: .strength,
-                    title: "Strength",
-                    value: "\(featured.count)",
-                    subtitle: subtitle,
-                    availability: aggregateAvailability(featured.map(\.dataAvailability))
-                )
+        guard !featured.isEmpty else {
+            return StrengthCardModel(
+                availability: .insufficient,
+                headline: "Strength highlights will appear here",
+                summaryText: "As you complete more logged sets, this card will surface your most relevant exercises and PR moments.",
+                exercises: [],
+                emptyMessage: "Log a few completed strength sets to unlock exercise highlights, PRs, and latest top-set signals."
             )
         }
 
-        if let weekly = summary.weeklySummary {
-            let volumeValue: String
-            if let load = weekly.totalLoad {
-                volumeValue = formatNumber(load)
-            } else {
-                volumeValue = "\(weekly.totalSets) sets"
-            }
-
-            cards.append(
-                InsightCard(
-                    kind: .volume,
-                    title: "Volume",
-                    value: volumeValue,
-                    subtitle: "Latest week: \(weekly.workoutsCompleted) workouts, \(weekly.totalSets) sets, \(weekly.totalReps) reps.",
-                    availability: weekly.dataAvailability
-                )
-            )
+        let newPRCount = featured.reduce(0) { partialResult, exercise in
+            partialResult + exercise.personalRecords.filter(\.isNewRecord).count
         }
 
-        let consistency = summary.consistency
-        let completionDetail: String
-        if let completionRate = consistency.completionRate {
-            completionDetail = " Completion rate \(formatPercent(completionRate))."
+        let headline: String
+        if newPRCount > 0 {
+            headline = "\(newPRCount) recent PR\(newPRCount == 1 ? "" : "s")"
+        } else if featured.count == 1 {
+            headline = featured[0].exerciseName
         } else {
-            completionDetail = ""
+            headline = "\(featured.count) featured exercises"
         }
 
-        cards.append(
-            InsightCard(
-                kind: .consistency,
-                title: "Consistency",
-                value: "\(consistency.activeWeeks)/\(consistency.totalWeeks)",
-                subtitle: "Avg \(formatNumber(consistency.averageWorkoutsPerWeek)) workouts/week.\(completionDetail)",
-                availability: consistency.dataAvailability
-            )
-        )
-
-        if let efficiency = summary.efficiency {
-            let value = efficiency.averageSessionDurationSeconds.map(formatDuration(seconds:)) ?? "—"
-            let restDetail: String
-            if let overrun = efficiency.averageRestOverrunSeconds {
-                let rounded = Int(overrun.rounded())
-                if rounded > 0 {
-                    restDetail = "Avg rest ran \(rounded)s long."
-                } else if rounded < 0 {
-                    restDetail = "Avg rest finished \(abs(rounded))s early."
-                } else {
-                    restDetail = "Rest matched plan on average."
-                }
-            } else {
-                restDetail = "Rest timing is still building."
-            }
-
-            cards.append(
-                InsightCard(
-                    kind: .efficiency,
-                    title: "Efficiency",
-                    value: value,
-                    subtitle: restDetail,
-                    availability: efficiency.availability
-                )
-            )
-        }
-
-        return cards
-    }
-
-    private func makeUnavailableSections(from summary: ProgressDashboardSummary) -> [UnavailableSection] {
-        var sections: [UnavailableSection] = []
-
-        if summary.featuredExercises.isEmpty {
-            sections.append(
-                UnavailableSection(
-                    kind: .strength,
-                    title: "Strength",
-                    message: "Log a few completed strength sets to unlock exercise highlights and PR trends."
-                )
-            )
-        }
-
-        if summary.weeklySummary == nil {
-            sections.append(
-                UnavailableSection(
-                    kind: .volume,
-                    title: "Volume",
-                    message: "Complete more workouts in the selected window to build weekly volume totals."
-                )
-            )
-        }
-
-        if summary.consistency.dataAvailability == .insufficient {
-            sections.append(
-                UnavailableSection(
-                    kind: .consistency,
-                    title: "Consistency",
-                    message: "A few completed sessions are needed before consistency trends can be trusted."
-                )
-            )
-        }
-
-        if summary.efficiency == nil {
-            sections.append(
-                UnavailableSection(
-                    kind: .efficiency,
-                    title: "Efficiency",
-                    message: "Session timing and rest comparisons appear after enough finished sessions include timing data."
-                )
-            )
-        }
-
-        return sections
-    }
-
-    private func makeExerciseRows(from exercises: [ExerciseProgressSummary]) -> [ExerciseRow] {
-        exercises.map { exercise in
-            ExerciseRow(
+        let exercises = featured.map { exercise in
+            StrengthCardModel.ExerciseHighlight(
                 exerciseID: exercise.exerciseID,
                 exerciseName: exercise.exerciseName,
-                highlight: highlightText(for: exercise),
+                badgeText: strengthBadgeText(for: exercise),
+                detailText: highlightText(for: exercise),
                 availability: exercise.dataAvailability
             )
         }
+
+        let topName = featured.first?.exerciseName ?? "your recent work"
+        let summaryText: String
+        if newPRCount > 0 {
+            summaryText = "Recent PR activity is led by \(topName). Tap an exercise to open the detail drill-down when it lands in PR12."
+        } else {
+            summaryText = "Recent logged strength work across \(featured.count) exercise\(featured.count == 1 ? "" : "s"). Tap an exercise to inspect its next detail view later."
+        }
+
+        return StrengthCardModel(
+            availability: aggregateAvailability(featured.map(\.dataAvailability)),
+            headline: headline,
+            summaryText: summaryText,
+            exercises: exercises,
+            emptyMessage: nil
+        )
+    }
+
+    private func makeVolumeCard(from summary: ProgressDashboardSummary) -> VolumeCardModel {
+        guard let weekly = summary.weeklySummary else {
+            return VolumeCardModel(
+                availability: .insufficient,
+                headline: "Weekly volume is still building",
+                primaryValue: "—",
+                supportingText: "This card uses the latest completed week in the selected window. More completed workouts will make the weekly picture useful.",
+                stats: [],
+                emptyMessage: "Complete more workouts in this window to build weekly sets, reps, and load totals."
+            )
+        }
+
+        let primaryValue: String
+        if let totalLoad = weekly.totalLoad {
+            primaryValue = formatNumber(totalLoad)
+        } else {
+            primaryValue = "\(weekly.totalSets) sets"
+        }
+
+        let stats = [
+            Stat(label: "Workouts", value: "\(weekly.workoutsCompleted)"),
+            Stat(label: "Sets", value: "\(weekly.totalSets)"),
+            Stat(label: "Reps", value: "\(weekly.totalReps)"),
+            Stat(label: "Exercises", value: "\(weekly.distinctExerciseCount)")
+        ]
+
+        let supportingText: String
+        if let duration = weekly.totalDurationSeconds {
+            supportingText = "Latest completed week totals \(weekly.totalSets) sets and \(weekly.totalReps) reps across \(weekly.workoutsCompleted) workouts in \(AppFormatting.shortDuration(seconds: duration, locale: locale))."
+        } else {
+            supportingText = "Latest completed week totals \(weekly.totalSets) sets and \(weekly.totalReps) reps across \(weekly.workoutsCompleted) workouts."
+        }
+
+        return VolumeCardModel(
+            availability: weekly.dataAvailability,
+            headline: "Latest weekly volume",
+            primaryValue: primaryValue,
+            supportingText: supportingText,
+            stats: stats,
+            emptyMessage: weekly.dataAvailability == .insufficient ? "More completed weeks are needed before the volume trend becomes trustworthy." : nil
+        )
+    }
+
+    private func makeConsistencyCard(from summary: ProgressDashboardSummary) -> ConsistencyCardModel {
+        let consistency = summary.consistency
+        let activeWeeksText = "\(consistency.activeWeeks)/\(consistency.totalWeeks) active weeks"
+        let averageText = "\(formatNumber(consistency.averageWorkoutsPerWeek)) workouts / week"
+        let completionText = consistency.completionRate.map { "\(formatPercent($0)) completion" }
+
+        let supportingText: String
+        switch consistency.dataAvailability {
+        case .full:
+            supportingText = "This window has enough finished sessions to treat the routine pattern as meaningful."
+        case .partial:
+            supportingText = "Your routine is starting to take shape, but a few more finished weeks will make this trend steadier."
+        case .insufficient:
+            supportingText = "You have some activity, but not enough completed sessions yet for a trusted consistency read."
+        }
+
+        return ConsistencyCardModel(
+            availability: consistency.dataAvailability,
+            headline: "Consistency",
+            activeWeeksText: activeWeeksText,
+            averageText: averageText,
+            completionText: completionText,
+            supportingText: supportingText,
+            emptyMessage: consistency.dataAvailability == .insufficient
+                ? "A few completed sessions are needed before consistency trends can be trusted."
+                : nil
+        )
+    }
+
+    private func makeRecoveryCard(from summary: ProgressDashboardSummary) -> RecoveryCardModel {
+        guard let efficiency = summary.efficiency else {
+            return RecoveryCardModel(
+                availability: .insufficient,
+                headline: "Recovery and efficiency",
+                sessionDurationText: "—",
+                plannedRestText: nil,
+                actualRestText: nil,
+                comparisonText: "Session timing and planned-vs-actual rest appear once enough completed sessions include timing data.",
+                emptyMessage: "Not enough timing data yet. Finish more sessions with rest metadata to unlock this card."
+            )
+        }
+
+        let durationText = efficiency.averageSessionDurationSeconds.map(formatDuration(seconds:)) ?? "—"
+        let plannedRestText = efficiency.averagePlannedRestSeconds.map { AppFormatting.shortDuration(seconds: Int($0.rounded()), locale: locale) }
+        let actualRestText = efficiency.averageActualRestSeconds.map { AppFormatting.shortDuration(seconds: Int($0.rounded()), locale: locale) }
+
+        let comparisonText: String
+        if let overrun = efficiency.averageRestOverrunSeconds {
+            let rounded = Int(overrun.rounded())
+            if rounded > 0 {
+                comparisonText = "Average rest ran \(AppFormatting.shortDuration(seconds: rounded, locale: locale)) longer than planned."
+            } else if rounded < 0 {
+                comparisonText = "Average rest finished \(AppFormatting.shortDuration(seconds: abs(rounded), locale: locale)) earlier than planned."
+            } else {
+                comparisonText = "Average rest matched the plan closely."
+            }
+        } else if efficiency.availability == .partial {
+            comparisonText = "Some timing data is present, but planned-vs-actual rest still needs more sessions."
+        } else {
+            comparisonText = "Rest timing is still building."
+        }
+
+        return RecoveryCardModel(
+            availability: efficiency.availability,
+            headline: "Recovery and efficiency",
+            sessionDurationText: durationText,
+            plannedRestText: plannedRestText,
+            actualRestText: actualRestText,
+            comparisonText: comparisonText,
+            emptyMessage: efficiency.availability == .partial && efficiency.averageRestOverrunSeconds == nil
+                ? "Efficiency has partial timing data, but rest comparison still needs more logged sessions."
+                : nil
+        )
+    }
+
+    private func strengthBadgeText(for exercise: ExerciseProgressSummary) -> String {
+        if exercise.personalRecords.contains(where: \.isNewRecord) {
+            return "PR"
+        }
+
+        if let bestWeight = exercise.bestWeight {
+            return "Best \(formatNumber(bestWeight.value))"
+        }
+
+        if let estimatedOneRepMax = exercise.bestEstimatedOneRepMax {
+            return "Est. 1RM \(formatNumber(estimatedOneRepMax.value))"
+        }
+
+        return exercise.dataAvailability == .partial ? "Early" : "Ready"
     }
 
     private func highlightText(for exercise: ExerciseProgressSummary) -> String {
@@ -339,25 +393,14 @@ final class ProgressDashboardViewModel: ObservableObject {
     }
 
     private func formatDuration(seconds: Double) -> String {
-        let totalMinutes = Int((seconds / 60).rounded())
-        if totalMinutes < 60 {
-            return "\(totalMinutes)m"
-        }
-
-        let hours = totalMinutes / 60
-        let minutes = totalMinutes % 60
-        if minutes == 0 {
-            return "\(hours)h"
-        }
-
-        return "\(hours)h \(minutes)m"
+        AppFormatting.shortDuration(seconds: Int(seconds.rounded()), locale: locale)
     }
 
     private func formatNumber(_ value: Double) -> String {
-        value.formatted(.number.precision(.fractionLength(0...1)))
+        AppFormatting.decimal(value, maxFractionDigits: 1, locale: locale)
     }
 
     private func formatPercent(_ value: Double) -> String {
-        (value * 100).formatted(.number.precision(.fractionLength(0...0))) + "%"
+        AppFormatting.percent(value, maxFractionDigits: 0, locale: locale)
     }
 }

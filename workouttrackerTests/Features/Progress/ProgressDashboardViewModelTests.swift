@@ -15,7 +15,7 @@ final class ProgressDashboardViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .emptyNoWorkouts)
     }
 
-    func test_load_mapsLowDataSummary_andTracksUnavailableSections() {
+    func test_load_mapsLowDataSummary_toPerCardFallbackState() {
         let service = StubProgressAnalyticsService(
             dashboard: .lowData,
             detail: ProgressDashboardViewModelTests.anyDetailSummary()
@@ -28,14 +28,17 @@ final class ProgressDashboardViewModelTests: XCTestCase {
             return XCTFail("Expected low-data content state")
         }
 
-        XCTAssertEqual(content.cards.map(\.kind), [.strength, .consistency])
-        XCTAssertEqual(content.unavailableSections.map(\.kind), [.volume, .efficiency])
-        XCTAssertEqual(content.featuredExercises.map(\.exerciseName), ["Bench Press"])
+        XCTAssertEqual(content.strength.availability, .partial)
+        XCTAssertEqual(content.strength.exercises.map(\.exerciseName), ["Bench Press"])
+        XCTAssertEqual(content.volume.availability, .insufficient)
+        XCTAssertEqual(content.volume.emptyMessage, "Complete more workouts in this window to build weekly sets, reps, and load totals.")
+        XCTAssertEqual(content.consistency.availability, .partial)
+        XCTAssertEqual(content.recovery.availability, .insufficient)
         XCTAssertEqual(service.lastWindow?.start, TestSupport.date(2025, 12, 22, calendar: TestSupport.utcCalendar))
         XCTAssertEqual(service.lastWindow?.end, TestSupport.date(2026, 3, 16, calendar: TestSupport.utcCalendar))
     }
 
-    func test_load_mapsFullSummaryToDashboardContent() {
+    func test_load_mapsFullSummaryToCardModels() {
         let service = StubProgressAnalyticsService(
             dashboard: .full,
             detail: ProgressDashboardViewModelTests.anyDetailSummary()
@@ -48,13 +51,52 @@ final class ProgressDashboardViewModelTests: XCTestCase {
             return XCTFail("Expected content state")
         }
 
-        XCTAssertEqual(content.cards.map(\.kind), [.strength, .volume, .consistency, .efficiency])
-        XCTAssertEqual(content.unavailableSections, [])
-        XCTAssertEqual(content.featuredExercises.count, 2)
+        XCTAssertEqual(content.strength.availability, .full)
+        XCTAssertEqual(content.strength.exercises.count, 2)
+        XCTAssertEqual(content.volume.availability, .full)
+        XCTAssertEqual(content.volume.stats.map(\.label), ["Workouts", "Sets", "Reps", "Exercises"])
+        XCTAssertEqual(content.consistency.availability, .full)
+        XCTAssertEqual(content.consistency.completionText, "82% completion")
+        XCTAssertEqual(content.recovery.availability, .full)
         XCTAssertEqual(content.windowTitle, "Dec 22 – Mar 15")
     }
 
-    func test_load_keepsConsistencyCard_butAddsUnavailableSection_whenConsistencyNeedsMoreData() {
+    func test_load_strengthCard_prefersPRHeadline_whenRecentRecordsExist() {
+        let service = StubProgressAnalyticsService(
+            dashboard: .full,
+            detail: ProgressDashboardViewModelTests.anyDetailSummary()
+        )
+        let viewModel = makeViewModel(service: service)
+
+        viewModel.load()
+
+        guard case .content(let content) = viewModel.state else {
+            return XCTFail("Expected content state")
+        }
+
+        XCTAssertEqual(content.strength.headline, "1 recent PR")
+        XCTAssertEqual(content.strength.exercises.first?.badgeText, "PR")
+    }
+
+    func test_load_recoveryCard_usesPartialFallback_whenRestComparisonIsUnavailable() {
+        let service = StubProgressAnalyticsService(
+            dashboard: .efficiencyPartialNoOverrun,
+            detail: ProgressDashboardViewModelTests.anyDetailSummary()
+        )
+        let viewModel = makeViewModel(service: service)
+
+        viewModel.load()
+
+        guard case .lowData(let content) = viewModel.state else {
+            return XCTFail("Expected low-data content state")
+        }
+
+        XCTAssertEqual(content.recovery.availability, .partial)
+        XCTAssertEqual(content.recovery.emptyMessage, "Efficiency has partial timing data, but rest comparison still needs more logged sessions.")
+        XCTAssertEqual(content.recovery.actualRestText, "2m 18s")
+    }
+
+    func test_load_keepsConsistencyCard_butMarksItUnavailable_whenDataIsThin() {
         let service = StubProgressAnalyticsService(
             dashboard: .consistencyLowData,
             detail: ProgressDashboardViewModelTests.anyDetailSummary()
@@ -67,8 +109,9 @@ final class ProgressDashboardViewModelTests: XCTestCase {
             return XCTFail("Expected low-data content state")
         }
 
-        XCTAssertTrue(content.cards.contains(where: { $0.kind == .consistency }))
-        XCTAssertTrue(content.unavailableSections.contains(where: { $0.kind == .consistency }))
+        XCTAssertEqual(content.consistency.availability, .insufficient)
+        XCTAssertNotNil(content.consistency.emptyMessage)
+        XCTAssertEqual(content.recovery.availability, .partial)
     }
 
     func test_openExerciseDetail_tracksSelectedExerciseID() {
@@ -204,6 +247,41 @@ private extension ProgressDashboardSummary {
                 averagePlannedRestSeconds: 120,
                 averageActualRestSeconds: 138,
                 averageRestOverrunSeconds: 18,
+                highestAverageRestOverrunExercises: [],
+                availability: .partial
+            ),
+            dataAvailability: .partial,
+            isEmpty: false,
+            hasLowData: true
+        )
+    }
+
+    static var efficiencyPartialNoOverrun: Self {
+        ProgressDashboardSummary(
+            featuredExercises: [benchFull()],
+            weeklySummary: WeeklyTrainingSummary(
+                weekStart: TestSupport.date(2026, 3, 9, calendar: TestSupport.utcCalendar),
+                workoutsCompleted: 2,
+                totalSets: 10,
+                totalReps: 50,
+                totalLoad: 3_500,
+                distinctExerciseCount: 2,
+                totalDurationSeconds: 3_200,
+                dataAvailability: .full
+            ),
+            consistency: ConsistencySummary(
+                window: sampleWindow(),
+                activeWeeks: 4,
+                totalWeeks: 12,
+                averageWorkoutsPerWeek: 1.2,
+                completionRate: 0.7,
+                dataAvailability: .partial
+            ),
+            efficiency: SessionEfficiencySummary(
+                averageSessionDurationSeconds: 2_900,
+                averagePlannedRestSeconds: 120,
+                averageActualRestSeconds: 138,
+                averageRestOverrunSeconds: nil,
                 highestAverageRestOverrunExercises: [],
                 availability: .partial
             ),

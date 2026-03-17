@@ -75,44 +75,19 @@ struct ProgressDashboardView: View {
                 if isLowData {
                     ProgressEmptyStateView(
                         kind: .lowData(
-                            message: "Some sections are already useful, but more completed workouts will make the trends steadier and fill the missing cards."
+                            message: "Some cards are already useful, while others still need more completed workouts or timing data to become trustworthy."
                         )
                     )
                 }
 
-                if !content.cards.isEmpty {
-                    section(title: "Highlights") {
-                        LazyVStack(spacing: 12) {
-                            ForEach(content.cards) { card in
-                                ProgressShellCard(card: card)
-                            }
-                        }
+                LazyVStack(spacing: 14) {
+                    StrengthProgressCard(model: content.strength) { exerciseID in
+                        viewModel.openExerciseDetail(exerciseID: exerciseID)
                     }
-                }
 
-                if !content.featuredExercises.isEmpty {
-                    section(title: "Featured exercises") {
-                        LazyVStack(spacing: 12) {
-                            ForEach(content.featuredExercises) { row in
-                                ProgressExerciseRow(row: row)
-                            }
-                        }
-                    }
-                }
-
-                if !content.unavailableSections.isEmpty {
-                    section(title: "Still building") {
-                        LazyVStack(spacing: 12) {
-                            ForEach(content.unavailableSections) { section in
-                                ProgressEmptyStateView(
-                                    kind: .sectionUnavailable(
-                                        title: section.title,
-                                        message: section.message
-                                    )
-                                )
-                            }
-                        }
-                    }
+                    VolumeTrendCard(model: content.volume)
+                    ConsistencyCard(model: content.consistency)
+                    RecoveryInsightCard(model: content.recovery)
                 }
             }
             .padding()
@@ -134,132 +109,5 @@ struct ProgressDashboardView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func section<Content: View>(
-        title: String,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.headline)
-            content()
-        }
-    }
-}
-
-private struct ProgressShellCard: View {
-    let card: ProgressDashboardViewModel.InsightCard
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(card.title)
-                        .font(.headline)
-                    Text(availabilityText)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(availabilityColor)
-                }
-
-                Spacer()
-
-                Text(card.value)
-                    .font(.title3.weight(.semibold))
-            }
-
-            Text(card.subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(.quaternary)
-        )
-    }
-
-    private var availabilityText: String {
-        switch card.availability {
-        case .full:
-            return "Ready"
-        case .partial:
-            return "Low data"
-        case .insufficient:
-            return "Unavailable"
-        }
-    }
-
-    private var availabilityColor: Color {
-        switch card.availability {
-        case .full:
-            return .secondary
-        case .partial:
-            return .orange
-        case .insufficient:
-            return .red
-        }
-    }
-}
-
-private struct ProgressExerciseRow: View {
-    let row: ProgressDashboardViewModel.ExerciseRow
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "figure.strengthtraining.traditional")
-                .font(.headline)
-                .foregroundStyle(.secondary)
-                .frame(width: 24)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(row.exerciseName)
-                    .font(.body.weight(.semibold))
-                Text(row.highlight)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer(minLength: 8)
-
-            Text(statusText)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(statusColor)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
-    }
-
-    private var statusText: String {
-        switch row.availability {
-        case .full:
-            return "Ready"
-        case .partial:
-            return "Early"
-        case .insufficient:
-            return "Low"
-        }
-    }
-
-    private var statusColor: Color {
-        switch row.availability {
-        case .full:
-            return .secondary
-        case .partial:
-            return .orange
-        case .insufficient:
-            return .red
-        }
     }
 }

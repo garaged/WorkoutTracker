@@ -105,6 +105,15 @@ enum AppFormatting {
         return formatter.string(from: NSNumber(value: value)) ?? String(value)
     }
 
+    static func percent(_ value: Double, maxFractionDigits: Int = 0, locale: Locale = .autoupdatingCurrent) -> String {
+        let formatter = NumberFormatter()
+        formatter.locale = locale
+        formatter.numberStyle = .percent
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = maxFractionDigits
+        return formatter.string(from: NSNumber(value: value)) ?? String(value)
+    }
+
     private static func localizedInteger(_ value: Int, minimumIntegerDigits: Int = 1, locale: Locale) -> String {
         let formatter = NumberFormatter()
         formatter.locale = locale

@@ -772,6 +772,9 @@
     "Conflicts" : {
 
     },
+    "Consistency" : {
+
+    },
     "Contact" : {
 
     },
@@ -1424,6 +1427,9 @@
 
     },
     "Recent" : {
+
+    },
+    "Recovery" : {
 
     },
     "Recurrence" : {
@@ -2486,6 +2492,9 @@
     "Stop workout" : {
 
     },
+    "Strength" : {
+
+    },
     "Style" : {
 
     },
@@ -2607,6 +2616,9 @@
 
     },
     "View Summary" : {
+
+    },
+    "Volume" : {
 
     },
     "Volume uses your preferred unit (%@)." : {
