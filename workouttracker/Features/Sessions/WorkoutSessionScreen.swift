@@ -19,10 +19,8 @@ struct WorkoutSessionScreen: View {
 
     /// Display numbering for set rows.
     ///
-    /// Historically some builders stored `WorkoutSetLog.order` as 0-based (0,1,2,...) while
-    /// others stored it as 1-based (1,2,3,...). The UI should always show sets starting at 1.
-    ///
-    /// We detect the base per-exercise by looking at the minimum order in that exercise.
+    /// The UI should always show sets as 1-based in their visible sorted order,
+    /// regardless of how `WorkoutSetLog.order` was originally persisted.
     private func displaySetNumber(for set: WorkoutSetLog, in ex: WorkoutSessionExercise) -> Int {
         let ordered = sortedSets(for: ex)
         guard let index = ordered.firstIndex(where: { $0.id == set.id }) else {
@@ -51,6 +49,10 @@ struct WorkoutSessionScreen: View {
     
     @State private var showReflectionSheet = false
     @State private var dismissAfterReflectionSheet = false
+    
+    private var bottomInsetLayoutKey: String {
+        "\(shouldShowCoachPrompt)-\(shouldShowRestTimerCard)-\(session.isPaused)-\(isInProgress)"
+    }
     
     private struct PRDetailsContext: Identifiable, Hashable {
         // Use setId as identity so it behaves nicely
@@ -115,17 +117,19 @@ struct WorkoutSessionScreen: View {
     var body: some View {
         ZStack {
             ScrollViewReader { proxy in
-                List {
-                    headerSection
-                    summarySectionIfReadOnly
-                    segmentSummarySectionIfReadOnly
-                    exercisesSection(proxy: proxy)
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        headerSection
+                        summarySectionIfReadOnly
+                        segmentSummarySectionIfReadOnly
+                        exercisesSection(proxy: proxy)
+                    }
                 }
                 .accessibilityIdentifier("WorkoutSession.Screen")
                 .navigationTitle(session.sourceRoutineNameSnapshot ?? String(localized: "session.title.fallback"))
                 .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
                 .safeAreaInset(edge: .bottom) { bottomInset(proxy: proxy) }
                 .safeAreaInset(edge: .top) {
                     if let banner = targetAppliedBanner {
@@ -138,6 +142,13 @@ struct WorkoutSessionScreen: View {
                     }
                 }
                 .toolbar { toolbarContent }
+                .onChange(of: bottomInsetLayoutKey, initial: false) { _, _ in
+                    guard let activeSetID else { return }
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 120_000_000)
+                        scrollToExercise(activeSetID, proxy: proxy)
+                    }
+                }
                 .confirmationDialog(
                     String(localized: "session.finish_workout.title"),
                     isPresented: $showFinishConfirm,
@@ -216,90 +227,154 @@ struct WorkoutSessionScreen: View {
     }
 
     private var headerSection: some View {
-        Section {
-            HStack {
-                LabeledContent(String(localized: "session.summary.started")) {
-                    Text(AppFormatting.time(session.startedAt))
-                }
-                Spacer()
-                LabeledContent(String(localized: "session.summary.status")) {
-                    Text(statusLabel)
-                        .foregroundStyle(session.status == .inProgress ? .secondary : .primary)
-                }
+        let completedSets = allSets.filter(\.completed).count
+        let totalSets = allSets.count
+        let progress = totalSets == 0 ? 0.0 : Double(completedSets) / Double(totalSets)
+
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                sessionSummaryMetric(
+                    title: String(localized: "session.summary.started"),
+                    value: AppFormatting.time(session.startedAt),
+                    alignment: .leading
+                )
+
+                sessionSummaryMetric(
+                    title: String(localized: "session.summary.elapsed"),
+                    value: AppFormatting.duration(seconds: session.elapsedSeconds()),
+                    alignment: .center,
+                    monospaced: true
+                )
+
+                sessionSummaryMetric(
+                    title: String(localized: "session.summary.status"),
+                    value: statusLabel,
+                    alignment: .trailing,
+                    valueColor: session.status == .inProgress ? .secondary : .primary
+                )
             }
 
-            HStack {
-                LabeledContent(String(localized: "session.summary.elapsed")) {
-                    Text(AppFormatting.duration(seconds: session.elapsedSeconds()))
-                        .monospacedDigit()
-                }
-                Spacer()
-                if session.isPaused {
-                    Text(String(localized: "session.summary.paused")).font(.caption).foregroundStyle(.secondary)
-                }
-            }
-
-            let completedSets = allSets.filter(\.completed).count
-            let totalSets = allSets.count
-
-            ProgressView(value: totalSets == 0 ? 0 : Double(completedSets) / Double(totalSets)) {
-                Text(String(localized: "session.progress.title"))
-            } currentValueLabel: {
-                Text(String(format: String(localized: "session.progress.sets_value"), completedSets, max(totalSets, 1)))
+            if session.isPaused {
+                Text(String(localized: "session.summary.paused"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(String(localized: "session.progress.title"))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+
+                    Spacer()
+
+                    Text(
+                        String(
+                            format: String(localized: "session.progress.sets_value"),
+                            completedSets,
+                            max(totalSets, 1)
+                        )
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                }
+
+                ProgressView(value: progress)
+                    .tint(.accentColor)
+            }
         }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.secondary.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.secondary.opacity(0.12), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
     }
 
     private var summarySectionIfReadOnly: some View {
         Group {
             if isReadOnly {
-                Section(String(localized: "session.summary.title")) {
-                    let completedSets = allSets.filter(\.completed).count
-                    let totalSets = allSets.count
+                let completedSets = allSets.filter(\.completed).count
+                let totalSets = allSets.count
 
-                    let volume = allSets.reduce(0.0) { acc, set in
-                        guard set.completed else { return acc }
-                        let reps = Double(set.reps ?? 0)
-                        let w = set.weight ?? 0
-                        return acc + (reps * w)
-                    }
-
-                    LabeledContent(String(localized: "session.summary.sets")) { Text("\(completedSets)/\(totalSets)") }
-
-                    LabeledContent(String(localized: "session.summary.volume")) {
-                        Text(AppFormatting.decimal(volume, maxFractionDigits: 0))
-                            .foregroundStyle(.secondary)
-                    }
-
-                    if let endedAt = session.endedAt {
-                        LabeledContent(String(localized: "session.summary.ended")) {
-                            Text(AppFormatting.time(endedAt))
-                        }
-                    }
+                let volume = allSets.reduce(0.0) { acc, set in
+                    guard set.completed else { return acc }
+                    let reps = Double(set.reps ?? 0)
+                    let w = set.weight ?? 0
+                    return acc + (reps * w)
                 }
 
-                Section(String(localized: "session.reflection.title")) {
-                    if let mood = session.reflectionMood {
-                        LabeledContent(String(localized: "session.reflection.mood")) {
-                            Text(mood.displayText)
+                VStack(alignment: .leading, spacing: 12) {
+                    readOnlyCardSectionTitle(String(localized: "session.summary.title"))
+
+                    VStack(spacing: 0) {
+                        readOnlySummaryRow(
+                            label: String(localized: "session.summary.sets"),
+                            value: "\(completedSets)/\(totalSets)"
+                        )
+
+                        Divider()
+
+                        readOnlySummaryRow(
+                            label: String(localized: "session.summary.volume"),
+                            value: AppFormatting.decimal(volume, maxFractionDigits: 0),
+                            valueColor: .secondary
+                        )
+
+                        if let endedAt = session.endedAt {
+                            Divider()
+
+                            readOnlySummaryRow(
+                                label: String(localized: "session.summary.ended"),
+                                value: AppFormatting.time(endedAt)
+                            )
                         }
                     }
-
-                    let note = (session.reflectionNote ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !note.isEmpty {
-                        Text(note)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Button(hasReflection ? String(localized: "session.reflection.edit") : String(localized: "session.reflection.add")) {
-                        dismissAfterReflectionSheet = false
-                        showReflectionSheet = true
-                    }
-                    .fontWeight(.semibold)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(readOnlyCardBackground)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    readOnlyCardSectionTitle(String(localized: "session.reflection.title"))
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        if let mood = session.reflectionMood {
+                            readOnlySummaryRow(
+                                label: String(localized: "session.reflection.mood"),
+                                value: mood.displayText
+                            )
+                        }
+
+                        let note = (session.reflectionNote ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !note.isEmpty {
+                            Text(note)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        Button(hasReflection ? String(localized: "session.reflection.edit") : String(localized: "session.reflection.add")) {
+                            dismissAfterReflectionSheet = false
+                            showReflectionSheet = true
+                        }
+                        .fontWeight(.semibold)
+                    }
+                    .padding(16)
+                    .background(readOnlyCardBackground)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
             }
         }
     }
@@ -307,15 +382,64 @@ struct WorkoutSessionScreen: View {
     private var segmentSummarySectionIfReadOnly: some View {
         Group {
             if isReadOnly && sessionHasMultipleSegments {
-                Section("Segments") {
-                    ForEach(orderedVisibleSegmentKinds, id: \.self) { kind in
-                        LabeledContent(segmentTitle(for: kind)) {
-                            Text(segmentProgressText(for: kind) ?? "0/0 sets")
-                                .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 12) {
+                    readOnlyCardSectionTitle("Segments")
+
+                    VStack(spacing: 0) {
+                        ForEach(Array(orderedVisibleSegmentKinds.enumerated()), id: \.element) { index, kind in
+                            if index > 0 {
+                                Divider()
+                            }
+
+                            readOnlySummaryRow(
+                                label: segmentTitle(for: kind),
+                                value: segmentProgressText(for: kind) ?? "0/0 sets",
+                                valueColor: .secondary
+                            )
                         }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(readOnlyCardBackground)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
             }
+        }
+    }
+    
+    private func sessionSummaryMetric(
+        title: String,
+        value: String,
+        alignment: HorizontalAlignment,
+        monospaced: Bool = false,
+        valueColor: Color = .primary
+    ) -> some View {
+        VStack(alignment: alignment, spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Text(value)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(valueColor)
+                .if(monospaced) { view in
+                    view.monospacedDigit()
+                }
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+        }
+        .frame(maxWidth: .infinity, alignment: frameAlignment(for: alignment))
+    }
+    
+    private func frameAlignment(for alignment: HorizontalAlignment) -> Alignment {
+        switch alignment {
+        case .leading:
+            return .leading
+        case .trailing:
+            return .trailing
+        default:
+            return .center
         }
     }
 
@@ -454,7 +578,6 @@ struct WorkoutSessionScreen: View {
 
         guard let target = nextActionableTarget() else { return }
 
-        restTimer.resolveForNextAction()
         activeExerciseID = target.exerciseID
         activeSetID = target.setID
 
@@ -469,7 +592,9 @@ struct WorkoutSessionScreen: View {
             exercises: exercises,
             activeExerciseID: activeExerciseID,
             activeSetID: activeSetID
-        ) else { return nil }
+        ) else {
+            return nil
+        }
 
         guard let owningExercise = exercises.first(where: { ex in
             ex.setLogs.contains(where: { $0.id == targetSetID })
@@ -490,7 +615,6 @@ struct WorkoutSessionScreen: View {
         activeExerciseID = target.exerciseID
         activeSetID = target.setID
 
-        // Let List + bottom safe-area content settle before the initial scroll.
         try? await Task.sleep(nanoseconds: 150_000_000)
         scrollToExercise(target.setID, proxy: proxy)
     }
@@ -552,6 +676,8 @@ struct WorkoutSessionScreen: View {
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 0, trailing: 16))
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
                 }
 
                 exerciseSection(ex, proxy: proxy)
@@ -635,13 +761,13 @@ struct WorkoutSessionScreen: View {
                 let state = setRowVisualState(for: set)
 
                 setRow(ex: ex, set: set, proxy: proxy)
-                    .id(set.id)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .background(setRowChrome(state: state))
                     .contentShape(Rectangle())
                     .accessibilityElement(children: .contain)
                     .accessibilityIdentifier(setRowAccessibilityIdentifier(for: set, state: state))
+                    .id(set.id)
                     .simultaneousGesture(
                         TapGesture().onEnded {
                             markActive(exerciseID: ex.id, setID: set.id)
@@ -649,6 +775,45 @@ struct WorkoutSessionScreen: View {
                     )
             }
         }
+    }
+    
+    private var readOnlyCardBackground: some View {
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .fill(Color.secondary.opacity(0.05))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.secondary.opacity(0.12), lineWidth: 1)
+            )
+    }
+
+    private func readOnlyCardSectionTitle(_ title: String) -> some View {
+        Text(title)
+            .font(.headline)
+            .foregroundStyle(.primary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 4)
+    }
+
+    private func readOnlySummaryRow(
+        label: String,
+        value: String,
+        valueColor: Color = .primary
+    ) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(label)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+
+            Spacer(minLength: 12)
+
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(valueColor)
+                .multilineTextAlignment(.trailing)
+                .monospacedDigit()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 10)
     }
 
     // MARK: - Row styling
@@ -938,11 +1103,19 @@ struct WorkoutSessionScreen: View {
 
         // Optional, post-session, never blocks logging flow:
         // we only prompt if the user hasn't added a reflection yet.
-        if !hasReflection {
-            dismissAfterReflectionSheet = true
-            showReflectionSheet = true
-        } else {
+        guard !hasReflection else {
             dismiss()
+            return
+        }
+
+        dismissAfterReflectionSheet = true
+        coachPrompt = nil
+        withAnimation(.snappy) { showRestTimer = false }
+
+        // Present the sheet on the next run loop after the completion-state save settles.
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 80_000_000)
+            showReflectionSheet = true
         }
     }
 
@@ -1278,16 +1451,26 @@ struct WorkoutSessionScreen: View {
     private func scrollToExercise(_ id: UUID, proxy: ScrollViewProxy) {
         dismissKeyboard()
 
+        let preferredAnchor = UnitPoint(x: 0.5, y: 0.30)
+
         Task { @MainActor in
             withAnimation(.snappy) {
-                proxy.scrollTo(id, anchor: .center)
+                proxy.scrollTo(id, anchor: preferredAnchor)
             }
 
-            // Second pass helps after List/layout/bottom-inset settling.
             try? await Task.sleep(nanoseconds: 120_000_000)
-
             withAnimation(.snappy) {
-                proxy.scrollTo(id, anchor: .center)
+                proxy.scrollTo(id, anchor: preferredAnchor)
+            }
+
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            withAnimation(.snappy) {
+                proxy.scrollTo(id, anchor: preferredAnchor)
+            }
+
+            try? await Task.sleep(nanoseconds: 350_000_000)
+            withAnimation(.snappy) {
+                proxy.scrollTo(id, anchor: preferredAnchor)
             }
         }
     }
@@ -1771,6 +1954,17 @@ struct WorkoutSessionScreen: View {
             WorkoutSessionScreen.playRestFinishedHaptic()
         }
     #endif
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
         }
     }
 }

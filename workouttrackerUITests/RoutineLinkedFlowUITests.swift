@@ -35,12 +35,38 @@ final class RoutineLinkedFlowUITests: XCTestCase {
 
         XCTAssertTrue(waitForCurrentSegment("coolDown", timeout: 10), "Expected completing the main segment to enter cool-down.")
 
+        if app.buttons["Dismiss coach suggestion"].exists {
+            app.buttons["Dismiss coach suggestion"].tap()
+        }
+
+        let restTimerToggle = app.buttons["WorkoutSession.RestTimerButton"]
+        if restTimerToggle.exists {
+            restTimerToggle.tap()   // hides the rest timer card if visible
+        }
+        
         let skipCoolDown = app.buttons["WorkoutSession.SkipSegmentButton"]
         XCTAssertTrue(skipCoolDown.waitForExistence(timeout: 10), "Expected skip action at the cool-down boundary.")
-        skipCoolDown.tap()
+
+        if app.buttons["Dismiss coach suggestion"].exists {
+            app.buttons["Dismiss coach suggestion"].tap()
+        }
+
+        XCTAssertTrue(skipCoolDown.waitForExistence(timeout: 5), "Expected cool-down skip button after dismissing overlays.")
+        XCTAssertTrue(skipCoolDown.isHittable, "Expected cool-down skip button to be hittable after dismissing overlays.")
+
+        skipCoolDown.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
 
         let notNow = app.buttons["SessionReflection.NotNow"]
-        XCTAssertTrue(notNow.waitForExistence(timeout: 10), "Expected session completion to present reflection after skipping cool-down.")
+        let started = Date()
+        while Date().timeIntervalSince(started) < 12 {
+            if notNow.exists { break }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+        }
+
+        if !notNow.exists {
+            attachUITestDebug(app, name: "LinkedFlow_ReflectionMissingAfterSkipCoolDown")
+        }
+        XCTAssertTrue(notNow.exists, "Expected session completion to present reflection after skipping cool-down.")
         notNow.tap()
 
         XCTAssertTrue(waitForSessionScreenToDisappear(timeout: 10), "Expected the linked session flow to finish after skipping cool-down.")

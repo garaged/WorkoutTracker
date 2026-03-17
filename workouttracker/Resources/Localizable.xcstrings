@@ -81,16 +81,6 @@
     "%lld workouts" : {
 
     },
-    "%lld/%lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld/%2$lld"
-          }
-        }
-      }
-    },
     "%lldm" : {
 
     },
@@ -1670,9 +1660,6 @@
 
     },
     "Segment" : {
-
-    },
-    "Segments" : {
 
     },
     "Select 2 sessions to compare." : {
