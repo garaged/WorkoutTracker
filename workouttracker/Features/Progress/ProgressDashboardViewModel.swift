@@ -111,7 +111,7 @@ final class ProgressDashboardViewModel: ObservableObject {
 
     func load() {
         guard let service else {
-            state = .failed("Progress isn’t available yet.")
+            state = .failed(localized("progress.dashboard.unavailable"))
             return
         }
 
@@ -131,6 +131,14 @@ final class ProgressDashboardViewModel: ObservableObject {
 
     func openExerciseDetail(exerciseID: UUID) {
         selectedExerciseID = exerciseID
+    }
+
+    func clearExerciseSelection() {
+        selectedExerciseID = nil
+    }
+
+    func localizedWindowLabel(_ value: String) -> String {
+        localizedFormat("progress.dashboard.window.value", value)
     }
 
     private func map(summary: ProgressDashboardSummary) -> State {
@@ -182,10 +190,10 @@ final class ProgressDashboardViewModel: ObservableObject {
         guard !featured.isEmpty else {
             return StrengthCardModel(
                 availability: .insufficient,
-                headline: "Strength highlights will appear here",
-                summaryText: "As you complete more logged sets, this card will surface your most relevant exercises and PR moments.",
+                headline: localized("progress.dashboard.strength.empty_headline"),
+                summaryText: localized("progress.dashboard.strength.empty_summary"),
                 exercises: [],
-                emptyMessage: "Log a few completed strength sets to unlock exercise highlights, PRs, and latest top-set signals."
+                emptyMessage: localized("progress.dashboard.strength.empty_message")
             )
         }
 
@@ -195,11 +203,17 @@ final class ProgressDashboardViewModel: ObservableObject {
 
         let headline: String
         if newPRCount > 0 {
-            headline = "\(newPRCount) recent PR\(newPRCount == 1 ? "" : "s")"
+            let key = newPRCount == 1
+                ? "progress.dashboard.strength.headline.recent_prs.one"
+                : "progress.dashboard.strength.headline.recent_prs.other"
+            headline = localizedFormat(key, Int64(newPRCount))
         } else if featured.count == 1 {
             headline = featured[0].exerciseName
         } else {
-            headline = "\(featured.count) featured exercises"
+            let key = featured.count == 1
+                ? "progress.dashboard.strength.headline.featured_exercises.one"
+                : "progress.dashboard.strength.headline.featured_exercises.other"
+            headline = localizedFormat(key, Int64(featured.count))
         }
 
         let exercises = featured.map { exercise in
@@ -212,12 +226,15 @@ final class ProgressDashboardViewModel: ObservableObject {
             )
         }
 
-        let topName = featured.first?.exerciseName ?? "your recent work"
+        let topName = featured.first?.exerciseName ?? localized("progress.dashboard.strength.top_name_fallback")
         let summaryText: String
         if newPRCount > 0 {
-            summaryText = "Recent PR activity is led by \(topName). Tap an exercise to open the detail drill-down when it lands in PR12."
+            summaryText = localizedFormat("progress.dashboard.strength.summary.with_pr", topName)
         } else {
-            summaryText = "Recent logged strength work across \(featured.count) exercise\(featured.count == 1 ? "" : "s"). Tap an exercise to inspect its next detail view later."
+            let key = featured.count == 1
+                ? "progress.dashboard.strength.summary.without_pr.one"
+                : "progress.dashboard.strength.summary.without_pr.other"
+            summaryText = localizedFormat(key, Int64(featured.count))
         }
 
         return StrengthCardModel(
@@ -233,11 +250,11 @@ final class ProgressDashboardViewModel: ObservableObject {
         guard let weekly = summary.weeklySummary else {
             return VolumeCardModel(
                 availability: .insufficient,
-                headline: "Weekly volume is still building",
+                headline: localized("progress.dashboard.volume.empty_headline"),
                 primaryValue: "—",
-                supportingText: "This card uses the latest completed week in the selected window. More completed workouts will make the weekly picture useful.",
+                supportingText: localized("progress.dashboard.volume.empty_support"),
                 stats: [],
-                emptyMessage: "Complete more workouts in this window to build weekly sets, reps, and load totals."
+                emptyMessage: localized("progress.dashboard.volume.empty_message")
             )
         }
 
@@ -245,58 +262,78 @@ final class ProgressDashboardViewModel: ObservableObject {
         if let totalLoad = weekly.totalLoad {
             primaryValue = formatNumber(totalLoad)
         } else {
-            primaryValue = "\(weekly.totalSets) sets"
+            primaryValue = localizedFormat("progress.dashboard.volume.primary.sets", Int64(weekly.totalSets))
         }
 
         let stats = [
-            Stat(label: "Workouts", value: "\(weekly.workoutsCompleted)"),
-            Stat(label: "Sets", value: "\(weekly.totalSets)"),
-            Stat(label: "Reps", value: "\(weekly.totalReps)"),
-            Stat(label: "Exercises", value: "\(weekly.distinctExerciseCount)")
+            Stat(label: localized("progress.dashboard.volume.stat.workouts"), value: AppFormatting.integer(weekly.workoutsCompleted, locale: locale)),
+            Stat(label: localized("progress.dashboard.volume.stat.sets"), value: AppFormatting.integer(weekly.totalSets, locale: locale)),
+            Stat(label: localized("progress.dashboard.volume.stat.reps"), value: AppFormatting.integer(weekly.totalReps, locale: locale)),
+            Stat(label: localized("progress.dashboard.volume.stat.exercises"), value: AppFormatting.integer(weekly.distinctExerciseCount, locale: locale))
         ]
 
         let supportingText: String
         if let duration = weekly.totalDurationSeconds {
-            supportingText = "Latest completed week totals \(weekly.totalSets) sets and \(weekly.totalReps) reps across \(weekly.workoutsCompleted) workouts in \(AppFormatting.shortDuration(seconds: duration, locale: locale))."
+            supportingText = localizedFormat(
+                "progress.dashboard.volume.support.with_duration",
+                Int64(weekly.totalSets),
+                Int64(weekly.totalReps),
+                Int64(weekly.workoutsCompleted),
+                AppFormatting.shortDuration(seconds: duration, locale: locale)
+            )
         } else {
-            supportingText = "Latest completed week totals \(weekly.totalSets) sets and \(weekly.totalReps) reps across \(weekly.workoutsCompleted) workouts."
+            supportingText = localizedFormat(
+                "progress.dashboard.volume.support.without_duration",
+                Int64(weekly.totalSets),
+                Int64(weekly.totalReps),
+                Int64(weekly.workoutsCompleted)
+            )
         }
 
         return VolumeCardModel(
             availability: weekly.dataAvailability,
-            headline: "Latest weekly volume",
+            headline: localized("progress.dashboard.volume.headline"),
             primaryValue: primaryValue,
             supportingText: supportingText,
             stats: stats,
-            emptyMessage: weekly.dataAvailability == .insufficient ? "More completed weeks are needed before the volume trend becomes trustworthy." : nil
+            emptyMessage: weekly.dataAvailability == .insufficient ? localized("progress.dashboard.volume.more_weeks_needed") : nil
         )
     }
 
     private func makeConsistencyCard(from summary: ProgressDashboardSummary) -> ConsistencyCardModel {
         let consistency = summary.consistency
-        let activeWeeksText = "\(consistency.activeWeeks)/\(consistency.totalWeeks) active weeks"
-        let averageText = "\(formatNumber(consistency.averageWorkoutsPerWeek)) workouts / week"
-        let completionText = consistency.completionRate.map { "\(formatPercent($0)) completion" }
+        let activeWeeksText = localizedFormat(
+            "progress.dashboard.consistency.active_weeks",
+            Int64(consistency.activeWeeks),
+            Int64(consistency.totalWeeks)
+        )
+        let averageText = localizedFormat(
+            "progress.dashboard.consistency.average",
+            formatNumber(consistency.averageWorkoutsPerWeek)
+        )
+        let completionText = consistency.completionRate.map {
+            localizedFormat("progress.dashboard.consistency.completion", formatPercent($0))
+        }
 
         let supportingText: String
         switch consistency.dataAvailability {
         case .full:
-            supportingText = "This window has enough finished sessions to treat the routine pattern as meaningful."
+            supportingText = localized("progress.dashboard.consistency.support.full")
         case .partial:
-            supportingText = "Your routine is starting to take shape, but a few more finished weeks will make this trend steadier."
+            supportingText = localized("progress.dashboard.consistency.support.partial")
         case .insufficient:
-            supportingText = "You have some activity, but not enough completed sessions yet for a trusted consistency read."
+            supportingText = localized("progress.dashboard.consistency.support.insufficient")
         }
 
         return ConsistencyCardModel(
             availability: consistency.dataAvailability,
-            headline: "Consistency",
+            headline: localized("progress.dashboard.consistency.headline"),
             activeWeeksText: activeWeeksText,
             averageText: averageText,
             completionText: completionText,
             supportingText: supportingText,
             emptyMessage: consistency.dataAvailability == .insufficient
-                ? "A few completed sessions are needed before consistency trends can be trusted."
+                ? localized("progress.dashboard.consistency.empty_message")
                 : nil
         )
     }
@@ -305,12 +342,12 @@ final class ProgressDashboardViewModel: ObservableObject {
         guard let efficiency = summary.efficiency else {
             return RecoveryCardModel(
                 availability: .insufficient,
-                headline: "Recovery and efficiency",
+                headline: localized("progress.dashboard.recovery.headline"),
                 sessionDurationText: "—",
                 plannedRestText: nil,
                 actualRestText: nil,
-                comparisonText: "Session timing and planned-vs-actual rest appear once enough completed sessions include timing data.",
-                emptyMessage: "Not enough timing data yet. Finish more sessions with rest metadata to unlock this card."
+                comparisonText: localized("progress.dashboard.recovery.empty_support"),
+                emptyMessage: localized("progress.dashboard.recovery.empty_message")
             )
         }
 
@@ -322,67 +359,79 @@ final class ProgressDashboardViewModel: ObservableObject {
         if let overrun = efficiency.averageRestOverrunSeconds {
             let rounded = Int(overrun.rounded())
             if rounded > 0 {
-                comparisonText = "Average rest ran \(AppFormatting.shortDuration(seconds: rounded, locale: locale)) longer than planned."
+                comparisonText = localizedFormat(
+                    "progress.dashboard.recovery.comparison.longer",
+                    AppFormatting.shortDuration(seconds: rounded, locale: locale)
+                )
             } else if rounded < 0 {
-                comparisonText = "Average rest finished \(AppFormatting.shortDuration(seconds: abs(rounded), locale: locale)) earlier than planned."
+                comparisonText = localizedFormat(
+                    "progress.dashboard.recovery.comparison.earlier",
+                    AppFormatting.shortDuration(seconds: abs(rounded), locale: locale)
+                )
             } else {
-                comparisonText = "Average rest matched the plan closely."
+                comparisonText = localized("progress.dashboard.recovery.comparison.matched")
             }
         } else if efficiency.availability == .partial {
-            comparisonText = "Some timing data is present, but planned-vs-actual rest still needs more sessions."
+            comparisonText = localized("progress.dashboard.recovery.comparison.partial")
         } else {
-            comparisonText = "Rest timing is still building."
+            comparisonText = localized("progress.dashboard.recovery.comparison.building")
         }
 
         return RecoveryCardModel(
             availability: efficiency.availability,
-            headline: "Recovery and efficiency",
+            headline: localized("progress.dashboard.recovery.headline"),
             sessionDurationText: durationText,
             plannedRestText: plannedRestText,
             actualRestText: actualRestText,
             comparisonText: comparisonText,
             emptyMessage: efficiency.availability == .partial && efficiency.averageRestOverrunSeconds == nil
-                ? "Efficiency has partial timing data, but rest comparison still needs more logged sessions."
+                ? localized("progress.dashboard.recovery.partial_message")
                 : nil
         )
     }
 
     private func strengthBadgeText(for exercise: ExerciseProgressSummary) -> String {
         if exercise.personalRecords.contains(where: \.isNewRecord) {
-            return "PR"
+            return localized("progress.dashboard.strength.badge.pr")
         }
 
         if let bestWeight = exercise.bestWeight {
-            return "Best \(formatNumber(bestWeight.value))"
+            return localizedFormat("progress.dashboard.strength.badge.best", formatNumber(bestWeight.value))
         }
 
         if let estimatedOneRepMax = exercise.bestEstimatedOneRepMax {
-            return "Est. 1RM \(formatNumber(estimatedOneRepMax.value))"
+            return localizedFormat("progress.dashboard.strength.badge.estimated_1rm", formatNumber(estimatedOneRepMax.value))
         }
 
-        return exercise.dataAvailability == .partial ? "Early" : "Ready"
+        return localized(exercise.dataAvailability == .partial
+            ? "progress.dashboard.strength.badge.early"
+            : "progress.availability.ready")
     }
 
     private func highlightText(for exercise: ExerciseProgressSummary) -> String {
         if let bestWeight = exercise.bestWeight {
-            return "Best weight \(formatNumber(bestWeight.value))"
+            return localizedFormat("progress.dashboard.strength.highlight.best_weight", formatNumber(bestWeight.value))
         }
 
         if let estimatedOneRepMax = exercise.bestEstimatedOneRepMax {
-            return "Best est. 1RM \(formatNumber(estimatedOneRepMax.value))"
+            return localizedFormat("progress.dashboard.strength.highlight.best_estimated_1rm", formatNumber(estimatedOneRepMax.value))
         }
 
         if let topSet = exercise.latestTopSet,
            let reps = topSet.reps,
            let weight = topSet.weight {
-            return "Latest top set \(reps) × \(formatNumber(weight))"
+            return localizedFormat(
+                "progress.dashboard.strength.highlight.latest_top_set",
+                Int64(reps),
+                formatNumber(weight)
+            )
         }
 
         if let performedAt = exercise.latestPerformedAt {
-            return "Last logged \(performedAt.formatted(.dateTime.month(.abbreviated).day()))"
+            return localizedFormat("progress.dashboard.strength.highlight.last_logged", AppFormatting.monthDay(performedAt, locale: locale))
         }
 
-        return "Progress history is still building"
+        return localized("progress.dashboard.strength.highlight.history_building")
     }
 
     private func aggregateAvailability(_ values: [ProgressDataAvailability]) -> ProgressDataAvailability {
@@ -402,5 +451,13 @@ final class ProgressDashboardViewModel: ObservableObject {
 
     private func formatPercent(_ value: Double) -> String {
         AppFormatting.percent(value, maxFractionDigits: 0, locale: locale)
+    }
+
+    private func localized(_ key: String) -> String {
+        NSLocalizedString(key, comment: "")
+    }
+
+    private func localizedFormat(_ key: String, _ args: CVarArg...) -> String {
+        String(format: localized(key), locale: locale, arguments: args)
     }
 }

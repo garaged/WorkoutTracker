@@ -20,6 +20,8 @@ struct UITestHostRootView: View {
                 SettingsScreen()
             case "home":
                 AppRootView()
+            case "progress":
+                ProgressDashboardView()
             case "routines":
                 RoutinesScreen()
             case "session":
@@ -201,14 +203,12 @@ private struct UITestStrengthSessionBootstrapView: View {
             )
         }
 
-        // Promote the anchor row to the top so first-visible-row test flows remain deterministic.
         let minExerciseOrder = session.exercises.map(\.order).min() ?? 0
         exercise.order = minExerciseOrder - 1
 
         let minSetOrder = exercise.setLogs.map(\.order).min() ?? 0
         set.order = minSetOrder - 1
 
-        // Normalize actuals so copy/add tests do not depend on starter-pack seed details.
         set.completed = false
         set.completedAt = nil
         set.reps = set.reps ?? set.targetReps ?? 5
@@ -217,7 +217,6 @@ private struct UITestStrengthSessionBootstrapView: View {
             set.weight = 100
         }
 
-        // Keep the target hint useful and ensure the rest timer path has a value to start from.
         if set.targetReps == nil {
             set.targetReps = set.reps
         }

@@ -9,14 +9,25 @@ struct SessionSegmentHeaderView: View {
 
     private var title: String {
         switch kind {
-        case .warmUp: return "Warm-up"
-        case .main: return "Workout"
-        case .coolDown: return "Cool-down"
+        case .warmUp: return String(localized: "session.segment.warm_up")
+        case .main: return String(localized: "session.segment.main")
+        case .coolDown: return String(localized: "session.segment.cool_down")
         }
     }
 
     private var subtitle: String {
-        isCurrent ? "Current segment" : "Segment"
+        isCurrent ? String(localized: "session.segment.current") : String(localized: "session.segment.label")
+    }
+
+    private var skipTitle: String {
+        switch kind {
+        case .warmUp:
+            return String(localized: "session.segment.skip.warm_up")
+        case .main:
+            return String(localized: "session.segment.main")
+        case .coolDown:
+            return String(localized: "session.segment.skip.cool_down")
+        }
     }
 
     private var containerID: String {
@@ -53,7 +64,7 @@ struct SessionSegmentHeaderView: View {
 
             if showsSkipAction, let onSkip {
                 Button(role: .destructive, action: onSkip) {
-                    Label(kind == .warmUp ? "Skip warm-up" : "Skip cool-down", systemImage: "forward.end")
+                    Label(skipTitle, systemImage: "forward.end")
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)

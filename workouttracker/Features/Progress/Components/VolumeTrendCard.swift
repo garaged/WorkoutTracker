@@ -2,6 +2,9 @@ import SwiftUI
 
 struct VolumeTrendCard: View {
     let model: ProgressDashboardViewModel.VolumeCardModel
+    var drillDownExerciseID: UUID? = nil
+    var drillDownExerciseName: String? = nil
+    var onOpenExercise: ((UUID) -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -23,11 +26,45 @@ struct VolumeTrendCard: View {
                     }
                 }
             }
+
+            if let drillDownExerciseID,
+               let drillDownExerciseName,
+               let onOpenExercise {
+                Button {
+                    onOpenExercise(drillDownExerciseID)
+                } label: {
+                    HStack(spacing: 10) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("progress.dashboard.volume.open_exercise_detail")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.primary)
+                            Text(drillDownExerciseName)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer(minLength: 8)
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(Color(.tertiarySystemGroupedBackground))
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("Progress.Dashboard.Volume.OpenExercise")
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(cardBackground)
         .overlay(cardBorder)
+        .accessibilityIdentifier("Progress.Dashboard.VolumeCard")
     }
 
     private let columns: [GridItem] = [
@@ -38,7 +75,7 @@ struct VolumeTrendCard: View {
     private var header: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
-                Label("Volume", systemImage: "chart.bar.fill")
+                Label("progress.dashboard.volume.title", systemImage: "chart.bar.fill")
                     .font(.headline)
                 Text(model.headline)
                     .font(.subheadline.weight(.medium))
@@ -70,7 +107,7 @@ struct VolumeTrendCard: View {
     }
 
     private var availabilityPill: some View {
-        Text(label(for: model.availability))
+        Text(verbatim: availabilityLabel(for: model.availability))
             .font(.caption.weight(.semibold))
             .foregroundStyle(color(for: model.availability))
             .padding(.horizontal, 8)
@@ -99,11 +136,11 @@ struct VolumeTrendCard: View {
             .strokeBorder(.quaternary)
     }
 
-    private func label(for availability: ProgressDataAvailability) -> String {
+    private func availabilityLabel(for availability: ProgressDataAvailability) -> String {
         switch availability {
-        case .full: return "Ready"
-        case .partial: return "Low data"
-        case .insufficient: return "Unavailable"
+        case .full: return NSLocalizedString("progress.availability.ready", comment: "")
+        case .partial: return NSLocalizedString("progress.availability.low_data", comment: "")
+        case .insufficient: return NSLocalizedString("progress.availability.unavailable", comment: "")
         }
     }
 

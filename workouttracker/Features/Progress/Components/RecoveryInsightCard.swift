@@ -8,15 +8,15 @@ struct RecoveryInsightCard: View {
             header
 
             HStack(alignment: .top, spacing: 12) {
-                statBlock(title: "Avg session", value: model.sessionDurationText)
+                statBlock(title: String(localized: "progress.dashboard.recovery.stat.avg_session"), value: model.sessionDurationText)
 
                 if let plannedRestText = model.plannedRestText {
-                    statBlock(title: "Planned rest", value: plannedRestText)
+                    statBlock(title: String(localized: "progress.dashboard.recovery.stat.planned_rest"), value: plannedRestText)
                 }
             }
 
             if let actualRestText = model.actualRestText {
-                statBlock(title: "Actual rest", value: actualRestText)
+                statBlock(title: String(localized: "progress.dashboard.recovery.stat.actual_rest"), value: actualRestText)
             }
 
             Text(model.comparisonText)
@@ -45,7 +45,7 @@ struct RecoveryInsightCard: View {
     private var header: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
-                Label("Recovery", systemImage: "timer")
+                Label("progress.dashboard.recovery.title", systemImage: "timer")
                     .font(.headline)
                 Text(model.headline)
                     .font(.title3.weight(.semibold))
@@ -75,7 +75,7 @@ struct RecoveryInsightCard: View {
     }
 
     private var availabilityPill: some View {
-        Text(label(for: model.availability))
+        Text(verbatim: availabilityLabel(for: model.availability))
             .font(.caption.weight(.semibold))
             .foregroundStyle(color(for: model.availability))
             .padding(.horizontal, 8)
@@ -92,11 +92,11 @@ struct RecoveryInsightCard: View {
             .strokeBorder(.quaternary)
     }
 
-    private func label(for availability: ProgressDataAvailability) -> String {
+    private func availabilityLabel(for availability: ProgressDataAvailability) -> String {
         switch availability {
-        case .full: return "Ready"
-        case .partial: return "Low data"
-        case .insufficient: return "Unavailable"
+        case .full: return NSLocalizedString("progress.availability.ready", comment: "")
+        case .partial: return NSLocalizedString("progress.availability.low_data", comment: "")
+        case .insufficient: return NSLocalizedString("progress.availability.unavailable", comment: "")
         }
     }
 

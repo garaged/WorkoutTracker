@@ -21,7 +21,6 @@ struct SettingsScreen: View {
 
             StarterPackSettingsSection()
 
-            // ✅ NEW
             Section(String(localized: "settings.section.programs")) {
                 NavigationLink {
                     ProgramsLibraryScreen()
@@ -29,7 +28,7 @@ struct SettingsScreen: View {
                     Label(String(localized: "settings.programs.library"), systemImage: "books.vertical")
                 }
                 .accessibilityIdentifier("settings.programsLink")
-                
+
                 NavigationLink {
                     ProgramAssetsScreen()
                 } label: {
@@ -61,31 +60,19 @@ struct SettingsScreen: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
-            
+
             Section(String(localized: "settings.section.workout_cues")) {
-                Toggle(String(localized: "settings.workout_cues.completion_cue"), isOn: Binding(
-                    get: { prefs.restTimerCueEnabled },
-                    set: { prefs.restTimerCueEnabled = $0 }
-                    )
-                )
-                .accessibilityIdentifier("settings.restTimerCueToggle")
-                .accessibilityLabel(AccessibilityLabels.Toggles.restTimerCue)
+                Toggle(String(localized: "settings.workout_cues.completion_cue"), isOn: $prefs.restTimerCueEnabled)
+                    .accessibilityIdentifier("settings.restTimerCueToggle")
+                    .accessibilityLabel(AccessibilityLabels.Toggles.restTimerCue)
 
                 Toggle(String(localized: "settings.workout_cues.haptics"), isOn: $prefs.hapticsEnabled)
                     .accessibilityIdentifier("settings.hapticsToggle")
 
-                Toggle(String(localized: "settings.workout_cues.auto_start_rest"), isOn: Binding(
-                    get: { prefs.restTimerCueEnabled },
-                    set: { prefs.restTimerCueEnabled = $0 }
-                    )
-                )
+                Toggle(String(localized: "settings.workout_cues.auto_start_rest"), isOn: $prefs.autoStartRest)
                     .accessibilityIdentifier("settings.autoStartRestToggle")
 
-                Toggle(String(localized: "settings.workout_cues.show_overdue"), isOn: Binding(
-                    get: { prefs.restTimerCueEnabled },
-                    set: { prefs.restTimerCueEnabled = $0 }
-                    )
-                )
+                Toggle(String(localized: "settings.workout_cues.show_overdue"), isOn: $prefs.restTimerShowOverdue)
                     .accessibilityIdentifier("settings.restTimerShowOverdueToggle")
                     .accessibilityLabel(AccessibilityLabels.Toggles.showOverdue)
 
@@ -111,9 +98,9 @@ struct SettingsScreen: View {
                 .accessibilityLabel(AccessibilityLabels.Toggles.verboseLogging)
                 .accessibilityHint(AccessibilityLabels.Toggles.verboseLoggingHint)
             }
-            
+
             ExerciseIllustrationSetPickerSection()
-            
+
             Section(String(localized: "settings.section.support")) {
                 NavigationLink {
                     SupportTipJarView()
@@ -122,7 +109,7 @@ struct SettingsScreen: View {
                 }
                 .accessibilityIdentifier("settings.tipJarLink")
             }
-            
+
             Section(String(localized: "settings.section.about")) {
                 HStack {
                     Text(String(localized: "settings.about.version"))

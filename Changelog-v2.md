@@ -1,5 +1,30 @@
 # Changelog v2.0.0
 
+## Phase 5
+
+### PR 13 
+
+- Added Spanish localization across key WorkoutTracker v2 flows
+- Localized Progress dashboard and exercise detail experiences
+- Localized linked warm-up and cool-down routine flows
+- Improved locale-aware formatting for timers, counts, and progress displays
+- Added localization smoke coverage for core v2 screens
+
+## Phase 4
+
+- Added a new Progress dashboard with strength, volume, consistency, and recovery insights
+- Added exercise-specific Progress drill-down
+- Improved honest low-data states across Progress
+- Added focused UI smoke coverage for Progress flows
+
+## Phase 3
+
+- Built the foundation for the upcoming Progress Hub
+- Added deeper workout analytics for consistency, volume, and exercise progress
+- Introduced session efficiency tracking for rest timing and workout pacing
+- Improved reliability of progress insights when workout history is limited
+- Expanded internal test coverage for analytics and progress calculations
+
 ## Phase 2
 
 - linked routine model

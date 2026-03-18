@@ -3,10 +3,8 @@ import SwiftUI
 // File: workouttracker/Features/Routines/Components/LinkedRoutinePickerView.swift
 //
 // Why this file lives here:
-// This is routine-authoring UI. It stays intentionally dumb: the view presents
-// the current link, allows choose/change/clear, and excludes the main routine
-// itself from the picker list. Relationship validation still lives in
-// RoutineLinkPlanner.
+// This component is the reusable picker row for warm-up / cool-down routine links.
+// It belongs with routine UI because it renders routine-specific selection state.
 
 struct LinkedRoutinePickerView: View {
     enum Role {
@@ -15,36 +13,36 @@ struct LinkedRoutinePickerView: View {
 
         var title: LocalizedStringKey {
             switch self {
-            case .warmUp: "Warm-up"
-            case .coolDown: "Cool-down"
+            case .warmUp: "routine.link.warm_up.title"
+            case .coolDown: "routine.link.cool_down.title"
             }
         }
 
         var pickerTitle: String {
             switch self {
-            case .warmUp: "Pick Warm-Up"
-            case .coolDown: "Pick Cool-Down"
+            case .warmUp: String(localized: "routine.link.warm_up.picker_title")
+            case .coolDown: String(localized: "routine.link.cool_down.picker_title")
             }
         }
 
         var emptyValue: LocalizedStringKey {
             switch self {
-            case .warmUp: "No warm-up linked"
-            case .coolDown: "No cool-down linked"
+            case .warmUp: "routine.link.warm_up.empty"
+            case .coolDown: "routine.link.cool_down.empty"
             }
         }
 
         var helperText: LocalizedStringKey {
             switch self {
-            case .warmUp: "Choose a reusable routine that should run before the main work."
-            case .coolDown: "Choose a reusable routine that should run after the main work."
+            case .warmUp: "routine.link.warm_up.helper"
+            case .coolDown: "routine.link.cool_down.helper"
             }
         }
 
         var clearLabel: LocalizedStringKey {
             switch self {
-            case .warmUp: "Remove warm-up link"
-            case .coolDown: "Remove cool-down link"
+            case .warmUp: "routine.link.warm_up.clear"
+            case .coolDown: "routine.link.cool_down.clear"
             }
         }
     }
@@ -75,7 +73,7 @@ struct LinkedRoutinePickerView: View {
 
                     Spacer()
 
-                    Text(currentRoutine == nil ? "Choose" : "Change")
+                    Text(currentRoutine == nil ? String(localized: "common.choose") : String(localized: "common.change"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
 
@@ -84,6 +82,8 @@ struct LinkedRoutinePickerView: View {
                 }
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(role.title)
+            .accessibilityValue(currentRoutine?.name ?? emptyAccessibilityValue)
 
             if currentRoutine != nil {
                 Button(role: .destructive) {
@@ -112,6 +112,15 @@ struct LinkedRoutinePickerView: View {
                     showPicker = false
                 }
             )
+        }
+    }
+
+    private var emptyAccessibilityValue: String {
+        switch role {
+        case .warmUp:
+            return String(localized: "routine.link.warm_up.empty")
+        case .coolDown:
+            return String(localized: "routine.link.cool_down.empty")
         }
     }
 

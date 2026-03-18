@@ -15,7 +15,7 @@ struct StrengthProgressCard: View {
 
             if let emptyMessage = model.emptyMessage {
                 lowDataCallout(
-                    title: "Not enough strength history",
+                    title: String(localized: "progress.dashboard.strength.low_data_title"),
                     message: emptyMessage
                 )
             } else {
@@ -56,6 +56,7 @@ struct StrengthProgressCard: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("Progress.Dashboard.StrengthExerciseButton.\(exercise.exerciseID.uuidString)")
                     }
                 }
             }
@@ -64,12 +65,14 @@ struct StrengthProgressCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(cardBackground)
         .overlay(cardBorder)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("Progress.Dashboard.StrengthCard")
     }
 
     private var header: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
-                Label("Strength", systemImage: "figure.strengthtraining.traditional")
+                Label("progress.dashboard.strength.title", systemImage: "figure.strengthtraining.traditional")
                     .font(.headline)
                 Text(model.headline)
                     .font(.title3.weight(.semibold))
@@ -82,7 +85,7 @@ struct StrengthProgressCard: View {
     }
 
     private var availabilityPill: some View {
-        Text(label(for: model.availability))
+        Text(verbatim: availabilityLabel(for: model.availability))
             .font(.caption.weight(.semibold))
             .foregroundStyle(color(for: model.availability))
             .padding(.horizontal, 8)
@@ -125,11 +128,11 @@ struct StrengthProgressCard: View {
             .strokeBorder(.quaternary)
     }
 
-    private func label(for availability: ProgressDataAvailability) -> String {
+    private func availabilityLabel(for availability: ProgressDataAvailability) -> String {
         switch availability {
-        case .full: return "Ready"
-        case .partial: return "Low data"
-        case .insufficient: return "Unavailable"
+        case .full: return NSLocalizedString("progress.availability.ready", comment: "")
+        case .partial: return NSLocalizedString("progress.availability.low_data", comment: "")
+        case .insufficient: return NSLocalizedString("progress.availability.unavailable", comment: "")
         }
     }
 

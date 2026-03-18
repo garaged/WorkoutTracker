@@ -114,9 +114,6 @@
     "A" : {
 
     },
-    "A simple dashboard for strength, volume, consistency, and session efficiency." : {
-
-    },
     "A: %@" : {
 
     },
@@ -217,6 +214,12 @@
             "state" : "translated",
             "value" : "Add 15 seconds to rest timer"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir 15 segundos al temporizador de descanso"
+          }
         }
       }
     },
@@ -227,6 +230,12 @@
             "state" : "translated",
             "value" : "Add 30 seconds to rest timer"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir 30 segundos al temporizador de descanso"
+          }
         }
       }
     },
@@ -236,6 +245,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Add 60 seconds to rest timer"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir 60 segundos al temporizador de descanso"
           }
         }
       }
@@ -357,6 +372,12 @@
             "state" : "translated",
             "value" : "Log a session to see trends, streaks, and insights."
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registra una sesión para ver tendencias, rachas e información útil."
+          }
         }
       }
     },
@@ -366,6 +387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No progress yet"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay progreso"
           }
         }
       }
@@ -387,6 +414,12 @@
             "state" : "translated",
             "value" : "Progress window"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ventana de progreso"
+          }
         }
       }
     },
@@ -396,6 +429,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Changes how many weeks of data are shown."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia cuántas semanas de datos se muestran."
           }
         }
       }
@@ -407,6 +446,12 @@
             "state" : "translated",
             "value" : "Rest completion cue"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aviso al terminar el descanso"
+          }
         }
       }
     },
@@ -416,6 +461,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show overdue timer"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar tiempo extra"
           }
         }
       }
@@ -427,6 +478,12 @@
             "state" : "translated",
             "value" : "Verbose logging"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registro detallado"
+          }
         }
       }
     },
@@ -436,6 +493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "When enabled, the app writes extra debug logs to help troubleshoot issues."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando está activado, la app escribe registros de depuración adicionales para ayudar a diagnosticar problemas."
           }
         }
       }
@@ -591,22 +654,10 @@
     "Catalog Empty" : {
 
     },
-    "Change" : {
-
-    },
     "Changes which bundled exercise art set is shown for seeded and catalog exercises. Default uses the neutral dummy artwork." : {
 
     },
     "Checking requirements…" : {
-
-    },
-    "Choose" : {
-
-    },
-    "Choose a reusable routine that should run after the main work." : {
-
-    },
-    "Choose a reusable routine that should run before the main work." : {
 
     },
     "Choose…" : {
@@ -634,6 +685,12 @@
             "state" : "translated",
             "value" : "Apply"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicar"
+          }
         }
       }
     },
@@ -643,6 +700,44 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        }
+      }
+    },
+    "common.change" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar"
+          }
+        }
+      }
+    },
+    "common.choose" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir"
           }
         }
       }
@@ -654,6 +749,12 @@
             "state" : "translated",
             "value" : "Close"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar"
+          }
         }
       }
     },
@@ -663,6 +764,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar"
           }
         }
       }
@@ -674,6 +781,12 @@
             "state" : "translated",
             "value" : "Done"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo"
+          }
         }
       }
     },
@@ -684,12 +797,40 @@
             "state" : "translated",
             "value" : "Edit"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar"
+          }
+        }
+      }
+    },
+    "common.off" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado"
+          }
         }
       }
     },
     "common.ok" : {
       "localizations" : {
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "OK"
@@ -704,6 +845,12 @@
             "state" : "translated",
             "value" : "Pause"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar"
+          }
         }
       }
     },
@@ -713,6 +860,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reset"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restablecer"
           }
         }
       }
@@ -725,6 +878,12 @@
             "state" : "translated",
             "value" : "Save"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar"
+          }
         }
       }
     },
@@ -735,6 +894,12 @@
             "state" : "translated",
             "value" : "Search routines"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar rutinas"
+          }
         }
       }
     },
@@ -744,6 +909,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Start"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar"
           }
         }
       }
@@ -772,9 +943,6 @@
     "Conflicts" : {
 
     },
-    "Consistency" : {
-
-    },
     "Contact" : {
 
     },
@@ -797,9 +965,6 @@
 
     },
     "Couldn’t load progress" : {
-
-    },
-    "Couldn’t load Progress" : {
 
     },
     "Couldn’t load reflection stats" : {
@@ -975,51 +1140,86 @@
 
     },
     "format.duration.short.hours_minutes" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@h %@m"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ h %@ min"
+          }
         }
       }
     },
     "format.duration.short.hours_minutes_seconds" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@h %@m %@s"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ h %@ min %@ s"
+          }
         }
       }
     },
     "format.duration.short.minutes" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@m"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ min"
+          }
         }
       }
     },
     "format.duration.short.minutes_seconds" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@m %@s"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ min %@ s"
+          }
         }
       }
     },
     "format.duration.short.seconds" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@s"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ s"
           }
         }
       }
@@ -1144,9 +1344,6 @@
     "Linked routines" : {
 
     },
-    "Loading progress…" : {
-
-    },
     "Loading…" : {
 
     },
@@ -1234,9 +1431,6 @@
     "No blocks" : {
 
     },
-    "No cool-down linked" : {
-
-    },
     "No Custom Equipment" : {
 
     },
@@ -1298,9 +1492,6 @@
 
     },
     "No sets planned." : {
-
-    },
-    "No warm-up linked" : {
 
     },
     "No workouts" : {
@@ -1417,6 +1608,1924 @@
     "Progress" : {
 
     },
+    "progress.availability.low_data" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Low data"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pocos datos"
+          }
+        }
+      }
+    },
+    "progress.availability.ready" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo"
+          }
+        }
+      }
+    },
+    "progress.availability.unavailable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unavailable"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible"
+          }
+        }
+      }
+    },
+    "progress.dashboard.consistency.active_weeks" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld/%lld active weeks"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld/%lld semanas activas"
+          }
+        }
+      }
+    },
+    "progress.dashboard.consistency.average" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ workouts / week"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ entrenamientos / semana"
+          }
+        }
+      }
+    },
+    "progress.dashboard.consistency.completion" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ completion"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ de finalización"
+          }
+        }
+      }
+    },
+    "progress.dashboard.consistency.empty_message" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A few completed sessions are needed before consistency trends can be trusted."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se necesitan algunas sesiones completadas antes de confiar en las tendencias de consistencia."
+          }
+        }
+      }
+    },
+    "progress.dashboard.consistency.headline" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consistency"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consistencia"
+          }
+        }
+      }
+    },
+    "progress.dashboard.consistency.stat.active_weeks" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active weeks"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semanas activas"
+          }
+        }
+      }
+    },
+    "progress.dashboard.consistency.stat.average" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promedio"
+          }
+        }
+      }
+    },
+    "progress.dashboard.consistency.stat.completion" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completion"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finalización"
+          }
+        }
+      }
+    },
+    "progress.dashboard.consistency.support.full" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This window has enough finished sessions to treat the routine pattern as meaningful."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta ventana ya tiene suficientes sesiones terminadas para considerar significativa la rutina."
+          }
+        }
+      }
+    },
+    "progress.dashboard.consistency.support.insufficient" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have some activity, but not enough completed sessions yet for a trusted consistency read."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hay algo de actividad, pero todavía no hay suficientes sesiones completadas para una lectura confiable de consistencia."
+          }
+        }
+      }
+    },
+    "progress.dashboard.consistency.support.partial" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your routine is starting to take shape, but a few more finished weeks will make this trend steadier."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu rutina empieza a tomar forma, pero unas semanas terminadas más harán esta tendencia más estable."
+          }
+        }
+      }
+    },
+    "progress.dashboard.consistency.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consistency"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consistencia"
+          }
+        }
+      }
+    },
+    "progress.dashboard.failure_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn’t load progress"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar el progreso"
+          }
+        }
+      }
+    },
+    "progress.dashboard.header_subtitle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A simple dashboard for strength, volume, consistency, and session efficiency."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un panel simple de fuerza, volumen, consistencia y eficiencia de la sesión."
+          }
+        }
+      }
+    },
+    "progress.dashboard.header_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Training trends"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tendencias de entrenamiento"
+          }
+        }
+      }
+    },
+    "progress.dashboard.loading" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading progress…"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cargando progreso…"
+          }
+        }
+      }
+    },
+    "progress.dashboard.low_data_banner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some cards are already useful, while others still need more completed workouts or timing data to become trustworthy."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algunas tarjetas ya son útiles, mientras que otras todavía necesitan más entrenamientos completados o datos de tiempo para volverse confiables."
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.comparison.building" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest timing is still building."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El tiempo de descanso todavía se está formando."
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.comparison.earlier" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average rest finished %@ earlier than planned."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En promedio, el descanso terminó %@ antes de lo planeado."
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.comparison.longer" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average rest ran %@ longer than planned."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En promedio, el descanso duró %@ más de lo planeado."
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.comparison.matched" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Average rest matched the plan closely."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En promedio, el descanso coincidió bastante con lo planificado."
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.comparison.partial" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some timing data is present, but planned-vs-actual rest still needs more sessions."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hay algunos datos de tiempo, pero la comparación entre descanso planificado y real aún necesita más sesiones."
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.empty_message" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not enough timing data yet. Finish more sessions with rest metadata to unlock this card."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay suficientes datos de tiempo. Completa más sesiones con metadatos de descanso para desbloquear esta tarjeta."
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.empty_support" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session timing and planned-vs-actual rest appear once enough completed sessions include timing data."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El tiempo de sesión y la comparación entre descanso planificado y real aparecen cuando suficientes sesiones completadas incluyen datos de tiempo."
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.headline" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recovery and efficiency"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recuperación y eficiencia"
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.partial_message" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Efficiency has partial timing data, but rest comparison still needs more logged sessions."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La eficiencia tiene datos de tiempo parciales, pero la comparación de descanso todavía necesita más sesiones registradas."
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.stat.actual_rest" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actual rest"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descanso real"
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.stat.avg_session" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avg session"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesión prom."
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.stat.planned_rest" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planned rest"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descanso planificado"
+          }
+        }
+      }
+    },
+    "progress.dashboard.recovery.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recovery"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recuperación"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.badge.best" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mejor %@"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.badge.early" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Early"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicial"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.badge.estimated_1rm" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Est. 1RM %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1RM est. %@"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.badge.pr" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PR"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PR"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.empty_headline" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strength highlights will appear here"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los puntos destacados de fuerza aparecerán aquí"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.empty_message" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log a few completed strength sets to unlock exercise highlights, PRs, and latest top-set signals."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registra algunas series de fuerza completadas para desbloquear ejercicios destacados, PR y señales de tus mejores series recientes."
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.empty_summary" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As you complete more logged sets, this card will surface your most relevant exercises and PR moments."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A medida que completes más series registradas, esta tarjeta mostrará tus ejercicios más relevantes y tus mejores marcas."
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.headline.featured_exercises.one" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld featured exercise"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ejercicio destacado"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.headline.featured_exercises.other" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld featured exercises"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ejercicios destacados"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.headline.recent_prs.one" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld recent PR"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld PR reciente"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.headline.recent_prs.other" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld recent PRs"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld PR recientes"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.highlight.best_estimated_1rm" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best est. 1RM %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mejor 1RM est. %@"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.highlight.best_weight" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best weight %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mejor peso %@"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.highlight.history_building" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progress history is still building"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El historial de progreso aún se está formando"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.highlight.last_logged" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last logged %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Último registro %@"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.highlight.latest_top_set" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Latest top set %lld × %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última serie principal %lld × %@"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.low_data_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not enough strength history"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay suficiente historial de fuerza"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.summary.with_pr" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent PR activity is led by %@. Open an exercise to inspect deeper progress detail."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La actividad reciente de PR la lidera %@. Abre un ejercicio para ver más detalle de progreso."
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.summary.without_pr.one" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent logged strength work across %lld exercise. Open an exercise to inspect its detail view."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trabajo de fuerza reciente registrado en %lld ejercicio. Abre un ejercicio para ver su detalle."
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.summary.without_pr.other" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent logged strength work across %lld exercises. Open an exercise to inspect its detail view."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trabajo de fuerza reciente registrado en %lld ejercicios. Abre un ejercicio para ver su detalle."
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strength"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fuerza"
+          }
+        }
+      }
+    },
+    "progress.dashboard.strength.top_name_fallback" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "your recent work"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tu trabajo reciente"
+          }
+        }
+      }
+    },
+    "progress.dashboard.unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progress isn’t available yet."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El progreso todavía no está disponible."
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.empty_headline" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly volume is still building"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El volumen semanal todavía se está formando"
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.empty_message" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complete more workouts in this window to build weekly sets, reps, and load totals."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completa más entrenamientos dentro de esta ventana para construir totales semanales de series, repeticiones y carga."
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.empty_support" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This card uses the latest completed week in the selected window. More completed workouts will make the weekly picture useful."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta tarjeta usa la semana completada más reciente dentro de la ventana seleccionada. Más entrenamientos completados harán más útil la vista semanal."
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.headline" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Latest weekly volume"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volumen semanal más reciente"
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.more_weeks_needed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More completed weeks are needed before the volume trend becomes trustworthy."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se necesitan más semanas completadas antes de que la tendencia de volumen sea confiable."
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.open_exercise_detail" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open exercise detail"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir detalle del ejercicio"
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.primary.sets" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sets"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld series"
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.stat.exercises" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercises"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejercicios"
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.stat.reps" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reps"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.stat.sets" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sets"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Series"
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.stat.workouts" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workouts"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamientos"
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.support.with_duration" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Latest completed week totals %lld sets and %lld reps across %lld workouts in %@."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La semana completada más reciente suma %lld series y %lld repeticiones en %lld entrenamientos durante %@."
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.support.without_duration" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Latest completed week totals %lld sets and %lld reps across %lld workouts."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La semana completada más reciente suma %lld series y %lld repeticiones en %lld entrenamientos."
+          }
+        }
+      }
+    },
+    "progress.dashboard.volume.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volumen"
+          }
+        }
+      }
+    },
+    "progress.dashboard.window.value" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Window: %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ventana: %@"
+          }
+        }
+      }
+    },
+    "progress.detail.empty.personal_records.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complete more quality sets for this exercise and PR summaries will appear here."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completa más series de calidad para este ejercicio y aquí aparecerán los resúmenes de PR."
+          }
+        }
+      }
+    },
+    "progress.detail.empty.personal_records.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personal records need more data"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los récords personales necesitan más datos"
+          }
+        }
+      }
+    },
+    "progress.detail.empty.recent_performance.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once this exercise has more completed sets, the latest performance samples will appear here."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando este ejercicio tenga más series completadas, aquí aparecerán las muestras de rendimiento más recientes."
+          }
+        }
+      }
+    },
+    "progress.detail.empty.recent_performance.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent samples are unavailable"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las muestras recientes no están disponibles"
+          }
+        }
+      }
+    },
+    "progress.detail.empty.recent_volume.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This exercise needs more completed sessions before its weekly volume pattern is useful."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este ejercicio necesita más sesiones completadas antes de que su patrón semanal de volumen sea útil."
+          }
+        }
+      }
+    },
+    "progress.detail.empty.recent_volume.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly volume is still building"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El volumen semanal todavía se está formando"
+          }
+        }
+      }
+    },
+    "progress.detail.failure_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn’t load exercise progress"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar el progreso del ejercicio"
+          }
+        }
+      }
+    },
+    "progress.detail.header_subtitle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A focused view of personal records, weekly volume, and recent performance samples for this exercise."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vista centrada en récords personales, volumen semanal y muestras recientes de rendimiento para este ejercicio."
+          }
+        }
+      }
+    },
+    "progress.detail.loading" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading exercise progress…"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cargando progreso del ejercicio…"
+          }
+        }
+      }
+    },
+    "progress.detail.low_data.insufficient" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log more completed sets for this exercise to unlock personal records, weekly volume, and performance history."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registra más series completadas para este ejercicio y desbloquea récords personales, volumen semanal e historial de rendimiento."
+          }
+        }
+      }
+    },
+    "progress.detail.low_data.partial.empty" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This exercise has a little history, but it still needs more completed sets before the trend becomes trustworthy."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este ejercicio tiene algo de historial, pero todavía necesita más series completadas antes de que la tendencia sea confiable."
+          }
+        }
+      }
+    },
+    "progress.detail.low_data.partial.some" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some signals are already useful, while volume and PR trends will get stronger with more logged sets."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algunas señales ya son útiles, mientras que el volumen y las tendencias de PR se fortalecerán con más series registradas."
+          }
+        }
+      }
+    },
+    "progress.detail.metric.best_estimate_on" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best estimate on %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mejor estimación el %@"
+          }
+        }
+      }
+    },
+    "progress.detail.metric.estimated_1rm" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estimated 1RM"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1RM estimado"
+          }
+        }
+      }
+    },
+    "progress.detail.metric.estimated_1rm_short" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Est. 1RM %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1RM est. %@"
+          }
+        }
+      }
+    },
+    "progress.detail.metric.latest_top_set" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Latest top set"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última serie principal"
+          }
+        }
+      }
+    },
+    "progress.detail.metric.logged_on" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logged on %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registrada el %@"
+          }
+        }
+      }
+    },
+    "progress.detail.metric.logged_top_set" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logged top set"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serie principal registrada"
+          }
+        }
+      }
+    },
+    "progress.detail.performance.planned_rest" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planned rest %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descanso planificado %@"
+          }
+        }
+      }
+    },
+    "progress.detail.performance.rest" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descanso %@"
+          }
+        }
+      }
+    },
+    "progress.detail.performance.value.completed_set" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed set"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serie completada"
+          }
+        }
+      }
+    },
+    "progress.detail.performance.value.logged_set" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logged set"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serie registrada"
+          }
+        }
+      }
+    },
+    "progress.detail.performance.value.reps_only" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld reps"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld repeticiones"
+          }
+        }
+      }
+    },
+    "progress.detail.performance.value.reps_weight" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld × %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld × %@"
+          }
+        }
+      }
+    },
+    "progress.detail.personal_record.achieved" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Achieved %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logrado %@"
+          }
+        }
+      }
+    },
+    "progress.detail.personal_record.best_estimated_1rm" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best est. 1RM"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mejor 1RM est."
+          }
+        }
+      }
+    },
+    "progress.detail.personal_record.best_session_volume" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best session volume"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mejor volumen de sesión"
+          }
+        }
+      }
+    },
+    "progress.detail.personal_record.heaviest_weight" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heaviest weight"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peso más alto"
+          }
+        }
+      }
+    },
+    "progress.detail.personal_record.most_reps" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Most reps"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más repeticiones"
+          }
+        }
+      }
+    },
+    "progress.detail.personal_record.new_pr" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New PR"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevo PR"
+          }
+        }
+      }
+    },
+    "progress.detail.personal_record.previous" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prev %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ant. %@"
+          }
+        }
+      }
+    },
+    "progress.detail.section.personal_records" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personal records"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Récords personales"
+          }
+        }
+      }
+    },
+    "progress.detail.section.recent_performance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent performance"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendimiento reciente"
+          }
+        }
+      }
+    },
+    "progress.detail.section.recent_volume" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent volume"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volumen reciente"
+          }
+        }
+      }
+    },
+    "progress.detail.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercise Progress"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progreso del ejercicio"
+          }
+        }
+      }
+    },
+    "progress.detail.unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercise progress isn’t available yet."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El progreso del ejercicio todavía no está disponible."
+          }
+        }
+      }
+    },
+    "progress.detail.week.prefix" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Week of %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semana de %@"
+          }
+        }
+      }
+    },
+    "progress.detail.week.sets" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sets"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld series"
+          }
+        }
+      }
+    },
+    "progress.detail.week.subtitle" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sets • %lld reps"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld series • %lld repeticiones"
+          }
+        }
+      }
+    },
+    "progress.detail.week.total_load" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ total load"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ carga total"
+          }
+        }
+      }
+    },
+    "progress.empty.low_data.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progress is starting to build"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El progreso apenas comienza a formarse"
+          }
+        }
+      }
+    },
+    "progress.empty.no_workouts.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish a few workouts and this dashboard will start showing strength, volume, consistency, and efficiency trends."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completa algunos entrenamientos y este panel comenzará a mostrar tendencias de fuerza, volumen, consistencia y eficiencia."
+          }
+        }
+      }
+    },
+    "progress.empty.no_workouts.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No completed workouts yet"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay entrenamientos completados"
+          }
+        }
+      }
+    },
+    "progress.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progress"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progreso"
+          }
+        }
+      }
+    },
     "Quick Start" : {
 
     },
@@ -1427,9 +3536,6 @@
 
     },
     "Recent" : {
-
-    },
-    "Recovery" : {
 
     },
     "Recurrence" : {
@@ -1454,12 +3560,6 @@
 
     },
     "Remote media" : {
-
-    },
-    "Remove cool-down link" : {
-
-    },
-    "Remove warm-up link" : {
 
     },
     "Reopen" : {
@@ -1521,6 +3621,166 @@
     },
     "Routine" : {
 
+    },
+    "routine.link.cool_down.clear" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove cool-down link"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar vínculo de enfriamiento"
+          }
+        }
+      }
+    },
+    "routine.link.cool_down.empty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No cool-down linked"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay enfriamiento vinculado"
+          }
+        }
+      }
+    },
+    "routine.link.cool_down.helper" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a reusable routine that should run after the main work."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige una rutina reutilizable que deba ejecutarse después del trabajo principal."
+          }
+        }
+      }
+    },
+    "routine.link.cool_down.picker_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick Cool-Down"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir enfriamiento"
+          }
+        }
+      }
+    },
+    "routine.link.cool_down.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cool-down"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enfriamiento"
+          }
+        }
+      }
+    },
+    "routine.link.warm_up.clear" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove warm-up link"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar vínculo de calentamiento"
+          }
+        }
+      }
+    },
+    "routine.link.warm_up.empty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No warm-up linked"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay calentamiento vinculado"
+          }
+        }
+      }
+    },
+    "routine.link.warm_up.helper" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a reusable routine that should run before the main work."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige una rutina reutilizable que deba ejecutarse antes del trabajo principal."
+          }
+        }
+      }
+    },
+    "routine.link.warm_up.picker_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick Warm-Up"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir calentamiento"
+          }
+        }
+      }
+    },
+    "routine.link.warm_up.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        }
+      }
     },
     "Routines" : {
 
@@ -1880,6 +4140,12 @@
             "state" : "translated",
             "value" : "%d/%d sets"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d/%d series"
+          }
         }
       }
     },
@@ -1889,6 +4155,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Progress"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progreso"
           }
         }
       }
@@ -1940,6 +4212,12 @@
             "state" : "translated",
             "value" : "Hide Rest"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar descanso"
+          }
         }
       }
     },
@@ -1950,6 +4228,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Overdue"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excedido"
           }
         }
       }
@@ -1962,6 +4246,12 @@
             "state" : "translated",
             "value" : "Paused"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausado"
+          }
         }
       }
     },
@@ -1973,6 +4263,12 @@
             "state" : "translated",
             "value" : "Ready"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo"
+          }
         }
       }
     },
@@ -1983,6 +4279,12 @@
             "state" : "translated",
             "value" : "Rest"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descanso"
+          }
         }
       }
     },
@@ -1992,6 +4294,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Resume"
+          }
+        }
+      }
+    },
+    "session.segment.cool_down" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cool-down"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enfriamiento"
+          }
+        }
+      }
+    },
+    "session.segment.current" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current segment"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segmento actual"
+          }
+        }
+      }
+    },
+    "session.segment.label" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segment"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segmento"
+          }
+        }
+      }
+    },
+    "session.segment.main" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento"
+          }
+        }
+      }
+    },
+    "session.segment.skip.cool_down" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip cool-down"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omitir enfriamiento"
+          }
+        }
+      }
+    },
+    "session.segment.skip.warm_up" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip warm-up"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omitir calentamiento"
+          }
+        }
+      }
+    },
+    "session.segment.warm_up" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
           }
         }
       }
@@ -2178,6 +4592,12 @@
             "state" : "translated",
             "value" : "Last backup"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Último respaldo"
+          }
         }
       }
     },
@@ -2187,6 +4607,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Never"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nunca"
           }
         }
       }
@@ -2198,6 +4624,12 @@
             "state" : "translated",
             "value" : "Version"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versión"
+          }
         }
       }
     },
@@ -2207,6 +4639,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Backup & Restore"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respaldo y restauración"
           }
         }
       }
@@ -2218,6 +4656,12 @@
             "state" : "translated",
             "value" : "Feedback"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comentarios"
+          }
         }
       }
     },
@@ -2227,6 +4671,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Program Assets"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activos de programas"
           }
         }
       }
@@ -2238,6 +4688,12 @@
             "state" : "translated",
             "value" : "Programs"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programas"
+          }
         }
       }
     },
@@ -2247,6 +4703,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "About"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acerca de"
           }
         }
       }
@@ -2258,6 +4720,12 @@
             "state" : "translated",
             "value" : "Backup"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respaldo"
+          }
         }
       }
     },
@@ -2267,6 +4735,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diagnostics"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnóstico"
           }
         }
       }
@@ -2278,6 +4752,12 @@
             "state" : "translated",
             "value" : "Programs"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programas"
+          }
         }
       }
     },
@@ -2287,6 +4767,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Support"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soporte"
           }
         }
       }
@@ -2298,6 +4784,12 @@
             "state" : "translated",
             "value" : "Units"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unidades"
+          }
         }
       }
     },
@@ -2307,6 +4799,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Workout cues"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Señales de entrenamiento"
           }
         }
       }
@@ -2318,6 +4816,12 @@
             "state" : "translated",
             "value" : "Tip Jar"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Propinas"
+          }
         }
       }
     },
@@ -2327,6 +4831,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Settings"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuración"
           }
         }
       }
@@ -2338,6 +4848,12 @@
             "state" : "translated",
             "value" : "Distance unit"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unidad de distancia"
+          }
         }
       }
     },
@@ -2347,6 +4863,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Weight is converted for display and entry using your selected unit. Cardio distance is stored internally in kilometers and converted in routine planning and workout logging when needed."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El peso se convierte para mostrarse y capturarse usando la unidad seleccionada. La distancia de cardio se guarda internamente en kilómetros y se convierte en la planificación de rutinas y el registro del entrenamiento cuando es necesario."
           }
         }
       }
@@ -2358,6 +4880,12 @@
             "state" : "translated",
             "value" : "Weight unit"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unidad de peso"
+          }
         }
       }
     },
@@ -2367,6 +4895,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verbose logging"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registro detallado"
           }
         }
       }
@@ -2378,6 +4912,12 @@
             "state" : "translated",
             "value" : "Auto-start rest timer"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar automáticamente el descanso"
+          }
         }
       }
     },
@@ -2387,6 +4927,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rest completion cue"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aviso al terminar el descanso"
           }
         }
       }
@@ -2398,6 +4944,12 @@
             "state" : "translated",
             "value" : "Haptics"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hápticos"
+          }
         }
       }
     },
@@ -2407,6 +4959,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Completion cue plays when rest finishes. Auto-start begins rest right after a set is completed. Show overdue keeps the timer visible after zero so you can track extra recovery."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El aviso suena cuando termina el descanso. El inicio automático comienza el descanso justo después de completar una serie. Mostrar tiempo extra mantiene visible el temporizador después de cero para que puedas seguir la recuperación adicional."
           }
         }
       }
@@ -2419,6 +4977,12 @@
             "state" : "translated",
             "value" : "Rest sound cues"
           }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Señales de sonido del descanso"
+          }
         }
       }
     },
@@ -2428,6 +4992,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show overdue timer"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar tiempo extra"
           }
         }
       }
@@ -2441,13 +5011,7 @@
     "Share JSON Backup" : {
 
     },
-    "Skip cool-down" : {
-
-    },
     "Skip today" : {
-
-    },
-    "Skip warm-up" : {
 
     },
     "Skipped" : {
@@ -2490,9 +5054,6 @@
 
     },
     "Stop workout" : {
-
-    },
-    "Strength" : {
 
     },
     "Style" : {
@@ -2585,9 +5146,6 @@
     "Training days" : {
 
     },
-    "Training trends" : {
-
-    },
     "Trend" : {
 
     },
@@ -2616,9 +5174,6 @@
 
     },
     "View Summary" : {
-
-    },
-    "Volume" : {
 
     },
     "Volume uses your preferred unit (%@)." : {

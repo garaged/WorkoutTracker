@@ -20,8 +20,22 @@ struct ProgressDashboardView: View {
                 dashboard(content: content, isLowData: false)
             }
         }
-        .navigationTitle("Progress")
+        .navigationTitle("progress.title")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(
+            isPresented: Binding(
+                get: { viewModel.selectedExerciseID != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        viewModel.clearExerciseSelection()
+                    }
+                }
+            )
+        ) {
+            if let exerciseID = viewModel.selectedExerciseID {
+                ExerciseProgressDetailView(exerciseID: exerciseID)
+            }
+        }
         .task {
             viewModel.configureIfNeeded(context: modelContext)
             if case .idle = viewModel.state {
@@ -38,12 +52,13 @@ struct ProgressDashboardView: View {
         VStack(spacing: 12) {
             ProgressView()
                 .controlSize(.large)
-            Text("Loading progress…")
+            Text("progress.dashboard.loading")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
+        .accessibilityIdentifier("Progress.Dashboard.Loading")
     }
 
     private var emptyDashboardView: some View {
@@ -54,13 +69,14 @@ struct ProgressDashboardView: View {
             .padding()
         }
         .background(Color(.systemGroupedBackground))
+        .accessibilityIdentifier("Progress.Dashboard.Empty")
     }
 
     private func failureView(message: String) -> some View {
         ContentUnavailableView(
-            "Couldn’t load Progress",
+            "progress.dashboard.failure_title",
             systemImage: "exclamationmark.triangle",
-            description: Text(message)
+            description: Text(verbatim: message)
         )
     }
 
@@ -75,9 +91,10 @@ struct ProgressDashboardView: View {
                 if isLowData {
                     ProgressEmptyStateView(
                         kind: .lowData(
-                            message: "Some cards are already useful, while others still need more completed workouts or timing data to become trustworthy."
+                            message: String(localized: "progress.dashboard.low_data_banner")
                         )
                     )
+                    .accessibilityIdentifier("Progress.Dashboard.LowDataBanner")
                 }
 
                 LazyVStack(spacing: 14) {
@@ -85,26 +102,37 @@ struct ProgressDashboardView: View {
                         viewModel.openExerciseDetail(exerciseID: exerciseID)
                     }
 
-                    VolumeTrendCard(model: content.volume)
+                    VolumeTrendCard(
+                        model: content.volume,
+                        drillDownExerciseID: content.summary.featuredExercises.first?.exerciseID,
+                        drillDownExerciseName: content.summary.featuredExercises.first?.exerciseName,
+                        onOpenExercise: { exerciseID in
+                            viewModel.openExerciseDetail(exerciseID: exerciseID)
+                        }
+                    )
+
                     ConsistencyCard(model: content.consistency)
+                        .accessibilityIdentifier("Progress.Dashboard.ConsistencyCard")
                     RecoveryInsightCard(model: content.recovery)
+                        .accessibilityIdentifier("Progress.Dashboard.RecoveryCard")
                 }
             }
             .padding()
         }
         .background(Color(.systemGroupedBackground))
+        .accessibilityIdentifier("Progress.Dashboard.Screen")
     }
 
     private func header(content: ProgressDashboardViewModel.DashboardContent) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Training trends")
+            Text("progress.dashboard.header_title")
                 .font(.title2.weight(.semibold))
 
-            Text("A simple dashboard for strength, volume, consistency, and session efficiency.")
+            Text("progress.dashboard.header_subtitle")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            Text("Window: \(content.windowTitle)")
+            Text(viewModel.localizedWindowLabel(content.windowTitle))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

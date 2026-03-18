@@ -48,9 +48,9 @@ struct ProgressEmptyStateView: View {
     private var title: String {
         switch kind {
         case .noWorkouts:
-            return "No completed workouts yet"
+            return String(localized: "progress.empty.no_workouts.title")
         case .lowData:
-            return "Progress is starting to build"
+            return String(localized: "progress.empty.low_data.title")
         case .sectionUnavailable(let title, _):
             return title
         }
@@ -59,7 +59,7 @@ struct ProgressEmptyStateView: View {
     private var message: String {
         switch kind {
         case .noWorkouts:
-            return "Finish a few workouts and this dashboard will start showing strength, volume, consistency, and efficiency trends."
+            return String(localized: "progress.empty.no_workouts.message")
         case .lowData(let message):
             return message
         case .sectionUnavailable(_, let message):

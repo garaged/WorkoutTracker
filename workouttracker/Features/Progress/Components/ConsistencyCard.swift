@@ -8,12 +8,12 @@ struct ConsistencyCard: View {
             header
 
             HStack(alignment: .top, spacing: 12) {
-                statBlock(title: "Active weeks", value: model.activeWeeksText)
-                statBlock(title: "Average", value: model.averageText)
+                statBlock(title: String(localized: "progress.dashboard.consistency.stat.active_weeks"), value: model.activeWeeksText)
+                statBlock(title: String(localized: "progress.dashboard.consistency.stat.average"), value: model.averageText)
             }
 
             if let completionText = model.completionText {
-                statBlock(title: "Completion", value: completionText)
+                statBlock(title: String(localized: "progress.dashboard.consistency.stat.completion"), value: completionText)
             }
 
             Text(model.supportingText)
@@ -42,7 +42,7 @@ struct ConsistencyCard: View {
     private var header: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 5) {
-                Label("Consistency", systemImage: "calendar.badge.clock")
+                Label("progress.dashboard.consistency.title", systemImage: "calendar.badge.clock")
                     .font(.headline)
                 Text(model.headline)
                     .font(.title3.weight(.semibold))
@@ -72,7 +72,7 @@ struct ConsistencyCard: View {
     }
 
     private var availabilityPill: some View {
-        Text(label(for: model.availability))
+        Text(verbatim: availabilityLabel(for: model.availability))
             .font(.caption.weight(.semibold))
             .foregroundStyle(color(for: model.availability))
             .padding(.horizontal, 8)
@@ -89,11 +89,11 @@ struct ConsistencyCard: View {
             .strokeBorder(.quaternary)
     }
 
-    private func label(for availability: ProgressDataAvailability) -> String {
+    private func availabilityLabel(for availability: ProgressDataAvailability) -> String {
         switch availability {
-        case .full: return "Ready"
-        case .partial: return "Low data"
-        case .insufficient: return "Unavailable"
+        case .full: return NSLocalizedString("progress.availability.ready", comment: "")
+        case .partial: return NSLocalizedString("progress.availability.low_data", comment: "")
+        case .insufficient: return NSLocalizedString("progress.availability.unavailable", comment: "")
         }
     }
 
