@@ -2,6 +2,12 @@
 
 ## Phase 5
 
+### PR 15
+
+- Deferred calories explicitly to v2.0.1 to protect the v2.0.0 release candidate from late-scope risk
+- Tightened UITestHost launch assertions so session and Progress smoke suites fail fast on invalid seed/route combinations
+- Updated the v2.0.0 release checklist and release copy to match the shipped scope
+
 ### PR 14
 
 - Improved accessibility across Progress, session, routine, and settings flows

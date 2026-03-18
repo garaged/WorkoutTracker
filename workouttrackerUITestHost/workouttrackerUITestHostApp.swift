@@ -650,6 +650,7 @@ private func assertLinkedRoutineUITestSeed(context: ModelContext) throws {
 
 @MainActor
 private func assertUITestLaunchConfiguration(_ env: [String: String]) {
+    let start = (env["UITESTS_START"] ?? "calendar").lowercased()
     let progressModes = [env["UITESTS_PROGRESS"] == "1", env["UITESTS_PROGRESS_LOW_DATA"] == "1"].filter { $0 }.count
     if progressModes > 1 {
         fatalError("UITESTS assertion failed: Choose only one Progress seed mode. UITESTS_PROGRESS and UITESTS_PROGRESS_LOW_DATA are mutually exclusive.")
@@ -660,9 +661,22 @@ private func assertUITestLaunchConfiguration(_ env: [String: String]) {
         fatalError("UITESTS assertion failed: Choose only one Home active-session seed mode. UITESTS_ACTIVE_SESSIONS and UITESTS_ACTIVE_SESSIONS_SCROLL are mutually exclusive.")
     }
 
+    if (env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1") && start != "progress" {
+        fatalError("UITESTS assertion failed: Progress seed modes must launch with UITESTS_START=progress.")
+    }
+
+    if env["UITESTS_LINKED_FLOW"] == "1" && start != "session" {
+        fatalError("UITESTS assertion failed: Linked routine flow smoke tests must launch with UITESTS_START=session.")
+    }
+
+    let needsSeededData = start == "session" || env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1" || env["UITESTS_LINKED_FLOW"] == "1"
+    if needsSeededData, env["UITESTS_SEED"] != "1" {
+        fatalError("UITESTS assertion failed: Session and Progress UITest routes require UITESTS_SEED=1 so starter-pack and scenario data are available.")
+    }
+
     if env["UITESTS_LOCALIZATION"] == "1" {
-        let needsSeededData = env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1" || env["UITESTS_LINKED_FLOW"] == "1"
-        if needsSeededData, env["UITESTS_SEED"] != "1" {
+        let needsLocalizedSeededData = env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1" || env["UITESTS_LINKED_FLOW"] == "1"
+        if needsLocalizedSeededData, env["UITESTS_SEED"] != "1" {
             fatalError("UITESTS assertion failed: Localization smoke tests that cover Progress or linked sessions must launch with UITESTS_SEED=1.")
         }
     }
