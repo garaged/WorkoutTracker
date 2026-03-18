@@ -78,6 +78,7 @@ struct ProgressDashboardView: View {
             systemImage: "exclamationmark.triangle",
             description: Text(verbatim: message)
         )
+        .accessibilityIdentifier("Progress.Dashboard.Failure")
     }
 
     private func dashboard(
@@ -137,5 +138,16 @@ struct ProgressDashboardView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(verbatim: headerAccessibilityLabel(content: content)))
+        .accessibilityIdentifier("Progress.Dashboard.Header")
+    }
+
+    private func headerAccessibilityLabel(content: ProgressDashboardViewModel.DashboardContent) -> String {
+        [
+            String(localized: "progress.dashboard.header_title"),
+            String(localized: "progress.dashboard.header_subtitle"),
+            viewModel.localizedWindowLabel(content.windowTitle)
+        ].joined(separator: ". ")
     }
 }

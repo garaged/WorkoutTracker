@@ -40,6 +40,7 @@ struct RecoveryInsightCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(cardBackground)
         .overlay(cardBorder)
+        .accessibilityElement(children: .contain)
     }
 
     private var header: some View {
@@ -54,7 +55,10 @@ struct RecoveryInsightCard: View {
             Spacer(minLength: 8)
 
             availabilityPill
+                .accessibilityHidden(true)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
     }
 
     private func statBlock(title: String, value: String) -> some View {
@@ -72,6 +76,7 @@ struct RecoveryInsightCard: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(.tertiarySystemGroupedBackground))
         )
+        .accessibilityElement(children: .combine)
     }
 
     private var availabilityPill: some View {
@@ -90,6 +95,14 @@ struct RecoveryInsightCard: View {
     private var cardBorder: some View {
         RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(.quaternary)
+    }
+
+    private var headerAccessibilityLabel: String {
+        [
+            String(localized: "progress.dashboard.recovery.title"),
+            model.headline,
+            availabilityLabel(for: model.availability)
+        ].joined(separator: ". ")
     }
 
     private func availabilityLabel(for availability: ProgressDataAvailability) -> String {

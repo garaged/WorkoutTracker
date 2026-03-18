@@ -45,6 +45,27 @@ struct LinkedRoutinePickerView: View {
             case .coolDown: "routine.link.cool_down.clear"
             }
         }
+
+        var identifierStem: String {
+            switch self {
+            case .warmUp: return "WarmUp"
+            case .coolDown: return "CoolDown"
+            }
+        }
+
+        var titleText: String {
+            switch self {
+            case .warmUp: return String(localized: "routine.link.warm_up.title")
+            case .coolDown: return String(localized: "routine.link.cool_down.title")
+            }
+        }
+
+        var helperTextValue: String {
+            switch self {
+            case .warmUp: return String(localized: "routine.link.warm_up.helper")
+            case .coolDown: return String(localized: "routine.link.cool_down.helper")
+            }
+        }
     }
 
     let role: Role
@@ -82,8 +103,10 @@ struct LinkedRoutinePickerView: View {
                 }
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(role.title)
-            .accessibilityValue(currentRoutine?.name ?? emptyAccessibilityValue)
+            .accessibilityLabel(Text(verbatim: role.titleText))
+            .accessibilityValue(Text(verbatim: currentRoutine?.name ?? emptyAccessibilityValue))
+            .accessibilityHint(Text(verbatim: role.helperTextValue))
+            .accessibilityIdentifier("LinkedRoutinePickerView.\(role.identifierStem).PickerButton")
 
             if currentRoutine != nil {
                 Button(role: .destructive) {
@@ -92,6 +115,8 @@ struct LinkedRoutinePickerView: View {
                     Label(role.clearLabel, systemImage: "xmark.circle")
                 }
                 .buttonStyle(.plain)
+                .accessibilityValue(Text(verbatim: currentRoutine?.name ?? emptyAccessibilityValue))
+                .accessibilityIdentifier("LinkedRoutinePickerView.\(role.identifierStem).ClearButton")
             }
 
             Text(role.helperText)

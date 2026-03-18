@@ -45,6 +45,8 @@ struct SettingsScreen: View {
                     }
                 }
                 .pickerStyle(.menu)
+                .accessibilityLabel(Text(verbatim: String(localized: "settings.units.weight")))
+                .accessibilityHint(Text(verbatim: String(localized: "settings.units.help")))
                 .accessibilityIdentifier("settings.weightUnitPicker")
 
                 Picker(String(localized: "settings.units.distance"), selection: $prefs.distanceUnit) {
@@ -54,6 +56,8 @@ struct SettingsScreen: View {
                     }
                 }
                 .pickerStyle(.menu)
+                .accessibilityLabel(Text(verbatim: String(localized: "settings.units.distance")))
+                .accessibilityHint(Text(verbatim: String(localized: "settings.units.help")))
                 .accessibilityIdentifier("settings.distanceUnitPicker")
 
                 Text(String(localized: "settings.units.help"))
@@ -65,16 +69,22 @@ struct SettingsScreen: View {
                 Toggle(String(localized: "settings.workout_cues.completion_cue"), isOn: $prefs.restTimerCueEnabled)
                     .accessibilityIdentifier("settings.restTimerCueToggle")
                     .accessibilityLabel(AccessibilityLabels.Toggles.restTimerCue)
+                    .accessibilityHint(Text(verbatim: String(localized: "settings.workout_cues.help")))
 
                 Toggle(String(localized: "settings.workout_cues.haptics"), isOn: $prefs.hapticsEnabled)
+                    .accessibilityLabel(Text(verbatim: String(localized: "settings.workout_cues.haptics")))
+                    .accessibilityHint(Text(verbatim: String(localized: "settings.workout_cues.help")))
                     .accessibilityIdentifier("settings.hapticsToggle")
 
                 Toggle(String(localized: "settings.workout_cues.auto_start_rest"), isOn: $prefs.autoStartRest)
+                    .accessibilityLabel(Text(verbatim: String(localized: "settings.workout_cues.auto_start_rest")))
+                    .accessibilityHint(Text(verbatim: String(localized: "settings.workout_cues.help")))
                     .accessibilityIdentifier("settings.autoStartRestToggle")
 
                 Toggle(String(localized: "settings.workout_cues.show_overdue"), isOn: $prefs.restTimerShowOverdue)
                     .accessibilityIdentifier("settings.restTimerShowOverdueToggle")
                     .accessibilityLabel(AccessibilityLabels.Toggles.showOverdue)
+                    .accessibilityHint(Text(verbatim: String(localized: "settings.workout_cues.help")))
 
                 Text(String(localized: "settings.workout_cues.help"))
                     .font(.footnote)

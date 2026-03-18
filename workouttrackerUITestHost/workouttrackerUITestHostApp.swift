@@ -32,6 +32,10 @@ struct workouttrackerUITestHostApp: App {
         }
 
         do {
+            if env["UITESTS"] == "1" {
+                assertUITestLaunchConfiguration(env)
+            }
+
             let c = try ModelContainerFactory.makeInMemoryContainer()
 
             if env["UITESTS"] == "1" {
@@ -640,5 +644,26 @@ private func assertLinkedRoutineUITestSeed(context: ModelContext) throws {
 
     guard main.coolDownRoutine?.id == cool.id else {
         fatalError("UITESTS assertion failed: linked-flow seed expected main routine to reference the cool-down routine.")
+    }
+}
+
+
+@MainActor
+private func assertUITestLaunchConfiguration(_ env: [String: String]) {
+    let progressModes = [env["UITESTS_PROGRESS"] == "1", env["UITESTS_PROGRESS_LOW_DATA"] == "1"].filter { $0 }.count
+    if progressModes > 1 {
+        fatalError("UITESTS assertion failed: Choose only one Progress seed mode. UITESTS_PROGRESS and UITESTS_PROGRESS_LOW_DATA are mutually exclusive.")
+    }
+
+    let activeSessionModes = [env["UITESTS_ACTIVE_SESSIONS"] == "1", env["UITESTS_ACTIVE_SESSIONS_SCROLL"] == "1"].filter { $0 }.count
+    if activeSessionModes > 1 {
+        fatalError("UITESTS assertion failed: Choose only one Home active-session seed mode. UITESTS_ACTIVE_SESSIONS and UITESTS_ACTIVE_SESSIONS_SCROLL are mutually exclusive.")
+    }
+
+    if env["UITESTS_LOCALIZATION"] == "1" {
+        let needsSeededData = env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1" || env["UITESTS_LINKED_FLOW"] == "1"
+        if needsSeededData, env["UITESTS_SEED"] != "1" {
+            fatalError("UITESTS assertion failed: Localization smoke tests that cover Progress or linked sessions must launch with UITESTS_SEED=1.")
+        }
     }
 }

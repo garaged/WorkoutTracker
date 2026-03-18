@@ -48,6 +48,8 @@ struct SessionSegmentHeaderView: View {
                         .foregroundStyle(.primary)
                         .accessibilityIdentifier("SessionSegmentHeaderView.Title.\(kind.rawValue)")
                 }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
 
                 Spacer(minLength: 12)
 
@@ -68,6 +70,8 @@ struct SessionSegmentHeaderView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
+                .accessibilityLabel(Text(verbatim: skipTitle))
+                .accessibilityValue(Text(verbatim: title))
                 .accessibilityIdentifier("WorkoutSession.SkipSegmentButton")
             }
         }
@@ -88,6 +92,14 @@ struct SessionSegmentHeaderView: View {
             return AnyShapeStyle(Color.accentColor.opacity(0.12))
         }
         return AnyShapeStyle(Color.secondary.opacity(0.04))
+    }
+
+    private var headerAccessibilityLabel: String {
+        var parts = [subtitle, title]
+        if let progressText, !progressText.isEmpty {
+            parts.append(progressText)
+        }
+        return parts.joined(separator: ". ")
     }
 
     private var borderColor: Color {

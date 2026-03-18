@@ -70,7 +70,7 @@ final class LocalizationSmokeUITests: XCTestCase {
             start: start,
             reset: true,
             seed: seed,
-            extraEnv: extraEnv,
+            extraEnv: extraEnv.merging(["UITESTS_LOCALIZATION": "1"]) { _, new in new },
             extraArgs: ["-AppleLanguages", "(es-MX)", "-AppleLocale", "es_MX"]
         )
     }

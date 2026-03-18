@@ -56,6 +56,8 @@ struct StrengthProgressCard: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(Text(verbatim: exerciseAccessibilityLabel(for: exercise)))
+                        .accessibilityHint(Text("progress.dashboard.volume.open_exercise_detail"))
                         .accessibilityIdentifier("Progress.Dashboard.StrengthExerciseButton.\(exercise.exerciseID.uuidString)")
                     }
                 }
@@ -81,7 +83,10 @@ struct StrengthProgressCard: View {
             Spacer(minLength: 8)
 
             availabilityPill
+                .accessibilityHidden(true)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
     }
 
     private var availabilityPill: some View {
@@ -100,6 +105,7 @@ struct StrengthProgressCard: View {
             .padding(.horizontal, 7)
             .padding(.vertical, 4)
             .background(color(for: availability).opacity(0.12), in: Capsule())
+            .accessibilityHidden(true)
     }
 
     private func lowDataCallout(title: String, message: String) -> some View {
@@ -117,6 +123,7 @@ struct StrengthProgressCard: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(.tertiarySystemGroupedBackground))
         )
+        .accessibilityElement(children: .combine)
     }
 
     private var cardBackground: some ShapeStyle {
@@ -126,6 +133,18 @@ struct StrengthProgressCard: View {
     private var cardBorder: some View {
         RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(.quaternary)
+    }
+
+    private var headerAccessibilityLabel: String {
+        [
+            String(localized: "progress.dashboard.strength.title"),
+            model.headline,
+            availabilityLabel(for: model.availability)
+        ].joined(separator: ". ")
+    }
+
+    private func exerciseAccessibilityLabel(for exercise: ProgressDashboardViewModel.StrengthCardModel.ExerciseHighlight) -> String {
+        [exercise.exerciseName, exercise.badgeText, exercise.detailText].joined(separator: ". ")
     }
 
     private func availabilityLabel(for availability: ProgressDataAvailability) -> String {

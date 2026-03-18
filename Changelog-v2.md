@@ -2,6 +2,14 @@
 
 ## Phase 5
 
+### PR 14
+
+- Improved accessibility across Progress, session, routine, and settings flows
+- Polished v2 copy for clearer and more consistent terminology
+- Hardened linked warm-up and cool-down workflow testing
+- Improved regression stability for Progress and localized flows
+- Strengthened UI test seed validation for release-ready smoke coverage
+
 ### PR 13 
 
 - Added Spanish localization across key WorkoutTracker v2 flows

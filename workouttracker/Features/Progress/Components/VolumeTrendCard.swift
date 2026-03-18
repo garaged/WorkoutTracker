@@ -57,6 +57,8 @@ struct VolumeTrendCard: View {
                     )
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(Text(verbatim: volumeDrillDownAccessibilityLabel(exerciseName: drillDownExerciseName)))
+                .accessibilityHint(Text("progress.dashboard.volume.open_exercise_detail"))
                 .accessibilityIdentifier("Progress.Dashboard.Volume.OpenExercise")
             }
         }
@@ -64,6 +66,7 @@ struct VolumeTrendCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(cardBackground)
         .overlay(cardBorder)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("Progress.Dashboard.VolumeCard")
     }
 
@@ -87,7 +90,10 @@ struct VolumeTrendCard: View {
             Spacer(minLength: 8)
 
             availabilityPill
+                .accessibilityHidden(true)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
     }
 
     private func statTile(_ stat: ProgressDashboardViewModel.Stat) -> some View {
@@ -104,6 +110,7 @@ struct VolumeTrendCard: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(.tertiarySystemGroupedBackground))
         )
+        .accessibilityElement(children: .combine)
     }
 
     private var availabilityPill: some View {
@@ -125,6 +132,7 @@ struct VolumeTrendCard: View {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color(.tertiarySystemGroupedBackground))
             )
+            .accessibilityElement(children: .combine)
     }
 
     private var cardBackground: some ShapeStyle {
@@ -134,6 +142,19 @@ struct VolumeTrendCard: View {
     private var cardBorder: some View {
         RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(.quaternary)
+    }
+
+    private var headerAccessibilityLabel: String {
+        [
+            String(localized: "progress.dashboard.volume.title"),
+            model.headline,
+            model.primaryValue,
+            availabilityLabel(for: model.availability)
+        ].joined(separator: ". ")
+    }
+
+    private func volumeDrillDownAccessibilityLabel(exerciseName: String) -> String {
+        [String(localized: "progress.dashboard.volume.open_exercise_detail"), exerciseName].joined(separator: ": ")
     }
 
     private func availabilityLabel(for availability: ProgressDataAvailability) -> String {

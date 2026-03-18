@@ -51,6 +51,7 @@ struct ExerciseProgressDetailView: View {
             systemImage: "exclamationmark.triangle",
             description: Text(verbatim: message)
         )
+        .accessibilityIdentifier("Progress.Detail.Failure")
     }
 
     private func detailContent(
@@ -106,6 +107,8 @@ struct ExerciseProgressDetailView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(verbatim: headerAccessibilityLabel(content)))
     }
 
     private func keyMetrics(_ content: ExerciseProgressDetailViewModel.DetailContent) -> some View {
@@ -148,6 +151,7 @@ struct ExerciseProgressDetailView: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .strokeBorder(.quaternary)
         )
+        .accessibilityElement(children: .combine)
     }
 
     private func personalRecordsSection(_ content: ExerciseProgressDetailViewModel.DetailContent) -> some View {
@@ -240,6 +244,7 @@ struct ExerciseProgressDetailView: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .strokeBorder(.quaternary)
         )
+        .accessibilityElement(children: .combine)
     }
 
     private func sectionHeader(title: String, systemImage: String) -> some View {
@@ -254,6 +259,16 @@ struct ExerciseProgressDetailView: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 5)
             .background(color(for: availability).opacity(0.12), in: Capsule())
+            .accessibilityHidden(true)
+    }
+
+    private func headerAccessibilityLabel(_ content: ExerciseProgressDetailViewModel.DetailContent) -> String {
+        var parts = [content.exerciseName, availabilityLabel(for: content.availability)]
+        if let latestTopSet = content.latestTopSet {
+            parts.append(latestTopSet.valueText)
+        }
+        parts.append(String(localized: "progress.detail.header_subtitle"))
+        return parts.joined(separator: ". ")
     }
 
     private func availabilityLabel(for availability: ProgressDataAvailability) -> String {

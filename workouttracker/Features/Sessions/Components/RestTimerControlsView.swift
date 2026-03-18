@@ -29,10 +29,12 @@ struct RestTimerControlsView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(!isEnabled)
-                .accessibilityLabel(accessibilityLabel(for: seconds))
+                .accessibilityLabel(Text(verbatim: accessibilityLabel(for: seconds)))
+                .accessibilityValue(Text(verbatim: AppFormatting.shortDuration(seconds: seconds)))
                 .accessibilityIdentifier("RestTimerControlsView.Extend\(seconds)Button")
             }
         }
+        .accessibilityIdentifier("RestTimerControlsView")
     }
 
     private func accessibilityLabel(for seconds: Int) -> String {

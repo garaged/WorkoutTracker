@@ -10,8 +10,6 @@ final class ProgressHubUITests: XCTestCase {
         let app = makeApp()
         app.launch()
 
-        openProgress(in: app)
-
         let dashboard = app.el("Progress.Dashboard.Screen")
         if !dashboard.waitForExistence(timeout: t(8)) {
             attachUITestDebug(app, name: "ProgressHub_DashboardMissing")
@@ -30,8 +28,6 @@ final class ProgressHubUITests: XCTestCase {
     func test_progressDashboard_opensExerciseDetailFromStrengthCard() {
         let app = makeApp()
         app.launch()
-
-        openProgress(in: app)
 
         let firstExercise = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", "Progress.Dashboard.StrengthExerciseButton.")
@@ -66,8 +62,6 @@ final class ProgressHubUITests: XCTestCase {
         let app = makeLowDataApp()
         app.launch()
 
-        openProgress(in: app)
-
         let firstExercise = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", "Progress.Dashboard.StrengthExerciseButton.")
         ).firstMatch
@@ -92,7 +86,7 @@ final class ProgressHubUITests: XCTestCase {
 
     private func makeApp() -> XCUIApplication {
         UITestLaunch.app(
-            start: "home",
+            start: "progress",
             reset: true,
             seed: true,
             extraEnv: ["UITESTS_PROGRESS": "1"]
@@ -101,31 +95,11 @@ final class ProgressHubUITests: XCTestCase {
 
     private func makeLowDataApp() -> XCUIApplication {
         UITestLaunch.app(
-            start: "home",
+            start: "progress",
             reset: true,
             seed: true,
             extraEnv: ["UITESTS_PROGRESS_LOW_DATA": "1"]
         )
-    }
-
-    private func openProgress(in app: XCUIApplication) {
-        let candidates = [
-            app.buttons["Progress"],
-            app.staticTexts["Progress"],
-            app.descendants(matching: .any)
-                .matching(NSPredicate(format: "label == %@", "Progress"))
-                .firstMatch
-        ]
-
-        for candidate in candidates {
-            if candidate.waitForExistence(timeout: t(6)) {
-                tapSafely(candidate)
-                return
-            }
-        }
-
-        attachUITestDebug(app, name: "ProgressHub_OpenProgressFailed")
-        XCTFail("Expected to find a Home tile or navigation entry labeled 'Progress'.")
     }
 
     private func tapSafely(_ el: XCUIElement) {
