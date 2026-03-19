@@ -43,18 +43,18 @@ struct WeekProgressScreen: View {
                     if hasAnyProgressData {
                         Section {
                             HStack {
-                                StatChip(title: "Current streak", value: "\(summary.currentStreakDays)d")
-                                StatChip(title: "Longest streak", value: "\(summary.longestStreakDays)d")
+                                StatChip(title: String(localized: "Current streak"), value: String(format: String(localized: "%lldd"), locale: .autoupdatingCurrent, Int64(summary.currentStreakDays)))
+                                StatChip(title: String(localized: "Longest streak"), value: String(format: String(localized: "%lldd"), locale: .autoupdatingCurrent, Int64(summary.longestStreakDays)))
                             }
                             .padding(.vertical, 4)
                         }
                     }
 
                     Section {
-                        Picker("Window", selection: $weeksBack) {
-                            Text("4w").tag(4)
-                            Text("12w").tag(12)
-                            Text("24w").tag(24)
+                        Picker(AppFormatting.localized("Window"), selection: $weeksBack) {
+                            Text(AppFormatting.localized("4w")).tag(4)
+                            Text(AppFormatting.localized("12w")).tag(12)
+                            Text(AppFormatting.localized("24w")).tag(24)
                         }
                         .pickerStyle(.segmented)
                         .accessibilityLabel(AccessibilityLabels.Pickers.progressWindow)
@@ -63,7 +63,7 @@ struct WeekProgressScreen: View {
 
                     if hasAnyProgressData {
                         if let insights {
-                            Section("Insights") {
+                            Section(AppFormatting.localized("Insights")) {
                                 if let reflectionSummary {
                                     ReflectionRateInsightCard(summary: reflectionSummary)
                                 }
@@ -76,7 +76,7 @@ struct WeekProgressScreen: View {
                             }
                         }
 
-                        Section("Weeks") {
+                        Section(AppFormatting.localized("Weeks")) {
                             ForEach(summary.weeks) { w in
                                 WeekRow(w: w)
                             }
@@ -97,16 +97,15 @@ struct WeekProgressScreen: View {
                 }
                 .listStyle(.insetGrouped)
             } else if let loadError {
-                ContentUnavailableView(
-                    "Couldn’t load progress",
+                ContentUnavailableView(AppFormatting.localized("Couldn’t load progress"),
                     systemImage: "exclamationmark.triangle",
                     description: Text(loadError)
                 )
             } else {
-                ProgressView("Loading…")
+                ProgressView(AppFormatting.localized("Loading…"))
             }
         }
-        .navigationTitle("Progress")
+        .navigationTitle(AppFormatting.localized("Progress"))
         .navigationBarTitleDisplayMode(.inline)
         .task(id: weeksBack) { reload() }
         .refreshable { reload() }
@@ -119,14 +118,14 @@ struct WeekProgressScreen: View {
             isPresented: $showResumeChoice,
             titleVisibility: .visible
         ) {
-            Button("Resume current workout") {
+            Button(AppFormatting.localized("Resume current workout")) {
                 showResumeChoice = false
                 resumeRoutineAndApplyTarget()
                 pendingTarget = nil
                 resumeCandidate = nil
             }
 
-            Button("Start Quick Workout") {
+            Button(AppFormatting.localized("Start Quick Workout")) {
                 showResumeChoice = false
                 if let t = pendingTarget { startQuick(from: t) }
                 pendingTarget = nil
@@ -140,10 +139,10 @@ struct WeekProgressScreen: View {
             }
         } message: {
             if let name = resumeCandidate?.sourceRoutineNameSnapshot {
-                Text("You already have an in-progress workout (\(name)).")
+                Text(AppFormatting.localizedFormat("You already have an in-progress workout (%@).", name))
             }
         }
-        .alert("Couldn’t start workout", isPresented: Binding(
+        .alert(AppFormatting.localized("Couldn’t start workout"), isPresented: Binding(
             get: { startError != nil },
             set: { if !$0 { startError = nil } }
         )) {
@@ -254,33 +253,27 @@ private struct WeekRow: View {
                 Text(weekTitle)
                     .font(.headline)
                 Spacer()
-                Text("\(w.workoutsCompleted) workouts")
+                Text(String(format: String(localized: "%lld workouts"), locale: .autoupdatingCurrent, Int64(w.workoutsCompleted)))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             HStack(spacing: 14) {
-                StatChip(title: "Sets", value: "\(w.totalSetsCompleted)")
-                StatChip(title: "Volume", value: formatVolume(w.totalVolume))
-                StatChip(title: "Time", value: formatDuration(w.timeTrainedSeconds))
+                StatChip(title: String(localized: "Sets"), value: "\(w.totalSetsCompleted)")
+                StatChip(title: String(localized: "Volume"), value: formatVolume(w.totalVolume))
+                StatChip(title: String(localized: "Time"), value: formatDuration(w.timeTrainedSeconds))
             }
         }
         .padding(.vertical, 6)
     }
 
     private var weekTitle: String {
-        let start = w.weekStart.formatted(.dateTime.month(.abbreviated).day())
         let endInclusive = Calendar.current.date(byAdding: .day, value: -1, to: w.weekEndExclusive) ?? w.weekEndExclusive
-        let end = endInclusive.formatted(.dateTime.month(.abbreviated).day())
-        return "\(start) – \(end)"
+        return AppFormatting.dateRange(start: w.weekStart, end: endInclusive)
     }
 
     private func formatDuration(_ seconds: Int) -> String {
-        let m = seconds / 60
-        if m < 60 { return "\(m)m" }
-        let h = m / 60
-        let r = m % 60
-        return "\(h)h \(r)m"
+        AppFormatting.shortDuration(seconds: seconds)
     }
 
     private func formatVolume(_ v: Double) -> String {
@@ -300,7 +293,7 @@ private struct ReflectionRateInsightCard: View {
         } label: {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Reflections")
+                    Text(AppFormatting.localized("Reflections"))
                         .font(.subheadline.weight(.semibold))
 
                     Text(subtitle)
@@ -323,9 +316,9 @@ private struct ReflectionRateInsightCard: View {
 
     private var subtitle: String {
         if summary.completedSessions == 0 {
-            return "Finish a workout to start stats"
+            return String(localized: "Finish a workout to start stats")
         }
-        return "\(summary.sessionsWithReflection)/\(summary.completedSessions) sessions reflected"
+        return String(format: String(localized: "%lld/%lld sessions reflected"), locale: .autoupdatingCurrent, Int64(summary.sessionsWithReflection), Int64(summary.completedSessions))
     }
 
     private var rateText: String {

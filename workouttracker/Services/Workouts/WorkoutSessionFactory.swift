@@ -9,7 +9,7 @@ enum WorkoutSessionFactory {
         var targetWeightUnit: WeightUnit
         var targetRPE: Double?
         var targetRestSeconds: Int?
-    var targetDurationSeconds: Int? = nil
+        var targetDurationSeconds: Int? = nil
         var targetDistance: Double? = nil
     }
 
@@ -19,7 +19,9 @@ enum WorkoutSessionFactory {
         var nameSnapshot: String
         var notes: String?
         var trackingStyle: ExerciseTrackingStyle
+        var segment: WorkoutExerciseSegment = .main
         var sets: [SetTemplate]
+        var segmentKind: SessionSegmentKind = .main
     }
 
     static func makeSession(
@@ -37,23 +39,41 @@ enum WorkoutSessionFactory {
             linkedActivityId: linkedActivityId
         )
 
-        let sortedExercises = exercises.sorted { $0.order < $1.order }
+        // Stable sort and then normalize to session-wide sequential order.
+        let normalizedExercises: [ExerciseTemplate] = exercises
+            .enumerated()
+            .sorted { lhs, rhs in
+                if lhs.element.order != rhs.element.order {
+                    return lhs.element.order < rhs.element.order
+                }
+                return lhs.offset < rhs.offset
+            }
+            .map(\.element)
 
-        session.exercises = sortedExercises.map { ex in
+        session.exercises = normalizedExercises.enumerated().map { exerciseIndex, ex in
             let se = WorkoutSessionExercise(
-                order: ex.order,
+                order: exerciseIndex,
                 exerciseId: ex.exerciseId,
                 exerciseNameSnapshot: ex.nameSnapshot,
                 notes: ex.notes,
                 trackingStyle: ex.trackingStyle,
+                segment: ex.segment,
                 session: session
             )
 
-            let sortedSets = ex.sets.sorted { $0.order < $1.order }
+            let normalizedSets: [SetTemplate] = ex.sets
+                .enumerated()
+                .sorted { lhs, rhs in
+                    if lhs.element.order != rhs.element.order {
+                        return lhs.element.order < rhs.element.order
+                    }
+                    return lhs.offset < rhs.offset
+                }
+                .map(\.element)
 
-            se.setLogs = sortedSets.map { st in
+            se.setLogs = normalizedSets.enumerated().map { setIndex, st in
                 let log = WorkoutSetLog(
-                    order: st.order,
+                    order: setIndex,
                     origin: .planned,
                     reps: prefillActualsFromTargets ? st.targetReps : nil,
                     weight: prefillActualsFromTargets ? st.targetWeight : nil,
@@ -68,7 +88,6 @@ enum WorkoutSessionFactory {
                     sessionExercise: se
                 )
 
-                // Timed / distance targets (used for cardio, intervals, mobility, etc.)
                 log.targetDurationSeconds = st.targetDurationSeconds
                 log.targetDistance = st.targetDistance
 

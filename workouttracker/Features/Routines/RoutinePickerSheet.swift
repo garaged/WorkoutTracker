@@ -3,33 +3,48 @@ import SwiftData
 
 struct RoutinePickerSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-
     @Query(sort: [SortDescriptor(\WorkoutRoutine.name, order: .forward)])
     private var routines: [WorkoutRoutine]
 
+    let title: String
     let selectedRoutineId: UUID?
+    let excludedRoutineIDs: Set<UUID>
     let onPick: (WorkoutRoutine?) -> Void
 
     @State private var showCreate = false
 
+    init(
+        title: String = "Pick Routine",
+        selectedRoutineId: UUID?,
+        excludedRoutineIDs: Set<UUID> = [],
+        onPick: @escaping (WorkoutRoutine?) -> Void
+    ) {
+        self.title = title
+        self.selectedRoutineId = selectedRoutineId
+        self.excludedRoutineIDs = excludedRoutineIDs
+        self.onPick = onPick
+    }
+
+    private var selectableRoutines: [WorkoutRoutine] {
+        routines.filter { !excludedRoutineIDs.contains($0.id) }
+    }
+
     var body: some View {
         NavigationStack {
             Group {
-                if routines.isEmpty {
-                    ContentUnavailableView(
-                        "No routines yet",
+                if selectableRoutines.isEmpty {
+                    ContentUnavailableView(AppFormatting.localized("No routines available"),
                         systemImage: "list.bullet.rectangle",
-                        description: Text("Create a routine to attach workouts to this template.")
+                        description: Text(AppFormatting.localized("Create another routine to pick it from the list."))
                     )
                 } else {
                     List {
                         Section {
                             Button {
-                                onPick(nil)   // ✅ None / clear selection
+                                onPick(nil)
                             } label: {
                                 HStack {
-                                    Text("None")
+                                    Text(AppFormatting.localized("None"))
                                     Spacer()
                                     if selectedRoutineId == nil {
                                         Image(systemName: "checkmark")
@@ -39,8 +54,8 @@ struct RoutinePickerSheet: View {
                             }
                         }
 
-                        Section("Routines") {
-                            ForEach(routines) { r in
+                        Section(AppFormatting.localized("Routines")) {
+                            ForEach(selectableRoutines) { r in
                                 Button {
                                     onPick(r)
                                 } label: {
@@ -59,23 +74,22 @@ struct RoutinePickerSheet: View {
                     .listStyle(.insetGrouped)
                 }
             }
-            .navigationTitle("Pick Routine")
+            .navigationTitle(title)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
+                    Button(AppFormatting.localized("Close")) { dismiss() }
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showCreate = true
                     } label: {
-                        Label("New", systemImage: "plus")
+                        Label(AppFormatting.localized("New"), systemImage: "plus")
                     }
                 }
             }
             .sheet(isPresented: $showCreate) {
                 NavigationStack {
                     RoutineQuickCreateScreen { created in
-                        // Save + select immediately
                         onPick(created)
                         showCreate = false
                     }

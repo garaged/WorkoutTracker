@@ -24,7 +24,7 @@ struct UndoToastView: View {
 
             Spacer(minLength: 8)
 
-            Button("Undo") { onUndo() }
+            Button(AppFormatting.localized("Undo")) { onUndo() }
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Color.accentColor)
                 .buttonStyle(.plain)
@@ -38,7 +38,7 @@ struct UndoToastView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Dismiss undo")
+            .accessibilityLabel(AppFormatting.localized("Dismiss undo"))
             .accessibilityIdentifier("UndoToastView.DismissButton")
         }
         .accessibilityIdentifier("UndoToastView.Container")

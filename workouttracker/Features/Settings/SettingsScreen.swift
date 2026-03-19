@@ -21,7 +21,6 @@ struct SettingsScreen: View {
 
             StarterPackSettingsSection()
 
-            // ✅ NEW
             Section(String(localized: "settings.section.programs")) {
                 NavigationLink {
                     ProgramsLibraryScreen()
@@ -29,7 +28,7 @@ struct SettingsScreen: View {
                     Label(String(localized: "settings.programs.library"), systemImage: "books.vertical")
                 }
                 .accessibilityIdentifier("settings.programsLink")
-                
+
                 NavigationLink {
                     ProgramAssetsScreen()
                 } label: {
@@ -46,6 +45,8 @@ struct SettingsScreen: View {
                     }
                 }
                 .pickerStyle(.menu)
+                .accessibilityLabel(Text(verbatim: String(localized: "settings.units.weight")))
+                .accessibilityHint(Text(verbatim: String(localized: "settings.units.help")))
                 .accessibilityIdentifier("settings.weightUnitPicker")
 
                 Picker(String(localized: "settings.units.distance"), selection: $prefs.distanceUnit) {
@@ -55,22 +56,35 @@ struct SettingsScreen: View {
                     }
                 }
                 .pickerStyle(.menu)
+                .accessibilityLabel(Text(verbatim: String(localized: "settings.units.distance")))
+                .accessibilityHint(Text(verbatim: String(localized: "settings.units.help")))
                 .accessibilityIdentifier("settings.distanceUnitPicker")
 
                 Text(String(localized: "settings.units.help"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
-            
+
             Section(String(localized: "settings.section.workout_cues")) {
-                Toggle(String(localized: "settings.workout_cues.rest_sound"), isOn: $prefs.restSoundCuesEnabled)
-                    .accessibilityIdentifier("settings.restSoundCuesToggle")
+                Toggle(String(localized: "settings.workout_cues.completion_cue"), isOn: $prefs.restTimerCueEnabled)
+                    .accessibilityIdentifier("settings.restTimerCueToggle")
+                    .accessibilityLabel(AccessibilityLabels.Toggles.restTimerCue)
+                    .accessibilityHint(Text(verbatim: String(localized: "settings.workout_cues.help")))
 
                 Toggle(String(localized: "settings.workout_cues.haptics"), isOn: $prefs.hapticsEnabled)
+                    .accessibilityLabel(Text(verbatim: String(localized: "settings.workout_cues.haptics")))
+                    .accessibilityHint(Text(verbatim: String(localized: "settings.workout_cues.help")))
                     .accessibilityIdentifier("settings.hapticsToggle")
 
                 Toggle(String(localized: "settings.workout_cues.auto_start_rest"), isOn: $prefs.autoStartRest)
+                    .accessibilityLabel(Text(verbatim: String(localized: "settings.workout_cues.auto_start_rest")))
+                    .accessibilityHint(Text(verbatim: String(localized: "settings.workout_cues.help")))
                     .accessibilityIdentifier("settings.autoStartRestToggle")
+
+                Toggle(String(localized: "settings.workout_cues.show_overdue"), isOn: $prefs.restTimerShowOverdue)
+                    .accessibilityIdentifier("settings.restTimerShowOverdueToggle")
+                    .accessibilityLabel(AccessibilityLabels.Toggles.showOverdue)
+                    .accessibilityHint(Text(verbatim: String(localized: "settings.workout_cues.help")))
 
                 Text(String(localized: "settings.workout_cues.help"))
                     .font(.footnote)
@@ -94,9 +108,9 @@ struct SettingsScreen: View {
                 .accessibilityLabel(AccessibilityLabels.Toggles.verboseLogging)
                 .accessibilityHint(AccessibilityLabels.Toggles.verboseLoggingHint)
             }
-            
+
             ExerciseIllustrationSetPickerSection()
-            
+
             Section(String(localized: "settings.section.support")) {
                 NavigationLink {
                     SupportTipJarView()
@@ -105,7 +119,7 @@ struct SettingsScreen: View {
                 }
                 .accessibilityIdentifier("settings.tipJarLink")
             }
-            
+
             Section(String(localized: "settings.section.about")) {
                 HStack {
                     Text(String(localized: "settings.about.version"))

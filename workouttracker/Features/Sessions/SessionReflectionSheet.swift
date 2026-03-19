@@ -44,21 +44,21 @@ struct SessionReflectionSheet: View {
                 .padding(16)
             }
             .background(Color(uiColor: .systemGroupedBackground))
-            .navigationTitle("Reflection")
+            .navigationTitle(AppFormatting.localized("Reflection"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Not now") { dismiss() }   // <- key to “never blocks logging flow”
+                    Button(AppFormatting.localized("Not now")) { dismiss() }   // <- key to “never blocks logging flow”
                         .accessibilityIdentifier("SessionReflection.NotNow")
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
+                    Button(AppFormatting.localized("Save")) { save() }
                         .accessibilityIdentifier("SessionReflection.Save")
                         .disabled(!canSave)
                 }
             }
-            .alert("Couldn’t Save", isPresented: $showError) {
-                Button("OK", role: .cancel) {}
+            .alert(AppFormatting.localized("Couldn’t Save"), isPresented: $showError) {
+                Button(AppFormatting.localized("OK"), role: .cancel) {}
             } message: {
                 Text(errorMessage)
             }
@@ -70,9 +70,9 @@ struct SessionReflectionSheet: View {
     private var headerCard: some View {
         Card {
             VStack(alignment: .leading, spacing: 8) {
-                Text("How did it go?")
+                Text(AppFormatting.localized("How did it go?"))
                     .font(.title3.weight(.semibold))
-                Text("Optional. A quick mood + note makes it fun to look back later.")
+                Text(AppFormatting.localized("Optional. A quick mood + note makes it fun to look back later."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -82,7 +82,7 @@ struct SessionReflectionSheet: View {
     private var moodCard: some View {
         Card {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Mood")
+                Text(AppFormatting.localized("Mood"))
                     .font(.headline)
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 10)], spacing: 10) {
@@ -108,7 +108,7 @@ struct SessionReflectionSheet: View {
     private var noteCard: some View {
         Card {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Notes (optional)")
+                Text(AppFormatting.localized("Notes (optional)"))
                     .font(.headline)
 
                 ZStack(alignment: .topLeading) {
@@ -121,7 +121,7 @@ struct SessionReflectionSheet: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                     if noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        Text("Sleep, energy, what felt strong, what to fix next time…")
+                        Text(AppFormatting.localized("Sleep, energy, what felt strong, what to fix next time…"))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 18)
@@ -139,7 +139,7 @@ struct SessionReflectionSheet: View {
             } label: {
                 HStack {
                     Image(systemName: "trash")
-                    Text("Clear Reflection")
+                    Text(AppFormatting.localized("Clear Reflection"))
                     Spacer()
                 }
                 .font(.headline)
@@ -216,7 +216,7 @@ private struct MoodChip: View {
             .clipShape(Capsule())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(title) mood")
+        .accessibilityLabel(AppFormatting.localizedFormat("%@ mood", title))
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }

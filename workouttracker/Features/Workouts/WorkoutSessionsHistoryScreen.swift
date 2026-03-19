@@ -14,10 +14,9 @@ struct WorkoutSessionsHistoryScreen: View {
     var body: some View {
         List {
             if sessions.isEmpty {
-                ContentUnavailableView(
-                    "No sessions yet",
+                ContentUnavailableView(AppFormatting.localized("No sessions yet"),
                     systemImage: "dumbbell",
-                    description: Text("Start a routine to create your first session.")
+                    description: Text(AppFormatting.localized("Start a routine to create your first session."))
                 )
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
@@ -39,7 +38,7 @@ struct WorkoutSessionsHistoryScreen: View {
                 }
             }
         }
-        .navigationTitle("History")
+        .navigationTitle(AppFormatting.localized("History"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

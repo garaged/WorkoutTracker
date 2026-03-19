@@ -23,22 +23,22 @@ struct ExerciseEditorSheet: View {
 
     var body: some View {
         Form {
-            Section("Exercise") {
-                TextField("Name", text: $name)
+            Section(AppFormatting.localized("Exercise")) {
+                TextField(AppFormatting.localized("Name"), text: $name)
 
-                Picker("Modality", selection: $modality) {
+                Picker(AppFormatting.localized("Modality"), selection: $modality) {
                     ForEach(ExerciseModality.allCases, id: \.self) { m in
                         Text(m.rawValue.capitalized).tag(m)
                     }
                 }
             }
 
-            Section("Instructions") {
+            Section(AppFormatting.localized("Instructions")) {
                 TextEditor(text: $instructions)
                     .frame(minHeight: 120)
             }
 
-            Section("Notes") {
+            Section(AppFormatting.localized("Notes")) {
                 TextEditor(text: $notes)
                     .frame(minHeight: 90)
             }
@@ -47,10 +47,10 @@ struct ExerciseEditorSheet: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+                Button(AppFormatting.localized("Cancel")) { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { save() }
+                Button(AppFormatting.localized("Save")) { save() }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }

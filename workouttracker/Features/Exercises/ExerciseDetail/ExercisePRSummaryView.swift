@@ -7,24 +7,24 @@ struct ExercisePRSummaryView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Personal Records")
+            Text(AppFormatting.localized("Personal Records"))
                 .font(.headline)
 
             Grid(horizontalSpacing: 12, verticalSpacing: 12) {
                 GridRow {
-                    tile(title: "Top Weight", value: records.bestWeight.map { formatWeight($0.value) } ?? "—",
+                    tile(title: AppFormatting.localized("Top Weight"), value: records.bestWeight.map { formatWeight($0.value) } ?? AppFormatting.localized("—"),
                          subtitle: records.bestWeight.map { formatDate($0.date) })
-                    tile(title: "Top Reps", value: records.bestReps.map { "\($0.value)" } ?? "—",
+                    tile(title: AppFormatting.localized("Top Reps"), value: records.bestReps.map { "\($0.value)" } ?? AppFormatting.localized("—"),
                          subtitle: records.bestReps.map { formatDate($0.date) })
                 }
                 GridRow {
-                    tile(title: "Best Set Volume", value: records.bestSetVolume.map { formatVolume($0.value) } ?? "—",
+                    tile(title: AppFormatting.localized("Best Set Volume"), value: records.bestSetVolume.map { formatVolume($0.value) } ?? AppFormatting.localized("—"),
                          subtitle: records.bestSetVolume.map { formatDate($0.date) })
-                    tile(title: "Best Session Volume", value: records.bestSessionVolume.map { formatVolume($0.value) } ?? "—",
+                    tile(title: AppFormatting.localized("Best Session Volume"), value: records.bestSessionVolume.map { formatVolume($0.value) } ?? AppFormatting.localized("—"),
                          subtitle: records.bestSessionVolume.map { formatDate($0.date) })
                 }
                 GridRow {
-                    tile(title: "Best Est. 1RM", value: records.bestEstimated1RM.map { formatWeight($0.value) } ?? "—",
+                    tile(title: AppFormatting.localized("Best Est. 1RM"), value: records.bestEstimated1RM.map { formatWeight($0.value) } ?? AppFormatting.localized("—"),
                          subtitle: records.bestEstimated1RM.map { formatDate($0.date) })
                     Spacer()
                 }

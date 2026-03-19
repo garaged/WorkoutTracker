@@ -24,38 +24,38 @@ struct ProgramAssetsScreen: View {
     var body: some View {
         List {
             Section {
-                KeyValueRow(title: "Mapped routines (slug → UUID)", value: "\(mappedRoutines)")
-                KeyValueRow(title: "Mapped exercises (slug → UUID)", value: "\(mappedExercises)")
+                KeyValueRow(title: AppFormatting.localized("Mapped routines (slug → UUID)"), value: "\(mappedRoutines)")
+                KeyValueRow(title: AppFormatting.localized("Mapped exercises (slug → UUID)"), value: "\(mappedExercises)")
 
                 KeyValueRow(
-                    title: "Mapped routines missing in DB",
+                    title: AppFormatting.localized("Mapped routines missing in DB"),
                     value: "\(staleMappedRoutines)",
                     valueStyle: staleMappedRoutines > 0 ? .warning : .secondary
                 )
                 KeyValueRow(
-                    title: "Mapped exercises missing in DB",
+                    title: AppFormatting.localized("Mapped exercises missing in DB"),
                     value: "\(staleMappedExercises)",
                     valueStyle: staleMappedExercises > 0 ? .warning : .secondary
                 )
             } header: {
-                Text("Mappings")
+                Text(AppFormatting.localized("Mappings"))
             }
 
             Section {
-                KeyValueRow(title: "Workout routines in DB", value: "\(dbRoutines)")
-                KeyValueRow(title: "Exercises in DB", value: "\(dbExercises)")
+                KeyValueRow(title: AppFormatting.localized("Workout routines in DB"), value: "\(dbRoutines)")
+                KeyValueRow(title: AppFormatting.localized("Exercises in DB"), value: "\(dbExercises)")
             } header: {
-                Text("Database")
+                Text(AppFormatting.localized("Database"))
             }
 
             Section {
-                KeyValueRow(title: "Bundled catalog", value: catalogVersionLabel)
+                KeyValueRow(title: AppFormatting.localized("Bundled catalog"), value: catalogVersionLabel)
 
-                Text("Reinstall is idempotent: it creates missing routines/exercises and refreshes the slug mapping without overwriting your custom routines.")
+                Text(AppFormatting.localized("Reinstall is idempotent: it creates missing routines/exercises and refreshes the slug mapping without overwriting your custom routines."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
-                Text("Catalog")
+                Text(AppFormatting.localized("Catalog"))
             }
 
             Section {
@@ -63,7 +63,7 @@ struct ProgramAssetsScreen: View {
                     Task { await reinstallCatalogAssets() }
                 } label: {
                     HStack {
-                        Label("Reinstall Catalog Assets", systemImage: "arrow.clockwise")
+                        Label(AppFormatting.localized("Reinstall Catalog Assets"), systemImage: "arrow.clockwise")
                         Spacer()
                         if isWorking { ProgressView().controlSize(.small) }
                     }
@@ -73,36 +73,36 @@ struct ProgramAssetsScreen: View {
                 Button(role: .destructive) {
                     showResetConfirm = true
                 } label: {
-                    Label("Reset Program Asset Map", systemImage: "trash")
+                    Label(AppFormatting.localized("Reset Program Asset Map"), systemImage: "trash")
                 }
                 .disabled(isWorking)
             } header: {
-                Text("Actions")
+                Text(AppFormatting.localized("Actions"))
             } footer: {
-                Text("Reset clears the slug → UUID mapping file. After reset, Programs may appear “not schedulable” until you reinstall catalog assets (this screen will do it for you).")
+                Text(AppFormatting.localized("Reset clears the slug → UUID mapping file. After reset, Programs may appear “not schedulable” until you reinstall catalog assets (this screen will do it for you)."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
-        .navigationTitle("Program Assets")
+        .navigationTitle(AppFormatting.localized("Program Assets"))
         .task { await refreshAll() }
         .refreshable { await refreshAll() }
-        .alert("Program Assets", isPresented: $showMessage) {
-            Button("OK", role: .cancel) { }
+        .alert(AppFormatting.localized("Program Assets"), isPresented: $showMessage) {
+            Button(AppFormatting.localized("OK"), role: .cancel) { }
         } message: {
-            Text(message ?? "Done.")
+            Text(message ?? AppFormatting.localized("Done."))
         }
         .confirmationDialog(
             "Reset Program Asset Map?",
             isPresented: $showResetConfirm,
             titleVisibility: .visible
         ) {
-            Button("Reset and Reinstall Catalog Assets", role: .destructive) {
+            Button(AppFormatting.localized("Reset and Reinstall Catalog Assets"), role: .destructive) {
                 Task { await resetMapAndReinstall() }
             }
-            Button("Cancel", role: .cancel) { }
+            Button(AppFormatting.localized("Cancel"), role: .cancel) { }
         } message: {
-            Text("This does not delete routines or exercises from the database — it only clears the mapping file. We will reinstall catalog assets immediately after.")
+            Text(AppFormatting.localized("This does not delete routines or exercises from the database — it only clears the mapping file. We will reinstall catalog assets immediately after."))
         }
     }
 

@@ -6,7 +6,7 @@ struct TodayJumpButton: View {
 
     var body: some View {
         Button(action: action) {
-            Label("Today", systemImage: "calendar")
+            Label(AppFormatting.localized("Today"), systemImage: "calendar")
         }
         .buttonStyle(.bordered)      // nice capsule in the top bar
         .controlSize(.small)

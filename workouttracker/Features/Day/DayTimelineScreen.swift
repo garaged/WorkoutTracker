@@ -97,10 +97,10 @@ struct DayTimelineScreen: View {
             .padding(.horizontal, platform.isPad ? 16 : 8)
             if isUITesting {
                 HStack(spacing: 12) {
-                    Text("Activities: \(activities.count)")
+                    Text(AppFormatting.localizedFormat("Activities: %lld", Int64(activities.count)))
                         .accessibilityIdentifier("DayTimeline.Debug.ActivitiesCount")
 
-                    Text("Workouts: \(activities.filter { $0.kind == .workout }.count)")
+                    Text(AppFormatting.localizedFormat("Workouts: %lld", Int64(activities.filter { $0.kind == .workout }.count)))
                         .accessibilityIdentifier("DayTimeline.Debug.WorkoutsCount")
                 }
                 .font(.caption2)
@@ -178,7 +178,7 @@ struct DayTimelineScreen: View {
             refreshWorkoutSessionCache()
         }
         .confirmationDialog(
-            workoutActionActivity?.title ?? "Workout",
+            workoutActionActivity?.title ?? String(localized: "Workout"),
             isPresented: $showWorkoutDialog,
             titleVisibility: .visible
         ) {
@@ -187,51 +187,51 @@ struct DayTimelineScreen: View {
                 switch workoutLaunchState {
                 case .none:
                     if a.workoutRoutineId == nil {
-                        Button("Quick Start") { startQuickWorkout(from: a); closeWorkoutDialog() }
-                        Button("Attach Routine") { onEdit(a); closeWorkoutDialog() }
+                        Button(AppFormatting.localized("Quick Start")) { startQuickWorkout(from: a); closeWorkoutDialog() }
+                        Button(AppFormatting.localized("Attach Routine")) { onEdit(a); closeWorkoutDialog() }
                     } else {
-                        Button("Start") { startWorkout(from: a); closeWorkoutDialog() }
+                        Button(AppFormatting.localized("Start")) { startWorkout(from: a); closeWorkoutDialog() }
                     }
-                    Button("Edit Details") { onEdit(a); closeWorkoutDialog() }
+                    Button(AppFormatting.localized("Edit Details")) { onEdit(a); closeWorkoutDialog() }
 
                 case .inProgress(let s):
-                    Button("Open") { openSession(s); closeWorkoutDialog() }
+                    Button(AppFormatting.localized("Open")) { openSession(s); closeWorkoutDialog() }
                     Button(s.isPaused ? "Resume" : "Pause") {
                         togglePause(s)
                         closeWorkoutDialog()
                     }
-                    Button("Finish") {
+                    Button(AppFormatting.localized("Finish")) {
                         finishSession(s)
                         closeWorkoutDialog()
                     }
-                    Button("Stop", role: .destructive) {
+                    Button(AppFormatting.localized("Stop"), role: .destructive) {
                         stopSession(s)
                         closeWorkoutDialog()
                     }
-                    Button("Edit Details") { onEdit(a); closeWorkoutDialog() }
+                    Button(AppFormatting.localized("Edit Details")) { onEdit(a); closeWorkoutDialog() }
 
                 case .completed(let s), .abandoned(let s):
-                    Button("View Summary") { openSession(s); closeWorkoutDialog() }
+                    Button(AppFormatting.localized("View Summary")) { openSession(s); closeWorkoutDialog() }
 
-                    Button("Reopen") {
+                    Button(AppFormatting.localized("Reopen")) {
                         closeWorkoutDialog()
                         s.reopenForContinuation()
                         try? modelContext.save()
                         presentedSession = s
                     }
 
-                    Button("Start new session") {
+                    Button(AppFormatting.localized("Start new session")) {
                         closeWorkoutDialog()
                         startNewSessionNow(from: a)
                     }
 
-                    Button("Edit Details") { onEdit(a); closeWorkoutDialog() }
+                    Button(AppFormatting.localized("Edit Details")) { onEdit(a); closeWorkoutDialog() }
                 }
 
-                Button("Delete", role: .destructive) { deleteActivity(a); closeWorkoutDialog() }
+                Button(AppFormatting.localized("Delete"), role: .destructive) { deleteActivity(a); closeWorkoutDialog() }
             }
 
-            Button("Cancel", role: .cancel) { closeWorkoutDialog() }
+            Button(AppFormatting.localized("Cancel"), role: .cancel) { closeWorkoutDialog() }
 
         } message: {
             if let a = workoutActionActivity {
@@ -241,33 +241,33 @@ struct DayTimelineScreen: View {
                          ? "No routine attached. Quick start or attach a routine."
                          : "Ready to start this routine.")
                 case .inProgress(let s):
-                    Text("In progress since \(s.startedAt.formatted(.dateTime.hour().minute())).")
+                    Text(AppFormatting.localizedFormat("In progress since %@.", s.startedAt.formatted(.dateTime.hour().minute())))
                 case .completed:
-                    Text("Completed workout. View summary, start again (clone) or reopen.")
+                    Text(AppFormatting.localized("Completed workout. View summary, start again (clone) or reopen."))
                 case .abandoned:
-                    Text("Abandoned workout. View summary, start again (clone) or reopen.")
+                    Text(AppFormatting.localized("Abandoned workout. View summary, start again (clone) or reopen."))
                 }
             } else {
                 Text("")
             }
         }
-        .alert("Couldn't start workout", isPresented: Binding(
+        .alert(AppFormatting.localized("Couldn't start workout"), isPresented: Binding(
             get: { workoutStartErrorMessage != nil },
             set: { if !$0 { workoutStartErrorMessage = nil } }
         )) {
-            Button("OK", role: .cancel) { workoutStartErrorMessage = nil }
+            Button(AppFormatting.localized("OK"), role: .cancel) { workoutStartErrorMessage = nil }
         } message: {
             Text(workoutStartErrorMessage ?? "")
         }
         .confirmationDialog(
             (activityActionActivity?.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
-                ? (activityActionActivity?.title ?? "Activity")
-                : "Activity",
+                ? (activityActionActivity?.title ?? String(localized: "Activity"))
+                : String(localized: "Activity"),
             isPresented: $showActivityDialog,
             titleVisibility: .visible
         ) {
             if let a = activityActionActivity {
-                Button("Edit") { onEdit(a); closeActivityActionDialog() }
+                Button(AppFormatting.localized("Edit")) { onEdit(a); closeActivityActionDialog() }
 
                 Button(a.isDone ? "Mark as not done" : "Mark as done") {
                     toggleDone(a)
@@ -275,7 +275,7 @@ struct DayTimelineScreen: View {
                 }
 
                 if a.templateId != nil {
-                    Button("Skip today") {
+                    Button(AppFormatting.localized("Skip today")) {
                         skipToday(a)
                         closeActivityActionDialog()
                     }
@@ -283,13 +283,13 @@ struct DayTimelineScreen: View {
 
                 Divider()
 
-                Button("Delete", role: .destructive) {
+                Button(AppFormatting.localized("Delete"), role: .destructive) {
                     deleteActivity(a)
                     closeActivityActionDialog()
                 }
             }
 
-            Button("Cancel", role: .cancel) { closeActivityActionDialog() }
+            Button(AppFormatting.localized("Cancel"), role: .cancel) { closeActivityActionDialog() }
         } message: {
             if let a = activityActionActivity {
                 Text(a.templateId != nil
@@ -633,10 +633,10 @@ struct DayTimelineScreen: View {
 
         private func badgeSpec(_ state: WorkoutLaunchState) -> (String, String) {
             switch state {
-            case .none:              return ("Start", "play.circle")
-            case .inProgress:        return ("Resume", "play.circle.fill")
-            case .completed:         return ("Done", "checkmark.circle.fill")
-            case .abandoned:         return ("Abandoned", "xmark.circle.fill")
+            case .none:              return (String(localized: "Start"), "play.circle")
+            case .inProgress:        return (String(localized: "Resume"), "play.circle.fill")
+            case .completed:         return (String(localized: "Done"), "checkmark.circle.fill")
+            case .abandoned:         return (String(localized: "Abandoned"), "xmark.circle.fill")
             }
         }
 
@@ -1070,7 +1070,7 @@ struct DayTimelineScreen: View {
                     decorated
                         .contextMenu {
                             Button { onEdit(a) } label: {
-                                Label("Edit", systemImage: "pencil")
+                                Label(AppFormatting.localized("Edit"), systemImage: "pencil")
                             }
 
                             Button { toggleDone(a) } label: {
@@ -1082,14 +1082,14 @@ struct DayTimelineScreen: View {
 
                             if a.templateId != nil {
                                 Button { skipToday(a) } label: {
-                                    Label("Skip today", systemImage: "forward.end")
+                                    Label(AppFormatting.localized("Skip today"), systemImage: "forward.end")
                                 }
                             }
 
                             Divider()
 
                             Button(role: .destructive) { deleteActivity(a) } label: {
-                                Label("Delete", systemImage: "trash")
+                                Label(AppFormatting.localized("Delete"), systemImage: "trash")
                             }
                         }
                 }
@@ -1122,7 +1122,7 @@ struct DayTimelineScreen: View {
                     } label: {
                         Image(systemName: "stop.fill")
                     }
-                    .accessibilityLabel("Stop workout")
+                    .accessibilityLabel(AppFormatting.localized("Stop workout"))
                     .accessibilityIdentifier("DayTimeline.WorkoutOverlay.Stop")
                 }
                 .font(.caption2.weight(.semibold))
@@ -1135,7 +1135,7 @@ struct DayTimelineScreen: View {
                 Button {
                     openSession(s)
                 } label: {
-                    Label("Summary", systemImage: "checkmark.circle")
+                    Label(AppFormatting.localized("Summary"), systemImage: "checkmark.circle")
                         .font(.caption2.weight(.semibold))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
@@ -1148,7 +1148,7 @@ struct DayTimelineScreen: View {
             Button {
                 startSession(for: a)
             } label: {
-                Label("Start", systemImage: "play.fill")
+                Label(AppFormatting.localized("Start"), systemImage: "play.fill")
                     .font(.caption2.weight(.semibold))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
@@ -1240,13 +1240,16 @@ struct DayTimelineScreen: View {
             )
 
             guard let routine = try modelContext.fetch(desc).first else {
-                workoutStartErrorMessage = "The attached routine could not be found. Please reattach a routine."
+                workoutStartErrorMessage = String(localized: "The attached routine could not be found. Please reattach a routine.")
                 return
             }
 
-            let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
+            // Linked-flow aware validation path.
+            let executionSegments = WorkoutRoutineMapper.toExecutionSegments(routine: routine)
+            let templates = WorkoutRoutineMapper.toExerciseTemplates(executionSegments: executionSegments)
+
             guard !templates.isEmpty else {
-                workoutStartErrorMessage = "Routine “\(routine.name)” has no linked exercises. Reinstall the pack or fix the routine."
+                workoutStartErrorMessage = String(format: String(localized: "Routine “%@” has no linked exercises. Reinstall the pack or fix the routine."), locale: .autoupdatingCurrent, routine.name)
                 return
             }
 
@@ -1266,11 +1269,17 @@ struct DayTimelineScreen: View {
 
             try modelContext.save()
 
+            // Keep returned relationship arrays normalized for immediate UI rendering.
+            session.exercises.sort { $0.order < $1.order }
+            for ex in session.exercises {
+                ex.setLogs.sort { $0.order < $1.order }
+            }
+
             presentedSession = session
             workoutLaunchState = .inProgress(session)
             workoutActionActivity = nil
         } catch {
-            workoutStartErrorMessage = "Failed to start workout: \(error.localizedDescription)"
+            workoutStartErrorMessage = String(format: String(localized: "Failed to start workout: %@"), locale: .autoupdatingCurrent, error.localizedDescription)
         }
     }
     
@@ -1326,7 +1335,7 @@ struct DayTimelineScreen: View {
 
 
     private var workoutDialogTitle: String {
-        workoutActionActivity?.title ?? "Workout"
+        workoutActionActivity?.title ?? String(localized: "Workout")
     }
 
     private var workoutDialogMessage: String {
@@ -1335,22 +1344,34 @@ struct DayTimelineScreen: View {
         switch workoutLaunchState {
         case .none:
             if a.workoutRoutineId == nil {
-                return "No routine attached. Quick Start now, or attach a routine."
+                return String(localized: "No routine attached. Quick Start now, or attach a routine.")
             } else {
-                return "Ready to start this workout."
+                return String(localized: "Ready to start this workout.")
             }
 
         case .inProgress(let s):
             let started = s.startedAt.formatted(.dateTime.hour().minute())
-            return "In progress since \(started). Resume, restart, or edit details."
+            return String(
+                format: String(localized: "In progress since %@. Resume, restart, or edit details."),
+                locale: .autoupdatingCurrent,
+                started
+            )
 
         case .completed(let s):
             let ended = (s.endedAt ?? s.startedAt).formatted(.dateTime.month(.abbreviated).day().hour().minute())
-            return "Completed (\(ended)). View summary or start again."
+            return String(
+                format: String(localized: "Completed (%@). View summary or start again."),
+                locale: .autoupdatingCurrent,
+                ended
+            )
 
         case .abandoned(let s):
             let ended = (s.endedAt ?? s.startedAt).formatted(.dateTime.month(.abbreviated).day().hour().minute())
-            return "Abandoned (\(ended)). View summary or start again."
+            return String(
+                format: String(localized: "Abandoned (%@). View summary or start again."),
+                locale: .autoupdatingCurrent,
+                ended
+            )
         }
     }
 
@@ -1400,10 +1421,10 @@ struct DayTimelineScreen: View {
 
         private var text: String {
             switch badge {
-            case .start:   return "Start"
-            case .resume:  return "Resume"
-            case .summary: return "Summary"
-            case .paused: return "Paused"
+            case .start:   return String(localized: "Start")
+            case .resume:  return String(localized: "Resume")
+            case .summary: return String(localized: "Summary")
+            case .paused: return String(localized: "Paused")
             }
         }
     }
@@ -1553,7 +1574,7 @@ private struct TimelineInteractionLayer: View {
             .frame(width: max(44, laneWidth), height: h)
             .offset(x: x, y: top)
             .overlay(alignment: .topTrailing) {
-                Text("Lane \(selectedLane + 1)")
+                Text(AppFormatting.localizedFormat("Lane %lld", Int64(selectedLane + 1)))
                     .font(.caption2)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)

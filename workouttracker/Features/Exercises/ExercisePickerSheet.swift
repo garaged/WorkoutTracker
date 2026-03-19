@@ -2,47 +2,109 @@ import SwiftUI
 import SwiftData
 
 struct ExercisePickerSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
+    private enum PickerScope: String, CaseIterable, Identifiable {
+        case all
+        case warmUp
+        case coolDown
 
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .all: return "All"
+            case .warmUp: return "Warm-up"
+            case .coolDown: return "Cool-down"
+            }
+        }
+
+        var role: ExerciseRoutineRole? {
+            switch self {
+            case .all: return nil
+            case .warmUp: return .warmUp
+            case .coolDown: return .coolDown
+            }
+        }
+    }
+
+    @Environment(\.dismiss) private var dismiss
     @Query(sort: [SortDescriptor(\Exercise.name, order: .forward)])
     private var exercises: [Exercise]
 
+    let title: String
+    let preferredRole: ExerciseRoutineRole?
     let onPick: (Exercise?) -> Void
+
     @State private var showCreate = false
+    @State private var searchText = ""
+    @State private var selectedScope: PickerScope
+
+    init(
+        title: String = "Pick Exercise",
+        preferredRole: ExerciseRoutineRole? = nil,
+        onPick: @escaping (Exercise?) -> Void
+    ) {
+        self.title = title
+        self.preferredRole = preferredRole
+        self.onPick = onPick
+        switch preferredRole {
+        case .warmUp:
+            _selectedScope = State(initialValue: .warmUp)
+        case .coolDown:
+            _selectedScope = State(initialValue: .coolDown)
+        case nil:
+            _selectedScope = State(initialValue: .all)
+        }
+    }
 
     var body: some View {
         NavigationStack {
             Group {
-                if exercises.isEmpty {
-                    ContentUnavailableView(
-                        "No exercises",
+                if visibleExercises.isEmpty {
+                    ContentUnavailableView(AppFormatting.localized("No exercises"),
                         systemImage: "figure.strengthtraining.traditional",
-                        description: Text("Create an exercise to add it to routines.")
+                        description: Text(emptyStateMessage)
                     )
                 } else {
                     List {
-                        ForEach(exercises) { ex in
-                            Button {
-                                onPick(ex)
-                                dismiss()
-                            } label: {
-                                Text(ex.name)
+                        if let role = selectedScope.role, !suggestedExercises.isEmpty {
+                            Section(AppFormatting.localizedFormat("Suggested for %@", role.displayName)) {
+                                ForEach(suggestedExercises) { ex in
+                                    pickButton(for: ex)
+                                }
+                            }
+                        }
+
+                        Section(selectedScope == .all ? "Exercises" : "All exercises") {
+                            ForEach(remainingExercises) { ex in
+                                pickButton(for: ex)
                             }
                         }
                     }
                 }
             }
-            .navigationTitle("Pick Exercise")
+            .navigationTitle(title)
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+            .safeAreaInset(edge: .top) {
+                Picker(AppFormatting.localized("Exercise scope"), selection: $selectedScope) {
+                    ForEach(PickerScope.allCases) { scope in
+                        Text(scope.title).tag(scope)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .padding(.bottom, 6)
+                .background(.ultraThinMaterial)
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
+                    Button(AppFormatting.localized("Close")) { dismiss() }
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showCreate = true
                     } label: {
-                        Label("New", systemImage: "plus")
+                        Label(AppFormatting.localized("New"), systemImage: "plus")
                     }
                 }
             }
@@ -57,4 +119,80 @@ struct ExercisePickerSheet: View {
             }
         }
     }
+
+    private var searchQuery: String {
+        searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var filteredBaseExercises: [Exercise] {
+        let query = searchQuery
+        return exercises
+            .filter { !$0.isArchived }
+            .filter { ex in
+                guard !query.isEmpty else { return true }
+                return ex.name.localizedCaseInsensitiveContains(query)
+            }
+            .sorted { lhs, rhs in
+                lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+            }
+    }
+
+    private var visibleExercises: [Exercise] {
+        filteredBaseExercises
+    }
+
+    private var suggestedExercises: [Exercise] {
+        guard let role = selectedScope.role else { return [] }
+        return filteredBaseExercises.filter { $0.supportsRoutineRole(role) }
+    }
+
+    private var remainingExercises: [Exercise] {
+        let suggestedIDs = Set(suggestedExercises.map(\.id))
+        return filteredBaseExercises.filter { !suggestedIDs.contains($0.id) }
+    }
+
+    private var emptyStateMessage: String {
+        switch selectedScope {
+        case .all:
+            return AppFormatting.localized("Create an exercise to add it to routines.")
+        case .warmUp:
+            return AppFormatting.localized("No warm-up suggestions matched your search. Switch to All to see the full library or create a new exercise.")
+        case .coolDown:
+            return AppFormatting.localized("No cool-down suggestions matched your search. Switch to All to see the full library or create a new exercise.")
+        }
+    }
+
+    @ViewBuilder
+    private func pickButton(for ex: Exercise) -> some View {
+        Button {
+            onPick(ex)
+            dismiss()
+        } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(ex.name)
+                    .foregroundStyle(.primary)
+
+                HStack(spacing: 6) {
+                    pill(ex.modality.rawValue.capitalized)
+
+                    ForEach(Array(ex.routineRoles).sorted(by: { $0.rawValue < $1.rawValue })) { role in
+                        pill(role.displayName)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func pill(_ text: String) -> some View {
+        Text(text)
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(.thinMaterial, in: Capsule())
+    }
+
+
 }

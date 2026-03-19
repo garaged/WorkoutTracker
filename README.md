@@ -3,7 +3,8 @@
 A lightweight, on-device workout logging app built with **SwiftUI + SwiftData**.
 
 - ✅ On-device first (no account required)
-- ✅ Fast logging + routines + history/compare
+- ✅ Fast logging + linked routines + history/compare
+- ✅ Progress insights + Spanish localization in v2.0.0
 - ✅ Apache 2.0 licensed
 
 ## Screenshots
@@ -16,17 +17,28 @@ A lightweight, on-device workout logging app built with **SwiftUI + SwiftData**.
 Workout Tracker is a lightweight, on-device workout logging app built with SwiftUI + SwiftData.
 
 Core features:
-- **Routines & templates**: create routines and reuse them quickly
-- **Fast workout logging**: track sets (weight/reps), mark sets complete, keep momentum
+- **Routines & templates**: create routines, then optionally attach linked warm-up and cool-down routines
+- **Fast workout logging**: track sets (weight/reps), mark sets complete, and keep momentum during training
+- **Smarter rest timing**: keep the timer visible through ready/overdue states and add extra rest quickly
+- **Progress Hub**: review strength, volume, consistency, and recovery trends with honest low-data handling
 - **History that’s useful**: browse past sessions, compare two sessions, and review per-exercise performance
 - **Personal records (PRs)**: track best sets and highlight progress
-- **Preferences**: unit settings (kg/lb) and other quality-of-life settings
+- **Preferences & localization**: unit settings plus Spanish localization for the key v2 flows
 - **Backup / export**: export your data for safe keeping (and import if supported in your build)
 
 Non-goals:
 - No social feed, no accounts required, no “gamification” bloat (yet?)
 
 ## Changelog
+
+### v2.0.0
+
+- New Progress Hub with strength, volume, consistency, and recovery insights
+- Smarter rest timer behavior with overdue visibility and quick extra-rest actions
+- Linked warm-up and cool-down routines
+- Spanish localization across the core v2 flows
+- Accessibility, copy, and release-candidate hardening
+- Calories intentionally deferred to v2.0.1
 
 ### v1.0.8
 

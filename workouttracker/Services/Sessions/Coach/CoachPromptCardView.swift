@@ -70,7 +70,7 @@ struct CoachPromptCardView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Dismiss coach suggestion")
+            .accessibilityLabel(AppFormatting.localized("Dismiss coach suggestion"))
         }
     }
 
@@ -121,7 +121,7 @@ struct CoachPromptCardView: View {
     private var restChip: some View {
         if let onStartRest {
             Button(action: onStartRest) {
-                Label("\(suggestedRestSeconds)s", systemImage: "timer")
+                Label(AppFormatting.localizedFormat("%llds", Int64(suggestedRestSeconds)), systemImage: "timer")
                     .font(.subheadline.weight(.semibold))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)

@@ -32,8 +32,8 @@ struct WorkoutSessionsScreen: View {
                     RoutinesScreen()
                 } label: {
                     ActionRow(
-                        title: "Start a Workout",
-                        subtitle: "Pick a routine and begin logging",
+                        title: AppFormatting.localized("Start a Workout"),
+                        subtitle: AppFormatting.localized("Pick a routine and begin logging"),
                         systemImage: "play.circle.fill"
                     )
                 }
@@ -42,8 +42,8 @@ struct WorkoutSessionsScreen: View {
                     WorkoutSessionsHistoryScreen()
                 } label: {
                     ActionRow(
-                        title: "Workout History",
-                        subtitle: "Review past sessions",
+                        title: AppFormatting.localized("Workout History"),
+                        subtitle: AppFormatting.localized("Review past sessions"),
                         systemImage: "clock.arrow.circlepath"
                     )
                 }
@@ -53,28 +53,27 @@ struct WorkoutSessionsScreen: View {
                         WorkoutSessionScreen(session: s)
                     } label: {
                         ActionRow(
-                            title: "Continue",
+                            title: AppFormatting.localized("Continue"),
                             subtitle: s.startedAt.formatted(.dateTime.month(.abbreviated).day().hour().minute()),
                             systemImage: "bolt.fill"
                         )
                     }
                 } else {
                     ActionRow(
-                        title: "Continue",
-                        subtitle: "No sessions yet",
+                        title: AppFormatting.localized("Continue"),
+                        subtitle: AppFormatting.localized("No sessions yet"),
                         systemImage: "bolt.fill"
                     )
                     .foregroundStyle(.secondary)
                 }
             }
 
-            Section("Recent") {
+            Section(AppFormatting.localized("Recent")) {
                 let recent = Array(sessions.prefix(8))
                 if recent.isEmpty {
-                    ContentUnavailableView(
-                        "No sessions yet",
+                    ContentUnavailableView(AppFormatting.localized("No sessions yet"),
                         systemImage: "dumbbell",
-                        description: Text("Start a routine to create your first session.")
+                        description: Text(AppFormatting.localized("Start a routine to create your first session."))
                     )
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
@@ -98,7 +97,7 @@ struct WorkoutSessionsScreen: View {
                 }
             }
         }
-        .navigationTitle("Workouts")
+        .navigationTitle(AppFormatting.localized("Workouts"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }

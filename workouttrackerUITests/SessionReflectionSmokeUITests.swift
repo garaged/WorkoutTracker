@@ -118,29 +118,22 @@ final class SessionReflectionSmokeUITests: XCTestCase {
         return setToggleQuery(in: app).count > 0
     }
 
-    private func startFirstRoutineSessionIfNeeded(_ app: XCUIApplication) {
-        if waitForSessionScreen(app: app, timeout: 1.0) { return }
+    private func startFirstRoutineSessionIfNeeded(
+        _ app: XCUIApplication,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        if waitForSessionScreen(app: app, timeout: 8.0) { return }
 
-        // Tap the first routine row (tables or collection).
-        if app.tables.cells.firstMatch.waitForExistence(timeout: 2) {
-            app.tables.cells.firstMatch.tap()
-        } else if app.collectionViews.cells.firstMatch.waitForExistence(timeout: 2) {
-            app.collectionViews.cells.firstMatch.tap()
-        }
-
-        // In routine detail, tap a Start button (label varies).
-        let startCandidates: [XCUIElement] = [
-            app.buttons.matching(NSPredicate(format: "label == %@", "Start Now")).firstMatch,
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Start")).firstMatch,
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Begin")).firstMatch,
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Continue")).firstMatch,
-            app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Resume")).firstMatch
-        ]
-
-        for b in startCandidates where b.exists {
-            b.tap()
-            break
-        }
+        attachUITestDebug(app, name: "SessionRouteBootstrapFailed", file: file, line: line)
+        XCTFail(
+            """
+            Expected UITESTS_START=session to bootstrap directly into a seeded workout session.
+            The UITestHost session route did not reach the session screen.
+            """,
+            file: file,
+            line: line
+        )
     }
 
     private func assertOnSessionScreen(_ app: XCUIApplication,

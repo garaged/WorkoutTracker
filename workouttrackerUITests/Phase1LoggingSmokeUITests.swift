@@ -87,11 +87,16 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertTrue(repsField.waitForExistence(timeout: 10), "Expected reps field.")
         XCTAssertTrue(weightField.waitForExistence(timeout: 10), "Expected weight field.")
 
-        replaceText(in: repsField, with: "10")
-        replaceText(in: weightField, with: "100")
+        let repsPlus = app.buttons["WorkoutSetEditorRow.\(uuid).Reps.Plus"]
+        XCTAssertTrue(repsPlus.waitForExistence(timeout: 10), "Expected reps plus button.")
+        for _ in 0..<5 { repsPlus.tap() }   // 5 -> 10
 
         let sourceReps = normalizedTextFieldValue(repsField)
         let sourceWeight = normalizedTextFieldValue(weightField)
+
+        XCTAssertEqual(sourceReps, "10", "Expected source reps to be 10 before exercising copy/add semantics.")
+        XCTAssertFalse(sourceWeight.isEmpty, "Expected source weight to have a seeded value before exercising copy/add semantics.")
+        
         XCTAssertFalse(sourceReps.isEmpty, "Expected source reps to have a value before Add.")
         XCTAssertFalse(sourceWeight.isEmpty, "Expected source weight to have a value before Add.")
 
@@ -140,11 +145,16 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertTrue(repsField.waitForExistence(timeout: 10), "Expected reps field.")
         XCTAssertTrue(weightField.waitForExistence(timeout: 10), "Expected weight field.")
 
-        replaceText(in: repsField, with: "10")
-        replaceText(in: weightField, with: "100")
+        let repsPlus = app.buttons["WorkoutSetEditorRow.\(uuid).Reps.Plus"]
+        XCTAssertTrue(repsPlus.waitForExistence(timeout: 10), "Expected reps plus button.")
+        for _ in 0..<5 { repsPlus.tap() }   // 5 -> 10
 
         let sourceReps = normalizedTextFieldValue(repsField)
         let sourceWeight = normalizedTextFieldValue(weightField)
+
+        XCTAssertEqual(sourceReps, "10", "Expected source reps to be 10 before exercising copy/add semantics.")
+        XCTAssertFalse(sourceWeight.isEmpty, "Expected source weight to have a seeded value before exercising copy/add semantics.")
+
         XCTAssertFalse(sourceReps.isEmpty, "Expected source reps to have a value before Copy.")
         XCTAssertFalse(sourceWeight.isEmpty, "Expected source weight to have a value before Copy.")
 
@@ -211,13 +221,13 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertTrue(continueButton.exists, "Expected Continue button on session screen.")
         continueButton.tap()
 
-        let focusedCard = app.otherElements["WorkoutSession.ActionableExerciseCard"]
-        if !focusedCard.waitForExistence(timeout: 6) {
+        let focusedRow = app.otherElements["WorkoutSession.ActionableSetRow"]
+        if !focusedRow.waitForExistence(timeout: 6) {
             attachUITestDebug(app, name: "Phase1_ActionableRowMissingAfterContinue")
         }
 
         assertApproximatelyVerticallyCentered(
-            focusedCard,
+            focusedRow,
             in: app,
             debugName: "Continue actionable row"
         )
@@ -369,25 +379,72 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         return nil
     }
 
+    @discardableResult
+    private func focusTextField(_ field: XCUIElement) -> Bool {
+        XCTAssertTrue(field.waitForExistence(timeout: 2), "Field does not exist: \(field.identifier)")
+
+        func hasKeyboardFocus(_ field: XCUIElement) -> Bool {
+            field.debugDescription.contains("Keyboard Focused")
+        }
+
+        if hasKeyboardFocus(field) { return true }
+
+        dismissKeyboardIfPresent()
+
+        field.tap()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+        if hasKeyboardFocus(field) { return true }
+
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+        if hasKeyboardFocus(field) { return true }
+
+        dismissKeyboardIfPresent()
+        field.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+
+        return hasKeyboardFocus(field)
+    }
+
     private func replaceText(in field: XCUIElement, with newValue: String) {
-        XCTAssertTrue(field.exists, "Field does not exist: \(field)")
+        XCTAssertTrue(field.waitForExistence(timeout: 5), "Field does not exist: \(field.identifier)")
+        XCTAssertTrue(focusTextField(field), "Could not focus field \(field.identifier)")
 
-        // UI text fields in SwiftUI can be stubborn about where the cursor lands.
-        // Clear multiple times, then type the desired value, and retry once if the final value is still empty.
-        field.tap()
-        field.tap()
-
-        for _ in 0..<3 {
-            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 24))
-            if normalizedTextFieldValue(field).isEmpty { break }
+        let current = normalizedTextFieldValue(field)
+        if !current.isEmpty {
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count + 4))
         }
 
         field.typeText(newValue)
 
-        if normalizedTextFieldValue(field).isEmpty {
-            field.tap()
-            field.typeText(newValue)
+        XCTAssertTrue(
+            waitForTextFieldValue(field, equals: newValue, timeout: 2),
+            "Expected field \(field.identifier) to become \(newValue), found \(normalizedTextFieldValue(field))"
+        )
+    }
+
+    private func dismissKeyboardIfPresent() {
+        let donePred = NSPredicate(format: "label IN %@", ["Done", "Return", "Hide keyboard"])
+        let doneButton = app.buttons.matching(donePred).firstMatch
+        if doneButton.exists {
+            doneButton.tap()
+            RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+            return
         }
+
+        if app.keyboards.count > 0 {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.05)).tap()
+            RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+        }
+    }
+
+    private func waitForTextFieldValue(_ field: XCUIElement, equals expected: String, timeout: TimeInterval) -> Bool {
+        let start = Date()
+        while Date().timeIntervalSince(start) < timeout {
+            if normalizedTextFieldValue(field) == expected { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        }
+        return normalizedTextFieldValue(field) == expected
     }
 
     private func normalizedTextFieldValue(_ field: XCUIElement) -> String {

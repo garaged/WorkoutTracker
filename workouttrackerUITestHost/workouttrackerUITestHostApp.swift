@@ -24,7 +24,18 @@ struct workouttrackerUITestHostApp: App {
             UserDefaults.standard.synchronize()
         }
 
+        if env["UITESTS"] == "1", env["UITESTS_REST_TIMER_SHORT"] == "1" {
+            UserDefaults.standard.set(2, forKey: "prefs.defaultRestSeconds")
+            UserDefaults.standard.set(true, forKey: "prefs.autoStartRest")
+            UserDefaults.standard.set(true, forKey: "prefs.restTimerCueEnabled")
+            UserDefaults.standard.set(true, forKey: "prefs.restTimerShowOverdue")
+        }
+
         do {
+            if env["UITESTS"] == "1" {
+                assertUITestLaunchConfiguration(env)
+            }
+
             let c = try ModelContainerFactory.makeInMemoryContainer()
 
             if env["UITESTS"] == "1" {
@@ -34,6 +45,21 @@ struct workouttrackerUITestHostApp: App {
                 // does NOT auto-seed on the "calendar" route (to avoid hijacking navigation).
                 if env["UITESTS_SEED"] == "1" {
                     try seedCalendarUITestDataIfNeeded(context: context)
+
+                    if env["UITESTS_LINKED_FLOW"] == "1" {
+                        try seedLinkedRoutineUITestDataIfNeeded(context: context)
+                        try assertLinkedRoutineUITestSeed(context: context)
+                    }
+
+                    if env["UITESTS_PROGRESS"] == "1" {
+                        try seedProgressUITestDataIfNeeded(context: context)
+                        try assertProgressUITestSeed(context: context)
+                    }
+
+                    if env["UITESTS_PROGRESS_LOW_DATA"] == "1" {
+                        try seedLowDataProgressUITestDataIfNeeded(context: context)
+                        try assertLowDataProgressUITestSeed(context: context)
+                    }
                 }
 
                 if env["UITESTS_ACTIVE_SESSIONS"] == "1" {
@@ -65,6 +91,13 @@ struct workouttrackerUITestHostApp: App {
         }
         .modelContainer(container)
     }
+}
+
+private enum ProgressUITestSeed {
+    static let primaryExerciseID = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
+    static let secondaryExerciseID = UUID(uuidString: "22222222-2222-2222-2222-222222222222")!
+    static let primaryExerciseName = "UITest Bench Press"
+    static let secondaryExerciseName = "UITest Squat"
 }
 
 // MARK: - Calendar UITest seed
@@ -157,6 +190,204 @@ private func seedCalendarUITestDataIfNeeded(context: ModelContext, calendar: Cal
     }
 
     try context.save()
+}
+
+// MARK: - Progress UITest seed
+@MainActor
+private func seedProgressUITestDataIfNeeded(context: ModelContext, calendar: Calendar = .current) throws {
+    let existing = try context.fetch(FetchDescriptor<WorkoutSession>())
+        .filter { $0.status == .completed }
+
+    if existing.contains(where: { session in
+        session.exercises.contains(where: { $0.exerciseId == ProgressUITestSeed.primaryExerciseID })
+    }) {
+        return
+    }
+
+    let now = Date()
+
+    let benchSeeds: [(daysAgo: Int, reps: [Int], weights: [Double], durationMinutes: Int)] = [
+        (77, [8, 8, 8], [60, 60, 60], 42),
+        (63, [8, 8, 8], [65, 65, 65], 44),
+        (49, [6, 6, 6], [70, 70, 70], 46),
+        (35, [6, 6, 6], [72.5, 72.5, 72.5], 47),
+        (21, [5, 5, 5], [75, 75, 75], 49),
+        (7, [5, 5, 5], [80, 80, 80], 50)
+    ]
+
+    let squatSeeds: [(daysAgo: Int, reps: [Int], weights: [Double], durationMinutes: Int)] = [
+        (56, [5, 5, 5], [90, 90, 90], 45),
+        (28, [5, 5, 5], [100, 100, 100], 47),
+        (14, [5, 5, 5], [105, 105, 105], 48)
+    ]
+
+    for seed in benchSeeds {
+        let startedAt = calendar.date(byAdding: .day, value: -seed.daysAgo, to: now) ?? now
+        let session = makeCompletedStrengthSession(
+            exerciseID: ProgressUITestSeed.primaryExerciseID,
+            exerciseName: ProgressUITestSeed.primaryExerciseName,
+            startedAt: startedAt,
+            durationMinutes: seed.durationMinutes,
+            reps: seed.reps,
+            weights: seed.weights,
+            calendar: calendar
+        )
+        context.insert(session)
+    }
+
+    for seed in squatSeeds {
+        let startedAt = calendar.date(byAdding: .day, value: -seed.daysAgo, to: now) ?? now
+        let session = makeCompletedStrengthSession(
+            exerciseID: ProgressUITestSeed.secondaryExerciseID,
+            exerciseName: ProgressUITestSeed.secondaryExerciseName,
+            startedAt: startedAt,
+            durationMinutes: seed.durationMinutes,
+            reps: seed.reps,
+            weights: seed.weights,
+            calendar: calendar
+        )
+        context.insert(session)
+    }
+
+    try context.save()
+}
+
+@MainActor
+private func seedLowDataProgressUITestDataIfNeeded(context: ModelContext, calendar: Calendar = .current) throws {
+    let existing = try context.fetch(FetchDescriptor<WorkoutSession>())
+        .filter { $0.status == .completed }
+
+    if existing.contains(where: { session in
+        session.exercises.contains(where: { $0.exerciseId == ProgressUITestSeed.primaryExerciseID })
+    }) {
+        return
+    }
+
+    let startedAt = calendar.date(byAdding: .day, value: -6, to: Date()) ?? Date()
+    let session = makeCompletedStrengthSession(
+        exerciseID: ProgressUITestSeed.primaryExerciseID,
+        exerciseName: ProgressUITestSeed.primaryExerciseName,
+        startedAt: startedAt,
+        durationMinutes: 35,
+        reps: [8, 8],
+        weights: [55, 55],
+        calendar: calendar
+    )
+
+    context.insert(session)
+    try context.save()
+}
+
+@MainActor
+private func assertProgressUITestSeed(context: ModelContext, calendar: Calendar = .current) throws {
+    let service = ProgressAnalyticsService(
+        context: context,
+        weeklyVolumeCalculator: WeeklyVolumeCalculator(calendar: calendar),
+        consistencyCalculator: ConsistencyCalculator(calendar: calendar)
+    )
+
+    let end = calendar.startOfDay(for: Date())
+    let start = calendar.date(byAdding: .day, value: -84, to: end) ?? end
+    let dashboard = try service.dashboardSummary(for: DateInterval(start: start, end: end))
+
+    guard dashboard.featuredExercises.contains(where: { $0.exerciseID == ProgressUITestSeed.primaryExerciseID }) else {
+        fatalError("UITESTS assertion failed: Progress seed did not surface the primary featured exercise on the dashboard.")
+    }
+
+    guard dashboard.weeklySummary != nil else {
+        fatalError("UITESTS assertion failed: Progress seed expected a weekly summary for the dashboard.")
+    }
+
+    let detail = try service.exerciseDetailSummary(
+        for: ProgressUITestSeed.primaryExerciseID,
+        window: DateInterval(start: start, end: end)
+    )
+
+    guard detail.personalRecords.count >= 1 else {
+        fatalError("UITESTS assertion failed: Progress seed expected at least 1 personal record for the primary exercise.")
+    }
+
+    guard detail.recentPerformanceSamples.count >= 3 else {
+        fatalError("UITESTS assertion failed: Progress seed expected at least 3 recent performance samples for the primary exercise.")
+    }
+}
+
+@MainActor
+private func assertLowDataProgressUITestSeed(context: ModelContext, calendar: Calendar = .current) throws {
+    let service = ProgressAnalyticsService(
+        context: context,
+        weeklyVolumeCalculator: WeeklyVolumeCalculator(calendar: calendar),
+        consistencyCalculator: ConsistencyCalculator(calendar: calendar)
+    )
+
+    let end = calendar.startOfDay(for: Date())
+    let start = calendar.date(byAdding: .day, value: -84, to: end) ?? end
+    let window = DateInterval(start: start, end: end)
+
+    let dashboard = try service.dashboardSummary(for: window)
+
+    guard dashboard.featuredExercises.contains(where: { $0.exerciseID == ProgressUITestSeed.primaryExerciseID }) else {
+        fatalError("UITESTS assertion failed: Low-data Progress seed should still surface the seeded primary exercise on the dashboard.")
+    }
+
+    let detail = try service.exerciseDetailSummary(
+        for: ProgressUITestSeed.primaryExerciseID,
+        window: window
+    )
+
+    guard detail.hasLowData else {
+        fatalError("UITESTS assertion failed: Low-data Progress seed should produce a low-data exercise detail state.")
+    }
+}
+
+@MainActor
+private func makeCompletedStrengthSession(
+    exerciseID: UUID,
+    exerciseName: String,
+    startedAt: Date,
+    durationMinutes: Int,
+    reps: [Int],
+    weights: [Double],
+    calendar: Calendar
+) -> WorkoutSession {
+    let session = WorkoutSession(startedAt: startedAt)
+    session.status = .completed
+    session.endedAt = calendar.date(byAdding: .minute, value: durationMinutes, to: startedAt)
+
+    let exercise = WorkoutSessionExercise(
+        order: 0,
+        exerciseId: exerciseID,
+        exerciseNameSnapshot: exerciseName,
+        trackingStyle: .strength,
+        segment: .main,
+        session: session
+    )
+
+    var logs: [WorkoutSetLog] = []
+    var secondsOffset = 5 * 60
+
+    for (index, rep) in reps.enumerated() {
+        let completedAt = startedAt.addingTimeInterval(TimeInterval(secondsOffset))
+        let log = WorkoutSetLog(
+            order: index,
+            origin: .planned,
+            reps: rep,
+            weight: weights[index],
+            weightUnit: .kg,
+            completed: true,
+            completedAt: completedAt,
+            targetReps: rep,
+            targetWeight: weights[index],
+            targetWeightUnit: .kg,
+            targetRestSeconds: 120
+        )
+        logs.append(log)
+        secondsOffset += 150
+    }
+
+    exercise.setLogs = logs
+    session.exercises = [exercise]
+    return session
 }
 
 // MARK: - Home active-session UITest seed
@@ -254,6 +485,84 @@ private func seedHomeActiveSessionsScrollUITestDataIfNeeded(context: ModelContex
     try context.save()
 }
 
+// MARK: - Linked routine UITest seed
+@MainActor
+private func seedLinkedRoutineUITestDataIfNeeded(context: ModelContext) throws {
+    let mainName = "UITest — Linked Main"
+
+    let existingMain = try context.fetch(
+        FetchDescriptor<WorkoutRoutine>(
+            predicate: #Predicate<WorkoutRoutine> { routine in
+                routine.name == mainName
+            }
+        )
+    ).first
+
+    if existingMain != nil {
+        return
+    }
+
+    let warmExercise = Exercise(name: "UITest Warm-up Press")
+    let mainExercise = Exercise(name: "UITest Main Bench")
+    let coolExercise = Exercise(name: "UITest Cool-down Press")
+
+    let warmRoutine = WorkoutRoutine(name: "UITest — Linked Warm-up")
+    let mainRoutine = WorkoutRoutine(name: mainName)
+    let coolRoutine = WorkoutRoutine(name: "UITest — Linked Cool-down")
+
+    let warmItem = WorkoutRoutineItem(
+        order: 0,
+        routine: warmRoutine,
+        exercise: warmExercise,
+        trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue
+    )
+    let mainItem = WorkoutRoutineItem(
+        order: 0,
+        routine: mainRoutine,
+        exercise: mainExercise,
+        trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue
+    )
+    let coolItem = WorkoutRoutineItem(
+        order: 0,
+        routine: coolRoutine,
+        exercise: coolExercise,
+        trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue
+    )
+
+    let warmPlan = WorkoutSetPlan(order: 0, targetReps: 12, targetWeight: 20, weightUnit: .kg, targetRPE: nil, restSeconds: 30, routineItem: warmItem)
+    let mainPlan = WorkoutSetPlan(order: 0, targetReps: 5, targetWeight: 60, weightUnit: .kg, targetRPE: nil, restSeconds: 60, routineItem: mainItem)
+    let coolPlan = WorkoutSetPlan(order: 0, targetReps: 10, targetWeight: 15, weightUnit: .kg, targetRPE: nil, restSeconds: 30, routineItem: coolItem)
+
+    warmRoutine.items = [warmItem]
+    mainRoutine.items = [mainItem]
+    coolRoutine.items = [coolItem]
+
+    warmItem.setPlans = [warmPlan]
+    mainItem.setPlans = [mainPlan]
+    coolItem.setPlans = [coolPlan]
+
+    mainRoutine.warmUpRoutine = warmRoutine
+    mainRoutine.coolDownRoutine = coolRoutine
+
+    context.insert(warmExercise)
+    context.insert(mainExercise)
+    context.insert(coolExercise)
+
+    context.insert(warmRoutine)
+    context.insert(mainRoutine)
+    context.insert(coolRoutine)
+
+    context.insert(warmItem)
+    context.insert(mainItem)
+    context.insert(coolItem)
+
+    context.insert(warmPlan)
+    context.insert(mainPlan)
+    context.insert(coolPlan)
+
+    try context.save()
+}
+
 @MainActor
 private func assertHomeActiveSessionsScrollSeed(context: ModelContext) throws {
     let sessions = try context.fetch(
@@ -306,5 +615,69 @@ private func assertHomeActiveSessionsScrollSeed(context: ModelContext) throws {
 
     guard targetExists else {
         fatalError("UITESTS assertion failed: Computed actionable target set does not belong to the seeded session.")
+    }
+}
+
+@MainActor
+private func assertLinkedRoutineUITestSeed(context: ModelContext) throws {
+    let routines = try context.fetch(
+        FetchDescriptor<WorkoutRoutine>(
+            predicate: #Predicate<WorkoutRoutine> { routine in
+                routine.name == "UITest — Linked Main" ||
+                routine.name == "UITest — Linked Warm-up" ||
+                routine.name == "UITest — Linked Cool-down"
+            }
+        )
+    )
+
+    let byName = Dictionary(uniqueKeysWithValues: routines.map { ($0.name, $0) })
+
+    guard let main = byName["UITest — Linked Main"],
+          let warm = byName["UITest — Linked Warm-up"],
+          let cool = byName["UITest — Linked Cool-down"] else {
+        fatalError("UITESTS assertion failed: linked-flow seed expected warm-up, main, and cool-down routines to exist.")
+    }
+
+    guard main.warmUpRoutine?.id == warm.id else {
+        fatalError("UITESTS assertion failed: linked-flow seed expected main routine to reference the warm-up routine.")
+    }
+
+    guard main.coolDownRoutine?.id == cool.id else {
+        fatalError("UITESTS assertion failed: linked-flow seed expected main routine to reference the cool-down routine.")
+    }
+}
+
+
+@MainActor
+private func assertUITestLaunchConfiguration(_ env: [String: String]) {
+    let start = (env["UITESTS_START"] ?? "calendar").lowercased()
+    let progressModes = [env["UITESTS_PROGRESS"] == "1", env["UITESTS_PROGRESS_LOW_DATA"] == "1"].filter { $0 }.count
+    if progressModes > 1 {
+        fatalError("UITESTS assertion failed: Choose only one Progress seed mode. UITESTS_PROGRESS and UITESTS_PROGRESS_LOW_DATA are mutually exclusive.")
+    }
+
+    let activeSessionModes = [env["UITESTS_ACTIVE_SESSIONS"] == "1", env["UITESTS_ACTIVE_SESSIONS_SCROLL"] == "1"].filter { $0 }.count
+    if activeSessionModes > 1 {
+        fatalError("UITESTS assertion failed: Choose only one Home active-session seed mode. UITESTS_ACTIVE_SESSIONS and UITESTS_ACTIVE_SESSIONS_SCROLL are mutually exclusive.")
+    }
+
+    if (env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1") && start != "progress" {
+        fatalError("UITESTS assertion failed: Progress seed modes must launch with UITESTS_START=progress.")
+    }
+
+    if env["UITESTS_LINKED_FLOW"] == "1" && start != "session" {
+        fatalError("UITESTS assertion failed: Linked routine flow smoke tests must launch with UITESTS_START=session.")
+    }
+
+    let needsSeededData = start == "session" || env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1" || env["UITESTS_LINKED_FLOW"] == "1"
+    if needsSeededData, env["UITESTS_SEED"] != "1" {
+        fatalError("UITESTS assertion failed: Session and Progress UITest routes require UITESTS_SEED=1 so starter-pack and scenario data are available.")
+    }
+
+    if env["UITESTS_LOCALIZATION"] == "1" {
+        let needsLocalizedSeededData = env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1" || env["UITESTS_LINKED_FLOW"] == "1"
+        if needsLocalizedSeededData, env["UITESTS_SEED"] != "1" {
+            fatalError("UITESTS assertion failed: Localization smoke tests that cover Progress or linked sessions must launch with UITESTS_SEED=1.")
+        }
     }
 }

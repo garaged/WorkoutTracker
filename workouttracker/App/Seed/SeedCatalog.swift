@@ -3,13 +3,14 @@ import Foundation
 struct SeedCatalog: Codable {
     struct SeedExercise: Codable {
         let id: UUID
-        let key: String        // stable reference for routines
+        let key: String
         let name: String
         let notes: String?
-        // Add fields here if your Exercise model supports them:
-        // let modality: String?
-        // let muscleGroups: [String]?
-        // let equipment: [String]?
+        let modalityRaw: String?
+        let instructions: String?
+        let equipmentTags: [String]?
+        let routineRoles: [String]?
+        let illustrationKey: String?
     }
 
     struct SeedPlan: Codable {

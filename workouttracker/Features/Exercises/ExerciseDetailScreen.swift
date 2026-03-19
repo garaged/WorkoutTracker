@@ -66,7 +66,7 @@ struct ExerciseDetailScreen: View {
                     Button {
                         startWorkoutAction(exercise)
                     } label: {
-                        Label("Start workout with this exercise", systemImage: "play.fill")
+                        Label(AppFormatting.localized("Start workout with this exercise"), systemImage: "play.fill")
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .buttonStyle(.borderedProminent)
@@ -109,14 +109,14 @@ struct ExerciseDetailScreen: View {
             isPresented: $showNextTargetActions,
             titleVisibility: .visible
         ) {
-            Button("Start workout and apply target") {
+            Button(AppFormatting.localized("Start workout and apply target")) {
                 applyNextTargetPrefill()
                 startWorkoutAction?(exercise)
             }
-            Button("Apply for next workout") {
+            Button(AppFormatting.localized("Apply for next workout")) {
                 applyNextTargetPrefill()
             }
-            Button("Cancel", role: .cancel) {}
+            Button(AppFormatting.localized("Cancel"), role: .cancel) {}
         } message: {
             if let text = nextTarget?.text {
                 Text(text)
@@ -163,10 +163,9 @@ struct ExerciseDetailScreen: View {
                     .fill(.secondary.opacity(0.08))
                     .frame(height: 220)
                     .overlay {
-                        ContentUnavailableView(
-                            "No media",
+                        ContentUnavailableView(AppFormatting.localized("No media"),
                             systemImage: "photo",
-                            description: Text("Add an asset name later.")
+                            description: Text(AppFormatting.localized("Add an asset name later."))
                         )
                     }
 
@@ -175,10 +174,9 @@ struct ExerciseDetailScreen: View {
                     .fill(.secondary.opacity(0.08))
                     .frame(height: 220)
                     .overlay {
-                        ContentUnavailableView(
-                            "Missing illustration",
+                        ContentUnavailableView(AppFormatting.localized("Missing illustration"),
                             systemImage: "photo",
-                            description: Text("No illustration asset could be resolved for this exercise.")
+                            description: Text(AppFormatting.localized("No illustration asset could be resolved for this exercise."))
                         )
                     }
 
@@ -187,10 +185,9 @@ struct ExerciseDetailScreen: View {
                     .fill(.secondary.opacity(0.08))
                     .frame(height: 220)
                     .overlay {
-                        ContentUnavailableView(
-                            "Remote media",
+                        ContentUnavailableView(AppFormatting.localized("Remote media"),
                             systemImage: "link",
-                            description: Text("We’ll support loading remote video/GIF later.")
+                            description: Text(AppFormatting.localized("We’ll support loading remote video/GIF later."))
                         )
                     }
             }
@@ -201,22 +198,21 @@ struct ExerciseDetailScreen: View {
     private var historySection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("History")
+                Text(AppFormatting.localized("History"))
                     .font(.headline)
                 Spacer()
                 NavigationLink {
                     WorkoutHistoryScreen(filter: .exercise(exerciseId: exercise.id, exerciseName: exercise.name))
                 } label: {
-                    Text("See all")
+                    Text(AppFormatting.localized("See all"))
                 }
                 .font(.subheadline)
             }
 
             if history.isEmpty {
-                ContentUnavailableView(
-                    "No logged sets yet",
+                ContentUnavailableView(AppFormatting.localized("No logged sets yet"),
                     systemImage: "clock",
-                    description: Text("Complete sets in a workout session to see history here.")
+                    description: Text(AppFormatting.localized("Complete sets in a workout session to see history here."))
                 )
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
@@ -256,9 +252,9 @@ struct ExerciseDetailScreen: View {
         let completedCount = sets.count
         let last = sets.compactMap(\.completedAt).max()
         return HStack(spacing: 10) {
-            statPill(title: "Sets", value: "\(completedCount)")
+            statPill(title: AppFormatting.localized("Sets"), value: "\(completedCount)")
             if let last {
-                statPill(title: "Last", value: last.formatted(.dateTime.month(.abbreviated).day()))
+                statPill(title: AppFormatting.localized("Last"), value: last.formatted(.dateTime.month(.abbreviated).day()))
             }
             Spacer()
         }
@@ -346,13 +342,13 @@ struct ExerciseDetailScreen: View {
         switch exercise.modality {
         case .strength:
             let unit = points.last?.unit ?? ""
-            return "Weight over time \(unit.isEmpty ? "" : "(\(unit))")"
+            return unit.isEmpty ? AppFormatting.localized("Weight over time") : AppFormatting.localizedFormat("Weight over time (%@)", unit)
         case .timed:
-            return "Seconds over time"
+            return AppFormatting.localized("Seconds over time")
         case .cardio:
-            return "Effort over time"
+            return AppFormatting.localized("Effort over time")
         case .mobility:
-            return "Reps/seconds over time"
+            return AppFormatting.localized("Reps/seconds over time")
         }
     }
     
@@ -368,19 +364,19 @@ struct ExerciseDetailScreen: View {
     private var equipmentSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("Equipment")
+                Text(AppFormatting.localized("Equipment"))
                     .font(.headline)
                 Spacer()
                 Button {
                     showEquipmentEditor = true
                 } label: {
-                    Label("Edit", systemImage: "tag")
+                    Label(AppFormatting.localized("Edit"), systemImage: "tag")
                 }
                 .buttonStyle(.bordered)
             }
 
             if exercise.equipmentTags.isEmpty {
-                Text("No equipment tags yet.")
+                Text(AppFormatting.localized("No equipment tags yet."))
                     .foregroundStyle(.secondary)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -500,18 +496,18 @@ private struct EquipmentTagsEditorSheet: View {
         NavigationStack {
             List {
                 Section {
-                    Text("\(selected.count) selected")
+                    Text(AppFormatting.localizedFormat("%lld selected", Int64(selected.count)))
                         .foregroundStyle(.secondary)
                 }
 
-                Section("Common") {
+                Section(AppFormatting.localized("Common")) {
                     ForEach(EquipmentCatalog.common) { item in
                         row(tag: item.id, label: item.label, symbol: item.symbol)
                     }
                 }
 
                 if !customLabels.isEmpty {
-                    Section("Custom") {
+                    Section(AppFormatting.localized("Custom")) {
                         ForEach(customLabels.sorted(), id: \.self) { label in
                             let tag = EquipmentCatalog.slugify(label)
                             row(tag: tag, label: label, symbol: EquipmentCatalog.symbol(for: tag))
@@ -519,10 +515,10 @@ private struct EquipmentTagsEditorSheet: View {
                     }
                 }
 
-                Section("Add tag") {
+                Section(AppFormatting.localized("Add tag")) {
                     HStack {
-                        TextField("e.g. Dip Station", text: $newTagLabel)
-                        Button("Add") {
+                        TextField(AppFormatting.localized("e.g. Dip Station"), text: $newTagLabel)
+                        Button(AppFormatting.localized("Add")) {
                             let tag = EquipmentCatalog.slugify(newTagLabel)
                             guard !tag.isEmpty else { return }
                             selected.insert(tag)
@@ -530,7 +526,7 @@ private struct EquipmentTagsEditorSheet: View {
                         }
                         .disabled(EquipmentCatalog.slugify(newTagLabel).isEmpty)
                     }
-                    Text("Tags are stored as canonical keys (letters/numbers only).")
+                    Text(AppFormatting.localized("Tags are stored as canonical keys (letters/numbers only)."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -539,11 +535,11 @@ private struct EquipmentTagsEditorSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(AppFormatting.localized("Cancel")) { dismiss() }
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
+                    Button(AppFormatting.localized("Save")) {
                         onSave(selected)
                         dismiss()
                     }
@@ -647,18 +643,18 @@ private struct EquipmentTagsEditorSheet: View {
             NavigationStack {
                 List {
                     Section {
-                        Text("\(selected.count) selected")
+                        Text(AppFormatting.localizedFormat("%lld selected", Int64(selected.count)))
                             .foregroundStyle(.secondary)
                     }
 
-                    Section("Common") {
+                    Section(AppFormatting.localized("Common")) {
                         ForEach(EquipmentTagCatalog.common) { item in
                             row(tag: item.id, label: item.label, symbol: item.symbol)
                         }
                     }
 
                     if !customLabels.isEmpty {
-                        Section("Custom") {
+                        Section(AppFormatting.localized("Custom")) {
                             ForEach(customLabels.sorted(), id: \.self) { label in
                                 let tag = EquipmentTagCatalog.slugify(label)
                                 row(tag: tag, label: label, symbol: EquipmentTagCatalog.symbol(for: tag))
@@ -666,10 +662,10 @@ private struct EquipmentTagsEditorSheet: View {
                         }
                     }
 
-                    Section("Add tag") {
+                    Section(AppFormatting.localized("Add tag")) {
                         HStack {
-                            TextField("e.g. Dip Station", text: $newTagLabel)
-                            Button("Add") {
+                            TextField(AppFormatting.localized("e.g. Dip Station"), text: $newTagLabel)
+                            Button(AppFormatting.localized("Add")) {
                                 let tag = EquipmentTagCatalog.slugify(newTagLabel)
                                 guard !tag.isEmpty else { return }
                                 selected.insert(tag)
@@ -678,7 +674,7 @@ private struct EquipmentTagsEditorSheet: View {
                             .disabled(EquipmentTagCatalog.slugify(newTagLabel).isEmpty)
                         }
 
-                        Text("Tags are stored as canonical keys (letters/numbers only).")
+                        Text(AppFormatting.localized("Tags are stored as canonical keys (letters/numbers only)."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -687,11 +683,11 @@ private struct EquipmentTagsEditorSheet: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button("Cancel") { dismiss() }
+                        Button(AppFormatting.localized("Cancel")) { dismiss() }
                     }
 
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Save") {
+                        Button(AppFormatting.localized("Save")) {
                             onSave(selected)
                             dismiss()
                         }

@@ -45,32 +45,31 @@ struct ProgramScheduleSheet: View {
 
         NavigationStack {
             List {
-                Section("Start") {
+                Section(AppFormatting.localized("Start")) {
                     DatePicker("Start date", selection: $startDate, displayedComponents: .date)
                     DatePicker("Start time", selection: $startTime, displayedComponents: .hourAndMinute)
                 }
 
-                Section("Options") {
-                    Toggle("Create Rest between training days", isOn: $includeRestDays)
+                Section(AppFormatting.localized("Options")) {
+                    Toggle(AppFormatting.localized("Create Rest between training days"), isOn: $includeRestDays)
 
-                    Picker("Conflicts", selection: $conflict) {
+                    Picker(AppFormatting.localized("Conflicts"), selection: $conflict) {
                         ForEach(ProgramSchedulingService.ConflictStrategy.allCases) { s in
                             Text(s.label).tag(s)
                         }
                     }
 
-                    Toggle("After scheduling, open start day in timeline", isOn: $openTimelineAfterSchedule)
+                    Toggle(AppFormatting.localized("After scheduling, open start day in timeline"), isOn: $openTimelineAfterSchedule)
                         .accessibilityIdentifier("programs.schedule.openTimelineToggle")
                 }
 
-                Section("Preview") {
-                    LabeledContent("Activities", value: "\(preview.totalActivities)")
-                    LabeledContent("Workouts", value: "\(preview.workoutActivities)")
-                    LabeledContent("Training days", value: "\(preview.trainingDays)")
+                Section(AppFormatting.localized("Preview")) {
+                    LabeledContent(AppFormatting.localized("Activities"), value: "\(preview.totalActivities)")
+                    LabeledContent(AppFormatting.localized("Workouts"), value: "\(preview.workoutActivities)")
+                    LabeledContent(AppFormatting.localized("Training days"), value: "\(preview.trainingDays)")
 
                     if let r = preview.dateRange {
-                        LabeledContent(
-                            "Range",
+                        LabeledContent(AppFormatting.localized("Range"),
                             value: "\(r.lowerBound.formatted(date: .abbreviated, time: .omitted)) → \(r.upperBound.formatted(date: .abbreviated, time: .omitted))"
                         )
                         .foregroundStyle(.secondary)
@@ -78,8 +77,8 @@ struct ProgramScheduleSheet: View {
                 }
 
                 if !preview.isSchedulable {
-                    Section("Required routines not installed") {
-                        Text("This program can’t be scheduled until its routines exist in your library (V2 rule).")
+                    Section(AppFormatting.localized("Required routines not installed")) {
+                        Text(AppFormatting.localized("This program can’t be scheduled until its routines exist in your library (V2 rule)."))
                             .font(.callout)
                             .foregroundStyle(.secondary)
 
@@ -89,24 +88,24 @@ struct ProgramScheduleSheet: View {
                     }
                 }
             }
-            .navigationTitle("Schedule Program")
+            .navigationTitle(AppFormatting.localized("Schedule Program"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(AppFormatting.localized("Cancel")) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button { scheduleNow() } label: {
-                        if isScheduling { ProgressView() } else { Text("Schedule") }
+                        if isScheduling { ProgressView() } else { Text(AppFormatting.localized("Schedule")) }
                     }
                     .disabled(isScheduling || !preview.isSchedulable)
                     .accessibilityIdentifier("programs.schedule.confirmButton")
                 }
             }
         }
-        .alert("Error", isPresented: $showError) {
-            Button("OK", role: .cancel) { }
+        .alert(AppFormatting.localized("Error"), isPresented: $showError) {
+            Button(AppFormatting.localized("OK"), role: .cancel) { }
         } message: {
-            Text(errorMessage ?? "Unknown error.")
+            Text(errorMessage ?? AppFormatting.localized("Unknown error."))
         }
     }
 

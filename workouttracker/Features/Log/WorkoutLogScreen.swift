@@ -47,10 +47,9 @@ struct WorkoutLogScreen: View {
 
             List {
                 if sessionsForSelectedDay.isEmpty {
-                    ContentUnavailableView(
-                        "No workouts",
+                    ContentUnavailableView(AppFormatting.localized("No workouts"),
                         systemImage: "calendar.badge.minus",
-                        description: Text("No sessions logged for this day.")
+                        description: Text(AppFormatting.localized("No sessions logged for this day."))
                     )
                     .listRowSeparator(.hidden)
                 } else {
@@ -67,7 +66,7 @@ struct WorkoutLogScreen: View {
             .listStyle(.plain)
         }
         .padding(.horizontal, 12)
-        .navigationTitle("Log")
+        .navigationTitle(AppFormatting.localized("Log"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -79,7 +78,7 @@ struct WorkoutLogScreen: View {
                 } label: {
                     Image(systemName: "clock.arrow.circlepath")
                 }
-                .accessibilityLabel("History")
+                .accessibilityLabel(AppFormatting.localized("History"))
             }
         }
 
@@ -196,7 +195,7 @@ struct WorkoutLogScreen: View {
                 Spacer()
 
                 if cal.isDateInToday(selectedDay) {
-                    Text("Today")
+                    Text(AppFormatting.localized("Today"))
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -205,9 +204,9 @@ struct WorkoutLogScreen: View {
             }
 
             HStack(spacing: 14) {
-                StatChip(title: "Workouts", value: "\(completed)/\(total)")
-                StatChip(title: "Volume (\(preferredUnit.label))", value: formatVolume(volume))
-                StatChip(title: "Time", value: formatDuration(seconds))
+                StatChip(title: AppFormatting.localized("Workouts"), value: "\(completed)/\(total)")
+                StatChip(title: AppFormatting.localizedFormat("Volume (%@)", preferredUnit.label), value: formatVolume(volume))
+                StatChip(title: AppFormatting.localized("Time"), value: formatDuration(seconds))
             }
         }
         .padding(.horizontal, 2)
@@ -221,13 +220,13 @@ struct WorkoutLogScreen: View {
                     onOpenSession: { s in presentedSession = s }
                 )
             } label: {
-                Label("History for this day", systemImage: "clock")
+                Label(AppFormatting.localized("History for this day"), systemImage: "clock")
                     .font(.subheadline.weight(.semibold))
             }
 
             Spacer()
 
-            Text("See all")
+            Text(AppFormatting.localized("See all"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -368,7 +367,7 @@ private struct DayCell: View {
                         .foregroundStyle(Color.accentColor)
                 }
                 if completedCount > 3 {
-                    Text("+")
+                    Text(AppFormatting.localized("+"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -397,7 +396,7 @@ private struct WorkoutSessionRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(session.sourceRoutineNameSnapshot ?? "Quick Workout")
+                Text(session.sourceRoutineNameSnapshot ?? AppFormatting.localized("Quick Workout"))
                     .font(.headline)
                     .lineLimit(1)
 
@@ -418,7 +417,7 @@ private struct WorkoutSessionRow: View {
                     .filter { $0.completed }
                     .count
 
-                Text("\(setsDone) sets")
+                Text(AppFormatting.localizedFormat("%lld sets", Int64(setsDone)))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

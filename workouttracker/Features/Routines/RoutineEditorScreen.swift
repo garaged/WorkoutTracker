@@ -16,6 +16,7 @@ struct RoutineEditorScreen: View {
 
     @State private var routine: WorkoutRoutine? = nil
     @State private var showExercisePicker = false
+    @State private var validationMessage: String? = nil
 
     @State private var pendingExerciseToAdd: Exercise? = nil
     @State private var pendingTrackingStyle: ExerciseTrackingStyle = .strength
@@ -43,20 +44,30 @@ struct RoutineEditorScreen: View {
                     ExercisePickerSheet { picked in
                         guard let picked else { return }
                         pendingExerciseToAdd = picked
-                        pendingTrackingStyle = .strength
+                        pendingTrackingStyle = defaultTrackingStyle(for: picked)
                         showExercisePicker = false
                         showTrackingStylePicker = true
                     }
                 }
                 .sheet(isPresented: $showTrackingStylePicker) {
                     TrackingStylePickerSheet(
-                        exerciseName: pendingExerciseToAdd?.name ?? "Exercise",
+                        exerciseName: pendingExerciseToAdd?.name ?? AppFormatting.localized("Exercise"),
                         selection: $pendingTrackingStyle
                     ) {
                         guard let ex = pendingExerciseToAdd else { return }
                         addExercise(ex, tracking: pendingTrackingStyle, to: routine)
                         pendingExerciseToAdd = nil
                     }
+                }
+                .alert(AppFormatting.localized("Linked routines"),
+                    isPresented: Binding(
+                        get: { validationMessage != nil },
+                        set: { if !$0 { validationMessage = nil } }
+                    )
+                ) {
+                    Button(AppFormatting.localized("OK"), role: .cancel) {}
+                } message: {
+                    Text(validationMessage ?? "")
                 }
             } else {
                 ProgressView()
@@ -69,15 +80,15 @@ struct RoutineEditorScreen: View {
     private func toolbarContent(for routine: WorkoutRoutine) -> some ToolbarContent {
         if isCreate {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Cancel") { cancelCreate() }
+                Button(AppFormatting.localized("Cancel")) { cancelCreate() }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Save") { saveAndDismiss() }
+                Button(AppFormatting.localized("Save")) { saveAndDismiss() }
                     .disabled(cleanName(for: routine).isEmpty)
             }
         } else {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Done") { saveAndDismiss() }
+                Button(AppFormatting.localized("Done")) { saveAndDismiss() }
                     .disabled(cleanName(for: routine).isEmpty)
             }
         }
@@ -85,7 +96,7 @@ struct RoutineEditorScreen: View {
         ToolbarItem(placement: .bottomBar) {
             if !isCreate {
                 Button(role: .destructive) { deleteRoutine() } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label(AppFormatting.localized("Delete"), systemImage: "trash")
                 }
             }
         }
@@ -123,6 +134,14 @@ struct RoutineEditorScreen: View {
     private func saveAndDismiss() {
         guard let r = routine else { return }
 
+        switch RoutineLinkPlanner.validate(mainRoutine: r) {
+        case .valid:
+            break
+        case .invalid(let message):
+            validationMessage = message
+            return
+        }
+
         r.name = cleanName(for: r)
         r.notes = cleanNotes(for: r)
         r.updatedAt = Date()
@@ -157,7 +176,8 @@ struct RoutineEditorScreen: View {
             routine: routine,
             exercise: ex,
             notes: nil,
-            trackingStyleRaw: style.rawValue
+            trackingStyleRaw: style.rawValue,
+            segmentRaw: WorkoutExerciseSegment.main.rawValue
         )
 
         let count = style.defaultPlannedRows
@@ -195,6 +215,17 @@ struct RoutineEditorScreen: View {
         for (idx, it) in sorted.enumerated() { it.order = idx }
     }
 
+    private func defaultTrackingStyle(for exercise: Exercise) -> ExerciseTrackingStyle {
+        switch exercise.modality {
+        case .strength:
+            return .strength
+        case .timed, .mobility:
+            return .timeOnly
+        case .cardio:
+            return .timeDistance
+        }
+    }
+
     private func cleanName(for routine: WorkoutRoutine) -> String {
         routine.name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -213,25 +244,54 @@ private struct RoutineEditorDetail: View {
 
     var body: some View {
         List {
-            Section("Routine") {
-                TextField("Name", text: Binding(
+            Section(AppFormatting.localized("Routine")) {
+                TextField(AppFormatting.localized("Name"), text: Binding(
                     get: { routine.name },
                     set: { routine.name = $0; routine.updatedAt = Date() }
                 ))
 
-                TextField("Notes", text: Binding(
+                TextField(AppFormatting.localized("Notes"), text: Binding(
                     get: { routine.notes ?? "" },
                     set: { routine.notes = $0.isEmpty ? nil : $0; routine.updatedAt = Date() }
                 ), axis: .vertical)
                 .lineLimit(2...6)
             }
 
-            Section("Exercises") {
+            Section(AppFormatting.localized("Linked routines")) {
+                LinkedRoutinePickerView(
+                    role: .warmUp,
+                    mainRoutineID: routine.id,
+                    currentRoutine: routine.warmUpRoutine,
+                    onSelect: { picked in
+                        routine.warmUpRoutine = picked
+                        routine.updatedAt = Date()
+                    },
+                    onClear: {
+                        routine.warmUpRoutine = nil
+                        routine.updatedAt = Date()
+                    }
+                )
+
+                LinkedRoutinePickerView(
+                    role: .coolDown,
+                    mainRoutineID: routine.id,
+                    currentRoutine: routine.coolDownRoutine,
+                    onSelect: { picked in
+                        routine.coolDownRoutine = picked
+                        routine.updatedAt = Date()
+                    },
+                    onClear: {
+                        routine.coolDownRoutine = nil
+                        routine.updatedAt = Date()
+                    }
+                )
+            }
+
+            Section(AppFormatting.localized("Exercises")) {
                 if routine.items.isEmpty {
-                    ContentUnavailableView(
-                        "No exercises",
+                    ContentUnavailableView(AppFormatting.localized("No exercises"),
                         systemImage: "dumbbell",
-                        description: Text("Add exercises so this routine can generate sessions.")
+                        description: Text(AppFormatting.localized("Add exercises so this routine can generate sessions."))
                     )
                     .listRowSeparator(.hidden)
                 } else {
@@ -249,12 +309,12 @@ private struct RoutineEditorDetail: View {
                 Button {
                     onAddExercise()
                 } label: {
-                    Label("Add exercise", systemImage: "plus")
+                    Label(AppFormatting.localized("Add exercise"), systemImage: "plus")
                 }
             }
 
-            Section("Status") {
-                Toggle("Archived", isOn: Binding(
+            Section(AppFormatting.localized("Status")) {
+                Toggle(AppFormatting.localized("Archived"), isOn: Binding(
                     get: { routine.isArchived },
                     set: {
                         routine.isArchived = $0
@@ -309,10 +369,20 @@ private struct RoutineItemRow: View {
     let item: WorkoutRoutineItem
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(item.exercise?.name ?? "Unknown Exercise")
-                .font(.headline)
-                .lineLimit(1)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Text(item.exercise?.name ?? AppFormatting.localized("Unknown Exercise"))
+                    .font(.headline)
+                    .lineLimit(1)
+
+                if item.segment != .main {
+                    Text(item.segment.displayName)
+                        .font(.caption.weight(.semibold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(.thinMaterial, in: Capsule())
+                }
+            }
 
             Text(summaryText)
                 .font(.subheadline)

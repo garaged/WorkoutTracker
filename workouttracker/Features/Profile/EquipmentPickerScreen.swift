@@ -13,22 +13,21 @@ struct EquipmentPickerScreen: View {
     var body: some View {
         List {
             Section {
-                Text("\(selected.count) selected")
+                Text(AppFormatting.localizedFormat("%lld selected", Int64(selected.count)))
                     .foregroundStyle(.secondary)
             }
 
-            Section("Common") {
+            Section(AppFormatting.localized("Common")) {
                 ForEach(EquipmentCatalog.common) { item in
                     row(tag: item.id, label: item.label, symbol: item.symbol)
                 }
             }
 
-            Section("Custom") {
+            Section(AppFormatting.localized("Custom")) {
                 if custom.isEmpty {
-                    ContentUnavailableView(
-                        "No Custom Equipment",
+                    ContentUnavailableView(AppFormatting.localized("No Custom Equipment"),
                         systemImage: "plus",
-                        description: Text("Add items you have at home or at your gym.")
+                        description: Text(AppFormatting.localized("Add items you have at home or at your gym."))
                     )
                     .listRowBackground(Color.clear)
                 } else {
@@ -39,7 +38,7 @@ struct EquipmentPickerScreen: View {
                                 Button(role: .destructive) {
                                     removeCustom(label: label)
                                 } label: {
-                                    Label("Delete", systemImage: "trash")
+                                    Label(AppFormatting.localized("Delete"), systemImage: "trash")
                                 }
                             }
                     }
@@ -49,11 +48,11 @@ struct EquipmentPickerScreen: View {
                     newCustom = ""
                     showAddCustom = true
                 } label: {
-                    Label("Add Custom Equipment", systemImage: "plus.circle.fill")
+                    Label(AppFormatting.localized("Add Custom Equipment"), systemImage: "plus.circle.fill")
                 }
             }
         }
-        .navigationTitle("Equipment")
+        .navigationTitle(AppFormatting.localized("Equipment"))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -78,17 +77,17 @@ struct EquipmentPickerScreen: View {
         .sheet(isPresented: $showAddCustom) {
             NavigationStack {
                 Form {
-                    Section("Name") {
-                        TextField("e.g. Dip Station", text: $newCustom)
+                    Section(AppFormatting.localized("Name")) {
+                        TextField(AppFormatting.localized("e.g. Dip Station"), text: $newCustom)
                     }
                 }
-                .navigationTitle("Add Equipment")
+                .navigationTitle(AppFormatting.localized("Add Equipment"))
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button("Cancel") { showAddCustom = false }
+                        Button(AppFormatting.localized("Cancel")) { showAddCustom = false }
                     }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Add") {
+                        Button(AppFormatting.localized("Add")) {
                             addCustom(label: newCustom)
                             showAddCustom = false
                         }

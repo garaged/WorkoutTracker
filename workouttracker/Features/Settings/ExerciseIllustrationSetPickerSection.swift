@@ -11,15 +11,15 @@ public struct ExerciseIllustrationSetPickerSection: View {
     public init() {}
 
     public var body: some View {
-        Section("Exercise Images") {
-            Picker("Illustration Set", selection: illustrationSetBinding) {
+        Section(AppFormatting.localized("Exercise Images")) {
+            Picker(AppFormatting.localized("Illustration Set"), selection: illustrationSetBinding) {
                 ForEach(ExerciseIllustrationSet.allCases) { set in
                     Text(set.displayName).tag(set)
                 }
             }
             .accessibilityIdentifier("settings.exerciseIllustrationSetPicker")
 
-            Text("Changes which bundled exercise art set is shown for seeded and catalog exercises. Default uses the neutral dummy artwork.")
+            Text(AppFormatting.localized("Changes which bundled exercise art set is shown for seeded and catalog exercises. Default uses the neutral dummy artwork."))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }

@@ -47,7 +47,7 @@ struct ExerciseInsightsSectionView: View {
             NavigationLink {
                 WorkoutHistoryScreen(filter: .exercise(exerciseId: exerciseId, exerciseName: exerciseName))
             } label: {
-                Label("View full history", systemImage: "clock.arrow.circlepath")
+                Label(AppFormatting.localized("View full history"), systemImage: "clock.arrow.circlepath")
                     .font(.subheadline.weight(.semibold))
             }
 
@@ -60,15 +60,15 @@ struct ExerciseInsightsSectionView: View {
         .task(id: exerciseId) { await reload() }
         .confirmationDialog("Next target", isPresented: $showNextTargetActions, titleVisibility: .visible) {
             if startWorkoutAction != nil {
-                Button("Start workout and apply target") {
+                Button(AppFormatting.localized("Start workout and apply target")) {
                     applyNextTargetPrefill()
                     startWorkoutAction?()
                 }
             }
-            Button("Apply target for next workout") {
+            Button(AppFormatting.localized("Apply target for next workout")) {
                 applyNextTargetPrefill()
             }
-            Button("Cancel", role: .cancel) {}
+            Button(AppFormatting.localized("Cancel"), role: .cancel) {}
         } message: {
             if let text = nextTarget?.text { Text(text) }
         }

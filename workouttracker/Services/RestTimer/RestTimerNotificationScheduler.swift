@@ -22,12 +22,14 @@ final class RestTimerNotificationScheduler {
     /// - It belongs to the rest-timer lifecycle, not to any one screen.
     /// - Keeping notification wiring here makes start / extend / cancel behavior deterministic.
     func scheduleRestFinished(after seconds: TimeInterval, soundEnabled: Bool) {
+        guard !isUITestRun else { return }
+        
         let clamped = max(1, Int(seconds.rounded(.up)))
         let token = UUID()
         latestScheduleToken = token
 
         let center = self.center
-
+        
         Task { @MainActor in
             let settings = await center.notificationSettings()
 
@@ -47,6 +49,11 @@ final class RestTimerNotificationScheduler {
                 break
             }
         }
+    }
+    
+    private var isUITestRun: Bool {
+        let env = ProcessInfo.processInfo.environment
+        return env["UITESTS"] == "1" || env["XCTestConfigurationFilePath"] != nil
     }
 
     func cancelActiveRestNotification() {

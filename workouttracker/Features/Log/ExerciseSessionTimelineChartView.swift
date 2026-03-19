@@ -12,7 +12,7 @@ struct ExerciseSessionTimelineChartView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Timeline")
+                Text(AppFormatting.localized("Timeline"))
                     .font(.headline)
                 Spacer()
                 if let label = points.last?.label {
@@ -26,10 +26,9 @@ struct ExerciseSessionTimelineChartView: View {
             }
 
             if points.isEmpty {
-                ContentUnavailableView(
-                    "Not enough data",
+                ContentUnavailableView(AppFormatting.localized("Not enough data"),
                     systemImage: "chart.line.uptrend.xyaxis",
-                    description: Text("Complete a few sessions with this exercise to see a timeline.")
+                    description: Text(AppFormatting.localized("Complete a few sessions with this exercise to see a timeline."))
                 )
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
@@ -47,7 +46,7 @@ struct ExerciseSessionTimelineChartView: View {
                 .frame(height: 170)
                 .chartXSelection(value: $selectedDate)
 
-                Text("Tap a point to open that session.")
+                Text(AppFormatting.localized("Tap a point to open that session."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

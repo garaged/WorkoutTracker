@@ -101,7 +101,7 @@ final class BackupServiceTests: XCTestCase {
 
         let decoded = try exportDecodedFile(context: context)
 
-        XCTAssertGreaterThanOrEqual(decoded.schemaVersion, 1)
+        XCTAssertGreaterThanOrEqual(decoded.schemaVersion, 4)
         XCTAssertFalse(decoded.createdAtISO8601.isEmpty)
         XCTAssertGreaterThan(decoded.entities.count, 0)
 
@@ -233,14 +233,16 @@ final class BackupServiceTests: XCTestCase {
             routine: routine,
             exercise: bench,
             notes: "Main lift",
-            trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue
+            trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue,
+            segmentRaw: WorkoutExerciseSegment.main.rawValue
         )
         let rowItem = WorkoutRoutineItem(
             order: 1,
             routine: routine,
             exercise: row,
             notes: "Back work",
-            trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue
+            trackingStyleRaw: ExerciseTrackingStyle.strength.rawValue,
+            segmentRaw: WorkoutExerciseSegment.coolDown.rawValue
         )
 
         context.insert(benchItem)
@@ -300,6 +302,7 @@ final class BackupServiceTests: XCTestCase {
             exerciseNameSnapshot: bench.name,
             notes: "Top sets felt good",
             trackingStyle: .strength,
+            segment: .main,
             session: session
         )
         let rowSessionExercise = WorkoutSessionExercise(
@@ -308,6 +311,7 @@ final class BackupServiceTests: XCTestCase {
             exerciseNameSnapshot: row.name,
             notes: "Hold peak contraction",
             trackingStyle: .strength,
+            segment: .coolDown,
             session: session
         )
 
@@ -418,6 +422,7 @@ final class BackupServiceTests: XCTestCase {
 
         let restoredBenchItem = try XCTUnwrap(restoredRoutineItems.first(where: { $0.order == 0 }))
         XCTAssertEqual(restoredBenchItem.notes, "Main lift")
+        XCTAssertEqual(restoredBenchItem.segment, .main)
 
         let restoredBenchPlans = restoredBenchItem.setPlans.sorted { lhs, rhs in
             if lhs.order != rhs.order { return lhs.order < rhs.order }
@@ -431,6 +436,7 @@ final class BackupServiceTests: XCTestCase {
 
         let restoredRowItem = try XCTUnwrap(restoredRoutineItems.first(where: { $0.order == 1 }))
         XCTAssertEqual(restoredRowItem.notes, "Back work")
+        XCTAssertEqual(restoredRowItem.segment, .coolDown)
 
         let restoredRowPlans = restoredRowItem.setPlans.sorted { lhs, rhs in
             if lhs.order != rhs.order { return lhs.order < rhs.order }
@@ -461,6 +467,7 @@ final class BackupServiceTests: XCTestCase {
         let restoredBenchSessionExercise = try XCTUnwrap(restoredSessionExercises.first(where: { $0.order == 0 }))
         XCTAssertEqual(restoredBenchSessionExercise.exerciseId, bench.id)
         XCTAssertEqual(restoredBenchSessionExercise.notes, "Top sets felt good")
+        XCTAssertEqual(restoredBenchSessionExercise.segment, .main)
 
         let restoredBenchLogs = restoredBenchSessionExercise.setLogs.sorted { lhs, rhs in
             if lhs.order != rhs.order { return lhs.order < rhs.order }
@@ -476,6 +483,7 @@ final class BackupServiceTests: XCTestCase {
 
         let restoredRowSessionExercise = try XCTUnwrap(restoredSessionExercises.first(where: { $0.order == 1 }))
         XCTAssertEqual(restoredRowSessionExercise.exerciseId, row.id)
+        XCTAssertEqual(restoredRowSessionExercise.segment, .coolDown)
 
         let restoredRowLogs = restoredRowSessionExercise.setLogs.sorted { lhs, rhs in
             if lhs.order != rhs.order { return lhs.order < rhs.order }

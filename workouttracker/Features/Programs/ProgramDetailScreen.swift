@@ -17,7 +17,7 @@ struct ProgramDetailScreen: View {
 
     var body: some View {
         List {
-            Section("Overview") {
+            Section(AppFormatting.localized("Overview")) {
                 Text(program.name)
                     .font(.title3)
                     .fontWeight(.semibold)
@@ -27,22 +27,22 @@ struct ProgramDetailScreen: View {
                         .foregroundStyle(.secondary)
                 }
 
-                LabeledContent("Duration", value: "\(program.durationWeeks) weeks")
+                LabeledContent(AppFormatting.localized("Duration"), value: AppFormatting.localizedFormat("%lld weeks", Int64(program.durationWeeks)))
 
                 if program.level != .unknown {
-                    LabeledContent("Level", value: program.level.rawValue.capitalized)
+                    LabeledContent(AppFormatting.localized("Level"), value: program.level.rawValue.capitalized)
                 }
 
                 if let author = program.author, !author.isEmpty {
-                    LabeledContent("Author", value: author)
+                    LabeledContent(AppFormatting.localized("Author"), value: author)
                 }
 
                 if !program.tags.isEmpty {
-                    LabeledContent("Tags", value: program.tags.joined(separator: ", "))
+                    LabeledContent(AppFormatting.localized("Tags"), value: program.tags.joined(separator: ", "))
                 }
 
                 if !program.equipment.isEmpty {
-                    LabeledContent("Equipment", value: program.equipment.joined(separator: ", "))
+                    LabeledContent(AppFormatting.localized("Equipment"), value: program.equipment.joined(separator: ", "))
                 }
 
                 // ✅ NEW: schedulable status + missing routines + install CTA
@@ -51,7 +51,7 @@ struct ProgramDetailScreen: View {
                 Button {
                     showScheduleSheet = true
                 } label: {
-                    Label("Schedule this program", systemImage: "calendar.badge.plus")
+                    Label(AppFormatting.localized("Schedule this program"), systemImage: "calendar.badge.plus")
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .buttonStyle(.borderedProminent)
@@ -60,7 +60,7 @@ struct ProgramDetailScreen: View {
                 .disabled(!(schedPreview?.isSchedulable ?? true))
             }
 
-            Section("Weeks") {
+            Section(AppFormatting.localized("Weeks")) {
                 ForEach(program.orderedWeeks, id: \.id) { week in
                     DisclosureGroup(week.displayTitle) {
                         if let goal = week.goal, !goal.isEmpty {
@@ -73,7 +73,7 @@ struct ProgramDetailScreen: View {
                         ForEach(week.orderedDays, id: \.id) { day in
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack {
-                                    Text("Day \(day.index)")
+                                    Text(AppFormatting.localizedFormat("Day %lld", Int64(day.index)))
                                         .font(.headline)
                                     Text(day.title)
                                         .foregroundStyle(.secondary)
@@ -86,7 +86,7 @@ struct ProgramDetailScreen: View {
                                 }
 
                                 if day.blocks.isEmpty {
-                                    Text("No blocks")
+                                    Text(AppFormatting.localized("No blocks"))
                                         .font(.callout)
                                         .foregroundStyle(.tertiary)
                                 } else {
@@ -98,7 +98,7 @@ struct ProgramDetailScreen: View {
                                                     .font(.caption)
                                                     .foregroundStyle(.secondary)
                                                 if let mins = b.estimatedMinutes {
-                                                    Text("\(mins) min")
+                                                    Text(AppFormatting.localizedFormat("%lld min", Int64(mins)))
                                                         .font(.caption)
                                                         .foregroundStyle(.secondary)
                                                 }
@@ -119,13 +119,13 @@ struct ProgramDetailScreen: View {
                 }
             }
         }
-        .navigationTitle("Program")
+        .navigationTitle(AppFormatting.localized("Program"))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showScheduleSheet = true
                 } label: {
-                    Label("Schedule", systemImage: "calendar.badge.plus")
+                    Label(AppFormatting.localized("Schedule"), systemImage: "calendar.badge.plus")
                 }
                 .accessibilityIdentifier("programs.detail.scheduleToolbarButton")
                 .disabled(!(schedPreview?.isSchedulable ?? true))
@@ -137,7 +137,7 @@ struct ProgramDetailScreen: View {
         .task {
             refreshSchedulablePreview()
         }
-        .alert("Program assets", isPresented: $showInstallMessage) {
+        .alert(AppFormatting.localized("Program assets"), isPresented: $showInstallMessage) {
             Button("OK", role: .cancel) { }
         } message: {
             Text(installMessage ?? "Done.")
@@ -170,7 +170,7 @@ struct ProgramDetailScreen: View {
 
                     if !p.isSchedulable {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Missing routine slugs:")
+                            Text(AppFormatting.localized("Missing routine slugs:"))
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
 
@@ -195,7 +195,7 @@ struct ProgramDetailScreen: View {
                             .disabled(isInstallingAssets)
                             .accessibilityIdentifier("programs.detail.installAssetsButton")
 
-                            Text("This installs routines/exercises from the bundled catalog (if available). Imported packs should be re-imported if their assets are missing.")
+                            Text(AppFormatting.localized("This installs routines/exercises from the bundled catalog (if available). Imported packs should be re-imported if their assets are missing."))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -207,7 +207,7 @@ struct ProgramDetailScreen: View {
                 // Initial load placeholder (avoids layout jump)
                 HStack(spacing: 10) {
                     ProgressView().controlSize(.small)
-                    Text("Checking requirements…")
+                    Text(AppFormatting.localized("Checking requirements…"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

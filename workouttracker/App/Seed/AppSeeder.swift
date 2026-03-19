@@ -4,15 +4,13 @@ import SwiftData
 @MainActor
 enum AppSeeder {
     // Bump when you change the bundled seed JSONs.
-    private static let seedVersion = 1
+    private static let seedVersion = 2
     private static let seedKey = "workouttracker.seedVersion"
 
     static func seedIfNeeded(context: ModelContext) {
         let current = UserDefaults.standard.integer(forKey: seedKey)
         guard current < seedVersion else { return }
 
-        // Only seed when user is effectively "fresh".
-        // This avoids surprising experienced users.
         let existingExerciseCount = (try? context.fetchCount(FetchDescriptor<Exercise>())) ?? 0
         let existingRoutineCount  = (try? context.fetchCount(FetchDescriptor<WorkoutRoutine>())) ?? 0
 
@@ -24,24 +22,35 @@ enum AppSeeder {
         do {
             let catalog = try SeedCatalog.loadFromBundle()
 
-            // 1) Exercises
             var exerciseByKey: [String: Exercise] = [:]
             for ex in catalog.exercises {
+                let rolesRaw = ex.routineRoles?
+                    .compactMap { ExerciseRoutineRole(rawValue: $0) }
+                    .sorted { $0.rawValue < $1.rawValue }
+                    .map(\.rawValue)
+                    .joined(separator: ",")
+
                 let e = Exercise(
                     id: ex.id,
                     name: ex.name,
-                    // Adapt these to your model fields:
-                    // modality: ex.modality,
-                    // muscleGroups: ex.muscleGroups,
-                    // equipment: ex.equipment
-                    // notes: ex.notes
-                    notes: ex.notes
+                    modality: .strength,
+                    instructions: ex.instructions,
+                    notes: ex.notes,
+                    mediaKind: (ex.illustrationKey == nil ? .none : .bundledAsset),
+                    mediaAssetName: ex.illustrationKey,
+                    mediaURLString: nil,
+                    equipmentTagsRaw: (ex.equipmentTags ?? []).joined(separator: ","),
+                    routineRolesRaw: rolesRaw?.isEmpty == false ? rolesRaw : nil
                 )
+
+                if let modalityRaw = ex.modalityRaw, !modalityRaw.isEmpty {
+                    e.modalityRaw = modalityRaw
+                }
+
                 context.insert(e)
                 exerciseByKey[ex.key] = e
             }
 
-            // 2) Routines + items + plans
             for r in catalog.routines {
                 let routine = WorkoutRoutine(id: r.id, name: r.name)
                 context.insert(routine)
@@ -58,7 +67,6 @@ enum AppSeeder {
                     )
                     routine.items.append(ri)
 
-                    // Planned rows
                     for (sidx, p) in item.plans.enumerated() {
                         let plan = WorkoutSetPlan(
                             order: sidx,
@@ -79,7 +87,6 @@ enum AppSeeder {
             try context.save()
             UserDefaults.standard.set(seedVersion, forKey: seedKey)
         } catch {
-            // Don’t hard-crash the app on seed issues.
             assertionFailure("Seed failed: \(error)")
         }
     }

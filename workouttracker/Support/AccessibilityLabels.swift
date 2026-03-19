@@ -12,6 +12,8 @@ enum AccessibilityLabels {
     enum Toggles {
         static var verboseLogging: String { String(localized: "a11y.toggle.verbose_logging") }
         static var verboseLoggingHint: String { String(localized: "a11y.toggle.verbose_logging_hint") }
+        static var restTimerCue: String { String(localized: "a11y.toggle.rest_timer_cue") }
+        static var showOverdue: String { String(localized: "a11y.toggle.show_overdue") }
     }
 
     enum EmptyStates {
@@ -42,6 +44,9 @@ enum AccessibilityLabels {
         static var scheduleTemplates: String { String(localized: "a11y.button.schedule_templates") }
         static var pauseWorkout: String { String(localized: "a11y.button.pause_workout") }
         static var showPRDetails: String { String(localized: "a11y.button.show_pr_details") }
+        static var extendRest15: String { String(localized: "a11y.button.extend_rest_15") }
+        static var extendRest30: String { String(localized: "a11y.button.extend_rest_30") }
+        static var extendRest60: String { String(localized: "a11y.button.extend_rest_60") }
     }
 
     enum Hints {

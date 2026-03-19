@@ -68,51 +68,51 @@ struct TemplateEditorView: View {
 
     var body: some View {
         Form {
-            Section("Schedule Template") {
-                TextField("Title", text: $title)
+            Section(AppFormatting.localized("Schedule Template")) {
+                TextField(AppFormatting.localized("Title"), text: $title)
 
-                Toggle("Enabled", isOn: $isEnabled)
+                Toggle(AppFormatting.localized("Enabled"), isOn: $isEnabled)
 
                 DatePicker("Default start time", selection: $startTime, displayedComponents: .hourAndMinute)
 
                 Stepper(value: $durationMinutes, in: 5...360, step: 5) {
                     HStack {
-                        Text("Duration")
+                        Text(AppFormatting.localized("Duration"))
                         Spacer()
                         Text("\(durationMinutes) min").foregroundStyle(.secondary)
                     }
                 }
             }
 
-            Section("Type") {
-                Picker("Kind", selection: $template.kind) {
-                    Text("General").tag(ActivityKind.generic)
-                    Text("Workout").tag(ActivityKind.workout)
+            Section(AppFormatting.localized("Type")) {
+                Picker(AppFormatting.localized("Kind"), selection: $template.kind) {
+                    Text(AppFormatting.localized("General")).tag(ActivityKind.generic)
+                    Text(AppFormatting.localized("Workout")).tag(ActivityKind.workout)
                 }
                 .pickerStyle(.segmented)
             }
 
             if template.kind == .workout {
-                Section("Workout") {
+                Section(AppFormatting.localized("Workout")) {
                     RoutinePickerField(routineId: $template.workoutRoutineId)
 
-                    Text("This routine will be attached to every generated workout activity from this schedule template.")
+                    Text(AppFormatting.localized("This routine will be attached to every generated workout activity from this schedule template."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
 
-            Section("Recurrence") {
-                Picker("Repeats", selection: $recurrenceKind) {
+            Section(AppFormatting.localized("Recurrence")) {
+                Picker(AppFormatting.localized("Repeats"), selection: $recurrenceKind) {
                     Text("One-time").tag(RecurrenceRule.Kind.none)
-                    Text("Daily").tag(RecurrenceRule.Kind.daily)
-                    Text("Weekly").tag(RecurrenceRule.Kind.weekly)
+                    Text(AppFormatting.localized("Daily")).tag(RecurrenceRule.Kind.daily)
+                    Text(AppFormatting.localized("Weekly")).tag(RecurrenceRule.Kind.weekly)
                 }
 
                 if recurrenceKind != .none {
                     Stepper(value: $interval, in: 1...30) {
                         HStack {
-                            Text("Interval")
+                            Text(AppFormatting.localized("Interval"))
                             Spacer()
                             Text(intervalLabel).foregroundStyle(.secondary)
                         }
@@ -125,21 +125,21 @@ struct TemplateEditorView: View {
 
                 DatePicker("Start date", selection: $ruleStartDate, displayedComponents: .date)
 
-                Toggle("End date", isOn: $hasEndDate)
+                Toggle(AppFormatting.localized("End date"), isOn: $hasEndDate)
                 if hasEndDate {
                     DatePicker(" ", selection: $ruleEndDate, displayedComponents: .date)
                 }
             }
 
             if case .edit = mode {
-                Section("Apply scope") {
-                    Picker("Scope", selection: $updateScope) {
+                Section(AppFormatting.localized("Apply scope")) {
+                    Picker(AppFormatting.localized("Scope"), selection: $updateScope) {
                         ForEach(UpdateScope.allCases) { scope in
                             Text(scope.rawValue).tag(scope)
                         }
                     }
 
-                    Toggle("Overwrite actual fields", isOn: $overwriteActual)
+                    Toggle(AppFormatting.localized("Overwrite actual fields"), isOn: $overwriteActual)
 
                     if let previewError {
                         Text(previewError)
@@ -165,7 +165,7 @@ struct TemplateEditorView: View {
                     Button(role: .destructive) {
                         deleteTemplate()
                     } label: {
-                        Label("Delete schedule template", systemImage: "trash")
+                        Label(AppFormatting.localized("Delete schedule template"), systemImage: "trash")
                     }
                 }
             }
@@ -174,10 +174,10 @@ struct TemplateEditorView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Cancel") { dismiss() }
+                Button(AppFormatting.localized("Cancel")) { dismiss() }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Save") { save() }
+                Button(AppFormatting.localized("Save")) { save() }
                     .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
@@ -220,9 +220,9 @@ struct TemplateEditorView: View {
         case .thisInstance:
             return "This will update \(c) \(noun) (apply day only)."
         case .thisAndFuture:
-            return "This will update \(c) \(noun) (this & future; materialized rows only)."
+            return AppFormatting.localizedFormat("This will update %1$lld %2$@ (this & future; materialized rows only).", Int64(c), noun)
         case .allInstances:
-            return "This will update \(c) \(noun) (all materialized rows)."
+            return AppFormatting.localizedFormat("This will update %1$lld %2$@ (all materialized rows).", Int64(c), noun)
         }
     }
 
@@ -518,7 +518,7 @@ private struct WeekdayPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Days").font(.subheadline).foregroundStyle(.secondary)
+            Text(AppFormatting.localized("Days")).font(.subheadline).foregroundStyle(.secondary)
 
             HStack(spacing: 8) {
                 ForEach(Weekday.allCases, id: \.self) { wd in
@@ -547,13 +547,13 @@ private struct WeekdayPicker: View {
 
     private func label(for w: Weekday) -> String {
         switch w {
-        case .sunday: return "Sun"
-        case .monday: return "Mon"
-        case .tuesday: return "Tue"
-        case .wednesday: return "Wed"
-        case .thursday: return "Thu"
-        case .friday: return "Fri"
-        case .saturday: return "Sat"
+        case .sunday: return AppFormatting.localized("Sun")
+        case .monday: return AppFormatting.localized("Mon")
+        case .tuesday: return AppFormatting.localized("Tue")
+        case .wednesday: return AppFormatting.localized("Wed")
+        case .thursday: return AppFormatting.localized("Thu")
+        case .friday: return AppFormatting.localized("Fri")
+        case .saturday: return AppFormatting.localized("Sat")
         }
     }
 }

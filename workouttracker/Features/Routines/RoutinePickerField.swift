@@ -14,7 +14,7 @@ struct RoutinePickerField: View {
             showPicker = true
         } label: {
             HStack {
-                Text("Routine")
+                Text(AppFormatting.localized("Routine"))
                 Spacer()
                 Text(routineName)
                     .foregroundStyle(.secondary)

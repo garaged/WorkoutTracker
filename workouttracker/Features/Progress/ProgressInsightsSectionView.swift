@@ -9,7 +9,7 @@ struct ProgressInsightsSectionView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             if !insights.targets.isEmpty {
-                Text("Next up")
+                Text(AppFormatting.localized("Next up"))
                     .font(.headline)
 
                 ForEach(insights.targets) { t in
@@ -40,7 +40,7 @@ struct ProgressInsightsSectionView: View {
                     NavigationLink {
                         WorkoutHistoryScreen(filter: .exercise(exerciseId: t.id, exerciseName: t.name))
                     } label: {
-                        Label("History", systemImage: "clock.arrow.circlepath")
+                        Label(AppFormatting.localized("History"), systemImage: "clock.arrow.circlepath")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -81,8 +81,19 @@ struct ProgressInsightsSectionView: View {
         let sign = d >= 0 ? "+" : ""
         if let pct = e.pctDeltaVolume {
             let pctStr = (pct * 100).formatted(.number.precision(.fractionLength(0...1)))
-            return "\(sign)\(d.formatted(.number.precision(.fractionLength(0...0)))) vol (\(sign)\(pctStr)%)"
+            return String(
+                format: String(localized: "%@%@ vol (%@%%)"),
+                locale: .autoupdatingCurrent,
+                sign,
+                d.formatted(.number.precision(.fractionLength(0...0))),
+                "\(sign)\(pctStr)"
+            )
         }
-        return "\(sign)\(d.formatted(.number.precision(.fractionLength(0...0)))) vol"
+        return String(
+            format: String(localized: "%@%@ vol"),
+            locale: .autoupdatingCurrent,
+            sign,
+            d.formatted(.number.precision(.fractionLength(0...0)))
+        )
     }
 }

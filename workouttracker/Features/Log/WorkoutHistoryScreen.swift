@@ -107,7 +107,7 @@ struct WorkoutHistoryScreen: View {
     @ViewBuilder
     private var controlsSection: some View {
         Section {
-            Toggle("Completed only", isOn: $completedOnly)
+            Toggle(AppFormatting.localized("Completed only"), isOn: $completedOnly)
 
             routinePickerRow
 
@@ -116,7 +116,7 @@ struct WorkoutHistoryScreen: View {
             }
 
             if compareMode {
-                Text("Select 2 sessions to compare.")
+                Text(AppFormatting.localized("Select 2 sessions to compare."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -131,7 +131,7 @@ struct WorkoutHistoryScreen: View {
         // Use the shared chart view you already have in the project:
         // ExerciseSessionTimelineChartView(points:onSelectSessionId:)
         if case .exercise = filter, !timelinePoints.isEmpty {
-            Section("Timeline") {
+            Section(AppFormatting.localized("Timeline")) {
                 ExerciseSessionTimelineChartView(
                     points: timelinePoints,
                     onSelectSessionId: { sessionId in
@@ -147,10 +147,9 @@ struct WorkoutHistoryScreen: View {
     private var sessionsSection: some View {
         if groupedDays.isEmpty, loadError == nil {
             Section {
-                ContentUnavailableView(
-                    "No history yet",
+                ContentUnavailableView(AppFormatting.localized("No history yet"),
                     systemImage: "clock",
-                    description: Text("Complete workouts to see them here.")
+                    description: Text(AppFormatting.localized("Complete workouts to see them here."))
                 )
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
@@ -171,12 +170,11 @@ struct WorkoutHistoryScreen: View {
         if case .all = filter {
             let items = exerciseBrowseItems(search: searchText)
 
-            Section("Exercises") {
+            Section(AppFormatting.localized("Exercises")) {
                 if items.isEmpty {
-                    ContentUnavailableView(
-                        "No exercises yet",
+                    ContentUnavailableView(AppFormatting.localized("No exercises yet"),
                         systemImage: "dumbbell",
-                        description: Text("Complete a workout to populate exercises here.")
+                        description: Text(AppFormatting.localized("Complete a workout to populate exercises here."))
                     )
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
@@ -214,7 +212,7 @@ struct WorkoutHistoryScreen: View {
             }
 
             if compareMode {
-                Button("Clear") { selectedIds.removeAll() }
+                Button(AppFormatting.localized("Clear")) { selectedIds.removeAll() }
             }
         }
     }
@@ -227,7 +225,7 @@ struct WorkoutHistoryScreen: View {
             let canCompare = selectedIds.count == 2
 
             HStack(spacing: 10) {
-                Button("Cancel") { compareMode = false }
+                Button(AppFormatting.localized("Cancel")) { compareMode = false }
                     .buttonStyle(.bordered)
 
                 Spacer()
@@ -235,7 +233,7 @@ struct WorkoutHistoryScreen: View {
                 Button {
                     showCompareSheet = true
                 } label: {
-                    Label("Compare", systemImage: "rectangle.split.2x1")
+                    Label(AppFormatting.localized("Compare"), systemImage: "rectangle.split.2x1")
                 }
                 .disabled(!canCompare)
                 .buttonStyle(.borderedProminent)
@@ -256,9 +254,9 @@ struct WorkoutHistoryScreen: View {
             WorkoutSessionCompareSheet(a: picked[0], b: picked[1])
         } else {
             VStack(spacing: 12) {
-                Text("Pick 2 sessions to compare.")
+                Text(AppFormatting.localized("Pick 2 sessions to compare."))
                     .foregroundStyle(.secondary)
-                Button("Close") { showCompareSheet = false }
+                Button(AppFormatting.localized("Close")) { showCompareSheet = false }
             }
             .padding()
         }
@@ -267,7 +265,7 @@ struct WorkoutHistoryScreen: View {
     // MARK: - Pickers
 
     private var routineOptions: [String] {
-        let names = sessions.map { $0.sourceRoutineNameSnapshot ?? "Quick Workout" }
+        let names = sessions.map { $0.sourceRoutineNameSnapshot ?? AppFormatting.localized("Quick Workout") }
         return Array(Set(names)).sorted()
     }
 
@@ -283,13 +281,13 @@ struct WorkoutHistoryScreen: View {
 
     private var routinePickerRow: some View {
         HStack {
-            Text("Routine")
+            Text(AppFormatting.localized("Routine"))
             Spacer()
             Picker("", selection: Binding(
                 get: { routineFilterName ?? "__ALL__" },
                 set: { routineFilterName = ($0 == "__ALL__") ? nil : $0 }
             )) {
-                Text("All").tag("__ALL__")
+                Text(AppFormatting.localized("All")).tag("__ALL__")
                 ForEach(routineOptions, id: \.self) { n in
                     Text(n).tag(n)
                 }
@@ -301,10 +299,10 @@ struct WorkoutHistoryScreen: View {
 
     private var exercisePickerRow: some View {
         HStack {
-            Text("Exercise")
+            Text(AppFormatting.localized("Exercise"))
             Spacer()
             Picker("", selection: $exerciseFilterId) {
-                Text("All").tag(UUID?.none)
+                Text(AppFormatting.localized("All")).tag(UUID?.none)
                 ForEach(exerciseOptions, id: \.id) { opt in
                     Text(opt.name).tag(Optional(opt.id))
                 }
@@ -490,7 +488,7 @@ private struct WorkoutHistoryRow: View {
 
     var body: some View {
         let stats = summarize(session)
-        let title = session.sourceRoutineNameSnapshot ?? "Quick Workout"
+        let title = session.sourceRoutineNameSnapshot ?? AppFormatting.localized("Quick Workout")
 
         VStack(alignment: .leading, spacing: 6) {
             HStack {
@@ -510,19 +508,19 @@ private struct WorkoutHistoryRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                Text("\(stats.exercises) exercises • \(stats.sets) sets")
+                Text(AppFormatting.localizedFormat("%lld exercises • %lld sets", Int64(stats.exercises), Int64(stats.sets)))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             if stats.volume > 0 {
-                Text("Volume: \(stats.volume.formatted(.number.precision(.fractionLength(0)))) \(preferredUnit.label)·reps")
+                Text(AppFormatting.localizedFormat("Volume: %@ %@·reps", stats.volume.formatted(.number.precision(.fractionLength(0))), preferredUnit.label))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             if let duration = stats.durationText {
-                Text("Duration: \(duration)")
+                Text(AppFormatting.localizedFormat("Duration: %@", duration))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -532,9 +530,9 @@ private struct WorkoutHistoryRow: View {
 
     private var statusLabel: String {
         switch session.status {
-        case .inProgress: return "In progress"
-        case .completed: return "Completed"
-        case .abandoned: return "Abandoned"
+        case .inProgress: return AppFormatting.localized("In progress")
+        case .completed: return AppFormatting.localized("Completed")
+        case .abandoned: return AppFormatting.localized("Abandoned")
         }
     }
 
@@ -580,8 +578,8 @@ private struct WorkoutHistoryRow: View {
     private func formatDuration(_ secs: Int) -> String {
         let h = secs / 3600
         let m = (secs % 3600) / 60
-        if h > 0 { return "\(h)h \(m)m" }
-        return "\(m)m"
+        if h > 0 { return AppFormatting.localizedFormat("%lldh %lldm", Int64(h), Int64(m)) }
+        return AppFormatting.localizedFormat("%lldm", Int64(m))
     }
     
 }

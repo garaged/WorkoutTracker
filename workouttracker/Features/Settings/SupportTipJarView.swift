@@ -15,16 +15,16 @@ struct SupportTipJarView: View {
     var body: some View {
         List {
             Section {
-                Text("WorkoutTracker is free and open-source. If you want to support ongoing development, you can leave a tip here. Nothing is locked behind payment.")
+                Text(AppFormatting.localized("WorkoutTracker is free and open-source. If you want to support ongoing development, you can leave a tip here. Nothing is locked behind payment."))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
-            Section("Tip Jar") {
+            Section(AppFormatting.localized("Tip Jar")) {
                 if store.isLoading {
                     ProgressView()
                 } else if store.products.isEmpty {
-                    Button("Reload tip options") {
+                    Button(AppFormatting.localized("Reload tip options")) {
                         Task { await store.loadProducts() }
                     }
                 } else {
@@ -53,12 +53,12 @@ struct SupportTipJarView: View {
             }
         }
         .readableWidth()
-        .navigationTitle("Support")
+        .navigationTitle(AppFormatting.localized("Support"))
         .task { await store.loadProducts() }
-        .alert("Thank you!", isPresented: $showThanks) {
-            Button("Done", role: .cancel) {}
+        .alert(AppFormatting.localized("Thank you!"), isPresented: $showThanks) {
+            Button(AppFormatting.localized("Done"), role: .cancel) {}
         } message: {
-            Text("Your support helps keep the project healthy.")
+            Text(AppFormatting.localized("Your support helps keep the project healthy."))
         }
     }
 }

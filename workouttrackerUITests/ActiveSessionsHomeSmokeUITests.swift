@@ -159,13 +159,13 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
         }
         XCTAssertTrue(sessionScreen.exists, "Expected resumed session screen.")
 
-        let focusedCard = app.otherElements["WorkoutSession.ActionableExerciseCard"]
-        if !focusedCard.waitForExistence(timeout: t(6)) {
+        let focusedRow = app.otherElements["WorkoutSession.ActionableSetRow"]
+        if !focusedRow.waitForExistence(timeout: t(6)) {
             attachUITestDebug(app, name: "ActiveSessions_Centering_ActionableRowMissing")
         }
 
         assertApproximatelyVerticallyCentered(
-            focusedCard,
+            focusedRow,
             in: app,
             debugName: "Resume actionable row"
         )
