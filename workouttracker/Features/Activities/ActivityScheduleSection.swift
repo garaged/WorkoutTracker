@@ -16,20 +16,20 @@ struct ActivityScheduleSection: View {
     }
 
     var body: some View {
-        Section("Schedule") {
+        Section(AppFormatting.localized("Schedule")) {
             Toggle("All-day", isOn: allDayBinding)
 
             if activity.isAllDay {
                 DatePicker("Start date", selection: allDayStartDateBinding, displayedComponents: [.date])
                 DatePicker("End date", selection: allDayEndDateInclusiveBinding, displayedComponents: [.date])
 
-                Text("End date is inclusive (like Calendar).")
+                Text(AppFormatting.localized("End date is inclusive (like Calendar)."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
                 DatePicker("Start", selection: startDateTimeBinding, displayedComponents: [.date, .hourAndMinute])
 
-                Toggle("Has end time", isOn: hasEndBinding)
+                Toggle(AppFormatting.localized("Has end time"), isOn: hasEndBinding)
 
                 if activity.endAt != nil {
                     DatePicker("End", selection: endDateTimeBinding, displayedComponents: [.date, .hourAndMinute])

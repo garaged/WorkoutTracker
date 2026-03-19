@@ -12,20 +12,20 @@ struct RoutineQuickCreateScreen: View {
 
     var body: some View {
         Form {
-            Section("Routine") {
-                TextField("Name", text: $name)
-                TextField("Notes", text: $notes, axis: .vertical)
+            Section(AppFormatting.localized("Routine")) {
+                TextField(AppFormatting.localized("Name"), text: $name)
+                TextField(AppFormatting.localized("Notes"), text: $notes, axis: .vertical)
                     .lineLimit(2...6)
             }
         }
-        .navigationTitle("New Routine")
+        .navigationTitle(AppFormatting.localized("New Routine"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+                Button(AppFormatting.localized("Cancel")) { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { save() }
+                Button(AppFormatting.localized("Save")) { save() }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }

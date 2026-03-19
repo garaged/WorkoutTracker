@@ -21,7 +21,7 @@ struct RestTimerControlsView: View {
                 Button {
                     onExtend(seconds)
                 } label: {
-                    Text("+\(AppFormatting.shortDuration(seconds: seconds))")
+                    Text(AppFormatting.localizedFormat("+%@", AppFormatting.shortDuration(seconds: seconds)))
                         .font(.caption.weight(.semibold))
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)

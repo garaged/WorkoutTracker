@@ -14,11 +14,11 @@ enum RootDestination: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .home: "Home"
-        case .routines: "Routines"
-        case .history: "History"
-        case .progress: "Progress"
-        case .settings: "Settings"
+        case .home: String(localized: "Home")
+        case .routines: String(localized: "Routines")
+        case .history: String(localized: "History")
+        case .progress: String(localized: "Progress")
+        case .settings: String(localized: "Settings")
         }
     }
 
@@ -73,7 +73,7 @@ struct AppRootView: View {
                 DayTimelineEntryScreen(initialDay: jump.day)
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
-                            Button("Close") { timelineJump = nil }
+                            Button(AppFormatting.localized("Close")) { timelineJump = nil }
                         }
                     }
             }
@@ -109,10 +109,10 @@ struct AppRootView: View {
                 ProgressView()
                     .controlSize(.large)
 
-                Text("Preparing starter pack…")
+                Text(AppFormatting.localized("Preparing starter pack…"))
                     .font(.headline)
 
-                Text("This only happens on first launch so Workout activities have routines ready immediately.")
+                Text(AppFormatting.localized("This only happens on first launch so Workout activities have routines ready immediately."))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -128,7 +128,7 @@ struct AppRootView: View {
             Label(dest.title, systemImage: dest.systemImage)
                 .tag(dest as RootDestination?)
         }
-        .navigationTitle("Workout Tracker")
+        .navigationTitle(AppFormatting.localized("Workout Tracker"))
         .listStyle(.sidebar)
     }
 
@@ -186,57 +186,57 @@ struct AppRootView: View {
 
         return [
             HomeTile(
-                title: "Calendar",
-                subtitle: "Plan and log your day",
+                title: String(localized: "Calendar"),
+                subtitle: String(localized: "Plan and log your day"),
                 systemImage: "calendar",
                 tint: .accentColor,
                 destination: { AnyView(DayTimelineEntryScreen()) }
             ),
             HomeTile(
-                title: "Workouts",
-                subtitle: "Start sessions and review history",
+                title: String(localized: "Workouts"),
+                subtitle: String(localized: "Start sessions and review history"),
                 systemImage: "dumbbell.fill",
                 tint: .orange,
                 destination: { AnyView(WorkoutSessionsScreen()) }
             ),
             HomeTile(
-                title: "Routines",
-                subtitle: "Build plans and reuse them",
+                title: String(localized: "Routines"),
+                subtitle: String(localized: "Build plans and reuse them"),
                 systemImage: "list.bullet.rectangle.portrait",
                 tint: .purple,
                 destination: { AnyView(RoutinesScreen()) }
             ),
             HomeTile(
-                title: "Schedule templates",
-                subtitle: "Plans that auto-preload your day",
+                title: String(localized: "Schedule templates"),
+                subtitle: String(localized: "Plans that auto-preload your day"),
                 systemImage: "wand.and.stars",
                 tint: .indigo,
                 destination: { AnyView(TemplatesScreen(applyDay: applyDay)) }
             ),
             HomeTile(
-                title: "Exercises",
-                subtitle: "Browse and edit your library",
+                title: String(localized: "Exercises"),
+                subtitle: String(localized: "Browse and edit your library"),
                 systemImage: "square.grid.2x2.fill",
                 tint: .mint,
                 destination: { AnyView(ExerciseLibraryScreen()) }
             ),
             HomeTile(
-                title: "Progress",
-                subtitle: "Streaks, volume, trends",
+                title: String(localized: "Progress"),
+                subtitle: String(localized: "Streaks, volume, trends"),
                 systemImage: "chart.line.uptrend.xyaxis",
                 tint: .blue,
                 destination: { AnyView(ProgressScreen()) }
             ),
             HomeTile(
-                title: "Body",
-                subtitle: "Measurements and tracking",
+                title: String(localized: "Body"),
+                subtitle: String(localized: "Measurements and tracking"),
                 systemImage: "scalemass.fill",
                 tint: .green,
                 destination: { AnyView(MeasurementsScreen()) }
             ),
             HomeTile(
-                title: "Settings",
-                subtitle: "Preferences and app info",
+                title: String(localized: "Settings"),
+                subtitle: String(localized: "Preferences and app info"),
                 systemImage: "gearshape.fill",
                 tint: .gray,
                 destination: { AnyView(SettingsScreen()) }
@@ -246,12 +246,11 @@ struct AppRootView: View {
 
     private struct HistoryRootPlaceholder: View {
         var body: some View {
-            ContentUnavailableView(
-                "History",
+            ContentUnavailableView(AppFormatting.localized("History"),
                 systemImage: "clock.arrow.circlepath",
-                description: Text("Wire your existing History screen here.")
+                description: Text(AppFormatting.localized("Wire your existing History screen here."))
             )
-            .navigationTitle("History")
+            .navigationTitle(AppFormatting.localized("History"))
         }
     }
     

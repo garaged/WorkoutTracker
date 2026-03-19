@@ -15,18 +15,18 @@ struct StarterPackSettingsSection: View {
     @State private var resultMessage: String = ""
 
     var body: some View {
-        Section("Starter Pack") {
-            Text("Import a curated set of common exercises and a few starter routines. Safe to run multiple times.")
+        Section(AppFormatting.localized("Starter Pack")) {
+            Text(AppFormatting.localized("Import a curated set of common exercises and a few starter routines. Safe to run multiple times."))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
             Button {
                 showConfirm = true
             } label: {
-                Label("Import Starter Pack", systemImage: "square.and.arrow.down")
+                Label(AppFormatting.localized("Import Starter Pack"), systemImage: "square.and.arrow.down")
             }
             .confirmationDialog("Import Starter Pack?", isPresented: $showConfirm, titleVisibility: .visible) {
-                Button("Import") {
+                Button(AppFormatting.localized("Import")) {
                     do {
                         resultMessage = try RoutineSeeder.importStarterPack(context: modelContext)
                     } catch {
@@ -34,10 +34,10 @@ struct StarterPackSettingsSection: View {
                     }
                     showResult = true
                 }
-                Button("Cancel", role: .cancel) {}
+                Button(AppFormatting.localized("Cancel"), role: .cancel) {}
             }
-            .alert("Starter Pack", isPresented: $showResult) {
-                Button("OK", role: .cancel) {}
+            .alert(AppFormatting.localized("Starter Pack"), isPresented: $showResult) {
+                Button(AppFormatting.localized("OK"), role: .cancel) {}
             } message: {
                 Text(resultMessage)
             }

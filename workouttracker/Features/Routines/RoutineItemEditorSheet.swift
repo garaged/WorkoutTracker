@@ -7,19 +7,19 @@ struct RoutineItemEditorScreen: View {
 
     var body: some View {
         List {
-            Section("Exercise") {
-                Text(item.exercise?.name ?? "Unknown")
+            Section(AppFormatting.localized("Exercise")) {
+                Text(item.exercise?.name ?? AppFormatting.localized("Unknown"))
                     .font(.headline)
 
-                TextField("Notes", text: Binding(
+                TextField(AppFormatting.localized("Notes"), text: Binding(
                     get: { item.notes ?? "" },
                     set: { item.notes = $0.isEmpty ? nil : $0 }
                 ), axis: .vertical)
                 .lineLimit(2...6)
             }
 
-            Section("Tracking") {
-                Picker("Segment", selection: Binding(
+            Section(AppFormatting.localized("Tracking")) {
+                Picker(AppFormatting.localized("Segment"), selection: Binding(
                     get: { item.segment },
                     set: {
                         item.segment = $0
@@ -32,7 +32,7 @@ struct RoutineItemEditorScreen: View {
                 }
                 .pickerStyle(.segmented)
 
-                Picker("Style", selection: Binding(
+                Picker(AppFormatting.localized("Style"), selection: Binding(
                     get: { item.trackingStyle },
                     set: {
                         item.trackingStyle = $0
@@ -46,23 +46,21 @@ struct RoutineItemEditorScreen: View {
                 }
             }
 
-            Section("Insights") {
+            Section(AppFormatting.localized("Insights")) {
                 if let ex = item.exercise {
                     ExerciseInsightsSectionView(exerciseId: ex.id, exerciseName: ex.name)
                 } else {
-                    ContentUnavailableView(
-                        "No exercise selected",
+                    ContentUnavailableView(AppFormatting.localized("No exercise selected"),
                         systemImage: "dumbbell",
-                        description: Text("Pick an exercise to see PRs, trends, and history.")
+                        description: Text(AppFormatting.localized("Pick an exercise to see PRs, trends, and history."))
                     )
                     .listRowSeparator(.hidden)
                 }
             }
 
-            Section("Set plans") {
+            Section(AppFormatting.localized("Set plans")) {
                 if setPlansSorted.isEmpty {
-                    ContentUnavailableView(
-                        "No planned rows",
+                    ContentUnavailableView(AppFormatting.localized("No planned rows"),
                         systemImage: "plus.circle",
                         description: Text(item.trackingStyle == .notesOnly
                                           ? "This exercise is notes-only."
@@ -79,13 +77,13 @@ struct RoutineItemEditorScreen: View {
 
                 if item.trackingStyle != .notesOnly {
                     Button { addPlan() } label: {
-                        Label("Add set", systemImage: "plus")
+                        Label(AppFormatting.localized("Add set"), systemImage: "plus")
                     }
                 }
 
                 if !setPlansSorted.isEmpty {
                     Button(role: .destructive) { clearAllPlans() } label: {
-                        Label("Clear all", systemImage: "trash")
+                        Label(AppFormatting.localized("Clear all"), systemImage: "trash")
                     }
                 }
             }
@@ -258,7 +256,7 @@ private struct SetPlanRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(style == .notesOnly ? "Row" : "Set \(plan.order + 1)")
+                Text(style == .notesOnly ? AppFormatting.localized("Row") : AppFormatting.localizedFormat("Set %lld", Int64(plan.order + 1)))
                     .font(.headline)
                 Spacer()
             }
@@ -267,7 +265,7 @@ private struct SetPlanRow: View {
                 HStack(spacing: 10) {
                     if style.showsReps {
                         LabeledContent("Reps") {
-                            TextField("—", text: repsBinding)
+                            TextField(AppFormatting.localized("—"), text: repsBinding)
                                 .multilineTextAlignment(.trailing)
                                 .keyboardType(.numberPad)
                                 .frame(width: 70)
@@ -277,7 +275,7 @@ private struct SetPlanRow: View {
                     if style.showsWeight {
                         LabeledContent("Weight") {
                             HStack(spacing: 6) {
-                                TextField("—", text: weightBinding)
+                                TextField(AppFormatting.localized("—"), text: weightBinding)
                                     .multilineTextAlignment(.trailing)
                                     .keyboardType(.decimalPad)
                                     .frame(width: 90)
@@ -303,7 +301,7 @@ private struct SetPlanRow: View {
                 HStack(spacing: 10) {
                     if style.showsDuration {
                         LabeledContent("Duration (min)") {
-                            TextField("—", text: durationMinutesBinding)
+                            TextField(AppFormatting.localized("—"), text: durationMinutesBinding)
                                 .multilineTextAlignment(.trailing)
                                 .keyboardType(.decimalPad)
                                 .frame(width: 90)
@@ -313,7 +311,7 @@ private struct SetPlanRow: View {
                     if style.showsDistance {
                         LabeledContent("Distance") {
                             HStack(spacing: 6) {
-                                TextField("—", text: distanceBinding)
+                                TextField(AppFormatting.localized("—"), text: distanceBinding)
                                     .multilineTextAlignment(.trailing)
                                     .keyboardType(.decimalPad)
                                     .frame(width: 90)
@@ -332,7 +330,7 @@ private struct SetPlanRow: View {
                 HStack(spacing: 10) {
                     if style.showsRPE {
                         LabeledContent("RPE") {
-                            TextField("—", text: rpeBinding)
+                            TextField(AppFormatting.localized("—"), text: rpeBinding)
                                 .multilineTextAlignment(.trailing)
                                 .keyboardType(.decimalPad)
                                 .frame(width: 70)

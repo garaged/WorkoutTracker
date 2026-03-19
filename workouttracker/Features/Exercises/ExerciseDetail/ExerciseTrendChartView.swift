@@ -9,12 +9,12 @@ struct ExerciseTrendChartView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Trend")
+                Text(AppFormatting.localized("Trend"))
                     .font(.headline)
 
                 Spacer()
 
-                Picker("Metric", selection: $metric) {
+                Picker(AppFormatting.localized("Metric"), selection: $metric) {
                     ForEach(PersonalRecordsService.TrendMetric.allCases) { m in
                         Text(m.rawValue).tag(m)
                     }
@@ -23,10 +23,9 @@ struct ExerciseTrendChartView: View {
             }
 
             if points.isEmpty {
-                ContentUnavailableView(
-                    "No history yet",
+                ContentUnavailableView(AppFormatting.localized("No history yet"),
                     systemImage: "chart.line.uptrend.xyaxis",
-                    description: Text("Log a few sets and you’ll see trends here.")
+                    description: Text(AppFormatting.localized("Log a few sets and you’ll see trends here."))
                 )
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
@@ -82,16 +81,16 @@ struct ExerciseTrendChartView: View {
         switch metric {
         case .bestReps:
             let d = Int(delta.rounded())
-            return "Last: \(Int(lv.rounded())) (\(d >= 0 ? "+" : "")\(d) vs previous)"
+            return AppFormatting.localizedFormat("Last: %1$lld (%2$@%3$lld vs previous)", Int64(lv.rounded()), d >= 0 ? "+" : "", Int64(d))
         default:
             let lastStr = lv.formatted(.number.precision(.fractionLength(0...1)))
             let deltaStr = delta.formatted(.number.precision(.fractionLength(0...1)))
             if pv != 0 {
                 let pct = (delta / pv) * 100.0
                 let pctStr = pct.formatted(.number.precision(.fractionLength(0...1)))
-                return "Last: \(lastStr) (\(delta >= 0 ? "+" : "")\(deltaStr), \(pct >= 0 ? "+" : "")\(pctStr)% vs previous)"
+                return AppFormatting.localizedFormat("Last: %1$@ (%2$@%3$@, %4$@%5$@%% vs previous)", lastStr, delta >= 0 ? "+" : "", deltaStr, pct >= 0 ? "+" : "", pctStr)
             } else {
-                return "Last: \(lastStr) (\(delta >= 0 ? "+" : "")\(deltaStr) vs previous)"
+                return AppFormatting.localizedFormat("Last: %1$@ (%2$@%3$@ vs previous)", lastStr, delta >= 0 ? "+" : "", deltaStr)
             }
         }
     }

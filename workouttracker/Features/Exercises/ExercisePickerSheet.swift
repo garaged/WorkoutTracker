@@ -60,15 +60,14 @@ struct ExercisePickerSheet: View {
         NavigationStack {
             Group {
                 if visibleExercises.isEmpty {
-                    ContentUnavailableView(
-                        "No exercises",
+                    ContentUnavailableView(AppFormatting.localized("No exercises"),
                         systemImage: "figure.strengthtraining.traditional",
                         description: Text(emptyStateMessage)
                     )
                 } else {
                     List {
                         if let role = selectedScope.role, !suggestedExercises.isEmpty {
-                            Section("Suggested for \(role.displayName)") {
+                            Section(AppFormatting.localizedFormat("Suggested for %@", role.displayName)) {
                                 ForEach(suggestedExercises) { ex in
                                     pickButton(for: ex)
                                 }
@@ -86,7 +85,7 @@ struct ExercisePickerSheet: View {
             .navigationTitle(title)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
             .safeAreaInset(edge: .top) {
-                Picker("Exercise scope", selection: $selectedScope) {
+                Picker(AppFormatting.localized("Exercise scope"), selection: $selectedScope) {
                     ForEach(PickerScope.allCases) { scope in
                         Text(scope.title).tag(scope)
                     }
@@ -99,13 +98,13 @@ struct ExercisePickerSheet: View {
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
+                    Button(AppFormatting.localized("Close")) { dismiss() }
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showCreate = true
                     } label: {
-                        Label("New", systemImage: "plus")
+                        Label(AppFormatting.localized("New"), systemImage: "plus")
                     }
                 }
             }
@@ -155,11 +154,11 @@ struct ExercisePickerSheet: View {
     private var emptyStateMessage: String {
         switch selectedScope {
         case .all:
-            return "Create an exercise to add it to routines."
+            return AppFormatting.localized("Create an exercise to add it to routines.")
         case .warmUp:
-            return "No warm-up suggestions matched your search. Switch to All to see the full library or create a new exercise."
+            return AppFormatting.localized("No warm-up suggestions matched your search. Switch to All to see the full library or create a new exercise.")
         case .coolDown:
-            return "No cool-down suggestions matched your search. Switch to All to see the full library or create a new exercise."
+            return AppFormatting.localized("No cool-down suggestions matched your search. Switch to All to see the full library or create a new exercise.")
         }
     }
 

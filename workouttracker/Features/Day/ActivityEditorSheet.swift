@@ -66,29 +66,29 @@ struct ActivityEditorSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Details") {
-                    TextField("Title", text: $title)
+                Section(AppFormatting.localized("Details")) {
+                    TextField(AppFormatting.localized("Title"), text: $title)
                         .accessibilityIdentifier("activityEditor.titleField")
 
 
                     if isUITesting {
-                        Button("UITest: Set Workout kind") {
+                        Button(AppFormatting.localized("UITest: Set Workout kind")) {
                             kindRaw = "workout"
                             selectDefaultRoutineIfNeeded()
                         }
                         .accessibilityIdentifier("activityEditor.uitestSetWorkoutKind")
                     }
 
-                    Picker("Status", selection: $status) {
-                        Text("Planned").tag(ActivityStatus.planned)
-                        Text("Done").tag(ActivityStatus.done)
-                        Text("Skipped").tag(ActivityStatus.skipped)
+                    Picker(AppFormatting.localized("Status"), selection: $status) {
+                        Text(AppFormatting.localized("Planned")).tag(ActivityStatus.planned)
+                        Text(AppFormatting.localized("Done")).tag(ActivityStatus.done)
+                        Text(AppFormatting.localized("Skipped")).tag(ActivityStatus.skipped)
                     }
                     .pickerStyle(.segmented)
 
                     Stepper(value: $laneHint, in: 0...12) {
                         HStack {
-                            Text("Lane")
+                            Text(AppFormatting.localized("Lane"))
                             Spacer()
                             Text("\(laneHint)")
                                 .foregroundStyle(.secondary)
@@ -96,18 +96,18 @@ struct ActivityEditorSheet: View {
                     }
                 }
 
-                Section("Time") {
+                Section(AppFormatting.localized("Time")) {
                     DatePicker("Start", selection: $startAt, displayedComponents: [.date, .hourAndMinute])
 
-                    Toggle("Has end time", isOn: $hasEndAt)
+                    Toggle(AppFormatting.localized("Has end time"), isOn: $hasEndAt)
 
                     if hasEndAt {
                         DatePicker("End", selection: $endAt, displayedComponents: [.date, .hourAndMinute])
                     }
                 }
 
-                Section("Kind") {
-                    Picker("Type", selection: $kindRaw) {
+                Section(AppFormatting.localized("Kind")) {
+                    Picker(AppFormatting.localized("Type"), selection: $kindRaw) {
                         ForEach(kindOptions, id: \.raw) { opt in
                             Text(opt.label).tag(opt.raw)
                         }
@@ -125,12 +125,12 @@ struct ActivityEditorSheet: View {
 
                     if isWorkout {
                         if routines.isEmpty {
-                            Text("No routines yet. Create one in Routines.")
+                            Text(AppFormatting.localized("No routines yet. Create one in Routines."))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                                 .accessibilityIdentifier("activityEditor.routineEmptyState")
                         } else {
-                            Picker("Routine", selection: Binding(
+                            Picker(AppFormatting.localized("Routine"), selection: Binding(
                                 get: {
                                     if let workoutRoutineId {
                                         return Optional(workoutRoutineId)
@@ -155,18 +155,18 @@ struct ActivityEditorSheet: View {
                         try? modelContext.save()
                         dismiss()
                     } label: {
-                        Label("Delete activity", systemImage: "trash")
+                        Label(AppFormatting.localized("Delete activity"), systemImage: "trash")
                     }
                 }
             }
-            .navigationTitle(isNew ? "New Activity" : "Edit Activity")
+            .navigationTitle(isNew ? String(localized: "New Activity") : String(localized: "Edit Activity"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { cancel() }
+                    Button(AppFormatting.localized("Cancel")) { cancel() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") { save() }
+                    Button(AppFormatting.localized("Save")) { save() }
                         .font(.headline)
                         .accessibilityIdentifier("activityEditor.saveButton")
                 }
@@ -185,7 +185,7 @@ struct ActivityEditorSheet: View {
     }
 
     private var kindOptions: [(raw: String, label: String)] {
-        var opts: [(String, String)] = [("generic", "Generic"), ("workout", "Workout")]
+        var opts: [(String, String)] = [("generic", String(localized: "Generic")), ("workout", String(localized: "Workout"))]
         let normalized = normalizedKindRaw
         if !opts.contains(where: { $0.0 == normalized }) && !normalized.isEmpty {
             opts.append((normalized, normalized.capitalized))

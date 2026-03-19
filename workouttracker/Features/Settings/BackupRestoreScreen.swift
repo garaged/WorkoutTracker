@@ -27,16 +27,16 @@ struct BackupRestoreScreen: View {
 
     var body: some View {
         Form {
-            Section("Export") {
+            Section(AppFormatting.localized("Export")) {
                 Button {
                     exportBackupJSON()
                 } label: {
-                    Label("Generate JSON Backup", systemImage: "square.and.arrow.up")
+                    Label(AppFormatting.localized("Generate JSON Backup"), systemImage: "square.and.arrow.up")
                 }
 
                 if let url = exportURL {
                     ShareLink(item: url) {
-                        Label("Share JSON Backup", systemImage: "square.and.arrow.up.on.square")
+                        Label(AppFormatting.localized("Share JSON Backup"), systemImage: "square.and.arrow.up.on.square")
                     }
                     .padding(.top, 4)
 
@@ -56,7 +56,7 @@ struct BackupRestoreScreen: View {
                 Button {
                     exportFullBackupZIP()
                 } label: {
-                    Label("Generate Full Backup (ZIP)", systemImage: "ladybug")
+                    Label(AppFormatting.localized("Generate Full Backup (ZIP)"), systemImage: "ladybug")
                 }
                 .disabled(backupExporter == nil)
                 .accessibilityLabel(AccessibilityLabels.Buttons.exportBackup)
@@ -64,7 +64,7 @@ struct BackupRestoreScreen: View {
 
                 if let url = fullExportURL {
                     ShareLink(item: url) {
-                        Label("Share Full Backup", systemImage: "square.and.arrow.up.on.square")
+                        Label(AppFormatting.localized("Share Full Backup"), systemImage: "square.and.arrow.up.on.square")
                     }
                     .padding(.top, 4)
 
@@ -74,7 +74,7 @@ struct BackupRestoreScreen: View {
                 }
 
                 if backupExporter == nil {
-                    Text("Full backup export isn’t configured yet. Add an exporter in SettingsScreen via .environment(\\.backupExporter, AppBackupExporter()).")
+                    Text(AppFormatting.localized("Full backup export isn’t configured yet. Add an exporter in SettingsScreen via .environment(\\.backupExporter, AppBackupExporter())."))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .padding(.top, 2)
@@ -86,36 +86,36 @@ struct BackupRestoreScreen: View {
                         .font(.footnote)
                 }
 
-                Text("JSON is best for restore. ZIP is best for debugging (logs + settings + data snapshot).")
+                Text(AppFormatting.localized("JSON is best for restore. ZIP is best for debugging (logs + settings + data snapshot)."))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.top, 2)
             }
 
-            Section("Import") {
+            Section(AppFormatting.localized("Import")) {
                 Button {
                     showImporter = true
                 } label: {
-                    Label("Select JSON Backup File", systemImage: "square.and.arrow.down")
+                    Label(AppFormatting.localized("Select JSON Backup File"), systemImage: "square.and.arrow.down")
                 }
 
                 if let v = importedValidation {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Backup found")
+                        Text(AppFormatting.localized("Backup found"))
                             .font(.subheadline)
                             .fontWeight(.semibold)
 
-                        Text("Schema v\(v.schemaVersion)")
+                        Text(AppFormatting.localizedFormat("Schema v%lld", Int64(v.schemaVersion)))
                             .font(.footnote)
                             .foregroundStyle(.secondary)
 
                         if let appV = v.appVersion {
                             if let b = v.appBuild {
-                                Text("App: \(appV) (\(b))")
+                                Text(AppFormatting.localizedFormat("App: %@ (%@)", appV, b))
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
                             } else {
-                                Text("App: \(appV)")
+                                Text(AppFormatting.localizedFormat("App: %@", appV))
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
                             }
@@ -123,16 +123,16 @@ struct BackupRestoreScreen: View {
 
                         if let dev = v.deviceName {
                             let os = v.systemVersion ?? "—"
-                            Text("Device: \(dev) • iOS \(os)")
+                            Text(AppFormatting.localizedFormat("Device: %@ • iOS %@", dev, os))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
 
-                        Text("Created: \(v.createdAt.formatted(date: .abbreviated, time: .shortened))")
+                        Text(AppFormatting.localizedFormat("Created: %@", v.createdAt.formatted(date: .abbreviated, time: .shortened)))
                             .font(.footnote)
                             .foregroundStyle(.secondary)
 
-                        Text("Preferences snapshot: \(v.hasPreferencesSnapshot ? "Yes" : "No")")
+                        Text(AppFormatting.localizedFormat("Preferences snapshot: %@", v.hasPreferencesSnapshot ? AppFormatting.localized("Yes") : AppFormatting.localized("No")))
                             .font(.footnote)
                             .foregroundStyle(.secondary)
 
@@ -149,7 +149,7 @@ struct BackupRestoreScreen: View {
                         }
 
                         HStack {
-                            Text("Total")
+                            Text(AppFormatting.localized("Total"))
                             Spacer()
                             Text("\(v.totalEntities)")
                                 .foregroundStyle(.secondary)
@@ -167,18 +167,18 @@ struct BackupRestoreScreen: View {
                 }
             }
 
-            Section("Restore") {
+            Section(AppFormatting.localized("Restore")) {
                 Button {
                     restoreSettingsOnly()
                 } label: {
-                    Label("Restore Settings From Backup", systemImage: "gearshape.arrow.triangle.2.circlepath")
+                    Label(AppFormatting.localized("Restore Settings From Backup"), systemImage: "gearshape.arrow.triangle.2.circlepath")
                 }
                 .disabled(importedData == nil)
 
                 Button(role: .destructive) {
                     restoreAllWorkoutData()
                 } label: {
-                    Label("Restore Workout Data", systemImage: "externaldrive.badge.plus")
+                    Label(AppFormatting.localized("Restore Workout Data"), systemImage: "externaldrive.badge.plus")
                 }
                 .disabled(importedData == nil)
 
@@ -194,12 +194,12 @@ struct BackupRestoreScreen: View {
                         .font(.footnote)
                 }
 
-                Text("Workout restore replaces the current backed-up data snapshot in this app install. Use a fresh JSON backup first if you want a rollback point.")
+                Text(AppFormatting.localized("Workout restore replaces the current backed-up data snapshot in this app install. Use a fresh JSON backup first if you want a rollback point."))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
         }
-        .navigationTitle("Backup & Restore")
+        .navigationTitle(AppFormatting.localized("Backup & Restore"))
         .fileImporter(
             isPresented: $showImporter,
             allowedContentTypes: [.json],

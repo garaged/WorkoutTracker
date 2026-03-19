@@ -18,24 +18,24 @@ struct FeedbackScreen: View {
     var body: some View {
         Form {
             Section {
-                Text("Nothing is sent automatically. These options open your browser or mail app only when you tap them.")
+                Text(AppFormatting.localized("Nothing is sent automatically. These options open your browser or mail app only when you tap them."))
                     .font(.footnote)
             }
 
-            Section("Report a bug") {
+            Section(AppFormatting.localized("Report a bug")) {
                 Button {
                     openGitHubIssue()
                 } label: {
-                    Label("Open GitHub Issue", systemImage: "ladybug")
+                    Label(AppFormatting.localized("Open GitHub Issue"), systemImage: "ladybug")
                 }
                 .disabled(SupportLinks.gitHubNewIssueURL == nil)
             }
 
-            Section("Contact") {
+            Section(AppFormatting.localized("Contact")) {
                 Button {
                     emailSupport()
                 } label: {
-                    Label("Email Support", systemImage: "envelope")
+                    Label(AppFormatting.localized("Email Support"), systemImage: "envelope")
                 }
                 .disabled(SupportLinks.mailtoURL(body: "test") == nil)
 
@@ -44,43 +44,43 @@ struct FeedbackScreen: View {
                         copyToClipboard(SupportLinks.supportEmailAddress)
                         showCopiedAlert = true
                     } label: {
-                        Label("Copy support email", systemImage: "doc.on.doc")
+                        Label(AppFormatting.localized("Copy support email"), systemImage: "doc.on.doc")
                     }
                 }
             }
 
-            Section("Describe what happened (optional)") {
+            Section(AppFormatting.localized("Describe what happened (optional)")) {
                 TextEditor(text: $userNotes)
                     .frame(minHeight: 110)
-                    .accessibilityLabel("Issue description")
+                    .accessibilityLabel(AppFormatting.localized("Issue description"))
 
-                Text("Tip: include steps to reproduce, what you expected, and what happened instead.")
+                Text(AppFormatting.localized("Tip: include steps to reproduce, what you expected, and what happened instead."))
                     .font(.footnote)
             }
 
-            Section("Help & links") {
+            Section(AppFormatting.localized("Help & links")) {
                 if let url = SupportLinks.supportPageURL {
                     Link(destination: url) {
-                        Label("Support page", systemImage: "questionmark.circle")
+                        Label(AppFormatting.localized("Support page"), systemImage: "questionmark.circle")
                     }
                 }
 
                 if let url = SupportLinks.faqURL {
                     Link(destination: url) {
-                        Label("FAQ", systemImage: "book")
+                        Label(AppFormatting.localized("FAQ"), systemImage: "book")
                     }
                 }
 
                 if let url = SupportLinks.privacyPolicyURL {
                     Link(destination: url) {
-                        Label("Privacy policy", systemImage: "hand.raised")
+                        Label(AppFormatting.localized("Privacy policy"), systemImage: "hand.raised")
                     }
                 }
             }
 
-            Section("Support summary") {
+            Section(AppFormatting.localized("Support summary")) {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Copy/paste this into an issue or email. It’s generated locally on your device.")
+                    Text(AppFormatting.localized("Copy/paste this into an issue or email. It’s generated locally on your device."))
                         .font(.footnote)
 
                     ScrollView(.vertical) {
@@ -99,23 +99,23 @@ struct FeedbackScreen: View {
                             copyToClipboard(supportSummary)
                             showCopiedAlert = true
                         } label: {
-                            Label("Copy", systemImage: "doc.on.doc")
+                            Label(AppFormatting.localized("Copy"), systemImage: "doc.on.doc")
                         }
 
                         if #available(iOS 16.0, *) {
                             ShareLink(item: supportSummary) {
-                                Label("Share", systemImage: "square.and.arrow.up")
+                                Label(AppFormatting.localized("Share"), systemImage: "square.and.arrow.up")
                             }
                         }
                     }
                 }
             }
         }
-        .navigationTitle("Support")
-        .alert("Copied", isPresented: $showCopiedAlert) {
-            Button("OK", role: .cancel) {}
+        .navigationTitle(AppFormatting.localized("Support"))
+        .alert(AppFormatting.localized("Copied"), isPresented: $showCopiedAlert) {
+            Button(AppFormatting.localized("OK"), role: .cancel) {}
         } message: {
-            Text("Copied to clipboard.")
+            Text(AppFormatting.localized("Copied to clipboard."))
         }
     }
 

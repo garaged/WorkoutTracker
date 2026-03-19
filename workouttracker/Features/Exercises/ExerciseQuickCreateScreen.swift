@@ -11,18 +11,18 @@ struct ExerciseQuickCreateScreen: View {
 
     var body: some View {
         Form {
-            Section("Exercise") {
-                TextField("Name", text: $name)
+            Section(AppFormatting.localized("Exercise")) {
+                TextField(AppFormatting.localized("Name"), text: $name)
             }
         }
-        .navigationTitle("New Exercise")
+        .navigationTitle(AppFormatting.localized("New Exercise"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+                Button(AppFormatting.localized("Cancel")) { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { save() }
+                Button(AppFormatting.localized("Save")) { save() }
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }

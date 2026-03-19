@@ -88,7 +88,7 @@ struct InteractiveActivityBlockView: View {
         // Main visual content (this is what gets the MOVE gesture)
         let content =
         VStack(alignment: .leading, spacing: 6) {
-            Text(activity.title.isEmpty ? "Untitled" : activity.title)
+            Text(activity.title.isEmpty ? String(localized: "Untitled") : activity.title)
                 .font(.headline)
                 .lineLimit(2)
 
@@ -107,7 +107,7 @@ struct InteractiveActivityBlockView: View {
         )
         .overlay(alignment: .topTrailing) {
             if isDragging || isResizing {
-                Text(isResizing ? "Resize" : "Move")
+                Text(isResizing ? String(localized: "Resize") : String(localized: "Move"))
                     .font(.caption2)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
@@ -385,7 +385,18 @@ struct InteractiveActivityBlockView: View {
         let base = String(format: "%02d:%02d", h, m)
 
         if dayOffset == 0 { return base }
-        return base + (dayOffset > 0 ? " (+\(dayOffset)d)" : " (\(dayOffset)d)")
+        if dayOffset > 0 {
+            return base + String(
+                format: String(localized: " (+%lldd)"),
+                locale: .autoupdatingCurrent,
+                Int64(dayOffset)
+            )
+        }
+        return base + String(
+            format: String(localized: " (%lldd)"),
+            locale: .autoupdatingCurrent,
+            Int64(dayOffset)
+        )
     }
 }
 

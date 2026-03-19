@@ -11,21 +11,21 @@ struct TrackingStylePickerSheet: View {
         NavigationStack {
             Form {
                 Section("Track \(exerciseName) as") {
-                    Picker("Style", selection: $selection) {
+                    Picker(AppFormatting.localized("Style"), selection: $selection) {
                         ForEach(ExerciseTrackingStyle.allCases) { style in
                             Text(style.displayName).tag(style)
                         }
                     }
                 }
             }
-            .navigationTitle("Tracking")
+            .navigationTitle(AppFormatting.localized("Tracking"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(AppFormatting.localized("Cancel")) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") {
+                    Button(AppFormatting.localized("Add")) {
                         onConfirm()
                         dismiss()
                     }

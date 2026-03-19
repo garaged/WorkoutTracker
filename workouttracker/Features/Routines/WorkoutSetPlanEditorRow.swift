@@ -7,7 +7,7 @@ struct WorkoutSetPlanEditorRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("Set \(plan.order + 1)")
+                Text(AppFormatting.localizedFormat("Set %lld", Int64(plan.order + 1)))
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -19,17 +19,17 @@ struct WorkoutSetPlanEditorRow: View {
             }
 
             HStack(spacing: 14) {
-                Stepper("Reps", value: repsBinding, in: 0...60)
+                Stepper(AppFormatting.localized("Reps"), value: repsBinding, in: 0...60)
                     .labelsHidden()
                 Text(repsLabel).font(.caption)
 
-                Stepper("Weight", value: weightBinding, in: 0...500, step: 2.5)
+                Stepper(AppFormatting.localized("Weight"), value: weightBinding, in: 0...500, step: 2.5)
                     .labelsHidden()
-                Text("kg").font(.caption).foregroundStyle(.secondary)
+                Text(AppFormatting.localized("kg")).font(.caption).foregroundStyle(.secondary)
 
                 Spacer()
 
-                Stepper("Rest", value: restBinding, in: 0...600, step: 15)
+                Stepper(AppFormatting.localized("Rest"), value: restBinding, in: 0...600, step: 15)
                     .labelsHidden()
                 Text(restLabel).font(.caption).foregroundStyle(.secondary)
             }
@@ -59,12 +59,12 @@ struct WorkoutSetPlanEditorRow: View {
 
     private var repsLabel: String {
         let r = plan.targetReps ?? 0
-        return r == 0 ? "— reps" : "\(r) reps"
+        return r == 0 ? AppFormatting.localized("— reps") : AppFormatting.localizedFormat("%lld reps", Int64(r))
     }
 
     private var restLabel: String {
         let s = plan.restSeconds ?? 0
-        return s == 0 ? "—" : "\(s)s"
+        return s == 0 ? AppFormatting.localized("—") : AppFormatting.localizedFormat("%llds", Int64(s))
     }
 
     private var weightLabel: String {

@@ -23,10 +23,9 @@ struct TemplatesScreen: View {
     var body: some View {
         List {
             if templates.isEmpty {
-                ContentUnavailableView(
-                    "No schedule templates",
+                ContentUnavailableView(AppFormatting.localized("No schedule templates"),
                     systemImage: "wand.and.stars",
-                    description: Text("Create schedule templates so Today is preloaded automatically.")
+                    description: Text(AppFormatting.localized("Create schedule templates so Today is preloaded automatically."))
                 )
             } else {
                 ForEach(orderedTemplates) { t in
@@ -39,7 +38,7 @@ struct TemplatesScreen: View {
                 .onDelete(perform: deleteTemplates)
             }
         }
-        .navigationTitle("Schedule Templates")
+        .navigationTitle(AppFormatting.localized("Schedule Templates"))
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 NavigationLink {
@@ -86,9 +85,9 @@ private struct TemplateRow: View {
 
             HStack(spacing: 8) {
                 Text(startTimeLabel(minutes: template.defaultStartMinute))
-                Text("•").foregroundStyle(.secondary)
+                Text(AppFormatting.localized("•")).foregroundStyle(.secondary)
                 Text("\(template.defaultDurationMinutes)m")
-                Text("•").foregroundStyle(.secondary)
+                Text(AppFormatting.localized("•")).foregroundStyle(.secondary)
                 Text(recurrenceSummary(template.recurrence))
             }
             .font(.subheadline)

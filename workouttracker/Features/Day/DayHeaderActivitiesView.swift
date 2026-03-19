@@ -19,7 +19,7 @@ struct DayHeaderActivitiesView: View {
         } else {
             VStack(spacing: 10) {
                 if !buckets.multiDay.isEmpty {
-                    headerRow(title: "Multi-day") {
+                    headerRow(title: String(localized: "Multi-day")) {
                         VStack(spacing: 6) {
                             ForEach(buckets.multiDay, id: \.persistentModelID) { a in
                                 MultiDayBar(activity: a, dayStart: dayStart, defaultDurationMinutes: defaultDurationMinutes) {
@@ -31,7 +31,7 @@ struct DayHeaderActivitiesView: View {
                 }
 
                 if !buckets.allDay.isEmpty {
-                    headerRow(title: "All-day") {
+                    headerRow(title: String(localized: "All-day")) {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 8)], spacing: 8) {
                             ForEach(buckets.allDay, id: \.persistentModelID) { a in
                                 AllDayChip(activity: a) {
@@ -125,5 +125,5 @@ private struct MultiDayBar: View {
 
 private func activityTitle(_ a: Activity) -> String {
     let t = a.title.trimmingCharacters(in: .whitespacesAndNewlines)
-    return t.isEmpty ? "Activity" : t
+    return t.isEmpty ? String(localized: "Activity") : t
 }

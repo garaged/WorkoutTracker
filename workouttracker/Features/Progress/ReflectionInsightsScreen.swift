@@ -17,10 +17,10 @@ struct ReflectionInsightsScreen: View {
             if let summary {
                 List {
                     Section {
-                        Picker("Window", selection: $weeksBack) {
-                            Text("4w").tag(4)
-                            Text("12w").tag(12)
-                            Text("24w").tag(24)
+                        Picker(AppFormatting.localized("Window"), selection: $weeksBack) {
+                            Text(AppFormatting.localized("4w")).tag(4)
+                            Text(AppFormatting.localized("12w")).tag(12)
+                            Text(AppFormatting.localized("24w")).tag(24)
                         }
                         .pickerStyle(.segmented)
                     }
@@ -28,8 +28,8 @@ struct ReflectionInsightsScreen: View {
                     if summary.completedSessions == 0 {
                         Section {
                             EmptyStateView(
-                                title: "No completed sessions yet",
-                                message: "Finish a workout to start building reflection stats.",
+                                title: String(localized: "No completed sessions yet"),
+                                message: String(localized: "Finish a workout to start building reflection stats."),
                                 systemImage: "face.smiling"
                             )
                             .frame(maxWidth: .infinity)
@@ -38,25 +38,25 @@ struct ReflectionInsightsScreen: View {
                         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                         .listRowBackground(Color.clear)
                     } else {
-                        Section("Reflection rate") {
+                        Section(AppFormatting.localized("Reflection rate")) {
                             HStack {
-                                StatChip(title: "Rate", value: rateText(summary.reflectionRate))
-                                StatChip(title: "Reflected", value: "\(summary.sessionsWithReflection)/\(summary.completedSessions)")
-                                StatChip(title: "Mood used", value: "\(summary.sessionsWithMood)")
+                                StatChip(title: String(localized: "Rate"), value: rateText(summary.reflectionRate))
+                                StatChip(title: String(localized: "Reflected"), value: "\(summary.sessionsWithReflection)/\(summary.completedSessions)")
+                                StatChip(title: String(localized: "Mood used"), value: "\(summary.sessionsWithMood)")
                             }
                             .padding(.vertical, 4)
 
                             HStack {
-                                StatChip(title: "Mood only", value: "\(summary.moodOnly)")
-                                StatChip(title: "Note only", value: "\(summary.noteOnly)")
-                                StatChip(title: "Both", value: "\(summary.bothMoodAndNote)")
+                                StatChip(title: String(localized: "Mood only"), value: "\(summary.moodOnly)")
+                                StatChip(title: String(localized: "Note only"), value: "\(summary.noteOnly)")
+                                StatChip(title: String(localized: "Both"), value: "\(summary.bothMoodAndNote)")
                             }
                             .padding(.vertical, 4)
                         }
 
-                        Section("Mood breakdown") {
+                        Section(AppFormatting.localized("Mood breakdown")) {
                             if summary.moodStats.isEmpty {
-                                Text("No moods recorded in this window yet.")
+                                Text(AppFormatting.localized("No moods recorded in this window yet."))
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             } else {
@@ -75,24 +75,29 @@ struct ReflectionInsightsScreen: View {
                         }
 
                         Section {
-                            Text("Window: \(windowText(summary))")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            Text(
+                                String(
+                                    format: String(localized: "Window: %@"),
+                                    locale: .autoupdatingCurrent,
+                                    windowText(summary)
+                                )
+                            )
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         }
                     }
                 }
                 .listStyle(.insetGrouped)
             } else if let loadError {
-                ContentUnavailableView(
-                    "Couldn’t load reflection stats",
+                ContentUnavailableView(AppFormatting.localized("Couldn’t load reflection stats"),
                     systemImage: "exclamationmark.triangle",
                     description: Text(loadError)
                 )
             } else {
-                ProgressView("Loading…")
+                ProgressView(AppFormatting.localized("Loading…"))
             }
         }
-        .navigationTitle("Reflections")
+        .navigationTitle(AppFormatting.localized("Reflections"))
         .navigationBarTitleDisplayMode(.inline)
         .task(id: weeksBack) { reload() }
         .refreshable { reload() }
@@ -117,25 +122,23 @@ struct ReflectionInsightsScreen: View {
 
     private func percentText(_ v: Double) -> String {
         let pct = (v * 100).formatted(.number.precision(.fractionLength(0...0)))
-        return "\(pct)%"
+        return String(format: String(localized: "%@%%"), locale: .autoupdatingCurrent, pct)
     }
 
     private func moodLabel(_ mood: SessionReflectionMood) -> String {
         // Prefer your enum's display helpers if you have them.
         // (Your v1 implementation includes `emoji` + `title`.)
         switch mood {
-        case .great: return "😄 Great"
-        case .good: return "🙂 Good"
-        case .neutral: return "😐 Neutral"
-        case .tough: return "😮‍💨 Tough"
-        case .bad: return "😞 Bad"
+        case .great: return String(localized: "😄 Great")
+        case .good: return String(localized: "🙂 Good")
+        case .neutral: return String(localized: "😐 Neutral")
+        case .tough: return String(localized: "😮‍💨 Tough")
+        case .bad: return String(localized: "😞 Bad")
         }
     }
 
     private func windowText(_ s: ReflectionInsightsService.Summary) -> String {
-        let start = s.windowStart.formatted(.dateTime.month(.abbreviated).day())
         let endInclusive = Calendar.current.date(byAdding: .day, value: -1, to: s.windowEndExclusive) ?? s.windowEndExclusive
-        let end = endInclusive.formatted(.dateTime.month(.abbreviated).day())
-        return "\(start) – \(end)"
+        return AppFormatting.dateRange(start: s.windowStart, end: endInclusive)
     }
 }

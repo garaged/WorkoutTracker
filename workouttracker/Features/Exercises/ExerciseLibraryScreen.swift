@@ -47,10 +47,9 @@ struct ExerciseLibraryScreen: View {
     var body: some View {
         List {
             if filtered.isEmpty {
-                ContentUnavailableView(
-                    "No exercises",
+                ContentUnavailableView(AppFormatting.localized("No exercises"),
                     systemImage: "dumbbell",
-                    description: Text("Create your first exercise to start building routines and tracking history.")
+                    description: Text(AppFormatting.localized("Create your first exercise to start building routines and tracking history."))
                 )
             } else {
                 ForEach(filtered) { ex in
@@ -63,7 +62,7 @@ struct ExerciseLibraryScreen: View {
                         Button {
                             editingExercise = ex
                         } label: {
-                            Label("Edit", systemImage: "pencil")
+                            Label(AppFormatting.localized("Edit"), systemImage: "pencil")
                         }
 
                         Button(role: ex.isArchived ? .cancel : .destructive) {
@@ -77,7 +76,7 @@ struct ExerciseLibraryScreen: View {
                 }
             }
         }
-        .navigationTitle("Exercises")
+        .navigationTitle(AppFormatting.localized("Exercises"))
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -92,7 +91,7 @@ struct ExerciseLibraryScreen: View {
                 } label: {
                     Image(systemName: "wrench.and.screwdriver")
                 }
-                .accessibilityLabel("Equipment")
+                .accessibilityLabel(AppFormatting.localized("Equipment"))
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -103,7 +102,7 @@ struct ExerciseLibraryScreen: View {
                 }
                 // ✅ FIX: use the real property in scope
                 .disabled(selectedEquipmentTags.isEmpty)
-                .accessibilityLabel("Filter by equipment")
+                .accessibilityLabel(AppFormatting.localized("Filter by equipment"))
             }
         }
         .safeAreaInset(edge: .top) {
@@ -128,7 +127,7 @@ struct ExerciseLibraryScreen: View {
     private var filtersBar: some View {
         HStack(spacing: 10) {
             Menu {
-                Button("All") { modalityFilter = nil }
+                Button(AppFormatting.localized("All")) { modalityFilter = nil }
                 Divider()
                 ForEach(ExerciseModality.allCases, id: \.self) { m in
                     Button(m.rawValue.capitalized) { modalityFilter = m }
@@ -146,7 +145,7 @@ struct ExerciseLibraryScreen: View {
                 .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
             }
 
-            Toggle("Archived", isOn: $showArchived)
+            Toggle(AppFormatting.localized("Archived"), isOn: $showArchived)
                 .toggleStyle(.switch)
                 .labelsHidden()
 
@@ -241,7 +240,7 @@ private struct ExerciseRow: View {
                 Spacer()
 
                 if exercise.isArchived {
-                    Text("Archived")
+                    Text(AppFormatting.localized("Archived"))
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)

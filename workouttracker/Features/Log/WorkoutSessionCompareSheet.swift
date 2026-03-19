@@ -16,12 +16,12 @@ struct WorkoutSessionCompareSheet: View {
 
         NavigationStack {
             List {
-                Section("Sessions") {
+                Section(AppFormatting.localized("Sessions")) {
                     sessionHeader("A", session: a)
                     sessionHeader("B", session: b)
                 }
 
-                Section("Totals") {
+                Section(AppFormatting.localized("Totals")) {
                     metricRow("Duration",
                               a: sa.durationText ?? "—",
                               b: sb.durationText ?? "—",
@@ -42,23 +42,23 @@ struct WorkoutSessionCompareSheet: View {
                               b: fmt0(sb.volume),
                               delta: deltaDouble(sb.volume - sa.volume))
 
-                    Text("Volume uses your preferred unit (\(preferredUnit.label)).")
+                    Text(AppFormatting.localizedFormat("Volume uses your preferred unit (%@).", preferredUnit.label))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Section("Best set") {
-                    Text("A: \(sa.bestSetText ?? "—")")
+                Section(AppFormatting.localized("Best set")) {
+                    Text(AppFormatting.localizedFormat("A: %@", sa.bestSetText ?? "—"))
                         .foregroundStyle(.secondary)
-                    Text("B: \(sb.bestSetText ?? "—")")
+                    Text(AppFormatting.localizedFormat("B: %@", sb.bestSetText ?? "—"))
                         .foregroundStyle(.secondary)
                 }
             }
-            .navigationTitle("Compare")
+            .navigationTitle(AppFormatting.localized("Compare"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
+                    Button(AppFormatting.localized("Done")) { dismiss() }
                 }
             }
         }
@@ -68,7 +68,7 @@ struct WorkoutSessionCompareSheet: View {
 
     private func sessionHeader(_ tag: String, session: WorkoutSession) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("\(tag): \(session.sourceRoutineNameSnapshot ?? "Quick Workout")")
+            Text(AppFormatting.localizedFormat("%1$@: %2$@", tag, session.sourceRoutineNameSnapshot ?? AppFormatting.localized("Quick Workout")))
                 .font(.headline)
                 .lineLimit(1)
 
@@ -87,17 +87,17 @@ struct WorkoutSessionCompareSheet: View {
 
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("A").font(.caption2).foregroundStyle(.secondary)
+                    Text(AppFormatting.localized("A")).font(.caption2).foregroundStyle(.secondary)
                     Text(a).font(.subheadline.weight(.semibold))
                 }
                 Spacer()
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("B").font(.caption2).foregroundStyle(.secondary)
+                    Text(AppFormatting.localized("B")).font(.caption2).foregroundStyle(.secondary)
                     Text(b).font(.subheadline.weight(.semibold))
                 }
                 Spacer()
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Δ").font(.caption2).foregroundStyle(.secondary)
+                    Text(AppFormatting.localized("Δ")).font(.caption2).foregroundStyle(.secondary)
                     Text(delta ?? "—")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(delta == nil ? .secondary : .primary)
@@ -114,17 +114,17 @@ struct WorkoutSessionCompareSheet: View {
     }
 
     private func deltaInt(_ d: Int) -> String {
-        d == 0 ? "±0" : (d > 0 ? "+\(d)" : "\(d)")
+        d == 0 ? AppFormatting.localized("±0") : (d > 0 ? AppFormatting.localizedFormat("+%lld", Int64(d)) : AppFormatting.localizedFormat("%lld", Int64(d)))
     }
 
     private func deltaDouble(_ d: Double) -> String {
         let v = Int(d.rounded())
-        return v == 0 ? "±0" : (v > 0 ? "+\(v)" : "\(v)")
+        return v == 0 ? AppFormatting.localized("±0") : (v > 0 ? AppFormatting.localizedFormat("+%lld", Int64(v)) : AppFormatting.localizedFormat("%lld", Int64(v)))
     }
 
     private func deltaSeconds(_ d: Int) -> String {
         let mins = abs(d) / 60
-        if mins == 0 { return "±0m" }
-        return d > 0 ? "+\(mins)m" : "−\(mins)m"
+        if mins == 0 { return AppFormatting.localized("±0m") }
+        return d > 0 ? AppFormatting.localizedFormat("+%lldm", Int64(mins)) : AppFormatting.localizedFormat("−%lldm", Int64(mins))
     }
 }

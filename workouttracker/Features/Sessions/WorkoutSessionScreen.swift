@@ -1830,7 +1830,7 @@ struct WorkoutSessionScreen: View {
                 HStack(spacing: isCompact ? 6 : 8) {
                     stepButton(system: "minus.circle") { bumpDurationMinutes(-1) }
 
-                    TextField("—", text: durationMinutesBinding)
+                    TextField(AppFormatting.localized("—"), text: durationMinutesBinding)
                         .multilineTextAlignment(.center)
                         .keyboardType(.numberPad)
                         .frame(width: durationFieldWidth)
@@ -1845,7 +1845,7 @@ struct WorkoutSessionScreen: View {
 
         private var distanceField: some View {
             VStack(alignment: .leading, spacing: 6) {
-                Text(isCompact ? "Dist (\(preferredDistanceUnit.symbol))" : "Distance (\(preferredDistanceUnit.symbol))")
+                Text(isCompact ? AppFormatting.localizedFormat("Dist (%@)", preferredDistanceUnit.symbol) : AppFormatting.localizedFormat("Distance (%@)", preferredDistanceUnit.symbol))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -1854,7 +1854,7 @@ struct WorkoutSessionScreen: View {
                 HStack(spacing: isCompact ? 6 : 8) {
                     stepButton(system: "minus.circle") { bumpDistance(-preferredDistanceUnit.stepSize) }
 
-                    TextField("—", text: distanceBinding)
+                    TextField(AppFormatting.localized("—"), text: distanceBinding)
                         .multilineTextAlignment(.center)
                         .keyboardType(.decimalPad)
                         .frame(width: distanceFieldWidth)

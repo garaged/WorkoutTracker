@@ -9,7 +9,7 @@ struct RestTimerPanelView: View {
     var body: some View {
         VStack(spacing: 10) {
             HStack {
-                Label("Rest", systemImage: "timer")
+                Label(AppFormatting.localized("Rest"), systemImage: "timer")
                     .font(.headline)
                 Spacer()
                 Button {
@@ -19,7 +19,7 @@ struct RestTimerPanelView: View {
                     Image(systemName: "xmark.circle.fill")
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("End rest")
+                .accessibilityLabel(AppFormatting.localized("End rest"))
             }
 
             Text(timeString(timer.remainingSeconds))
@@ -27,13 +27,13 @@ struct RestTimerPanelView: View {
                 .monospacedDigit()
 
             HStack(spacing: 10) {
-                Button("-15s") { timer.extend(by: -15) }
+                Button(AppFormatting.localized("-15s")) { timer.extend(by: -15) }
                     .disabled(!timer.isRunning)
 
-                Button("+15s") { timer.extend(by: 15) }
+                Button(AppFormatting.localized("+15s")) { timer.extend(by: 15) }
                     .disabled(!timer.isRunning)
 
-                Button("Done") {
+                Button(AppFormatting.localized("Done")) {
                     timer.stop()
                     onDismiss()
                 }

@@ -154,7 +154,7 @@ struct DayTimelineEntryScreen: View {
         let computedEnd = end ?? cal.date(byAdding: .minute, value: 30, to: start)
 
         let a = Activity(
-            title: "New Activity",
+            title: String(localized: "New Activity"),
             startAt: start,
             endAt: computedEnd,
             laneHint: lane

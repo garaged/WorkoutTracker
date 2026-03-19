@@ -138,6 +138,15 @@ enum AppFormatting {
 
 
 
+    static func localized(_ key: String, locale: Locale = .autoupdatingCurrent) -> String {
+        localizedString(key, locale: locale)
+    }
+
+    static func localizedFormat(_ key: String, locale: Locale = .autoupdatingCurrent, _ arguments: CVarArg...) -> String {
+        String(format: localizedString(key, locale: locale), locale: locale, arguments: arguments)
+    }
+
+
     private static func localizedString(_ key: String, locale: Locale) -> String {
         let bundle = localizedBundle(for: locale)
         let localized = bundle.localizedString(forKey: key, value: nil, table: nil)

@@ -46,7 +46,7 @@ struct ActiveSessionsSection: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Label("Active Sessions", systemImage: "figure.strengthtraining.traditional")
+                Label(AppFormatting.localized("Active Sessions"), systemImage: "figure.strengthtraining.traditional")
                     .font(.headline)
 
                 Spacer()
@@ -56,7 +56,7 @@ struct ActiveSessionsSection: View {
                     .foregroundStyle(.secondary)
             }
 
-            Text("Resume unfinished workouts here. Sessions from previous days can be finished quickly so they stop appearing on Home.")
+            Text(AppFormatting.localized("Resume unfinished workouts here. Sessions from previous days can be finished quickly so they stop appearing on Home."))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
@@ -99,9 +99,17 @@ struct ActiveSessionsSection: View {
     private func subtitle(for session: WorkoutSession) -> String {
         let startedText: String
         if calendar.isDateInToday(session.startedAt) {
-            startedText = "Started today at \(session.startedAt.formatted(date: .omitted, time: .shortened))"
+            startedText = String(
+                format: String(localized: "Started today at %@"),
+                locale: .autoupdatingCurrent,
+                session.startedAt.formatted(date: .omitted, time: .shortened)
+            )
         } else {
-            startedText = "Started \(session.startedAt.formatted(date: .abbreviated, time: .shortened))"
+            startedText = String(
+                format: String(localized: "Started %@"),
+                locale: .autoupdatingCurrent,
+                session.startedAt.formatted(date: .abbreviated, time: .shortened)
+            )
         }
 
         let plannedPrefix: String? = {
@@ -109,18 +117,26 @@ struct ActiveSessionsSection: View {
             guard !calendar.isDate(activity.startAt, inSameDayAs: session.startedAt) else { return nil }
 
             if calendar.isDateInToday(activity.startAt) {
-                return "Planned for today"
+                return String(localized: "Planned for today")
             } else if calendar.isDateInYesterday(activity.startAt) {
-                return "Planned for yesterday"
+                return String(localized: "Planned for yesterday")
             } else {
-                return "Planned for \(activity.startAt.formatted(date: .abbreviated, time: .omitted))"
+                return String(
+                    format: String(localized: "Planned for %@"),
+                    locale: .autoupdatingCurrent,
+                    activity.startAt.formatted(date: .abbreviated, time: .omitted)
+                )
             }
         }()
 
         let base = plannedPrefix.map { "\($0) · \(startedText)" } ?? startedText
 
         if session.isPaused {
-            return "Paused · \(base)"
+            return String(
+                format: String(localized: "Paused · %@"),
+                locale: .autoupdatingCurrent,
+                base
+            )
         }
 
         return base
@@ -154,7 +170,7 @@ private struct ActiveSessionCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 10) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(session.sourceRoutineNameSnapshot ?? "Workout")
+                    Text(session.sourceRoutineNameSnapshot ?? String(localized: "Workout"))
                         .font(.headline)
                         .foregroundStyle(.primary)
 
@@ -166,14 +182,14 @@ private struct ActiveSessionCard: View {
                 Spacer()
 
                 if isPastDay {
-                    Text("Previous day")
+                    Text(AppFormatting.localized("Previous day"))
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.orange)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(.orange.opacity(0.12), in: Capsule())
                 } else {
-                    Text("Today")
+                    Text(AppFormatting.localized("Today"))
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.green)
                         .padding(.horizontal, 8)
@@ -184,7 +200,7 @@ private struct ActiveSessionCard: View {
 
             HStack(spacing: 10) {
                 Button(action: resumeAction) {
-                    Label("Resume", systemImage: "play.circle.fill")
+                    Label(AppFormatting.localized("Resume"), systemImage: "play.circle.fill")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -192,7 +208,7 @@ private struct ActiveSessionCard: View {
 
                 if isPastDay {
                     Button(action: finishAction) {
-                        Label("Finish", systemImage: "checkmark.circle")
+                        Label(AppFormatting.localized("Finish"), systemImage: "checkmark.circle")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)

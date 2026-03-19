@@ -49,7 +49,7 @@ struct HomeScreen: View {
                     }
                     .padding(.top, 4)
 
-                    Text("Tip: Long-press tiles later for quick actions (e.g., “Start workout”, “Add exercise”).")
+                    Text(AppFormatting.localized("Tip: Long-press tiles later for quick actions (e.g., “Start workout”, “Add exercise”)."))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .padding(.top, 6)
@@ -63,7 +63,7 @@ struct HomeScreen: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Workout Tracker")
+                Text(AppFormatting.localized("Workout Tracker"))
                     .font(.largeTitle.bold())
 
                 Text(Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
@@ -84,7 +84,7 @@ struct HomeScreen: View {
                     .background(.ultraThinMaterial, in: Circle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Settings")
+            .accessibilityLabel(AppFormatting.localized("Settings"))
         }
     }
 }

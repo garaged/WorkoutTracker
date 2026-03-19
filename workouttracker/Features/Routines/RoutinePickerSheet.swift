@@ -33,10 +33,9 @@ struct RoutinePickerSheet: View {
         NavigationStack {
             Group {
                 if selectableRoutines.isEmpty {
-                    ContentUnavailableView(
-                        "No routines available",
+                    ContentUnavailableView(AppFormatting.localized("No routines available"),
                         systemImage: "list.bullet.rectangle",
-                        description: Text("Create another routine to pick it from the list.")
+                        description: Text(AppFormatting.localized("Create another routine to pick it from the list."))
                     )
                 } else {
                     List {
@@ -45,7 +44,7 @@ struct RoutinePickerSheet: View {
                                 onPick(nil)
                             } label: {
                                 HStack {
-                                    Text("None")
+                                    Text(AppFormatting.localized("None"))
                                     Spacer()
                                     if selectedRoutineId == nil {
                                         Image(systemName: "checkmark")
@@ -55,7 +54,7 @@ struct RoutinePickerSheet: View {
                             }
                         }
 
-                        Section("Routines") {
+                        Section(AppFormatting.localized("Routines")) {
                             ForEach(selectableRoutines) { r in
                                 Button {
                                     onPick(r)
@@ -78,13 +77,13 @@ struct RoutinePickerSheet: View {
             .navigationTitle(title)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
+                    Button(AppFormatting.localized("Close")) { dismiss() }
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showCreate = true
                     } label: {
-                        Label("New", systemImage: "plus")
+                        Label(AppFormatting.localized("New"), systemImage: "plus")
                     }
                 }
             }

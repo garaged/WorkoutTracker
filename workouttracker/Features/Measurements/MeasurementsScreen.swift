@@ -22,7 +22,7 @@ struct MeasurementsScreen: View {
     var body: some View {
         List {
             Section {
-                Picker("Mode", selection: $mode) {
+                Picker(AppFormatting.localized("Mode"), selection: $mode) {
                     ForEach(Mode.allCases) { m in
                         Text(m.rawValue).tag(m)
                     }
@@ -31,10 +31,9 @@ struct MeasurementsScreen: View {
             }
 
             if entries.isEmpty {
-                ContentUnavailableView(
-                    "No Measurements Yet",
+                ContentUnavailableView(AppFormatting.localized("No Measurements Yet"),
                     systemImage: "ruler",
-                    description: Text("Add your first entry to start tracking trends.")
+                    description: Text(AppFormatting.localized("Add your first entry to start tracking trends."))
                 )
                 .listRowBackground(Color.clear)
             } else {
@@ -46,13 +45,13 @@ struct MeasurementsScreen: View {
                 }
             }
         }
-        .navigationTitle("Measurements")
+        .navigationTitle(AppFormatting.localized("Measurements"))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showAdd = true } label: {
                     Image(systemName: "plus.circle.fill")
                 }
-                .accessibilityLabel("Add measurement")
+                .accessibilityLabel(AppFormatting.localized("Add measurement"))
             }
         }
         .onAppear {
@@ -64,7 +63,7 @@ struct MeasurementsScreen: View {
         }
         .sheet(isPresented: $showAdd) {
             MeasurementEditorSheet(
-                title: "Add Measurement",
+                title: AppFormatting.localized("Add Measurement"),
                 initial: .new(defaultDate: Date()),
                 onSave: { newEntry in
                     entries.append(newEntry)
@@ -74,7 +73,7 @@ struct MeasurementsScreen: View {
         }
         .sheet(item: $editing) { entry in
             MeasurementEditorSheet(
-                title: "Edit Measurement",
+                title: AppFormatting.localized("Edit Measurement"),
                 initial: entry,
                 onSave: { updated in
                     if let idx = entries.firstIndex(where: { $0.id == updated.id }) {
@@ -93,7 +92,7 @@ struct MeasurementsScreen: View {
         let series = seriesByType(entries)
 
         return Group {
-            Section("Latest") {
+            Section(AppFormatting.localized("Latest")) {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 12)], spacing: 12) {
                     ForEach(types, id: \.self) { t in
                         let s = series[t, default: []]
@@ -129,7 +128,7 @@ struct MeasurementsScreen: View {
                             Button(role: .destructive) {
                                 delete(e)
                             } label: {
-                                Label("Delete", systemImage: "trash")
+                                Label(AppFormatting.localized("Delete"), systemImage: "trash")
                             }
                         }
                     }
@@ -144,7 +143,7 @@ struct MeasurementsScreen: View {
         let series = seriesByType(entries)
 
         return Group {
-            Section("By Type") {
+            Section(AppFormatting.localized("By Type")) {
                 ForEach(MeasurementType.allCases, id: \.self) { t in
                     let s = series[t, default: []]
                     TrendRow(type: t, series: s)
@@ -246,14 +245,14 @@ private enum MeasurementType: String, CaseIterable, Codable, Hashable {
 
     var displayName: String {
         switch self {
-        case .weight: return "Weight"
-        case .bodyFat: return "Body Fat"
-        case .waist: return "Waist"
-        case .chest: return "Chest"
-        case .hips: return "Hips"
-        case .thigh: return "Thigh"
-        case .arm: return "Arm"
-        case .neck: return "Neck"
+        case .weight: return AppFormatting.localized("Weight")
+        case .bodyFat: return AppFormatting.localized("Body Fat")
+        case .waist: return AppFormatting.localized("Waist")
+        case .chest: return AppFormatting.localized("Chest")
+        case .hips: return AppFormatting.localized("Hips")
+        case .thigh: return AppFormatting.localized("Thigh")
+        case .arm: return AppFormatting.localized("Arm")
+        case .neck: return AppFormatting.localized("Neck")
         }
     }
 
@@ -354,7 +353,7 @@ private struct LatestCard: View {
                     Text(last.valueString)
                         .font(.headline)
                 } else {
-                    Text("—").font(.headline).foregroundStyle(.secondary)
+                    Text(AppFormatting.localized("—")).font(.headline).foregroundStyle(.secondary)
                 }
             }
 
@@ -368,7 +367,7 @@ private struct LatestCard: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                Text("Tap + to add")
+                Text(AppFormatting.localized("Tap + to add"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -437,7 +436,7 @@ private struct TrendDelta: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(delta == 0 ? .secondary : .primary)
             } else {
-                Text("—").font(.caption).foregroundStyle(.secondary)
+                Text(AppFormatting.localized("—")).font(.caption).foregroundStyle(.secondary)
             }
         }
         .padding(.horizontal, 8)
@@ -480,8 +479,8 @@ private struct MeasurementEditorSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Measurement") {
-                    Picker("Type", selection: $type) {
+                Section(AppFormatting.localized("Measurement")) {
+                    Picker(AppFormatting.localized("Type"), selection: $type) {
                         ForEach(MeasurementType.allCases, id: \.self) { t in
                             Text(t.displayName).tag(t)
                         }
@@ -493,7 +492,7 @@ private struct MeasurementEditorSheet: View {
                     }
 
                     HStack {
-                        Text("Value")
+                        Text(AppFormatting.localized("Value"))
                         Spacer()
                         TextField("0", value: $value, format: .number)
                             .keyboardType(.decimalPad)
@@ -501,29 +500,29 @@ private struct MeasurementEditorSheet: View {
                             .frame(width: 120)
                     }
 
-                    Picker("Unit", selection: $unit) {
+                    Picker(AppFormatting.localized("Unit"), selection: $unit) {
                         ForEach(type.allowedUnits, id: \.self) { u in
                             Text(unitLabel(u)).tag(u)
                         }
                     }
                 }
 
-                Section("When") {
+                Section(AppFormatting.localized("When")) {
                     DatePicker("Date", selection: $date, displayedComponents: [.date, .hourAndMinute])
                 }
 
-                Section("Note") {
-                    TextField("Optional", text: $note, axis: .vertical)
+                Section(AppFormatting.localized("Note")) {
+                    TextField(AppFormatting.localized("Optional"), text: $note, axis: .vertical)
                         .lineLimit(3...6)
                 }
             }
             .navigationTitle(title)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(AppFormatting.localized("Cancel")) { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
+                    Button(AppFormatting.localized("Save")) {
                         onSave(.init(id: id, date: date, type: type, value: value, unit: unit, note: note))
                         dismiss()
                     }

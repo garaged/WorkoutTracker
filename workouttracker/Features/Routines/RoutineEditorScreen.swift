@@ -51,7 +51,7 @@ struct RoutineEditorScreen: View {
                 }
                 .sheet(isPresented: $showTrackingStylePicker) {
                     TrackingStylePickerSheet(
-                        exerciseName: pendingExerciseToAdd?.name ?? "Exercise",
+                        exerciseName: pendingExerciseToAdd?.name ?? AppFormatting.localized("Exercise"),
                         selection: $pendingTrackingStyle
                     ) {
                         guard let ex = pendingExerciseToAdd else { return }
@@ -59,14 +59,13 @@ struct RoutineEditorScreen: View {
                         pendingExerciseToAdd = nil
                     }
                 }
-                .alert(
-                    "Linked routines",
+                .alert(AppFormatting.localized("Linked routines"),
                     isPresented: Binding(
                         get: { validationMessage != nil },
                         set: { if !$0 { validationMessage = nil } }
                     )
                 ) {
-                    Button("OK", role: .cancel) {}
+                    Button(AppFormatting.localized("OK"), role: .cancel) {}
                 } message: {
                     Text(validationMessage ?? "")
                 }
@@ -81,15 +80,15 @@ struct RoutineEditorScreen: View {
     private func toolbarContent(for routine: WorkoutRoutine) -> some ToolbarContent {
         if isCreate {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Cancel") { cancelCreate() }
+                Button(AppFormatting.localized("Cancel")) { cancelCreate() }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Save") { saveAndDismiss() }
+                Button(AppFormatting.localized("Save")) { saveAndDismiss() }
                     .disabled(cleanName(for: routine).isEmpty)
             }
         } else {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Done") { saveAndDismiss() }
+                Button(AppFormatting.localized("Done")) { saveAndDismiss() }
                     .disabled(cleanName(for: routine).isEmpty)
             }
         }
@@ -97,7 +96,7 @@ struct RoutineEditorScreen: View {
         ToolbarItem(placement: .bottomBar) {
             if !isCreate {
                 Button(role: .destructive) { deleteRoutine() } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label(AppFormatting.localized("Delete"), systemImage: "trash")
                 }
             }
         }
@@ -245,20 +244,20 @@ private struct RoutineEditorDetail: View {
 
     var body: some View {
         List {
-            Section("Routine") {
-                TextField("Name", text: Binding(
+            Section(AppFormatting.localized("Routine")) {
+                TextField(AppFormatting.localized("Name"), text: Binding(
                     get: { routine.name },
                     set: { routine.name = $0; routine.updatedAt = Date() }
                 ))
 
-                TextField("Notes", text: Binding(
+                TextField(AppFormatting.localized("Notes"), text: Binding(
                     get: { routine.notes ?? "" },
                     set: { routine.notes = $0.isEmpty ? nil : $0; routine.updatedAt = Date() }
                 ), axis: .vertical)
                 .lineLimit(2...6)
             }
 
-            Section("Linked routines") {
+            Section(AppFormatting.localized("Linked routines")) {
                 LinkedRoutinePickerView(
                     role: .warmUp,
                     mainRoutineID: routine.id,
@@ -288,12 +287,11 @@ private struct RoutineEditorDetail: View {
                 )
             }
 
-            Section("Exercises") {
+            Section(AppFormatting.localized("Exercises")) {
                 if routine.items.isEmpty {
-                    ContentUnavailableView(
-                        "No exercises",
+                    ContentUnavailableView(AppFormatting.localized("No exercises"),
                         systemImage: "dumbbell",
-                        description: Text("Add exercises so this routine can generate sessions.")
+                        description: Text(AppFormatting.localized("Add exercises so this routine can generate sessions."))
                     )
                     .listRowSeparator(.hidden)
                 } else {
@@ -311,12 +309,12 @@ private struct RoutineEditorDetail: View {
                 Button {
                     onAddExercise()
                 } label: {
-                    Label("Add exercise", systemImage: "plus")
+                    Label(AppFormatting.localized("Add exercise"), systemImage: "plus")
                 }
             }
 
-            Section("Status") {
-                Toggle("Archived", isOn: Binding(
+            Section(AppFormatting.localized("Status")) {
+                Toggle(AppFormatting.localized("Archived"), isOn: Binding(
                     get: { routine.isArchived },
                     set: {
                         routine.isArchived = $0
@@ -373,7 +371,7 @@ private struct RoutineItemRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
-                Text(item.exercise?.name ?? "Unknown Exercise")
+                Text(item.exercise?.name ?? AppFormatting.localized("Unknown Exercise"))
                     .font(.headline)
                     .lineLimit(1)
 

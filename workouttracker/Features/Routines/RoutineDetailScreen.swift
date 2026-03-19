@@ -9,27 +9,30 @@ struct RoutineDetailScreen: View {
 
     var body: some View {
         Form {
-            Section("Routine") {
-                TextField("Name", text: $routine.name)
+            Section {
+                TextField(AppFormatting.localized("Name"), text: $routine.name)
                     .onChange(of: routine.name) { _, _ in touchUpdatedAndSave() }
 
-                TextField("Notes", text: Binding(
+                TextField(AppFormatting.localized("Notes"), text: Binding(
                     get: { routine.notes ?? "" },
                     set: { routine.notes = $0.isEmpty ? nil : $0; touchUpdatedAndSave() }
                 ), axis: .vertical)
+            } header: {
+                Text(AppFormatting.localized("Routine"))
             }
 
-            Section("Linked routines") {
-                linkedRoutineRow(title: "Warm-up", routine: routine.warmUpRoutine)
-                linkedRoutineRow(title: "Cool-down", routine: routine.coolDownRoutine)
+            Section {
+                linkedRoutineRow(title: AppFormatting.localized("Warm-up"), routine: routine.warmUpRoutine)
+                linkedRoutineRow(title: AppFormatting.localized("Cool-down"), routine: routine.coolDownRoutine)
+            } header: {
+                Text(AppFormatting.localized("Linked routines"))
             }
 
-            Section("Exercises") {
+            Section {
                 if sortedItems.isEmpty {
-                    ContentUnavailableView(
-                        "No exercises yet",
+                    ContentUnavailableView(AppFormatting.localized("No exercises yet"),
                         systemImage: "dumbbell",
-                        description: Text("Add an item, pick an exercise, then set planned reps/weight/rest.")
+                        description: Text(AppFormatting.localized("Add an item, pick an exercise, then set planned reps/weight/rest."))
                     )
                 }
 
@@ -47,13 +50,17 @@ struct RoutineDetailScreen: View {
                 Button {
                     addItem()
                 } label: {
-                    Label("Add Exercise", systemImage: "plus")
+                    Label(AppFormatting.localized("Add Exercise"), systemImage: "plus")
                 }
+            } header: {
+                Text(AppFormatting.localized("Exercises"))
             }
 
             Section {
-                Toggle("Archived", isOn: $routine.isArchived)
-                    .onChange(of: routine.isArchived) { _, _ in touchUpdatedAndSave() }
+                Toggle(isOn: $routine.isArchived) {
+                    Text(AppFormatting.localized("Archived"))
+                }
+                .onChange(of: routine.isArchived) { _, _ in touchUpdatedAndSave() }
             }
         }
         .navigationTitle(routine.name.isEmpty ? "Routine" : routine.name)
@@ -69,7 +76,7 @@ struct RoutineDetailScreen: View {
     }
 
     @ViewBuilder
-    private func linkedRoutineRow(title: LocalizedStringKey, routine linkedRoutine: WorkoutRoutine?) -> some View {
+    private func linkedRoutineRow(title: String, routine linkedRoutine: WorkoutRoutine?) -> some View {
         if let linkedRoutine {
             NavigationLink {
                 RoutineDetailScreen(routine: linkedRoutine)
@@ -83,7 +90,11 @@ struct RoutineDetailScreen: View {
                 }
             }
         } else {
-            LabeledContent(title, value: "None")
+            LabeledContent {
+                Text(AppFormatting.localized("None"))
+            } label: {
+                Text(title)
+            }
         }
     }
 
@@ -155,7 +166,7 @@ private struct RoutineItemCard: View {
     let onPlanChanged: () -> Void
 
     private var exerciseName: String {
-        item.exercise?.name ?? "Pick exercise"
+        item.exercise?.name ?? AppFormatting.localized("Pick exercise")
     }
 
     private var sortedPlans: [WorkoutSetPlan] {
@@ -176,13 +187,13 @@ private struct RoutineItemCard: View {
             }
             .buttonStyle(.plain)
 
-            TextField("Item notes (optional)", text: Binding(
+            TextField(AppFormatting.localized("Item notes (optional)"), text: Binding(
                 get: { item.notes ?? "" },
                 set: { item.notes = $0.isEmpty ? nil : $0 }
             ), axis: .vertical)
             .font(.caption)
 
-            Picker("Segment", selection: Binding(
+            Picker(selection: Binding(
                 get: { item.segment },
                 set: {
                     item.segment = $0
@@ -192,19 +203,21 @@ private struct RoutineItemCard: View {
                 ForEach(WorkoutExerciseSegment.allCases, id: \.self) { segment in
                     Text(segment.displayName).tag(segment)
                 }
+            } label: {
+                Text(AppFormatting.localized("Segment"))
             }
             .pickerStyle(.segmented)
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Planned sets").font(.subheadline)
+                    Text(AppFormatting.localized("Planned sets")).font(.subheadline)
                     Spacer()
                     Button { onAddSet() } label: { Image(systemName: "plus.circle") }
                         .buttonStyle(.plain)
                 }
 
                 if sortedPlans.isEmpty {
-                    Text("No sets planned.")
+                    Text(AppFormatting.localized("No sets planned."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
@@ -214,7 +227,7 @@ private struct RoutineItemCard: View {
                                 Button(role: .destructive) {
                                     onDeleteSet(plan)
                                 } label: {
-                                    Label("Delete", systemImage: "trash")
+                                    Label(AppFormatting.localized("Delete"), systemImage: "trash")
                                 }
                             }
                     }

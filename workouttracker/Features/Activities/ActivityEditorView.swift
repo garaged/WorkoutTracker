@@ -115,21 +115,21 @@ struct ActivityEditorView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Activity") {
-                    TextField("Title", text: $title)
+                Section(AppFormatting.localized("Activity")) {
+                    TextField(AppFormatting.localized("Title"), text: $title)
                         .accessibilityIdentifier("activityEditor.titleField")
                 }
 
-                Section("Type") {
-                    Picker("Kind", selection: $kind) {
-                        Text("Generic").tag(ActivityKind.generic)
-                        Text("Workout").tag(ActivityKind.workout)
+                Section(AppFormatting.localized("Type")) {
+                    Picker(AppFormatting.localized("Kind"), selection: $kind) {
+                        Text(AppFormatting.localized("Generic")).tag(ActivityKind.generic)
+                        Text(AppFormatting.localized("Workout")).tag(ActivityKind.workout)
                     }
                     .pickerStyle(.segmented)
                     .accessibilityIdentifier("activityEditor.typePicker")
 
                     if kind == .workout && routines.isEmpty {
-                        Text("Create a routine first to use Workout activities.")
+                        Text(AppFormatting.localized("Create a routine first to use Workout activities."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .accessibilityIdentifier("activityEditor.routineEmptyState")
@@ -137,15 +137,15 @@ struct ActivityEditorView: View {
                 }
 
                 if kind == .workout {
-                    Section("Workout") {
+                    Section(AppFormatting.localized("Workout")) {
                         if routines.isEmpty {
-                            Text("No routines yet. Create one in Routines first.")
+                            Text(AppFormatting.localized("No routines yet. Create one in Routines first."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .accessibilityIdentifier("activityEditor.routineEmptyState")
                         } else {
-                            Picker("Routine", selection: $workoutRoutineId) {
-                                Text("Choose…").tag(UUID?.none)
+                            Picker(AppFormatting.localized("Routine"), selection: $workoutRoutineId) {
+                                Text(AppFormatting.localized("Choose…")).tag(UUID?.none)
                                 ForEach(routines) { r in
                                     Text(r.name).tag(Optional(r.id))
                                 }
@@ -154,14 +154,14 @@ struct ActivityEditorView: View {
                         }
 
                         if workoutRoutineId == nil {
-                            Text("Pick a routine so tapping this block can Start/Resume a session.")
+                            Text(AppFormatting.localized("Pick a routine so tapping this block can Start/Resume a session."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
                 }
 
-                Section("Time") {
+                Section(AppFormatting.localized("Time")) {
                     Toggle("All-day", isOn: $isAllDay)
 
                     if isAllDay {
@@ -208,7 +208,7 @@ struct ActivityEditorView: View {
                             displayedComponents: [.date]
                         )
 
-                        Text("End date is inclusive (Calendar-style).")
+                        Text(AppFormatting.localized("End date is inclusive (Calendar-style)."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
 
@@ -221,7 +221,7 @@ struct ActivityEditorView: View {
                                 }
                             }
 
-                        Toggle("Set end time", isOn: $hasEnd)
+                        Toggle(AppFormatting.localized("Set end time"), isOn: $hasEnd)
 
                         if hasEnd {
                             DatePicker("End", selection: $endAt, in: minEndRange..., displayedComponents: [.date, .hourAndMinute])
@@ -230,15 +230,15 @@ struct ActivityEditorView: View {
                 }
 
                 if !isAllDay {
-                    Section("Lane") {
-                        Picker("Lane", selection: $laneHint) {
+                    Section(AppFormatting.localized("Lane")) {
+                        Picker(AppFormatting.localized("Lane"), selection: $laneHint) {
                             ForEach(Array(zip(laneOptions, laneLabels)), id: \.0) { value, label in
                                 Text(label).tag(value)
                             }
                         }
                         .pickerStyle(.segmented)
 
-                        Text("Lane affects which column the block prefers when activities overlap.")
+                        Text(AppFormatting.localized("Lane affects which column the block prefers when activities overlap."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -248,11 +248,11 @@ struct ActivityEditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(AppFormatting.localized("Cancel")) { dismiss() }
                         .accessibilityIdentifier("activityEditor.cancel")
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
+                    Button(AppFormatting.localized("Save")) { save() }
                         .accessibilityIdentifier("activityEditor.saveButton")
                         .disabled(!canSave)
                 }

@@ -28,13 +28,13 @@ struct ProgramsLibraryScreen: View {
     var body: some View {
         NavigationStack {
             content
-                .navigationTitle("Programs")
+                .navigationTitle(AppFormatting.localized("Programs"))
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {
                         Button {
                             showImporter = true
                         } label: {
-                            Label("Import", systemImage: "square.and.arrow.down")
+                            Label(AppFormatting.localized("Import"), systemImage: "square.and.arrow.down")
                         }
 
                         Button {
@@ -45,7 +45,7 @@ struct ProgramsLibraryScreen: View {
                                 }
                             }
                         } label: {
-                            Label("Export", systemImage: "square.and.arrow.up")
+                            Label(AppFormatting.localized("Export"), systemImage: "square.and.arrow.up")
                         }
                         .disabled(model.installed.isEmpty)
                     }
@@ -84,10 +84,10 @@ struct ProgramsLibraryScreen: View {
                 }
             )
         }
-        .alert("Error", isPresented: $model.showError) {
-            Button("OK", role: .cancel) { }
+        .alert(AppFormatting.localized("Error"), isPresented: $model.showError) {
+            Button(AppFormatting.localized("OK"), role: .cancel) { }
         } message: {
-            Text(model.errorMessage ?? "Unknown error.")
+            Text(model.errorMessage ?? AppFormatting.localized("Unknown error."))
         }
     }
 
@@ -116,10 +116,9 @@ struct ProgramsLibraryScreen: View {
     private var installedSection: some View {
         Group {
             if model.installed.isEmpty {
-                ContentUnavailableView(
-                    "No Programs Yet",
+                ContentUnavailableView(AppFormatting.localized("No Programs Yet"),
                     systemImage: "list.bullet.rectangle",
-                    description: Text("Import a program pack, or add one from the Catalog tab.")
+                    description: Text(AppFormatting.localized("Import a program pack, or add one from the Catalog tab."))
                 )
             } else {
                 Section {
@@ -127,16 +126,16 @@ struct ProgramsLibraryScreen: View {
                         NavigationLink {
                             ProgramDetailScreen(program: program)
                         } label: {
-                            ProgramRow(program: program, subtitle: "\(program.durationWeeks) weeks")
+                            ProgramRow(program: program, subtitle: AppFormatting.localizedFormat("%lld weeks", Int64(program.durationWeeks)))
                         }
                     }
                     .onDelete { idx in
                         Task { await model.deleteInstalled(at: idx) }
                     }
                 } header: {
-                    Text("Installed")
+                    Text(AppFormatting.localized("Installed"))
                 } footer: {
-                    Text("Export produces a V2 pack (programs + routines + exercises). Scheduling is disabled unless routines exist.")
+                    Text(AppFormatting.localized("Export produces a V2 pack (programs + routines + exercises). Scheduling is disabled unless routines exist."))
                 }
             }
         }
@@ -145,19 +144,18 @@ struct ProgramsLibraryScreen: View {
     private var catalogSection: some View {
         Group {
             if model.catalog.isEmpty {
-                ContentUnavailableView(
-                    "Catalog Empty",
+                ContentUnavailableView(AppFormatting.localized("Catalog Empty"),
                     systemImage: "books.vertical",
-                    description: Text("Add program_catalog.json to your app bundle (Copy Bundle Resources).")
+                    description: Text(AppFormatting.localized("Add program_catalog.json to your app bundle (Copy Bundle Resources)."))
                 )
             } else {
-                Section("Catalog") {
+                Section(AppFormatting.localized("Catalog")) {
                     ForEach(model.catalog, id: \.id) { program in
                         HStack(spacing: 12) {
                             NavigationLink {
                                 ProgramDetailScreen(program: program)
                             } label: {
-                                ProgramRow(program: program, subtitle: "Catalog")
+                                ProgramRow(program: program, subtitle: AppFormatting.localized("Catalog"))
                             }
 
                             Spacer()
@@ -167,7 +165,7 @@ struct ProgramsLibraryScreen: View {
                             if alreadyInstalled {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundStyle(.green)
-                                    .accessibilityLabel("Installed")
+                                    .accessibilityLabel(AppFormatting.localized("Installed"))
                                     .accessibilityIdentifier("programs.catalog.installedCheckmark")
                             } else {
                                 Button {
@@ -176,7 +174,7 @@ struct ProgramsLibraryScreen: View {
                                     Image(systemName: "plus.circle.fill")
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("Add program to installed")
+                                .accessibilityLabel(AppFormatting.localized("Add program to installed"))
                                 .accessibilityIdentifier("programs.catalog.addButton")
                             }
                         }
@@ -340,28 +338,28 @@ private struct ImportPreviewSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Pack") {
-                    LabeledContent("Version", value: "\(preview.packVersion)")
+                Section(AppFormatting.localized("Pack")) {
+                    LabeledContent(AppFormatting.localized("Version"), value: "\(preview.packVersion)")
                     if preview.includesAssets {
-                        LabeledContent("Includes routines/exercises", value: "Yes")
+                        LabeledContent(AppFormatting.localized("Includes routines/exercises"), value: "Yes")
                     } else {
-                        LabeledContent("Includes routines/exercises", value: "No")
+                        LabeledContent(AppFormatting.localized("Includes routines/exercises"), value: "No")
                     }
                     if let date = preview.generatedAt {
-                        LabeledContent("Generated", value: date.formatted(date: .abbreviated, time: .shortened))
+                        LabeledContent(AppFormatting.localized("Generated"), value: date.formatted(date: .abbreviated, time: .shortened))
                     }
-                    Picker("On conflict", selection: $strategy) {
+                    Picker(AppFormatting.localized("On conflict"), selection: $strategy) {
                         ForEach(ProgramImportExportService.ConflictStrategy.allCases, id: \.self) { s in
                             Text(label(for: s)).tag(s)
                         }
                     }
                 }
 
-                Section("Programs (\(preview.programs.count))") {
+                Section(AppFormatting.localizedFormat("Programs (%lld)", Int64(preview.programs.count))) {
                     ForEach(preview.programs, id: \.id) { p in
                         VStack(alignment: .leading, spacing: 2) {
                             Text(p.name).font(.headline)
-                            Text("\(p.durationWeeks) weeks • \(p.slug)")
+                            Text(AppFormatting.localizedFormat("%1$lld weeks • %2$@", Int64(p.durationWeeks), p.slug))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -369,26 +367,26 @@ private struct ImportPreviewSheet: View {
                 }
 
                 if !preview.warnings.isEmpty {
-                    Section("Warnings") {
+                    Section(AppFormatting.localized("Warnings")) {
                         ForEach(preview.warnings, id: \.self) { w in
                             Text(w).font(.callout)
                         }
                     }
                 }
             }
-            .navigationTitle("Import Preview")
+            .navigationTitle(AppFormatting.localized("Import Preview"))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onCancel) }
-                ToolbarItem(placement: .confirmationAction) { Button("Import", action: onImport) }
+                ToolbarItem(placement: .cancellationAction) { Button(AppFormatting.localized("Cancel"), action: onCancel) }
+                ToolbarItem(placement: .confirmationAction) { Button(AppFormatting.localized("Import"), action: onImport) }
             }
         }
     }
 
     private func label(for s: ProgramImportExportService.ConflictStrategy) -> String {
         switch s {
-        case .keepExisting: return "Keep existing"
-        case .replaceExisting: return "Replace existing"
-        case .renameOnConflict: return "Import as new"
+        case .keepExisting: return AppFormatting.localized("Keep existing")
+        case .replaceExisting: return AppFormatting.localized("Replace existing")
+        case .renameOnConflict: return AppFormatting.localized("Import as new")
         }
     }
 }
