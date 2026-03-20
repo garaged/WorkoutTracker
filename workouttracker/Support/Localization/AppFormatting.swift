@@ -160,7 +160,7 @@ enum AppFormatting {
 
     private static func localizedBundle(for locale: Locale) -> Bundle {
         let identifier = locale.identifier.replacingOccurrences(of: "_", with: "-")
-        let languageCode = locale.language.languageCode?.identifier ?? locale.languageCode ?? ""
+        let languageCode = locale.language.languageCode?.identifier ?? locale.language.languageCode?.identifier ?? ""
         let candidates = [identifier, locale.identifier, languageCode].filter { !$0.isEmpty }
 
         let preferred = Bundle.preferredLocalizations(from: candidates)
