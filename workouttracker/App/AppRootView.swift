@@ -41,7 +41,7 @@ struct AppRootView: View {
     @AppStorage("workouttracker.starterPackVersion") private var starterPackVersion = 0
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var selection: RootDestination? = .home
-    @State private var presentedSession: WorkoutSession? = nil
+    @State private var presentedSessionRoute: SessionPresentationRoute? = nil
 
     @State private var timelineJump: TimelineJump? = nil
 
@@ -51,6 +51,7 @@ struct AppRootView: View {
     }
 
     private let cal = Calendar.current
+    private let sessionResumePlanner = SessionResumePlanner()
 
     var body: some View {
         Group {
@@ -260,8 +261,11 @@ struct AppRootView: View {
                 tiles: tiles,
                 onResumeSession: openSession
             )
-            .navigationDestination(item: $presentedSession) { session in
-                WorkoutSessionScreen(session: session)
+            .navigationDestination(item: $presentedSessionRoute) { route in
+                WorkoutSessionScreen(
+                    session: route.session,
+                    initialResumeTarget: route.initialResumeTarget
+                )
             }
         }
     }
@@ -272,23 +276,31 @@ struct AppRootView: View {
         } detail: {
             NavigationStack {
                 detail(for: selection ?? .home)
-                    .navigationDestination(item: $presentedSession) { session in
-                        WorkoutSessionScreen(session: session)
+                    .navigationDestination(item: $presentedSessionRoute) { route in
+                        WorkoutSessionScreen(
+                            session: route.session,
+                            initialResumeTarget: route.initialResumeTarget
+                        )
                     }
             }
         }
     }
 
     private func openSession(_ session: WorkoutSession) {
-        let sameSession = presentedSession?.persistentModelID == session.persistentModelID
+        let route = SessionPresentationRoute(
+            session: session,
+            initialResumeTarget: sessionResumePlanner.target(for: session)
+        )
+
+        let sameSession = presentedSessionRoute?.session.persistentModelID == session.persistentModelID
 
         if sameSession {
-            presentedSession = nil
+            presentedSessionRoute = nil
             Task { @MainActor in
-                presentedSession = session
+                presentedSessionRoute = route
             }
         } else {
-            presentedSession = session
+            presentedSessionRoute = route
         }
     }
 }

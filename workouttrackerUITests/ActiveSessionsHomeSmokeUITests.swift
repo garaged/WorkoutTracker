@@ -142,6 +142,45 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
         )
     }
     
+
+    func test_dayTimelineResume_centersSameActionableSet() {
+        let app = UITestLaunch.app(
+            start: "calendar",
+            reset: true,
+            seed: false,
+            extraEnv: ["UITESTS_ACTIVE_SESSIONS_SCROLL": "1"]
+        )
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["DayTimeline.Debug.ActivitiesCount"].waitForExistence(timeout: t(6)))
+        XCTAssertEqual(app.staticTexts["DayTimeline.Debug.ActivitiesCount"].label, "Activities: 1")
+        XCTAssertEqual(app.staticTexts["DayTimeline.Debug.WorkoutsCount"].label, "Workouts: 1")
+
+        let openWorkout = app.buttons["DayTimeline.WorkoutCard.DefaultAction"].firstMatch
+        if !openWorkout.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "DayTimelineResume_OpenControlMissing")
+        }
+        XCTAssertTrue(openWorkout.exists, "Expected DayTimeline.WorkoutCard.DefaultAction.")
+        tapSafely(openWorkout)
+
+        let sessionScreen = app.el("WorkoutSession.Screen")
+        if !sessionScreen.waitForExistence(timeout: t(8)) {
+            attachUITestDebug(app, name: "DayTimelineResume_SessionMissing")
+        }
+        XCTAssertTrue(sessionScreen.exists, "Expected Day timeline resume to open the session screen.")
+
+        let focusedRow = app.otherElements["WorkoutSession.ActionableSetRow"]
+        if !focusedRow.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "DayTimelineResume_ActionableRowMissing")
+        }
+
+        assertApproximatelyVerticallyCentered(
+            focusedRow,
+            in: app,
+            debugName: "Day timeline actionable row"
+        )
+    }
+
     func test_homeResume_centersActionableSet() {
         let app = makeScrollableResumeApp()
         app.launch()
@@ -192,12 +231,29 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
             extraEnv: ["UITESTS_ACTIVE_SESSIONS": "1"]
         )
     }
-
+    
     private func tapSafely(_ el: XCUIElement) {
         if el.isHittable {
             el.tap()
         } else {
             el.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         }
+    }
+
+    private func revealAndTap(_ el: XCUIElement, in app: XCUIApplication) {
+        let scrollView = app.scrollViews.firstMatch
+        XCTAssertTrue(scrollView.waitForExistence(timeout: t(2)), "Expected Day timeline scroll view.")
+
+        var attempts = 0
+        while !el.isHittable && attempts < 4 {
+            scrollView.swipeUp()
+            attempts += 1
+        }
+
+        if !el.isHittable {
+            attachUITestDebug(app, name: "DayTimelineResume_OpenControlStillNotHittable")
+        }
+        XCTAssertTrue(el.isHittable, "Expected Day timeline workout-open control to become hittable after scrolling into view.")
+        el.tap()
     }
 }

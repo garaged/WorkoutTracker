@@ -455,14 +455,33 @@ private func seedHomeActiveSessionsScrollUITestDataIfNeeded(context: ModelContex
         fatalError("UITESTS assertion failed: Chosen routine '\(chosen.routine.name)' produced 0 exercise templates.")
     }
 
+    let dayStart = calendar.startOfDay(for: Date())
+    let now = Date()
+    let comps = calendar.dateComponents([.hour, .minute], from: now)
+    let hour = comps.hour ?? 9
+    let minute = ((comps.minute ?? 0) / 5) * 5
+    let activityStart = calendar.date(bySettingHour: hour, minute: minute, second: 0, of: dayStart) ?? now
+    let activityEnd = calendar.date(byAdding: .minute, value: 60, to: activityStart)
+
+    let activity = Activity(
+        title: "UITest — Active Scroll",
+        startAt: activityStart,
+        endAt: activityEnd,
+        laneHint: 0,
+        kind: .workout,
+        workoutRoutineId: chosen.routine.id
+    )
+    activity.dayKey = DayTimelineEntryScreen.dayKey(for: activityStart)
+
     let session = WorkoutSessionFactory.makeSession(
-        linkedActivityId: nil,
+        linkedActivityId: activity.id,
         sourceRoutineId: chosen.routine.id,
         sourceRoutineNameSnapshot: "UITest — Active Scroll",
         exercises: templates,
         prefillActualsFromTargets: true
     )
     session.status = .inProgress
+    activity.workoutSessionId = session.id
 
     let orderedExercises = session.exercises.sorted { $0.order < $1.order }
     let orderedSets = orderedExercises.flatMap { ex in
@@ -481,6 +500,7 @@ private func seedHomeActiveSessionsScrollUITestDataIfNeeded(context: ModelContex
         set.completedAt = completedAt
     }
 
+    context.insert(activity)
     context.insert(session)
     try context.save()
 }
@@ -599,14 +619,10 @@ private func assertHomeActiveSessionsScrollSeed(context: ModelContext) throws {
         fatalError("UITESTS assertion failed: Scrollable active session has no incomplete set rows to focus.")
     }
 
-    let targetID = WorkoutContinueNavigator().nextTargetSetID(
-        exercises: orderedExercises,
-        activeExerciseID: nil,
-        activeSetID: nil
-    )
+    let plannerTarget = SessionResumePlanner().target(for: session)
 
-    guard let targetID else {
-        fatalError("UITESTS assertion failed: Scrollable active session did not produce a Continue/Resume target set.")
+    guard let targetID = plannerTarget?.setID else {
+        fatalError("UITESTS assertion failed: Scrollable active session did not produce a planner target set.")
     }
 
     let targetExists = orderedExercises.contains { ex in
@@ -614,7 +630,11 @@ private func assertHomeActiveSessionsScrollSeed(context: ModelContext) throws {
     }
 
     guard targetExists else {
-        fatalError("UITESTS assertion failed: Computed actionable target set does not belong to the seeded session.")
+        fatalError("UITESTS assertion failed: Planner target set does not belong to the seeded session.")
+    }
+
+    guard session.linkedActivityId != nil else {
+        fatalError("UITESTS assertion failed: Scrollable active session should be linked to a workout Activity so Home and Day resume test the same session.")
     }
 }
 

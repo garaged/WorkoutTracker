@@ -13,15 +13,17 @@ struct ActiveSessionsSection: View {
     var onResume: (WorkoutSession) -> Void = { _ in }
 
     private let calendar = Calendar.current
+    private let sessionResumePlanner = SessionResumePlanner()
 
     private var activityByID: [UUID: Activity] {
         Dictionary(uniqueKeysWithValues: activities.map { ($0.id, $0) })
     }
 
     private var activeSessions: [WorkoutSession] {
-        sessions
-            .filter { $0.status == .inProgress && $0.endedAt == nil }
-            .sorted(by: activeSessionSort)
+        sessionResumePlanner.sortedActiveSessions(
+            sessions,
+            activitiesByID: activityByID
+        )
     }
 
     var body: some View {
@@ -71,24 +73,6 @@ struct ActiveSessionsSection: View {
     /// Prefer the linked workout activity date; fall back to when the session record was started.
     private func owningDayDate(for session: WorkoutSession) -> Date {
         linkedActivity(for: session)?.startAt ?? session.startedAt
-    }
-
-    private func activeSessionSort(_ lhs: WorkoutSession, _ rhs: WorkoutSession) -> Bool {
-        let lhsOwningDay = calendar.startOfDay(for: owningDayDate(for: lhs))
-        let rhsOwningDay = calendar.startOfDay(for: owningDayDate(for: rhs))
-
-        let lhsToday = calendar.isDateInToday(lhsOwningDay)
-        let rhsToday = calendar.isDateInToday(rhsOwningDay)
-
-        if lhsToday != rhsToday {
-            return lhsToday && !rhsToday
-        }
-
-        if lhsOwningDay != rhsOwningDay {
-            return lhsOwningDay > rhsOwningDay
-        }
-
-        return lhs.startedAt > rhs.startedAt
     }
 
     private func isPastDay(_ session: WorkoutSession) -> Bool {

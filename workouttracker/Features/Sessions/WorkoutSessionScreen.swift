@@ -12,10 +12,19 @@ struct WorkoutSessionScreen: View {
 
 
     @Bindable var session: WorkoutSession
+    let initialResumeTarget: SessionResumeTarget?
 
     @StateObject private var logging = WorkoutLoggingService()
     @StateObject private var prefs = UserPreferences.shared
     @ObservedObject private var restTimer = SessionRestTimerController.shared
+    
+    init(
+        session: WorkoutSession,
+        initialResumeTarget: SessionResumeTarget? = nil
+    ) {
+        self.session = session
+        self.initialResumeTarget = initialResumeTarget
+    }
 
     /// Display numbering for set rows.
     ///
@@ -49,6 +58,7 @@ struct WorkoutSessionScreen: View {
     
     @State private var showReflectionSheet = false
     @State private var dismissAfterReflectionSheet = false
+    @State private var didApplyInitialResumeTarget = false
     
     private var bottomInsetLayoutKey: String {
         "\(shouldShowCoachPrompt)-\(shouldShowRestTimerCard)-\(session.isPaused)-\(isInProgress)"
@@ -77,7 +87,7 @@ struct WorkoutSessionScreen: View {
     private let coachService = CoachSuggestionService()
     private let prService = PersonalRecordsService()
 
-    private let continueNav = WorkoutContinueNavigator()
+    private let sessionResumePlanner = SessionResumePlanner()
 
     private var isReadOnly: Bool { session.status != .inProgress }
     private var isInProgress: Bool { session.status == .inProgress }
@@ -585,32 +595,43 @@ struct WorkoutSessionScreen: View {
     }
     
     private func nextActionableTarget() -> ActionableSetTarget? {
-        let exercises = sortedExercises
-        guard !exercises.isEmpty else { return nil }
-
-        guard let targetSetID = continueNav.nextTargetSetID(
-            exercises: exercises,
+        guard let target = sessionResumePlanner.target(
+            for: session,
             activeExerciseID: activeExerciseID,
-            activeSetID: activeSetID
+            activeSetID: activeSetID,
+            visibleExercises: sortedExercises
         ) else {
             return nil
         }
 
-        guard let owningExercise = exercises.first(where: { ex in
-            ex.setLogs.contains(where: { $0.id == targetSetID })
-        }) else {
+        guard let exerciseID = target.exerciseID,
+              let setID = target.setID else {
             return nil
         }
 
         return ActionableSetTarget(
-            exerciseID: owningExercise.id,
-            setID: targetSetID
+            exerciseID: exerciseID,
+            setID: setID
         )
     }
 
     private func centerActionableSetOnOpen(proxy: ScrollViewProxy) async {
         guard isInProgress else { return }
-        guard let target = nextActionableTarget() else { return }
+
+        let targetToApply: ActionableSetTarget?
+
+        if !didApplyInitialResumeTarget,
+           let initialResumeTarget,
+           initialResumeTarget.sessionID == session.id,
+           let exerciseID = initialResumeTarget.exerciseID,
+           let setID = initialResumeTarget.setID {
+            targetToApply = ActionableSetTarget(exerciseID: exerciseID, setID: setID)
+            didApplyInitialResumeTarget = true
+        } else {
+            targetToApply = nextActionableTarget()
+        }
+
+        guard let target = targetToApply else { return }
 
         activeExerciseID = target.exerciseID
         activeSetID = target.setID

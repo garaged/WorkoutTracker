@@ -13,7 +13,7 @@ struct DayTimelineScreen: View {
     @State private var viewportHeight: CGFloat = 0
     @State private var workoutActionActivity: Activity? = nil
     @State private var showWorkoutDialog: Bool = false
-    @Binding var presentedSession: WorkoutSession?
+    @Binding var presentedSessionRoute: SessionPresentationRoute?
     @State private var workoutLaunchState: WorkoutLaunchState = .none
     @State private var latestSessionByActivityIdCache: [UUID: WorkoutSession] = [:]
     @State private var suppressWorkoutTap = false
@@ -24,6 +24,7 @@ struct DayTimelineScreen: View {
 
     private let day: Date
     private let cal = Calendar.current
+    private let sessionResumePlanner = SessionResumePlanner()
     private var dayStart: Date { cal.startOfDay(for: day) }   // ✅ must use `day`, not Date()
 
     private let onEdit: (Activity) -> Void
@@ -49,13 +50,13 @@ struct DayTimelineScreen: View {
 
     init(
         day: Date,
-        presentedSession: Binding<WorkoutSession?>,
+        presentedSessionRoute: Binding<SessionPresentationRoute?>,
         onEdit: @escaping (Activity) -> Void,
         onCreateAt: @escaping (Date, Int) -> Void,
         onCreateRange: @escaping (Date, Date, Int) -> Void
     ) {
         self.day = day
-        self._presentedSession = presentedSession
+        self._presentedSessionRoute = presentedSessionRoute
         self.onEdit = onEdit
         self.onCreateAt = onCreateAt
         self.onCreateRange = onCreateRange
@@ -217,7 +218,7 @@ struct DayTimelineScreen: View {
                         closeWorkoutDialog()
                         s.reopenForContinuation()
                         try? modelContext.save()
-                        presentedSession = s
+                        openSession(s)
                     }
 
                     Button(AppFormatting.localized("Start new session")) {
@@ -520,17 +521,20 @@ struct DayTimelineScreen: View {
     
     @MainActor
     private func openSession(_ s: WorkoutSession) {
-        // Use SwiftData's stable identity (safer than comparing `id` if your model changes)
-        let same = presentedSession?.persistentModelID == s.persistentModelID
+        let route = SessionPresentationRoute(
+            session: s,
+            initialResumeTarget: sessionResumePlanner.target(for: s)
+        )
+
+        let same = presentedSessionRoute?.session.persistentModelID == s.persistentModelID
 
         if same {
-            // Force SwiftUI to treat it as a "new" navigation by bouncing through nil
-            presentedSession = nil
+            presentedSessionRoute = nil
             Task { @MainActor in
-                presentedSession = s
+                presentedSessionRoute = route
             }
         } else {
-            presentedSession = s
+            presentedSessionRoute = route
         }
     }
 
@@ -655,7 +659,7 @@ struct DayTimelineScreen: View {
         let state = workoutSessionState(for: activity)
         switch state {
         case .inProgress(let s), .completed(let s), .abandoned(let s):
-            openSession(s) // or presentedSession = s (but openSession is better for re-nav)
+            openSession(s) // or openSession(s) (but openSession is better for re-nav)
         case .none:
             startSession(for: activity)
         }
@@ -1063,6 +1067,21 @@ struct DayTimelineScreen: View {
             Group {
                 if workout {
                     decorated
+                        .overlay(alignment: .topLeading) {
+                            if isUITesting {
+                                Button {
+                                    handleWorkoutTap(a)
+                                } label: {
+                                    Color.clear
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.trailing, 110) // leave overlay controls alone
+                                .accessibilityIdentifier("DayTimeline.WorkoutCard.DefaultAction")
+                                .accessibilityLabel(a.title)
+                                .accessibilityHint("Open or start workout")
+                            }
+                        }
                         .onLongPressGesture(minimumDuration: 0.5) {
                             showWorkoutActions(for: item.activity)
                         }
@@ -1275,7 +1294,7 @@ struct DayTimelineScreen: View {
                 ex.setLogs.sort { $0.order < $1.order }
             }
 
-            presentedSession = session
+            openSession(session)
             workoutLaunchState = .inProgress(session)
             workoutActionActivity = nil
         } catch {
@@ -1314,13 +1333,13 @@ struct DayTimelineScreen: View {
             switch s.status {
             case .inProgress:
                 // Just continue
-                presentedSession = s
+                openSession(s)
 
             case .completed, .abandoned:
                 // Reopen same session (keeps sets/logs)
                 s.reopenForContinuation()
                 try? modelContext.save()
-                presentedSession = s
+                openSession(s)
             }
             return
         }
