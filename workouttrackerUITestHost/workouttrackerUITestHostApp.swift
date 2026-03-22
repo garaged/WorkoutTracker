@@ -66,9 +66,16 @@ struct workouttrackerUITestHostApp: App {
                     try seedHomeActiveSessionsUITestDataIfNeeded(context: context)
 
                     let sessions = try context.fetch(FetchDescriptor<WorkoutSession>())
-                    let activeCount = sessions.filter { $0.status == .inProgress && $0.endedAt == nil }.count
-                    if activeCount < 2 {
+                    let activeSessions = sessions.filter { $0.status == .inProgress && $0.endedAt == nil }
+                    if activeSessions.count < 2 {
                         fatalError("UITESTS assertion failed: Expected at least 2 active WorkoutSession records for Home active-session tests.")
+                    }
+
+                    let calendar = Calendar.current
+                    let hasToday = activeSessions.contains { calendar.isDateInToday($0.startedAt) }
+                    let hasPreviousDay = activeSessions.contains { calendar.startOfDay(for: $0.startedAt) < calendar.startOfDay(for: Date()) }
+                    if !hasToday || !hasPreviousDay {
+                        fatalError("UITESTS assertion failed: Home active-session seed must include one current-day and one previous-day unfinished session.")
                     }
                 }
 
@@ -685,8 +692,13 @@ private func assertUITestLaunchConfiguration(_ env: [String: String]) {
         fatalError("UITESTS assertion failed: Progress seed modes must launch with UITESTS_START=progress.")
     }
 
-    if env["UITESTS_LINKED_FLOW"] == "1" && start != "session" {
-        fatalError("UITESTS assertion failed: Linked routine flow smoke tests must launch with UITESTS_START=session.")
+    if env["UITESTS_LINKED_FLOW"] == "1" && start != "session" && start != "home" {
+        fatalError(
+            """
+            UITESTS assertion failed: Linked routine flow tests must launch with \
+            UITESTS_START=session or UITESTS_START=home.
+            """
+        )
     }
 
     let needsSeededData = start == "session" || env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1" || env["UITESTS_LINKED_FLOW"] == "1"

@@ -63,21 +63,19 @@ struct RestTimerEngine: Equatable {
 
     mutating func pause(now: Date) {
         guard startedAt != nil else { return }
-        let display = currentDisplaySeconds(now: now)
-        guard display > 0 else { return }
-
-        pausedDisplaySeconds = display
+        pausedDisplaySeconds = currentDisplaySeconds(now: now)
         startedAt = nil
     }
 
     mutating func resume(now: Date) {
-        guard let pausedDisplaySeconds, pausedDisplaySeconds > 0 else { return }
+        guard let pausedDisplaySeconds else { return }
+        guard totalSeconds > 0 else {
+            clear()
+            return
+        }
 
-        plannedRestSeconds = pausedDisplaySeconds
-        extendedSeconds = 0
-        startedAt = now
+        startedAt = now.addingTimeInterval(TimeInterval(pausedDisplaySeconds - totalSeconds))
         self.pausedDisplaySeconds = nil
-        cuePlayed = false
     }
 
     mutating func reset() {
@@ -94,34 +92,43 @@ struct RestTimerEngine: Equatable {
     mutating func extend(by seconds: Int, now: Date) {
         guard hasConfiguredTimer else { return }
 
-        if let pausedDisplaySeconds {
-            let adjusted = max(0, pausedDisplaySeconds + seconds)
-            self.pausedDisplaySeconds = adjusted == 0 ? nil : adjusted
-            plannedRestSeconds = adjusted
-            extendedSeconds = 0
-            cuePlayed = false
-            if adjusted == 0 {
-                clear()
-            }
-            return
-        }
-
         let updatedTotal = max(0, totalSeconds + seconds)
-        plannedRestSeconds = updatedTotal
-        extendedSeconds = 0
-
-        if updatedTotal == 0 {
+        guard updatedTotal > 0 else {
             clear()
             return
         }
 
+        plannedRestSeconds = updatedTotal
+        extendedSeconds = 0
+
+        if let pausedDisplaySeconds {
+            let adjustedDisplay = pausedDisplaySeconds + seconds
+            self.pausedDisplaySeconds = adjustedDisplay
+            if adjustedDisplay > 0 {
+                cuePlayed = false
+            }
+            return
+        }
+
         let newDisplay = currentDisplaySeconds(now: now)
-        cuePlayed = newDisplay <= 0
+        if newDisplay > 0 {
+            cuePlayed = false
+        }
     }
 
-    mutating func resolveForNextAction(now: Date) {
-        _ = now
+    mutating func resolveForNextAction(now: Date) -> Int? {
+        finish(now: now)
+    }
+
+    mutating func finish(now: Date) -> Int? {
+        let elapsed = actualElapsedSeconds(now: now)
         clear()
+        return elapsed
+    }
+
+    func actualElapsedSeconds(now: Date) -> Int? {
+        guard hasConfiguredTimer else { return nil }
+        return max(0, totalSeconds - currentDisplaySeconds(now: now))
     }
 
     mutating func clear() {
@@ -166,7 +173,7 @@ struct RestTimerEngine: Equatable {
             remainingSeconds: remaining,
             overdueSeconds: overdue,
             displaySeconds: display,
-            isRunning: startedAt != nil && display > 0,
+            isRunning: startedAt != nil,
             isPaused: pausedDisplaySeconds != nil,
             shouldShow: true,
             shouldPlayCompletionCue: shouldPlayCompletionCue

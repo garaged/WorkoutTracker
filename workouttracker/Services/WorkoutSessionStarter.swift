@@ -52,4 +52,61 @@ enum WorkoutSessionStarter {
         try context.save()
         return session
     }
+
+    static func resumeForActiveLogging(
+        _ session: WorkoutSession,
+        context: ModelContext,
+        now: Date = Date()
+    ) throws {
+        guard session.status == .inProgress, session.endedAt == nil else { return }
+        session.resume(at: now)
+        try context.save()
+    }
+
+    static func keepForLater(
+        _ session: WorkoutSession,
+        context: ModelContext,
+        now: Date = Date()
+    ) throws {
+        guard session.status == .inProgress, session.endedAt == nil else { return }
+        session.dismissedStalePromptAt = now
+        if !session.isPaused {
+            session.pause(at: now)
+        }
+        try context.save()
+    }
+
+    static func finishFromRecovery(
+        _ session: WorkoutSession,
+        context: ModelContext,
+        now: Date = Date()
+    ) throws {
+        guard session.status == .inProgress, session.endedAt == nil else { return }
+        if session.isPaused {
+            session.resume(at: now)
+        }
+        session.endedAt = now
+        session.status = .completed
+        session.dismissedStalePromptAt = nil
+        try context.save()
+    }
+
+    static func discardUnfinishedSession(
+        _ session: WorkoutSession,
+        context: ModelContext,
+        now: Date = Date()
+    ) throws {
+        guard session.status == .inProgress, session.endedAt == nil else { return }
+        if session.isPaused {
+            session.resume(at: now)
+        }
+        session.endedAt = now
+        session.status = .abandoned
+        session.dismissedStalePromptAt = nil
+        try context.save()
+    }
+
+    static func canMutateProgress(_ session: WorkoutSession) -> Bool {
+        SessionLifecyclePolicy().canMutateProgress(session)
+    }
 }

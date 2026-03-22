@@ -152,4 +152,39 @@ final class WorkoutLoggingServiceTests: XCTestCase {
 
         XCTAssertEqual(svc.undoToast?.message, "Copied set")
     }
+
+    func test_toggleCompleted_toIncomplete_clearsActualRestSeconds_andUndoRestoresIt() throws {
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
+        let (_, _, logs) = try makeSession(context: context)
+
+        logs[0].completed = true
+        logs[0].completedAt = Date()
+        logs[0].actualRestSeconds = 75
+        try context.save()
+
+        let svc = WorkoutLoggingService()
+        svc.toggleCompleted(logs[0], context: context)
+
+        XCTAssertFalse(logs[0].completed)
+        XCTAssertNil(logs[0].completedAt)
+        XCTAssertNil(logs[0].actualRestSeconds)
+
+        svc.undoLast(context: context)
+        XCTAssertTrue(logs[0].completed)
+        XCTAssertNotNil(logs[0].completedAt)
+        XCTAssertEqual(logs[0].actualRestSeconds, 75)
+    }
+
+    func test_setActualRestSeconds_persistsValue() throws {
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
+        let (_, _, logs) = try makeSession(context: context)
+
+        let svc = WorkoutLoggingService()
+        svc.setActualRestSeconds(95, for: logs[0], context: context)
+
+        XCTAssertEqual(logs[0].actualRestSeconds, 95)
+    }
+
 }

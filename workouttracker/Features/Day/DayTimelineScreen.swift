@@ -21,10 +21,12 @@ struct DayTimelineScreen: View {
     @State private var activityActionActivity: Activity? = nil
     @State private var showActivityDialog: Bool = false
     @State private var workoutStartErrorMessage: String? = nil
+    @State private var recoveryPromptSession: WorkoutSession? = nil
 
     private let day: Date
     private let cal = Calendar.current
     private let sessionResumePlanner = SessionResumePlanner()
+    private let attentionEvaluator = SessionAttentionEvaluator()
     private var dayStart: Date { cal.startOfDay(for: day) }   // ✅ must use `day`, not Date()
 
     private let onEdit: (Activity) -> Void
@@ -251,6 +253,51 @@ struct DayTimelineScreen: View {
             } else {
                 Text("")
             }
+        }
+        .sheet(item: $recoveryPromptSession) { session in
+            SessionRecoveryPrompt(
+                title: String(localized: "Older unfinished workout"),
+                message: recoveryPromptMessage(for: session),
+                onResume: {
+                    do {
+                        try WorkoutSessionStarter.resumeForActiveLogging(session, context: modelContext)
+                        recoveryPromptSession = nil
+                        presentSessionRoute(for: session)
+                    } catch {
+                        assertionFailure("Failed to resume stale session from Day timeline: \(error)")
+                    }
+                },
+                onFinishNow: {
+                    do {
+                        try WorkoutSessionStarter.finishFromRecovery(session, context: modelContext)
+                        recoveryPromptSession = nil
+                        if let aid = session.linkedActivityId { latestSessionByActivityIdCache[aid] = session }
+                        refreshWorkoutSessionCache()
+                    } catch {
+                        assertionFailure("Failed to finish stale session from Day timeline: \(error)")
+                    }
+                },
+                onDiscard: {
+                    do {
+                        try WorkoutSessionStarter.discardUnfinishedSession(session, context: modelContext)
+                        recoveryPromptSession = nil
+                        if let aid = session.linkedActivityId { latestSessionByActivityIdCache[aid] = session }
+                        refreshWorkoutSessionCache()
+                    } catch {
+                        assertionFailure("Failed to discard stale session from Day timeline: \(error)")
+                    }
+                },
+                onKeepForLater: {
+                    do {
+                        try WorkoutSessionStarter.keepForLater(session, context: modelContext)
+                        recoveryPromptSession = nil
+                        if let aid = session.linkedActivityId { latestSessionByActivityIdCache[aid] = session }
+                        refreshWorkoutSessionCache()
+                    } catch {
+                        assertionFailure("Failed to keep stale session for later from Day timeline: \(error)")
+                    }
+                }
+            )
         }
         .alert(AppFormatting.localized("Couldn't start workout"), isPresented: Binding(
             get: { workoutStartErrorMessage != nil },
@@ -518,9 +565,37 @@ struct DayTimelineScreen: View {
         case .abandoned:  return .abandoned(s)
         }
     }
+
+    private func owningDayDate(for session: WorkoutSession) -> Date {
+        guard let linkedActivityId = session.linkedActivityId,
+              let activity = activities.first(where: { $0.id == linkedActivityId }) else {
+            return session.startedAt
+        }
+        return activity.startAt
+    }
+
+    private func recoveryPromptMessage(for session: WorkoutSession) -> String {
+        let dayText = owningDayDate(for: session).formatted(date: .abbreviated, time: .omitted)
+        return String(
+            format: String(localized: "This unfinished workout belongs to %@. Resume it now, finish it, discard it, or keep it for later without being prompted again today."),
+            locale: .autoupdatingCurrent,
+            dayText
+        )
+    }
     
     @MainActor
     private func openSession(_ s: WorkoutSession) {
+        let evaluation = attentionEvaluator.evaluate(session: s, owningDay: owningDayDate(for: s))
+        if evaluation.shouldShowRecoveryPrompt {
+            recoveryPromptSession = s
+            return
+        }
+
+        presentSessionRoute(for: s)
+    }
+
+    @MainActor
+    private func presentSessionRoute(for s: WorkoutSession) {
         let route = SessionPresentationRoute(
             session: s,
             initialResumeTarget: sessionResumePlanner.target(for: s)
@@ -568,43 +643,34 @@ struct DayTimelineScreen: View {
     
     @MainActor
     private func finishSessionFromTimeline(_ s: WorkoutSession, activity: Activity) {
-        if s.isPaused { s.resume() }
-        s.endedAt = Date()
-        s.status = .completed
-
-        // keep cache consistent for badges
-        latestSessionByActivityIdCache[activity.id] = s
-
-        do { try modelContext.save() }
-        catch { assertionFailure("Failed to finish session: \(error)") }
-
-        refreshWorkoutSessionCache()
+        do {
+            try WorkoutSessionStarter.finishFromRecovery(s, context: modelContext)
+            latestSessionByActivityIdCache[activity.id] = s
+            refreshWorkoutSessionCache()
+        } catch {
+            assertionFailure("Failed to finish session: \(error)")
+        }
     }
     
     @MainActor
     private func finishSession(_ s: WorkoutSession) {
-        if s.isPaused { s.resume() }        // optional: avoid finishing while paused
-        s.endedAt = Date()
-        s.status = .completed
-
-        do { try modelContext.save() }
-        catch { assertionFailure("Failed to finish: \(error)") }
-
-        refreshWorkoutSessionCache()
+        do {
+            try WorkoutSessionStarter.finishFromRecovery(s, context: modelContext)
+            refreshWorkoutSessionCache()
+        } catch {
+            assertionFailure("Failed to finish: \(error)")
+        }
     }
 
     @MainActor
     private func abandonSessionFromTimeline(_ s: WorkoutSession, activity: Activity) {
-        if s.isPaused { s.resume() }
-        s.endedAt = Date()
-        s.status = .abandoned
-
-        latestSessionByActivityIdCache[activity.id] = s
-
-        do { try modelContext.save() }
-        catch { assertionFailure("Failed to abandon session: \(error)") }
-
-        refreshWorkoutSessionCache()
+        do {
+            try WorkoutSessionStarter.discardUnfinishedSession(s, context: modelContext)
+            latestSessionByActivityIdCache[activity.id] = s
+            refreshWorkoutSessionCache()
+        } catch {
+            assertionFailure("Failed to abandon session: \(error)")
+        }
     }
     
     @MainActor
@@ -1188,12 +1254,13 @@ struct DayTimelineScreen: View {
     @MainActor
     private func stopSession(_ s: WorkoutSession) {
         // Treat "Stop" as "Finish" (Completed). Keep "Abandon" in your long-press menu.
-        if s.isPaused { s.resume() }
-        s.endedAt = Date()
-        s.status = .completed
-        try? modelContext.save()
-        if let aid = s.linkedActivityId { latestSessionByActivityIdCache[aid] = s }
-        openSession(s)
+        do {
+            try WorkoutSessionStarter.finishFromRecovery(s, context: modelContext)
+            if let aid = s.linkedActivityId { latestSessionByActivityIdCache[aid] = s }
+            presentSessionRoute(for: s)
+        } catch {
+            assertionFailure("Failed to stop session: \(error)")
+        }
     }
     
     private var magnifyToZoomGesture: some Gesture {

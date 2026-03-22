@@ -2827,6 +2827,9 @@
         }
       }
     },
+    "Discard" : {
+
+    },
     "Dismiss coach suggestion" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3360,6 +3363,9 @@
           }
         }
       }
+    },
+    "Finish now" : {
+
     },
     "format.duration.short.hours_minutes" : {
       "extractionState" : "stale",
@@ -3976,6 +3982,9 @@
           }
         }
       }
+    },
+    "Keep for later" : {
+
     },
     "kg" : {
       "extractionState" : "stale",
@@ -5054,6 +5063,9 @@
           }
         }
       }
+    },
+    "Older unfinished workout" : {
+
     },
     "On conflict" : {
       "extractionState" : "stale",
@@ -8491,6 +8503,9 @@
         }
       }
     },
+    "Session recovery" : {
+
+    },
     "session.abandon_workout.action" : {
       "localizations" : {
         "en" : {
@@ -8887,6 +8902,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reflexión"
+          }
+        }
+      }
+    },
+    "session.rest.finish" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish rest"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminar descanso"
           }
         }
       }
@@ -10376,6 +10407,9 @@
           }
         }
       }
+    },
+    "This unfinished workout belongs to %@. Resume it now, finish it, discard it, or keep it for later without being prompted again today." : {
+
     },
     "This will update %1$lld %2$@ (all materialized rows)." : {
       "extractionState" : "stale",

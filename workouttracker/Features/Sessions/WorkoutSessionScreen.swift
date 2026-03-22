@@ -41,6 +41,7 @@ struct WorkoutSessionScreen: View {
     @State private var showFinishConfirm = false
     @State private var showAbandonConfirm = false
     @State private var showRestTimer = false
+    @State private var restTimerOwnerSetID: UUID? = nil
     @State private var activeExerciseID: UUID? = nil
     @State private var activeSetID: UUID? = nil
     @State private var skippedSegmentKinds: Set<WorkoutExerciseSegment> = []
@@ -61,7 +62,7 @@ struct WorkoutSessionScreen: View {
     @State private var didApplyInitialResumeTarget = false
     
     private var bottomInsetLayoutKey: String {
-        "\(shouldShowCoachPrompt)-\(shouldShowRestTimerCard)-\(session.isPaused)-\(isInProgress)"
+        "\(shouldShowCoachPrompt)-\(shouldShowRestTimerCard)-\(session.isPaused)-\(canMutateProgress)"
     }
     
     private struct PRDetailsContext: Identifiable, Hashable {
@@ -88,8 +89,10 @@ struct WorkoutSessionScreen: View {
     private let prService = PersonalRecordsService()
 
     private let sessionResumePlanner = SessionResumePlanner()
+    private let lifecyclePolicy = SessionLifecyclePolicy()
 
-    private var isReadOnly: Bool { session.status != .inProgress }
+    private var canMutateProgress: Bool { lifecyclePolicy.canMutateProgress(session) }
+    private var isReadOnly: Bool { !canMutateProgress }
     private var isInProgress: Bool { session.status == .inProgress }
     
     private var prefersSideBySideBottomOverlays: Bool {
@@ -105,7 +108,7 @@ struct WorkoutSessionScreen: View {
     }
 
     private var shouldShowCoachPrompt: Bool {
-        showRestTimer && isInProgress && !session.isPaused && coachPrompt != nil
+        showRestTimer && canMutateProgress && coachPrompt != nil
     }
 
     private var restTimerSnapshot: RestTimerSnapshot {
@@ -113,15 +116,7 @@ struct WorkoutSessionScreen: View {
     }
 
     private var shouldShowRestTimerCard: Bool {
-        guard showRestTimer, isInProgress, !session.isPaused, restTimerSnapshot.shouldShow else {
-            return false
-        }
-
-        if !prefs.restTimerShowOverdue, (restTimerSnapshot.isReady || restTimerSnapshot.isOverdue) {
-            return false
-        }
-
-        return true
+        showRestTimer && canMutateProgress && restTimerSnapshot.shouldShow
     }
 
     var body: some View {
@@ -222,11 +217,6 @@ struct WorkoutSessionScreen: View {
             if isRunning {
                 withAnimation { showRestTimer = true }
             } else if !restTimer.hasConfiguredTimer {
-                withAnimation { showRestTimer = false }
-            }
-        }
-        .onChange(of: restTimer.snapshot, initial: false) { _, snapshot in
-            if !prefs.restTimerShowOverdue, (snapshot.isReady || snapshot.isOverdue) {
                 withAnimation { showRestTimer = false }
             }
         }
@@ -530,7 +520,7 @@ struct WorkoutSessionScreen: View {
     }
 
     private func canSkipSegment(_ kind: WorkoutExerciseSegment) -> Bool {
-        isInProgress && !session.isPaused && kind == currentSegmentKind && (kind == .warmUp || kind == .coolDown)
+        canMutateProgress && kind == currentSegmentKind && (kind == .warmUp || kind == .coolDown)
     }
 
     private func firstIncompleteVisibleTarget() -> (exercise: WorkoutSessionExercise, set: WorkoutSetLog)? {
@@ -545,12 +535,13 @@ struct WorkoutSessionScreen: View {
     private func skipCurrentSegment() {
         guard let kind = currentSegmentKind, canSkipSegment(kind) else { return }
 
+        finishActiveRestTimerIfNeeded()
+
         withAnimation(.snappy) {
             skippedSegmentKinds.insert(kind)
             coachPrompt = nil
             showRestTimer = false
         }
-        restTimer.resolveForNextAction()
 
         if let target = firstIncompleteVisibleTarget() {
             markActive(exerciseID: target.exercise.id, setID: target.set.id)
@@ -580,6 +571,8 @@ struct WorkoutSessionScreen: View {
     // MARK: Logging actions
 
     private func continueLogging(proxy: ScrollViewProxy) {
+        finishActiveRestTimerIfNeeded()
+
         if session.isPaused {
             session.resume()
             withAnimation { showRestTimer = false }
@@ -645,7 +638,7 @@ struct WorkoutSessionScreen: View {
         set: WorkoutSetLog,
         suggestedRest: Int?
     ) {
-        guard isInProgress, !session.isPaused else { return }
+        guard canMutateProgress else { return }
 
         // This is critical: Continue navigation uses the active exercise/set cursor.
         // Without updating it here, Continue can look like it does nothing because it
@@ -669,6 +662,8 @@ struct WorkoutSessionScreen: View {
             prompt: prompt
         )
 
+        restTimerOwnerSetID = set.id
+
         // Start rest timer using coach suggestion
         restTimer.configure(
             seconds: max(1, prompt.suggestedRestSeconds),
@@ -676,6 +671,23 @@ struct WorkoutSessionScreen: View {
             playStartCue: prefs.restTimerCueEnabled
         )
         withAnimation { showRestTimer = true }
+    }
+
+    private func finishActiveRestTimerIfNeeded(forceHideWhenNoTimer: Bool = false) {
+        let capturedSeconds = restTimer.finishAndCaptureElapsedSeconds()
+
+        if let setID = restTimerOwnerSetID,
+           let ownerSet = session.exercises
+            .flatMap(\.setLogs)
+            .first(where: { $0.id == setID }) {
+            logging.setActualRestSeconds(capturedSeconds, for: ownerSet, context: modelContext)
+        }
+
+        restTimerOwnerSetID = nil
+
+        if capturedSeconds != nil || forceHideWhenNoTimer {
+            withAnimation { showRestTimer = false }
+        }
     }
 
     // MARK: View builders
@@ -745,7 +757,7 @@ struct WorkoutSessionScreen: View {
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            if isInProgress, let t = nextTargets[ex.exerciseId] {
+            if canMutateProgress, let t = nextTargets[ex.exerciseId] {
                 HStack(spacing: 8) {
                     Text(String(format: String(localized: "session.next_target"), t.text))
                         .font(.caption)
@@ -952,7 +964,7 @@ struct WorkoutSessionScreen: View {
                 }
             }
 
-            if let toast = logging.undoToast, isInProgress {
+            if let toast = logging.undoToast, canMutateProgress {
                 UndoToastView(
                     message: toast.message,
                     onUndo: { logging.undoLast(context: modelContext) },
@@ -1004,7 +1016,7 @@ struct WorkoutSessionScreen: View {
 
     private func restTimerOverlay(paired: Bool) -> some View {
         RestTimerView {
-            withAnimation { showRestTimer = false }
+            finishActiveRestTimerIfNeeded(forceHideWhenNoTimer: true)
         }
         .frame(maxWidth: bottomOverlayCardMaxWidth)
         .frame(maxWidth: .infinity, alignment: paired ? .trailing : .center)
@@ -1062,11 +1074,12 @@ struct WorkoutSessionScreen: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            if isInProgress {
+            if canMutateProgress {
                 Button {
                     if showRestTimer {
                         withAnimation { showRestTimer = false }
                     } else {
+                        restTimerOwnerSetID = nil
                         restTimer.configure(
                             seconds: max(1, prefs.defaultRestSeconds),
                             startImmediately: prefs.autoStartRest,
@@ -1102,11 +1115,7 @@ struct WorkoutSessionScreen: View {
 
     private func syncRestTimerVisibility() {
         if restTimer.isRunning || restTimer.hasConfiguredTimer {
-            if !prefs.restTimerShowOverdue, (restTimerSnapshot.isReady || restTimerSnapshot.isOverdue) {
-                showRestTimer = false
-            } else {
-                showRestTimer = true
-            }
+            showRestTimer = true
         } else {
             showRestTimer = false
         }
@@ -1117,9 +1126,10 @@ struct WorkoutSessionScreen: View {
 
     private func finish() {
         if session.isPaused { session.resume() }
-        restTimer.resolveForNextAction()
+        finishActiveRestTimerIfNeeded(forceHideWhenNoTimer: true)
         session.endedAt = Date()
         session.status = .completed
+        session.dismissedStalePromptAt = nil
         saveOrAssert("finish")
 
         // Optional, post-session, never blocks logging flow:
@@ -1142,9 +1152,10 @@ struct WorkoutSessionScreen: View {
 
     private func abandon() {
         if session.isPaused { session.resume() }
-        restTimer.resolveForNextAction()
+        finishActiveRestTimerIfNeeded(forceHideWhenNoTimer: true)
         session.endedAt = Date()
         session.status = .abandoned
+        session.dismissedStalePromptAt = nil
         saveOrAssert("abandon")
         dismiss()
     }
@@ -1239,6 +1250,11 @@ struct WorkoutSessionScreen: View {
 
                     // If user un-completes, clear PR markers so re-completing can celebrate again.
                     if wasCompleted && !set.completed {
+                        if restTimerOwnerSetID == set.id {
+                            restTimer.stop()
+                            restTimerOwnerSetID = nil
+                            withAnimation { showRestTimer = false }
+                        }
                         prBadgesBySetId[set.id] = nil
                         celebratedPRSetIDs.remove(set.id)
                         return

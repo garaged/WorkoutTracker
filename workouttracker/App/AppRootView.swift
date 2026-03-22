@@ -59,10 +59,8 @@ struct AppRootView: View {
                 bootstrapView
             } else if let start = uiTestStartRoute {
                 uiTestRoot(for: start)
-            } else if platform.prefersSplitNavigation {
-                splitRoot
             } else {
-                compactRoot
+                appShellRoot
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("workouttracker.openTimelineForDate"))) { note in
@@ -142,7 +140,7 @@ struct AppRootView: View {
                 onResumeSession: openSession
             )
         case .routines:
-            RoutinesScreen()
+            RoutinesScreen(onOpenSession: openSession)
         case .history:
             HistoryRootPlaceholder()
         case .progress:
@@ -170,13 +168,13 @@ struct AppRootView: View {
         case "session":
             NavigationStack { DayTimelineEntryScreen() }
         case "routines":
-            NavigationStack { RoutinesScreen() }
+            NavigationStack { RoutinesScreen(onOpenSession: openSession) }
         case "workouts":
             NavigationStack { WorkoutSessionsScreen() }
         case "home":
-            compactRoot
+            appShellRoot
         default:
-            compactRoot
+            appShellRoot
         }
     }
 
@@ -205,7 +203,7 @@ struct AppRootView: View {
                 subtitle: String(localized: "Build plans and reuse them"),
                 systemImage: "list.bullet.rectangle.portrait",
                 tint: .purple,
-                destination: { AnyView(RoutinesScreen()) }
+                destination: { AnyView(RoutinesScreen(onOpenSession: openSession)) }
             ),
             HomeTile(
                 title: String(localized: "Schedule templates"),
@@ -301,6 +299,16 @@ struct AppRootView: View {
             }
         } else {
             presentedSessionRoute = route
+        }
+    }
+    
+    private var appShellRoot: some View {
+        Group {
+            if platform.isPad && platform.prefersSplitNavigation {
+                splitRoot
+            } else {
+                compactRoot
+            }
         }
     }
 }

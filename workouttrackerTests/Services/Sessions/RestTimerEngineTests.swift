@@ -53,6 +53,7 @@ final class RestTimerEngineTests: XCTestCase {
         XCTAssertEqual(snapshot.remainingSeconds, 0)
         XCTAssertEqual(snapshot.overdueSeconds, 15)
         XCTAssertEqual(snapshot.displaySeconds, -15)
+        XCTAssertTrue(snapshot.isRunning)
     }
 
     func test_extendWhileCountdownAddsTime() {
@@ -133,4 +134,33 @@ final class RestTimerEngineTests: XCTestCase {
         let resumed = engine.snapshot(now: now.addingTimeInterval(50))
         XCTAssertEqual(resumed.remainingSeconds, 30)
     }
+
+    func test_finishCapturesPositiveAndOverdueRest() {
+        var engine = RestTimerEngine()
+        let now = Date(timeIntervalSinceReferenceDate: 1_000)
+
+        engine.start(plannedRestSeconds: 60, now: now)
+
+        XCTAssertEqual(engine.finish(now: now.addingTimeInterval(75)), 75)
+        XCTAssertEqual(engine.snapshot(now: now.addingTimeInterval(75)), .inactive)
+    }
+
+    func test_pauseAndResumePreserveOverdueDisplay() {
+        var engine = RestTimerEngine()
+        let now = Date(timeIntervalSinceReferenceDate: 1_000)
+
+        engine.start(plannedRestSeconds: 30, now: now)
+        _ = engine.snapshot(now: now.addingTimeInterval(40))
+        engine.pause(now: now.addingTimeInterval(40))
+
+        let paused = engine.snapshot(now: now.addingTimeInterval(50))
+        XCTAssertTrue(paused.isPaused)
+        XCTAssertEqual(paused.displaySeconds, -10)
+
+        engine.resume(now: now.addingTimeInterval(50))
+        let resumed = engine.snapshot(now: now.addingTimeInterval(55))
+        XCTAssertEqual(resumed.displaySeconds, -15)
+        XCTAssertTrue(resumed.isRunning)
+    }
+
 }

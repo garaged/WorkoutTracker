@@ -19,6 +19,7 @@ final class SessionRestTimerController: ObservableObject {
     var isRunning: Bool { snapshot.isRunning }
     var hasConfiguredTimer: Bool { snapshot.shouldShow }
     var remainingSeconds: Int { snapshot.remainingSeconds }
+    var displaySeconds: Int { snapshot.displaySeconds }
     var totalSeconds: Int { snapshot.totalSeconds }
 
     func configure(seconds: Int, startImmediately: Bool, playStartCue: Bool) {
@@ -64,10 +65,20 @@ final class SessionRestTimerController: ObservableObject {
         refresh(now: Date())
     }
 
-    func resolveForNextAction() {
-        engine.resolveForNextAction(now: Date())
+    @discardableResult
+    func finishAndCaptureElapsedSeconds() -> Int? {
+        let elapsed = engine.finish(now: Date())
         didFinishToken = nil
         refresh(now: Date())
+        return elapsed
+    }
+
+    @discardableResult
+    func resolveForNextAction() -> Int? {
+        let elapsed = engine.resolveForNextAction(now: Date())
+        didFinishToken = nil
+        refresh(now: Date())
+        return elapsed
     }
 
     private func refresh(now: Date) {

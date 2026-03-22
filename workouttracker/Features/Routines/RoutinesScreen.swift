@@ -8,27 +8,30 @@ struct RoutinesScreen: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.platform) private var platform
 
+    let onOpenSession: ((WorkoutSession) -> Void)?
+
     @Query(sort: [SortDescriptor(\WorkoutRoutine.name, order: .forward)])
     private var routines: [WorkoutRoutine]
 
     @State private var searchText: String = ""
 
-    // Delete confirmation
     @State private var routineToDelete: WorkoutRoutine? = nil
     @State private var showDeleteConfirm: Bool = false
 
-    // Start-now flow
+    // Fallback only when used outside the app shell
     @State private var launchedSession: WorkoutSession? = nil
     @State private var showSessionCover: Bool = false
 
-    // Schedule feedback + navigation
     @State private var scheduledMessage: String = ""
     @State private var showScheduledAlert: Bool = false
     @State private var navToCalendar: Bool = false
     @State private var calendarInitialDay: Date = Date()
 
-    // Canonical routine editor presentation
     @State private var presentedEditor: PresentedRoutineEditor? = nil
+
+    init(onOpenSession: ((WorkoutSession) -> Void)? = nil) {
+        self.onOpenSession = onOpenSession
+    }
 
     private enum PresentedRoutineEditor: Identifiable {
         case create
@@ -206,8 +209,12 @@ struct RoutinesScreen: View {
                 now: start
             )
 
-            launchedSession = session
-            showSessionCover = true
+            if let onOpenSession {
+                onOpenSession(session)
+            } else {
+                launchedSession = session
+                showSessionCover = true
+            }
         } catch {
             assertionFailure("Failed to start routine workout: \(error)")
         }
