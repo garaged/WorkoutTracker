@@ -1009,8 +1009,21 @@ struct DayTimelineScreen: View {
                 )
             )
         }
+
+        if let session = linkedUnfinishedSession(for: a) {
+            do {
+                try WorkoutSessionStarter.discardUnfinishedSession(session, context: modelContext)
+                if let aid = session.linkedActivityId {
+                    latestSessionByActivityIdCache[aid] = session
+                }
+            } catch {
+                assertionFailure("Failed to discard linked unfinished session before deleting activity: \(error)")
+            }
+        }
+
         modelContext.delete(a)
         try? modelContext.save()
+        refreshWorkoutSessionCache()
     }
 
     private func skipToday(_ a: Activity) {
@@ -1037,7 +1050,24 @@ struct DayTimelineScreen: View {
         try? modelContext.save()
     }
     
-    // Put this helper somewhere inside DayTimelineScreen
+    private func linkedUnfinishedSession(for activity: Activity) -> WorkoutSession? {
+        if let sid = activity.workoutSessionId,
+           let session = latestSession(for: activity),
+           session.id == sid,
+           session.status == WorkoutSessionStatus.inProgress,
+           session.endedAt == nil {
+            return session
+        }
+
+        if let cached = latestSessionByActivityIdCache[activity.id],
+           cached.status == WorkoutSessionStatus.inProgress,
+           cached.endedAt == nil {
+            return cached
+        }
+
+        return nil
+    }
+    
     private func isWorkout(_ a: Activity) -> Bool {
         a.kind == .workout || a.workoutRoutineId != nil || a.workoutSessionId != nil
     }
