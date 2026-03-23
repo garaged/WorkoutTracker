@@ -162,5 +162,17 @@ final class RestTimerEngineTests: XCTestCase {
         XCTAssertEqual(resumed.displaySeconds, -15)
         XCTAssertTrue(resumed.isRunning)
     }
+    
+    func test_resolveForNextAction_capturesPositiveAndOverdueRest() {
+        var engine = RestTimerEngine()
+        let now = Date(timeIntervalSinceReferenceDate: 1_000)
+
+        engine.start(plannedRestSeconds: 60, now: now)
+
+        let elapsed = engine.resolveForNextAction(now: now.addingTimeInterval(75))
+
+        XCTAssertEqual(elapsed, 75, "Expected Continue-style resolution to capture planned plus overdue rest.")
+        XCTAssertEqual(engine.snapshot(now: now.addingTimeInterval(75)), .inactive)
+    }
 
 }

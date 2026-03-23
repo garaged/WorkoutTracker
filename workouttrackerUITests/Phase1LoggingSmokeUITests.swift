@@ -212,6 +212,34 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertTrue(waitForElementToDisappear(finishRest, timeout: 5),
                       "Expected Finish rest to dismiss the active rest timer.")
     }
+    
+    func test_restTimer_pauseWorkout_doesNotSilentlyFinishActiveRest() {
+        relaunchForShortRestTimerSession()
+        completeFirstSetAndWaitForRestTimer()
+
+        XCTAssertTrue(
+            waitForRestTimerToGoOverdue(in: app, timeout: 8),
+            "Expected rest timer to stay visible and go overdue before pausing workout."
+        )
+
+        let pauseWorkout = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Pause")).firstMatch
+        if !pauseWorkout.waitForExistence(timeout: 5) {
+            attachUITestDebug(app, name: "Phase1_PauseWorkoutButtonMissing")
+        }
+        XCTAssertTrue(pauseWorkout.exists, "Expected pause workout button.")
+
+        pauseWorkout.tap()
+
+        let finishRest = app.buttons["RestTimerView.FinishButton"]
+        if !finishRest.waitForExistence(timeout: 5) {
+            attachUITestDebug(app, name: "Phase1_RestTimerHiddenByPause")
+        }
+
+        XCTAssertTrue(
+            finishRest.exists,
+            "Expected pausing workout not to silently finish or hide the active rest timer."
+        )
+    }
 
     // MARK: - Navigation to Session
 

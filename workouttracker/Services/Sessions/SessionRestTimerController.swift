@@ -13,6 +13,7 @@ final class SessionRestTimerController: ObservableObject {
 
     private var engine = RestTimerEngine()
     private var ticker: Timer?
+    private let cuePlayer = WorkoutCuePlayer.shared
 
     private init() {}
 
@@ -23,10 +24,13 @@ final class SessionRestTimerController: ObservableObject {
     var totalSeconds: Int { snapshot.totalSeconds }
 
     func configure(seconds: Int, startImmediately: Bool, playStartCue: Bool) {
-        _ = playStartCue // Cue playback stays outside this domain/controller PR.
+        didFinishToken = nil
 
         if startImmediately {
             engine.start(plannedRestSeconds: seconds, now: Date())
+            if playStartCue {
+                cuePlayer.play(.restStart)
+            }
         } else {
             engine.configure(plannedRestSeconds: seconds)
         }
@@ -34,8 +38,14 @@ final class SessionRestTimerController: ObservableObject {
         refresh(now: Date())
     }
 
-    func start(seconds: Int) {
+    func start(seconds: Int, playStartCue: Bool = true) {
+        didFinishToken = nil
         engine.start(plannedRestSeconds: seconds, now: Date())
+
+        if playStartCue {
+            cuePlayer.play(.restStart)
+        }
+
         refresh(now: Date())
     }
 
@@ -51,6 +61,7 @@ final class SessionRestTimerController: ObservableObject {
 
     func reset() {
         engine.reset()
+        didFinishToken = nil
         refresh(now: Date())
     }
 
@@ -82,11 +93,20 @@ final class SessionRestTimerController: ObservableObject {
     }
 
     private func refresh(now: Date) {
+        let previousSnapshot = snapshot
         let nextSnapshot = engine.snapshot(now: now)
         snapshot = nextSnapshot
 
+        if previousSnapshot.displaySeconds > 3,
+           nextSnapshot.displaySeconds <= 3,
+           nextSnapshot.displaySeconds > 0,
+           nextSnapshot.isRunning {
+            cuePlayer.play(.restCountdown)
+        }
+
         if nextSnapshot.shouldPlayCompletionCue {
             didFinishToken = UUID()
+            cuePlayer.play(.restEnd)
         }
 
         if engine.isClockRunning {

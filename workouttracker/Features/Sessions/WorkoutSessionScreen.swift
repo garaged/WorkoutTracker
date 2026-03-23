@@ -221,8 +221,8 @@ struct WorkoutSessionScreen: View {
             }
         }
         .onChange(of: restTimer.didFinishToken, initial: false) { _, token in
-            guard token != nil, prefs.restTimerCueEnabled, prefs.hapticsEnabled else { return }
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            guard token != nil else { return }
+            Haptics.success()
         }
     }
 
@@ -673,7 +673,11 @@ struct WorkoutSessionScreen: View {
         withAnimation { showRestTimer = true }
     }
 
-    private func finishActiveRestTimerIfNeeded(forceHideWhenNoTimer: Bool = false) {
+    private func finishActiveRestTimerIfNeeded(
+        forceHideWhenNoTimer: Bool = false,
+        playExplicitFinishHaptic: Bool = true
+    ) {
+        let hadVisibleOrConfiguredTimer = showRestTimer || restTimer.hasConfiguredTimer
         let capturedSeconds = restTimer.finishAndCaptureElapsedSeconds()
 
         if let setID = restTimerOwnerSetID,
@@ -681,11 +685,16 @@ struct WorkoutSessionScreen: View {
             .flatMap(\.setLogs)
             .first(where: { $0.id == setID }) {
             logging.setActualRestSeconds(capturedSeconds, for: ownerSet, context: modelContext)
+            saveOrAssert("finish rest")
         }
 
         restTimerOwnerSetID = nil
 
-        if capturedSeconds != nil || forceHideWhenNoTimer {
+        if playExplicitFinishHaptic && hadVisibleOrConfiguredTimer {
+            Haptics.tickLight()
+        }
+
+        if hadVisibleOrConfiguredTimer || forceHideWhenNoTimer {
             withAnimation { showRestTimer = false }
         }
     }
@@ -1040,8 +1049,7 @@ struct WorkoutSessionScreen: View {
             if !session.isPaused {
                 Button {
                     session.pause()
-                    restTimer.resolveForNextAction()
-                    withAnimation { showRestTimer = false }
+                    restTimer.pause()
                     saveOrAssert("pause")
                 } label: {
                     Image(systemName: "pause.fill")
@@ -1126,14 +1134,15 @@ struct WorkoutSessionScreen: View {
 
     private func finish() {
         if session.isPaused { session.resume() }
-        finishActiveRestTimerIfNeeded(forceHideWhenNoTimer: true)
+        finishActiveRestTimerIfNeeded(
+            forceHideWhenNoTimer: true,
+            playExplicitFinishHaptic: false
+        )
         session.endedAt = Date()
         session.status = .completed
         session.dismissedStalePromptAt = nil
         saveOrAssert("finish")
 
-        // Optional, post-session, never blocks logging flow:
-        // we only prompt if the user hasn't added a reflection yet.
         guard !hasReflection else {
             dismiss()
             return
@@ -1143,7 +1152,6 @@ struct WorkoutSessionScreen: View {
         coachPrompt = nil
         withAnimation(.snappy) { showRestTimer = false }
 
-        // Present the sheet on the next run loop after the completion-state save settles.
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 80_000_000)
             showReflectionSheet = true
@@ -1152,7 +1160,10 @@ struct WorkoutSessionScreen: View {
 
     private func abandon() {
         if session.isPaused { session.resume() }
-        finishActiveRestTimerIfNeeded(forceHideWhenNoTimer: true)
+        finishActiveRestTimerIfNeeded(
+            forceHideWhenNoTimer: true,
+            playExplicitFinishHaptic: false
+        )
         session.endedAt = Date()
         session.status = .abandoned
         session.dismissedStalePromptAt = nil
@@ -1974,23 +1985,6 @@ struct WorkoutSessionScreen: View {
             let current = set.editableDistance(in: preferredDistanceUnit) ?? 0
             let next = max(0, current + delta)
             set.setActualDistance(next == 0 ? nil : next, preferredUnit: preferredDistanceUnit)
-        }
-    }
-    
-    @MainActor
-    private static func playRestFinishedHaptic() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.prepare()
-        generator.notificationOccurred(.success)
-    }
-
-    private enum Haptics {
-        static func success() {
-    #if canImport(UIKit)
-        Task { @MainActor in
-            WorkoutSessionScreen.playRestFinishedHaptic()
-        }
-    #endif
         }
     }
 }

@@ -84,11 +84,9 @@ final class RoutineLinkedFlowUITests: XCTestCase {
             tapSafely(dismissCoach)
         }
 
-        if isRestTimerOverlayVisible() {
-            let restTimerToggle = app.buttons["WorkoutSession.RestTimerButton"]
-            if restTimerToggle.exists {
-                tapSafely(restTimerToggle)
-            }
+        let finishRest = app.buttons["RestTimerView.FinishButton"]
+        if finishRest.exists {
+            tapSafely(finishRest)
         }
     }
 
