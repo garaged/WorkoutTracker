@@ -92,6 +92,16 @@
         }
       }
     },
+    "%@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
+          }
+        }
+      }
+    },
     "%@: %@" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -9198,6 +9208,7 @@
       }
     },
     "session.summary.ended" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9230,6 +9241,7 @@
       }
     },
     "session.summary.sets" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9294,6 +9306,7 @@
       }
     },
     "session.summary.volume" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
