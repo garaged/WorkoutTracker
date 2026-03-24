@@ -40,6 +40,12 @@
     },
     "—" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "—"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -801,13 +807,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Export backup"
+            "value" : "Export support bundle"
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Exportar respaldo"
+            "value" : "Exportar paquete de soporte"
           }
         }
       }
@@ -817,13 +823,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Creates a backup file you can share or restore later."
+            "value" : "Creates a ZIP support bundle you can share for troubleshooting."
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Crea un archivo de respaldo que puedes compartir o restaurar después."
+            "value" : "Crea un paquete de soporte ZIP que puedes compartir para solucionar problemas."
           }
         }
       }
@@ -1198,6 +1204,12 @@
     },
     "Abandoned" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abandoned"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1207,6 +1219,7 @@
       }
     },
     "Abandoned (%@). View summary or start again." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -1261,6 +1274,12 @@
     "Active Sessions" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active Sessions"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1299,6 +1318,12 @@
     },
     "Activity" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activity"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1681,6 +1706,12 @@
     "Attach Routine" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attach Routine"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1743,6 +1774,12 @@
     "Backup & Restore" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup & Restore"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1754,10 +1791,368 @@
     "Backup found" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup file loaded"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Respaldo encontrado"
+            "value" : "Archivo de respaldo cargado"
+          }
+        }
+      }
+    },
+    "backup.export.contents.no_workouts" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup ready. No workout records were available to export yet."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respaldo listo. Todavía no había registros de entrenamiento disponibles para exportar."
+          }
+        }
+      }
+    },
+    "backup.export.contents.settings_and_workouts.plural" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup ready. It includes your settings snapshot and %lld workout records."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respaldo listo. Incluye tu instantánea de configuración y %lld registros de entrenamiento."
+          }
+        }
+      }
+    },
+    "backup.export.contents.settings_and_workouts.singular" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup ready. It includes your settings snapshot and %lld workout record."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respaldo listo. Incluye tu instantánea de configuración y %lld registro de entrenamiento."
+          }
+        }
+      }
+    },
+    "backup.export.contents.settings_only" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup ready. It includes your settings snapshot, but no workout records yet."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respaldo listo. Incluye tu instantánea de configuración, pero todavía no hay registros de entrenamiento."
+          }
+        }
+      }
+    },
+    "backup.export.contents.workouts_only.plural" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup ready. It includes %lld workout records."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respaldo listo. Incluye %lld registros de entrenamiento."
+          }
+        }
+      }
+    },
+    "backup.export.contents.workouts_only.singular" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup ready. It includes %lld workout record."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Respaldo listo. Incluye %lld registro de entrenamiento."
+          }
+        }
+      }
+    },
+    "backup.export.generate_support_bundle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generate Support Bundle (ZIP)"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generar paquete de soporte (ZIP)"
+          }
+        }
+      }
+    },
+    "backup.export.guidance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JSON backups are best for restore. ZIP support bundles are best for troubleshooting (logs, settings, and data snapshot)."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los respaldos JSON son mejores para restaurar. Los paquetes de soporte ZIP son mejores para solucionar problemas (logs, configuración e instantánea de datos)."
+          }
+        }
+      }
+    },
+    "backup.export.note.logs.included" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App log file was included."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se incluyó el archivo de logs de la app."
+          }
+        }
+      }
+    },
+    "backup.export.note.logs.missing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No app log file was available when the support bundle was created."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No había un archivo de logs de la app disponible cuando se creó el paquete de soporte."
+          }
+        }
+      }
+    },
+    "backup.export.note.swiftdata.included.plural" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Included %lld SwiftData store files from Application Support."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se incluyeron %lld archivos de almacenamiento de SwiftData desde Application Support."
+          }
+        }
+      }
+    },
+    "backup.export.note.swiftdata.included.singular" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Included %lld SwiftData store file from Application Support."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se incluyó %lld archivo de almacenamiento de SwiftData desde Application Support."
+          }
+        }
+      }
+    },
+    "backup.export.note.swiftdata.missing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No SwiftData store files were found in Application Support."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se encontraron archivos de almacenamiento de SwiftData en Application Support."
+          }
+        }
+      }
+    },
+    "backup.export.note.userdefaults.empty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The UserDefaults snapshot was empty when the support bundle was created."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La instantánea de UserDefaults estaba vacía cuando se creó el paquete de soporte."
+          }
+        }
+      }
+    },
+    "backup.export.note.userdefaults.included.plural" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Included a sanitized snapshot of %lld UserDefaults keys."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se incluyó una instantánea saneada de %lld claves de UserDefaults."
+          }
+        }
+      }
+    },
+    "backup.export.note.userdefaults.included.singular" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Included a sanitized snapshot of %lld UserDefaults key."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se incluyó una instantánea saneada de %lld clave de UserDefaults."
+          }
+        }
+      }
+    },
+    "backup.export.share_support_bundle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share Support Bundle"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir paquete de soporte"
+          }
+        }
+      }
+    },
+    "backup.export.support_bundle_ready" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support bundle ready. manifest.json lists any logs or data files that weren’t available when export started."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paquete de soporte listo. manifest.json enumera cualquier log o archivo de datos que no estaba disponible cuando comenzó la exportación."
+          }
+        }
+      }
+    },
+    "backup.export.support_bundle_unavailable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ZIP support bundle export isn’t available right now."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La exportación del paquete de soporte ZIP no está disponible en este momento."
+          }
+        }
+      }
+    },
+    "backup.import.file_loaded" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup file loaded"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archivo de respaldo cargado"
+          }
+        }
+      }
+    },
+    "backup.import.settings_snapshot" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings snapshot: %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instantánea de configuración: %@"
+          }
+        }
+      }
+    },
+    "backup.restore.replace_warning" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restoring workout data replaces the current data on this device. Create a fresh JSON backup first if you want a rollback point."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurar los datos de entrenamiento reemplaza los datos actuales de este dispositivo. Crea primero un respaldo JSON reciente si quieres un punto de reversión."
           }
         }
       }
@@ -1927,6 +2322,12 @@
     },
     "Cancel" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2388,6 +2789,7 @@
       }
     },
     "Completed (%@). View summary or start again." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -2442,7 +2844,6 @@
       }
     },
     "Continue" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2566,6 +2967,12 @@
     "Couldn't start workout" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't start workout"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2738,6 +3145,134 @@
         }
       }
     },
+    "day.workout_actions.abandoned_message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abandoned (%@). View the summary, reopen it, or start a new session."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abandonado (%@). Ver resumen, reabrirlo o iniciar una nueva sesión."
+          }
+        }
+      }
+    },
+    "day.workout_actions.completed_message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed (%@). View the summary, reopen it, or start a new session."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completado (%@). Ver resumen, reabrirlo o iniciar una nueva sesión."
+          }
+        }
+      }
+    },
+    "day.workout_actions.in_progress_message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In progress since %@. Continue it, finish it now, stop it, or edit details."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En progreso desde las %@. Continúalo, finalízalo ahora, deténlo o edita los detalles."
+          }
+        }
+      }
+    },
+    "day.workout_actions.no_routine_message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No routine attached yet. Quick Start now or attach a routine."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todavía no hay una rutina adjunta. Haz un inicio rápido ahora o adjunta una rutina."
+          }
+        }
+      }
+    },
+    "day.workout_actions.ready_message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready to start this workout."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo listo para iniciar este entrenamiento."
+          }
+        }
+      }
+    },
+    "day.workout_card.open_or_start_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open or start workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir o iniciar entrenamiento"
+          }
+        }
+      }
+    },
+    "day.workout_overlay.pause_workout" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar entrenamiento"
+          }
+        }
+      }
+    },
+    "day.workout_overlay.resume_workout" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar entrenamiento"
+          }
+        }
+      }
+    },
     "Days" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2768,6 +3303,12 @@
     "Delete" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2838,7 +3379,20 @@
       }
     },
     "Discard" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartar"
+          }
+        }
+      }
     },
     "Dismiss coach suggestion" : {
       "extractionState" : "stale",
@@ -2908,6 +3462,12 @@
     },
     "Done" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2985,6 +3545,12 @@
     "Edit" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3006,6 +3572,12 @@
     "Edit Details" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Details"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3292,6 +3864,12 @@
     "Export" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3313,6 +3891,12 @@
     },
     "Failed to start workout: %@" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to start workout: %@"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3375,7 +3959,20 @@
       }
     },
     "Finish now" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish now"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finalizar ahora"
+          }
+        }
+      }
     },
     "format.duration.short.hours_minutes" : {
       "extractionState" : "stale",
@@ -3485,13 +4082,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Full backup export isn’t configured yet. Add an exporter in SettingsScreen via .environment(\\.backupExporter, AppBackupExporter())."
+            "value" : "ZIP support bundle export isn’t available right now."
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La exportación de respaldo completo aún no está configurada. Agrega un exportador en SettingsScreen mediante .environment(\\.backupExporter, AppBackupExporter())."
+            "value" : "La exportación del paquete de soporte ZIP no está disponible en este momento."
           }
         }
       }
@@ -3510,10 +4107,16 @@
     "Generate Full Backup (ZIP)" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generate Support Bundle (ZIP)"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Generar respaldo completo (ZIP)"
+            "value" : "Generar paquete de soporte (ZIP)"
           }
         }
       }
@@ -3521,6 +4124,12 @@
     "Generate JSON Backup" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generate JSON Backup"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3636,6 +4245,22 @@
         }
       }
     },
+    "home.active_sessions.help" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume unfinished workouts here. Previous-day workouts stay visible, and recovery options appear when you open them."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanuda aquí los entrenamientos sin terminar. Los entrenamientos de días anteriores siguen visibles y muestran opciones de recuperación al abrirlos."
+          }
+        }
+      }
+    },
     "How did it go?" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3661,6 +4286,12 @@
     "Import" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3775,6 +4406,7 @@
       }
     },
     "In progress since %@. Resume, restart, or edit details." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -3958,10 +4590,16 @@
     "JSON is best for restore. ZIP is best for debugging (logs + settings + data snapshot)." : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JSON backups are best for restore. ZIP support bundles are best for troubleshooting (logs, settings, and data snapshot)."
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "JSON es mejor para restaurar. ZIP es mejor para depuración (logs + configuración + instantánea de datos)."
+            "value" : "Los respaldos JSON son mejores para restaurar. Los paquetes de soporte ZIP son mejores para solucionar problemas (logs, configuración e instantánea de datos)."
           }
         }
       }
@@ -3994,7 +4632,20 @@
       }
     },
     "Keep for later" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep for later"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar para después"
+          }
+        }
+      }
     },
     "kg" : {
       "extractionState" : "stale",
@@ -4847,6 +5498,7 @@
       }
     },
     "No routine attached. Quick Start now, or attach a routine." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -4857,6 +5509,7 @@
       }
     },
     "No routine attached. Quick start or attach a routine." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -5075,7 +5728,21 @@
       }
     },
     "Older unfinished workout" : {
-
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous-day unfinished workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento sin terminar del día anterior"
+          }
+        }
+      }
     },
     "On conflict" : {
       "extractionState" : "stale",
@@ -5125,9 +5792,6 @@
           }
         }
       }
-    },
-    "Open or start workout" : {
-
     },
     "Optional" : {
       "extractionState" : "stale",
@@ -5203,6 +5867,12 @@
     },
     "Pause" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5212,6 +5882,7 @@
       }
     },
     "Pause workout" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -5223,6 +5894,12 @@
     },
     "Paused" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5233,6 +5910,12 @@
     },
     "Paused · %@" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused · %@"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5342,6 +6025,12 @@
     },
     "Planned for %@" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planned for %@"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5352,6 +6041,12 @@
     },
     "Planned for today" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planned for today"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5362,6 +6057,12 @@
     },
     "Planned for yesterday" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planned for yesterday"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5407,13 +6108,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Preferences snapshot: %@"
+            "value" : "Settings snapshot: %@"
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Instantánea de preferencias: %@"
+            "value" : "Instantánea de configuración: %@"
           }
         }
       }
@@ -5442,6 +6143,12 @@
     },
     "Previous day" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous day"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7471,6 +8178,12 @@
     "Quick Start" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick Start"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7518,6 +8231,7 @@
       }
     },
     "Ready to start this routine." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -7528,6 +8242,7 @@
       }
     },
     "Ready to start this workout." : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -7649,6 +8364,12 @@
     "Reopen" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reopen"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7806,6 +8527,12 @@
     "Restore" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7817,6 +8544,12 @@
     "Restore Settings From Backup" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore Settings From Backup"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7828,6 +8561,12 @@
     "Restore Workout Data" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore Workout Data"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7838,6 +8577,12 @@
     },
     "Resume" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7879,6 +8624,7 @@
       }
     },
     "Resume workout" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -7918,6 +8664,12 @@
     },
     "Routine “%@” has no linked exercises. Reinstall the pack or fix the routine." : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routine “%@” has no linked exercises. Reinstall the pack or fix the routine."
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8505,6 +9257,12 @@
     "Select JSON Backup File" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select JSON Backup File"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8514,7 +9272,21 @@
       }
     },
     "Session recovery" : {
-
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session recovery"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recuperación de sesión"
+          }
+        }
+      }
     },
     "session.abandon_workout.action" : {
       "localizations" : {
@@ -8560,6 +9332,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "¿Abandonar sesión?"
+          }
+        }
+      }
+    },
+    "session.attention.needs_attention" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Needs attention"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Necesita atención"
           }
         }
       }
@@ -8852,6 +9640,54 @@
         }
       }
     },
+    "session.recovery.previous_day.message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This unfinished workout belongs to %@. Resume it, finish it now, discard it, or keep it for later without being prompted again today."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este entrenamiento sin terminar corresponde al %@. Reanúdalo, finalízalo ahora, descártalo o déjalo para después sin volver a mostrar este aviso hoy."
+          }
+        }
+      }
+    },
+    "session.recovery.previous_day.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous-day unfinished workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento sin terminar del día anterior"
+          }
+        }
+      }
+    },
+    "session.recovery.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session recovery"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recuperación de sesión"
+          }
+        }
+      }
+    },
     "session.reflection.add" : {
       "localizations" : {
         "en" : {
@@ -9084,13 +9920,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Workout"
+            "value" : "Main"
           }
         },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Entrenamiento"
+            "value" : "Principal"
           }
         }
       }
@@ -9191,6 +10027,22 @@
         }
       }
     },
+    "session.summary.completed_sets" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed sets"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Series completadas"
+          }
+        }
+      }
+    },
     "session.summary.elapsed" : {
       "localizations" : {
         "en" : {
@@ -9208,7 +10060,6 @@
       }
     },
     "session.summary.ended" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9240,6 +10091,38 @@
         }
       }
     },
+    "session.summary.personal_records" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personal records"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Récords personales"
+          }
+        }
+      }
+    },
+    "session.summary.segments" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segments"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segmentos"
+          }
+        }
+      }
+    },
     "session.summary.sets" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -9253,6 +10136,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Series"
+          }
+        }
+      }
+    },
+    "session.summary.skipped_sets" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skipped sets"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Series omitidas"
           }
         }
       }
@@ -9915,10 +10814,16 @@
     "Share Full Backup" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share Support Bundle"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Compartir respaldo completo"
+            "value" : "Compartir paquete de soporte"
           }
         }
       }
@@ -9926,6 +10831,12 @@
     "Share JSON Backup" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share JSON Backup"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9937,6 +10848,12 @@
     "Skip today" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip today"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9969,6 +10886,12 @@
     },
     "Start" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10018,6 +10941,12 @@
     "Start new session" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start new session"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10098,6 +11027,12 @@
     },
     "Started %@" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Started %@"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10108,6 +11043,12 @@
     },
     "Started today at %@" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Started today at %@"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10141,6 +11082,12 @@
     "Stop" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10152,6 +11099,12 @@
     "Stop workout" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop workout"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10200,6 +11153,12 @@
     },
     "Summary" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Summary"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10331,6 +11290,12 @@
     },
     "The attached routine could not be found. Please reattach a routine." : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The attached routine could not be found. Please reattach a routine."
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10422,7 +11387,21 @@
       }
     },
     "This unfinished workout belongs to %@. Resume it now, finish it, discard it, or keep it for later without being prompted again today." : {
-
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This unfinished workout belongs to %@. Resume it, finish it now, discard it, or keep it for later without being prompted again today."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este entrenamiento sin terminar corresponde al %@. Reanúdalo, finalízalo ahora, descártalo o déjalo para después sin volver a mostrar este aviso hoy."
+          }
+        }
+      }
     },
     "This will update %1$lld %2$@ (all materialized rows)." : {
       "extractionState" : "stale",
@@ -10566,6 +11545,12 @@
     "Today" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10611,6 +11596,12 @@
     "Total" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10852,6 +11843,12 @@
     "View Summary" : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View Summary"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11117,6 +12114,12 @@
     },
     "Workout" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout"
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11145,10 +12148,16 @@
     "Workout restore replaces the current backed-up data snapshot in this app install. Use a fresh JSON backup first if you want a rollback point." : {
       "extractionState" : "stale",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restoring workout data replaces the current data on this device. Create a fresh JSON backup first if you want a rollback point."
+          }
+        },
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La restauración de entrenamientos reemplaza la instantánea de datos respaldada actualmente en esta instalación de la app. Usa primero un respaldo JSON reciente si quieres un punto de reversión."
+            "value" : "Restaurar los datos de entrenamiento reemplaza los datos actuales de este dispositivo. Crea primero un respaldo JSON reciente si quieres un punto de reversión."
           }
         }
       }

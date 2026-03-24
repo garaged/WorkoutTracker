@@ -15,7 +15,7 @@ struct BackupRestoreScreen: View {
     @State private var exportError: String?
     @State private var exportStatusMessage: String?
 
-    // Full diagnostic backup (ZIP) via AppBackupExporter
+    // ZIP support bundle for troubleshooting via AppBackupExporter
     @State private var fullExportURL: URL?
     @State private var fullExportError: String?
     @State private var fullExportStatusMessage: String?
@@ -64,7 +64,7 @@ struct BackupRestoreScreen: View {
                 Button {
                     exportFullBackupZIP()
                 } label: {
-                    Label(AppFormatting.localized("Generate Full Backup (ZIP)"), systemImage: "ladybug")
+                    Label(String(localized: "backup.export.generate_support_bundle"), systemImage: "ladybug")
                 }
                 .disabled(backupExporter == nil)
                 .accessibilityLabel(AccessibilityLabels.Buttons.exportBackup)
@@ -72,7 +72,7 @@ struct BackupRestoreScreen: View {
 
                 if let url = fullExportURL {
                     ShareLink(item: url) {
-                        Label(AppFormatting.localized("Share Full Backup"), systemImage: "square.and.arrow.up.on.square")
+                        Label(String(localized: "backup.export.share_support_bundle"), systemImage: "square.and.arrow.up.on.square")
                     }
                     .padding(.top, 4)
 
@@ -88,7 +88,7 @@ struct BackupRestoreScreen: View {
                 }
 
                 if backupExporter == nil {
-                    Text(AppFormatting.localized("Full backup export isn’t configured yet. Add an exporter in SettingsScreen via .environment(\\.backupExporter, AppBackupExporter())."))
+                    Text(String(localized: "backup.export.support_bundle_unavailable"))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .padding(.top, 2)
@@ -100,7 +100,7 @@ struct BackupRestoreScreen: View {
                         .font(.footnote)
                 }
 
-                Text(AppFormatting.localized("JSON is best for restore. ZIP is best for debugging (logs + settings + data snapshot)."))
+                Text(String(localized: "backup.export.guidance"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.top, 2)
@@ -115,7 +115,7 @@ struct BackupRestoreScreen: View {
 
                 if let v = importedValidation {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(AppFormatting.localized("Backup found"))
+                        Text(String(localized: "backup.import.file_loaded"))
                             .font(.subheadline)
                             .fontWeight(.semibold)
 
@@ -149,7 +149,7 @@ struct BackupRestoreScreen: View {
                             .font(.footnote)
                             .foregroundStyle(.secondary)
 
-                        Text(AppFormatting.localizedFormat("Preferences snapshot: %@", v.hasPreferencesSnapshot ? AppFormatting.localized("Yes") : AppFormatting.localized("No")))
+                        Text(AppFormatting.localizedFormat("backup.import.settings_snapshot", v.hasPreferencesSnapshot ? AppFormatting.localized("Yes") : AppFormatting.localized("No")))
                             .font(.footnote)
                             .foregroundStyle(.secondary)
 
@@ -218,7 +218,7 @@ struct BackupRestoreScreen: View {
                         .font(.footnote)
                 }
 
-                Text(AppFormatting.localized("Workout restore replaces the current backed-up data snapshot in this app install. Use a fresh JSON backup first if you want a rollback point."))
+                Text(String(localized: "backup.restore.replace_warning"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

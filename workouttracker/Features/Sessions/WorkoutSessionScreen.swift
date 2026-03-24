@@ -325,13 +325,13 @@ struct WorkoutSessionScreen: View {
 
                         HStack(spacing: 12) {
                             finishSummaryMetricTile(
-                                title: "Completed sets",
+                                title: String(localized: "session.summary.completed_sets"),
                                 value: summary.completedSetsText,
                                 accessibilityIdentifier: "WorkoutSession.FinishSummary.CompletedSets"
                             )
 
                             finishSummaryMetricTile(
-                                title: "Skipped sets",
+                                title: String(localized: "session.summary.skipped_sets"),
                                 value: summary.skippedSetsText,
                                 accessibilityIdentifier: "WorkoutSession.FinishSummary.SkippedSets"
                             )
@@ -344,14 +344,14 @@ struct WorkoutSessionScreen: View {
                         }
 
                         readOnlySummaryRow(
-                            label: "Status",
+                            label: String(localized: "session.summary.status"),
                             value: summary.overallStatusText,
                             accessibilityIdentifier: "WorkoutSession.FinishSummary.Status"
                         )
 
                         if let endedAtText = summary.endedText {
                             readOnlySummaryRow(
-                                label: "Ended",
+                                label: String(localized: "session.summary.ended"),
                                 value: endedAtText,
                                 valueColor: .secondary,
                                 accessibilityIdentifier: "WorkoutSession.FinishSummary.Ended"
@@ -376,7 +376,7 @@ struct WorkoutSessionScreen: View {
 
                 if !summary.segmentRows.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
-                        readOnlyCardSectionTitle("Segments")
+                        readOnlyCardSectionTitle(String(localized: "session.summary.segments"))
 
                         VStack(spacing: 0) {
                             ForEach(Array(summary.segmentRows.enumerated()), id: \.element.id) { index, row in
@@ -410,7 +410,7 @@ struct WorkoutSessionScreen: View {
                 }
 
                 VStack(alignment: .leading, spacing: 12) {
-                    readOnlyCardSectionTitle("Personal records")
+                    readOnlyCardSectionTitle(String(localized: "session.summary.personal_records"))
 
                     VStack(alignment: .leading, spacing: 12) {
                         if summary.prItems.isEmpty {

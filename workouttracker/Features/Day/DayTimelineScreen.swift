@@ -181,7 +181,7 @@ struct DayTimelineScreen: View {
             refreshWorkoutSessionCache()
         }
         .confirmationDialog(
-            workoutActionActivity?.title ?? String(localized: "Workout"),
+            workoutDialogTitle,
             isPresented: $showWorkoutDialog,
             titleVisibility: .visible
         ) {
@@ -198,12 +198,12 @@ struct DayTimelineScreen: View {
                     Button(AppFormatting.localized("Edit Details")) { onEdit(a); closeWorkoutDialog() }
 
                 case .inProgress(let s):
-                    Button(AppFormatting.localized("Open")) { openSession(s); closeWorkoutDialog() }
-                    Button(s.isPaused ? "Resume" : "Pause") {
+                    Button(String(localized: "Continue")) { openSession(s); closeWorkoutDialog() }
+                    Button(s.isPaused ? String(localized: "Resume") : String(localized: "Pause")) {
                         togglePause(s)
                         closeWorkoutDialog()
                     }
-                    Button(AppFormatting.localized("Finish")) {
+                    Button(String(localized: "Finish now")) {
                         finishSession(s)
                         closeWorkoutDialog()
                     }
@@ -237,26 +237,11 @@ struct DayTimelineScreen: View {
             Button(AppFormatting.localized("Cancel"), role: .cancel) { closeWorkoutDialog() }
 
         } message: {
-            if let a = workoutActionActivity {
-                switch workoutLaunchState {
-                case .none:
-                    Text(a.workoutRoutineId == nil
-                         ? "No routine attached. Quick start or attach a routine."
-                         : "Ready to start this routine.")
-                case .inProgress(let s):
-                    Text(AppFormatting.localizedFormat("In progress since %@.", s.startedAt.formatted(.dateTime.hour().minute())))
-                case .completed:
-                    Text(AppFormatting.localized("Completed workout. View summary, start again (clone) or reopen."))
-                case .abandoned:
-                    Text(AppFormatting.localized("Abandoned workout. View summary, start again (clone) or reopen."))
-                }
-            } else {
-                Text("")
-            }
+            Text(workoutDialogMessage)
         }
         .sheet(item: $recoveryPromptSession) { session in
             SessionRecoveryPrompt(
-                title: String(localized: "Older unfinished workout"),
+                title: String(localized: "session.recovery.previous_day.title"),
                 message: recoveryPromptMessage(for: session),
                 onResume: {
                     do {
@@ -577,7 +562,7 @@ struct DayTimelineScreen: View {
     private func recoveryPromptMessage(for session: WorkoutSession) -> String {
         let dayText = owningDayDate(for: session).formatted(date: .abbreviated, time: .omitted)
         return String(
-            format: String(localized: "This unfinished workout belongs to %@. Resume it now, finish it, discard it, or keep it for later without being prompted again today."),
+            format: String(localized: "session.recovery.previous_day.message"),
             locale: .autoupdatingCurrent,
             dayText
         )
@@ -704,7 +689,7 @@ struct DayTimelineScreen: View {
         private func badgeSpec(_ state: WorkoutLaunchState) -> (String, String) {
             switch state {
             case .none:              return (String(localized: "Start"), "play.circle")
-            case .inProgress:        return (String(localized: "Resume"), "play.circle.fill")
+            case .inProgress:        return (String(localized: "Continue"), "play.circle.fill")
             case .completed:         return (String(localized: "Done"), "checkmark.circle.fill")
             case .abandoned:         return (String(localized: "Abandoned"), "xmark.circle.fill")
             }
@@ -1175,7 +1160,7 @@ struct DayTimelineScreen: View {
                                 .padding(.trailing, 110) // leave overlay controls alone
                                 .accessibilityIdentifier("DayTimeline.WorkoutCard.DefaultAction")
                                 .accessibilityLabel(a.title)
-                                .accessibilityHint("Open or start workout")
+                                .accessibilityHint(String(localized: "day.workout_card.open_or_start_hint"))
                             }
                         }
                         .onLongPressGesture(minimumDuration: 0.5) {
@@ -1229,7 +1214,7 @@ struct DayTimelineScreen: View {
                     } label: {
                         Image(systemName: s.isPaused ? "play.fill" : "pause.fill")
                     }
-                    .accessibilityLabel(s.isPaused ? "Resume workout" : "Pause workout")
+                    .accessibilityLabel(s.isPaused ? String(localized: "day.workout_overlay.resume_workout") : String(localized: "day.workout_overlay.pause_workout"))
                     .accessibilityIdentifier("DayTimeline.WorkoutOverlay.PauseResume")
 
                     Button(role: .destructive) {
@@ -1460,15 +1445,15 @@ struct DayTimelineScreen: View {
         switch workoutLaunchState {
         case .none:
             if a.workoutRoutineId == nil {
-                return String(localized: "No routine attached. Quick Start now, or attach a routine.")
+                return String(localized: "day.workout_actions.no_routine_message")
             } else {
-                return String(localized: "Ready to start this workout.")
+                return String(localized: "day.workout_actions.ready_message")
             }
 
         case .inProgress(let s):
             let started = s.startedAt.formatted(.dateTime.hour().minute())
             return String(
-                format: String(localized: "In progress since %@. Resume, restart, or edit details."),
+                format: String(localized: "day.workout_actions.in_progress_message"),
                 locale: .autoupdatingCurrent,
                 started
             )
@@ -1476,7 +1461,7 @@ struct DayTimelineScreen: View {
         case .completed(let s):
             let ended = (s.endedAt ?? s.startedAt).formatted(.dateTime.month(.abbreviated).day().hour().minute())
             return String(
-                format: String(localized: "Completed (%@). View summary or start again."),
+                format: String(localized: "day.workout_actions.completed_message"),
                 locale: .autoupdatingCurrent,
                 ended
             )
@@ -1484,7 +1469,7 @@ struct DayTimelineScreen: View {
         case .abandoned(let s):
             let ended = (s.endedAt ?? s.startedAt).formatted(.dateTime.month(.abbreviated).day().hour().minute())
             return String(
-                format: String(localized: "Abandoned (%@). View summary or start again."),
+                format: String(localized: "day.workout_actions.abandoned_message"),
                 locale: .autoupdatingCurrent,
                 ended
             )
@@ -1538,7 +1523,7 @@ struct DayTimelineScreen: View {
         private var text: String {
             switch badge {
             case .start:   return String(localized: "Start")
-            case .resume:  return String(localized: "Resume")
+            case .resume:  return String(localized: "Continue")
             case .summary: return String(localized: "Summary")
             case .paused: return String(localized: "Paused")
             }

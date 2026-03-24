@@ -59,20 +59,25 @@ enum ExportNamingFormatter {
     static func backupContentsDescription(totalEntities: Int, hasPreferencesSnapshot: Bool) -> String {
         guard totalEntities > 0 else {
             return hasPreferencesSnapshot
-                ? "Backup ready. It includes your settings snapshot, but no workout records yet."
-                : "Backup ready. No workout records were available to export yet."
+                ? String(localized: "backup.export.contents.settings_only")
+                : String(localized: "backup.export.contents.no_workouts")
         }
 
-        let recordLabel = totalEntities == 1 ? "record" : "records"
         if hasPreferencesSnapshot {
-            return "Backup ready. It includes your settings snapshot and \(totalEntities) workout \(recordLabel)."
+            let key = totalEntities == 1
+                ? "backup.export.contents.settings_and_workouts.singular"
+                : "backup.export.contents.settings_and_workouts.plural"
+            return AppFormatting.localizedFormat(key, Int64(totalEntities))
         }
 
-        return "Backup ready. It includes \(totalEntities) workout \(recordLabel)."
+        let key = totalEntities == 1
+            ? "backup.export.contents.workouts_only.singular"
+            : "backup.export.contents.workouts_only.plural"
+        return AppFormatting.localizedFormat(key, Int64(totalEntities))
     }
 
     static func supportBundleDescription() -> String {
-        "Support bundle ready. manifest.json will call out any logs or data files that were unavailable at export time."
+        String(localized: "backup.export.support_bundle_ready")
     }
 
     static func supportBundleNotes(
@@ -83,23 +88,27 @@ enum ExportNamingFormatter {
         var notes: [String] = []
 
         if logFileIncluded {
-            notes.append("App log file was included.")
+            notes.append(String(localized: "backup.export.note.logs.included"))
         } else {
-            notes.append("No app log file was available at export time.")
+            notes.append(String(localized: "backup.export.note.logs.missing"))
         }
 
         if swiftDataFileCount > 0 {
-            let label = swiftDataFileCount == 1 ? "file" : "files"
-            notes.append("Included \(swiftDataFileCount) SwiftData store \(label) from Application Support.")
+            let key = swiftDataFileCount == 1
+                ? "backup.export.note.swiftdata.included.singular"
+                : "backup.export.note.swiftdata.included.plural"
+            notes.append(AppFormatting.localizedFormat(key, Int64(swiftDataFileCount)))
         } else {
-            notes.append("No SwiftData store files were found in Application Support.")
+            notes.append(String(localized: "backup.export.note.swiftdata.missing"))
         }
 
         if userDefaultsKeyCount > 0 {
-            let label = userDefaultsKeyCount == 1 ? "key" : "keys"
-            notes.append("Included a sanitized snapshot of \(userDefaultsKeyCount) UserDefaults \(label).")
+            let key = userDefaultsKeyCount == 1
+                ? "backup.export.note.userdefaults.included.singular"
+                : "backup.export.note.userdefaults.included.plural"
+            notes.append(AppFormatting.localizedFormat(key, Int64(userDefaultsKeyCount)))
         } else {
-            notes.append("UserDefaults snapshot was empty at export time.")
+            notes.append(String(localized: "backup.export.note.userdefaults.empty"))
         }
 
         return notes

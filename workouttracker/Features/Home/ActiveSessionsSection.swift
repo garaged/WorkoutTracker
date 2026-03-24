@@ -52,12 +52,13 @@ struct ActiveSessionsSection: View {
                             : "Home.ActiveSessions.Card.Today",
                         resumeAction: { handleResumeTap(for: session) },
                         finishAction: { finish(session) }
-                    )                }
+                    )
+                }
             }
             .accessibilityIdentifier("Home.ActiveSessions.Section")
             .sheet(item: $recoveryPromptSession) { session in
                 SessionRecoveryPrompt(
-                    title: String(localized: "Older unfinished workout"),
+                    title: String(localized: "session.recovery.previous_day.title"),
                     message: recoveryPromptMessage(for: session),
                     onResume: {
                         do {
@@ -110,7 +111,7 @@ struct ActiveSessionsSection: View {
                     .foregroundStyle(.secondary)
             }
 
-            Text(AppFormatting.localized("Resume unfinished workouts here. Previous-day sessions stay visible, but recovery choices appear only when you open them."))
+            Text(String(localized: "home.active_sessions.help"))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
@@ -186,7 +187,7 @@ struct ActiveSessionsSection: View {
         let owningDay = owningDayDate(for: session)
         let dayText = owningDay.formatted(date: .abbreviated, time: .omitted)
         return String(
-            format: String(localized: "This unfinished workout belongs to %@. Resume it now, finish it, discard it, or keep it for later without being prompted again today."),
+            format: String(localized: "session.recovery.previous_day.message"),
             locale: .autoupdatingCurrent,
             dayText
         )
@@ -270,7 +271,7 @@ private struct ActiveSessionCard: View {
             }
             
             if attentionState == .staleNeedsPrompt {
-                Text(AppFormatting.localized("Needs attention"))
+                Text(String(localized: "session.attention.needs_attention"))
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
@@ -285,7 +286,7 @@ private struct ActiveSessionCard: View {
                 
                 if isPastDay {
                     Button(action: finishAction) {
-                        Label(AppFormatting.localized("Finish"), systemImage:  "checkmark.circle")
+                        Label(String(localized: "Finish now"), systemImage:  "checkmark.circle")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)

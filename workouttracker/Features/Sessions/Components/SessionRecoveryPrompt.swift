@@ -23,25 +23,33 @@ struct SessionRecoveryPrompt: View {
                 VStack(spacing: 10) {
                     Button(action: onResume) {
                         Label(String(localized: "Resume"), systemImage: "play.fill")
-                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(2)
                     }
                     .buttonStyle(.borderedProminent)
 
                     Button(action: onFinishNow) {
                         Label(String(localized: "Finish now"), systemImage: "checkmark.circle")
-                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(2)
                     }
                     .buttonStyle(.bordered)
 
                     Button(action: onKeepForLater) {
                         Label(String(localized: "Keep for later"), systemImage: "clock")
-                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(2)
                     }
                     .buttonStyle(.bordered)
 
                     Button(role: .destructive, action: onDiscard) {
                         Label(String(localized: "Discard"), systemImage: "trash")
-                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(2)
                     }
                     .buttonStyle(.bordered)
                 }
@@ -49,7 +57,7 @@ struct SessionRecoveryPrompt: View {
                 Spacer(minLength: 0)
             }
             .padding(20)
-            .navigationTitle(String(localized: "Session recovery"))
+            .navigationTitle(String(localized: "session.recovery.title"))
             .navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.medium])
