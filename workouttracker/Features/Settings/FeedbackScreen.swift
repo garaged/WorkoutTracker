@@ -205,7 +205,7 @@ private enum SupportSummaryBuilder {
         lines.append("OS: \(osString)")
         lines.append("Locale: \(locale)")
         lines.append("Time Zone: \(tz)")
-        lines.append("Date: \(ISO8601DateFormatter().string(from: Date()))")
+        lines.append("Generated: \(ExportNamingFormatter.supportSummaryDateLine())")
 
         // If you already have a diagnostics/bug-report summary string in the app,
         // append it here (still local-only until user shares it).
