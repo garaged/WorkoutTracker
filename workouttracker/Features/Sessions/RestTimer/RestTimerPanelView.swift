@@ -50,8 +50,10 @@ struct RestTimerPanelView: View {
     }
 
     private func timeString(_ s: Int) -> String {
-        let m = s / 60
-        let r = s % 60
-        return String(format: "%d:%02d", m, r)
+        let absolute = abs(s)
+        let m = absolute / 60
+        let r = absolute % 60
+        let base = String(format: "%d:%02d", m, r)
+        return s < 0 ? "-\(base)" : base
     }
 }

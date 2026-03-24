@@ -1,3 +1,46 @@
+# Changelog v2.0.1
+
+## v2.0.1 — Session polish and trust pass
+
+This release improves reliability, clarity, and overall trust in workout sessions without changing the app’s core workflow.
+
+### 1. Resume and active-session reliability
+- Improved resume behavior across Home and Calendar flows.
+- Reopening an active workout is more consistent and more likely to land on the next actionable set.
+- Reduced cases where a session existed but the app did not return to the expected place.
+
+### 2. Better stale-session recovery
+- Added clearer handling for older unfinished sessions.
+- Stale sessions now offer safer recovery choices:
+  - Resume
+  - Finish now
+  - Discard
+  - Keep for later
+- Improved suppression behavior so recovery prompts feel less repetitive.
+
+### 3. Finish summary improvements
+- Improved the end-of-session summary to better reflect what actually happened in the workout.
+- Added or refined summary details such as:
+  - completed sets
+  - skipped sets
+  - elapsed time
+  - personal record highlights
+  - segment-aware summary for warm-up, main, and cool-down
+
+### 4. Export and backup polish
+- Improved export naming and wording for better clarity.
+- Cleaner support bundle / backup wording in user-facing flows.
+- Better empty-state messaging when there is little or no data to export.
+
+### 5. Copy and localization consistency
+- Standardized wording across resume, recovery, finish, and export flows.
+- Made warm-up / main / cool-down terminology more consistent.
+- Improved localized text fit for compact layouts, including touched Spanish flows.
+
+### Also in this release
+- Test hardening and regression coverage for the updated session flows.
+- General UI polish for trust-critical workout lifecycle screens.
+
 # Changelog v2.0.0
 
 ## Phase 5

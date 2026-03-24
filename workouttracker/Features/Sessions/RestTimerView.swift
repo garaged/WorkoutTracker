@@ -5,7 +5,7 @@ struct RestTimerView: View {
     let presets: [Int]
     var onFinish: (() -> Void)? = nil
 
-    @ObservedObject private var timer = RestTimerController.shared
+    @ObservedObject private var timer = SessionRestTimerController.shared
     @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     private let cornerRadius: CGFloat = 16
@@ -34,10 +34,6 @@ struct RestTimerView: View {
                 .stroke(Color(uiColor: .separator).opacity(0.30), lineWidth: 1)
         }
         .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 4)
-        .onChange(of: timer.didFinishToken, initial: false) { _, token in
-            guard token != nil else { return }
-            onFinish?()
-        }
     }
 
     @ViewBuilder
@@ -47,6 +43,7 @@ struct RestTimerView: View {
                 titleAndTimer
                 Spacer(minLength: 8)
                 startPauseButton
+                finishButton
                 resetButton
             }
 
@@ -58,6 +55,7 @@ struct RestTimerView: View {
 
                 HStack(spacing: 8) {
                     startPauseButton
+                    finishButton
                     resetButton
                 }
             }
@@ -69,7 +67,7 @@ struct RestTimerView: View {
             Text(String(localized: "session.rest.title"))
                 .font(.subheadline.weight(.semibold))
 
-            Text(AppFormatting.duration(seconds: timer.remainingSeconds))
+            Text(signedDuration(timer.displaySeconds))
                 .font(
                     .system(
                         isCompactLayout ? .title3 : .title2,
@@ -80,6 +78,7 @@ struct RestTimerView: View {
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+                .accessibilityIdentifier("RestTimerView.TimeLabel")
         }
     }
 
@@ -108,7 +107,7 @@ struct RestTimerView: View {
             timer.configure(
                 seconds: seconds,
                 startImmediately: UserPreferences.shared.autoStartRest,
-                playStartCue: UserPreferences.shared.autoStartRest
+                playStartCue: UserPreferences.shared.restTimerCueEnabled
             )
         } label: {
             Text(AppFormatting.shortDuration(seconds: seconds))
@@ -124,7 +123,7 @@ struct RestTimerView: View {
         Button {
             if timer.isRunning {
                 timer.pause()
-            } else if timer.remainingSeconds > 0 {
+            } else if timer.hasConfiguredTimer {
                 timer.resume()
             } else {
                 timer.start(seconds: max(1, timer.totalSeconds))
@@ -140,6 +139,23 @@ struct RestTimerView: View {
         .controlSize(.small)
     }
 
+    private var finishButton: some View {
+        Button {
+            if let onFinish {
+                onFinish()
+            } else {
+                _ = timer.finishAndCaptureElapsedSeconds()
+            }
+        } label: {
+            Label(String(localized: "session.rest.finish"), systemImage: "checkmark.circle")
+                .font(.subheadline.weight(.semibold))
+        }
+        .accessibilityIdentifier("RestTimerView.FinishButton")
+        .buttonStyle(.bordered)
+        .controlSize(.small)
+        .disabled(!timer.hasConfiguredTimer)
+    }
+
     private var resetButton: some View {
         Button {
             timer.reset()
@@ -152,4 +168,8 @@ struct RestTimerView: View {
         .disabled(timer.totalSeconds <= 0)
     }
 
+    private func signedDuration(_ seconds: Int) -> String {
+        let base = AppFormatting.duration(seconds: abs(seconds))
+        return seconds < 0 ? "-\(base)" : base
+    }
 }

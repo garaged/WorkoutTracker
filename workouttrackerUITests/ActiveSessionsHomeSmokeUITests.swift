@@ -1,16 +1,9 @@
 import XCTest
 
-// File: workouttrackerUITests/ActiveSessionsHomeSmokeUITests.swift
-//
 // Coverage for the Home-screen active-session reminder:
 // 1) Home shows unfinished sessions when they exist.
 // 2) Resume returns the user to the active session screen.
-// 3) Past-day sessions offer a quick Finish action and disappear after finishing.
-//
-// Notes:
-// - Seed data for these tests is created in workouttrackerUITestHost/workouttrackerUITestHostApp.swift
-//   behind UITESTS_ACTIVE_SESSIONS=1.
-// - We intentionally follow the existing UITestLaunch + in-memory host patterns.
+// 3) Previous-day unfinished sessions route through recovery instead of being finished inline.
 
 final class ActiveSessionsHomeSmokeUITests: XCTestCase {
 
@@ -44,125 +37,156 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
             "Expected the previous-day badge for stale active sessions."
         )
 
+        let todayResume = app.buttons["Home.ActiveSessions.Resume.Today"]
+        let previousDayResume = app.buttons["Home.ActiveSessions.Resume.PreviousDay"]
+
         XCTAssertTrue(
-            app.buttons.matching(identifier: "Home.ActiveSessions.Resume").count >= 2,
-            "Expected one Resume button per active session."
+            todayResume.waitForExistence(timeout: t(2)),
+            "Expected Resume button for today's active session."
         )
+        XCTAssertTrue(
+            previousDayResume.waitForExistence(timeout: t(2)),
+            "Expected Resume button for previous-day active session."
+        )
+    }
+
+    func test_homePastDaySession_showsFinishAndAttentionState() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["UITest — Active Previous Day"].waitForExistence(timeout: t(4)))
+        XCTAssertTrue(app.staticTexts["Previous day"].waitForExistence(timeout: t(2)))
+        XCTAssertTrue(app.staticTexts["Needs attention"].waitForExistence(timeout: t(2)))
+
+        let finishButton = staleFinishButton(in: app)
+        XCTAssertTrue(finishButton.waitForExistence(timeout: t(4)), "Expected stale session finish button on Home.")
     }
 
     func test_homeResumeOpensTodaySession() {
         let app = makeApp()
         app.launch()
 
-        let resumeButtons = app.buttons.matching(identifier: "Home.ActiveSessions.Resume")
-        XCTAssertGreaterThanOrEqual(resumeButtons.count, 1, "Expected at least one Resume button on Home.")
-
-        let firstResume = resumeButtons.element(boundBy: 0)
-        if !firstResume.waitForExistence(timeout: t(4)) {
-            attachUITestDebug(app, name: "ActiveSessions_ResumeMissing")
-        }
-        XCTAssertTrue(firstResume.exists, "Expected Resume button for today's session.")
-        tapSafely(firstResume)
+        let todayResume = todayResumeButton(in: app)
+        XCTAssertTrue(todayResume.waitForExistence(timeout: t(4)))
+        tapSafely(todayResume)
 
         let sessionScreen = app.el("WorkoutSession.Screen")
-        if !sessionScreen.waitForExistence(timeout: t(8)) {
-            attachUITestDebug(app, name: "ActiveSessions_SessionScreenMissing")
-        }
+        XCTAssertTrue(sessionScreen.waitForExistence(timeout: t(8)))
         XCTAssertTrue(sessionScreen.exists, "Expected Resume to navigate to the active workout session screen.")
 
         XCTAssertTrue(
             app.navigationBars.staticTexts["UITest — Active Today"].waitForExistence(timeout: t(3))
             || app.staticTexts["UITest — Active Today"].exists,
-            "Expected the resumed session to be the today's active session, sorted first on Home."
-        )
-    }
-
-    func test_homeFinishRemovesPastDaySession() {
-        let app = makeApp()
-        app.launch()
-
-        XCTAssertTrue(
-            app.staticTexts["UITest — Active Previous Day"].waitForExistence(timeout: t(4)),
-            "Expected the previous-day active session before finishing."
-        )
-
-        let finishButtons = app.buttons.matching(identifier: "Home.ActiveSessions.Finish")
-        let finish = finishButtons.firstMatch
-        if !finish.waitForExistence(timeout: t(4)) {
-            attachUITestDebug(app, name: "ActiveSessions_FinishMissing")
-        }
-        XCTAssertTrue(finish.exists, "Expected a quick Finish button for stale active sessions.")
-        tapSafely(finish)
-
-        XCTAssertFalse(
-            app.staticTexts["UITest — Active Previous Day"].waitForExistence(timeout: t(2)),
-            "Expected the previous-day session to disappear from Home after quick finish."
-        )
-
-        XCTAssertTrue(
-            app.staticTexts["UITest — Active Today"].exists,
-            "Expected the current-day active session to remain after finishing the stale one."
-        )
-
-        XCTAssertEqual(
-            app.buttons.matching(identifier: "Home.ActiveSessions.Finish").count,
-            0,
-            "Expected no stale-session Finish buttons after the only past-day session is completed."
+            "Expected the resumed session to be the today's active session."
         )
     }
     
+    func test_homeResumeForPastDaySession_showsRecoveryActions() {
+        let app = makeApp()
+        app.launch()
+
+        let staleResume = staleResumeButton(in: app)
+        XCTAssertTrue(staleResume.waitForExistence(timeout: t(4)), "Expected Resume button for stale active session.")
+        tapSafely(staleResume)
+
+        XCTAssertTrue(waitForRecoveryPrompt(in: app, timeout: t(4)), "Expected stale-session recovery prompt.")
+
+        XCTAssertTrue(app.buttons["Resume"].exists, "Expected recovery prompt Resume action.")
+        XCTAssertTrue(app.buttons["Finish now"].exists, "Expected Finish now action for stale recovery.")
+        XCTAssertTrue(app.buttons["Keep for later"].exists, "Expected Keep for later action for stale recovery.")
+        XCTAssertTrue(app.buttons["Discard"].exists, "Expected Discard action for stale recovery.")
+    }
+
+    func test_homeFinishNowRemovesPastDaySession() {
+        let app = makeApp()
+        app.launch()
+
+        let staleResume = staleResumeButton(in: app)
+        XCTAssertTrue(staleResume.waitForExistence(timeout: t(4)), "Expected stale session Resume button.")
+        tapSafely(staleResume)
+
+        let finishNow = app.buttons["Finish now"]
+        XCTAssertTrue(finishNow.waitForExistence(timeout: t(4)), "Expected Finish now action for stale active sessions.")
+        tapSafely(finishNow)
+
+        XCTAssertFalse(
+            app.staticTexts["UITest — Active Previous Day"].waitForExistence(timeout: t(2)),
+            "Expected the previous-day session to disappear from Home after Finish now."
+        )
+    }
+
     func test_homeResume_survivesRotation_andStaysOnSessionScreen() {
         let app = makeApp()
         app.launch()
 
-        let resume = app.buttons.matching(identifier: "Home.ActiveSessions.Resume").element(boundBy: 0)
-        if !resume.waitForExistence(timeout: t(4)) {
-            attachUITestDebug(app, name: "ActiveSessions_Rotation_ResumeMissing")
-        }
-        XCTAssertTrue(resume.exists, "Expected at least one Resume button on Home.")
+        let resume = todayResumeButton(in: app)
+        XCTAssertTrue(resume.waitForExistence(timeout: t(4)), "Expected Resume button for today's active session.")
         tapSafely(resume)
 
         let sessionScreen = app.el("WorkoutSession.Screen")
-        if !sessionScreen.waitForExistence(timeout: t(8)) {
-            attachUITestDebug(app, name: "ActiveSessions_Rotation_SessionMissingBeforeRotate")
-        }
-        XCTAssertTrue(sessionScreen.exists, "Expected to be on WorkoutSession screen before rotation.")
+        XCTAssertTrue(sessionScreen.waitForExistence(timeout: t(8)), "Expected to be on WorkoutSession screen before rotation.")
 
         XCUIDevice.shared.orientation = .landscapeLeft
         defer { XCUIDevice.shared.orientation = .portrait }
 
         let continueButton = app.buttons["WorkoutSession.ContinueButton"]
-        if !continueButton.waitForExistence(timeout: t(6)) {
-            attachUITestDebug(app, name: "ActiveSessions_Rotation_SessionLostAfterRotate")
-        }
-
         XCTAssertTrue(
-            sessionScreen.exists || continueButton.exists,
+            sessionScreen.waitForExistence(timeout: t(6)) || continueButton.waitForExistence(timeout: t(6)),
             "Expected active session to remain visible after rotation instead of dropping back to Home."
         )
     }
-    
+
+    func test_dayTimelineResume_centersSameActionableSet() {
+        let app = UITestLaunch.app(
+            start: "calendar",
+            reset: true,
+            seed: false,
+            extraEnv: ["UITESTS_ACTIVE_SESSIONS_SCROLL": "1"]
+        )
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["DayTimeline.Debug.ActivitiesCount"].waitForExistence(timeout: t(6)))
+        XCTAssertEqual(app.staticTexts["DayTimeline.Debug.ActivitiesCount"].label, "Activities: 1")
+        XCTAssertEqual(app.staticTexts["DayTimeline.Debug.WorkoutsCount"].label, "Workouts: 1")
+
+        let openWorkout = app.buttons["DayTimeline.WorkoutCard.DefaultAction"].firstMatch
+        if !openWorkout.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "DayTimelineResume_OpenControlMissing")
+        }
+        XCTAssertTrue(openWorkout.exists, "Expected DayTimeline.WorkoutCard.DefaultAction.")
+        tapSafely(openWorkout)
+
+        let sessionScreen = app.el("WorkoutSession.Screen")
+        if !sessionScreen.waitForExistence(timeout: t(8)) {
+            attachUITestDebug(app, name: "DayTimelineResume_SessionMissing")
+        }
+        XCTAssertTrue(sessionScreen.exists, "Expected Day timeline resume to open the session screen.")
+
+        let focusedRow = app.otherElements["WorkoutSession.ActionableSetRow"]
+        if !focusedRow.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "DayTimelineResume_ActionableRowMissing")
+        }
+
+        assertApproximatelyVerticallyCentered(
+            focusedRow,
+            in: app,
+            debugName: "Day timeline actionable row"
+        )
+    }
+
     func test_homeResume_centersActionableSet() {
         let app = makeScrollableResumeApp()
         app.launch()
 
-        let resume = app.buttons.matching(identifier: "Home.ActiveSessions.Resume").element(boundBy: 0)
-        if !resume.waitForExistence(timeout: t(4)) {
-            attachUITestDebug(app, name: "ActiveSessions_Centering_ResumeMissing")
-        }
-        XCTAssertTrue(resume.exists, "Expected Resume button on Home.")
+        let resume = todayResumeButton(in: app)
+        XCTAssertTrue(resume.waitForExistence(timeout: t(4)), "Expected Resume button on Home.")
         tapSafely(resume)
 
         let sessionScreen = app.el("WorkoutSession.Screen")
-        if !sessionScreen.waitForExistence(timeout: t(8)) {
-            attachUITestDebug(app, name: "ActiveSessions_Centering_SessionMissing")
-        }
-        XCTAssertTrue(sessionScreen.exists, "Expected resumed session screen.")
+        XCTAssertTrue(sessionScreen.waitForExistence(timeout: t(8)), "Expected resumed session screen.")
 
         let focusedRow = app.otherElements["WorkoutSession.ActionableSetRow"]
-        if !focusedRow.waitForExistence(timeout: t(6)) {
-            attachUITestDebug(app, name: "ActiveSessions_Centering_ActionableRowMissing")
-        }
+        XCTAssertTrue(focusedRow.waitForExistence(timeout: t(6)), "Expected actionable set row after resume.")
 
         assertApproximatelyVerticallyCentered(
             focusedRow,
@@ -172,7 +196,7 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
     }
 
     // MARK: - Helpers
-    
+
     private func makeScrollableResumeApp() -> XCUIApplication {
         UITestLaunch.app(
             start: "home",
@@ -193,11 +217,60 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
         )
     }
 
+//    private func score(_ button: XCUIElement, anchor: XCUIElement) -> CGFloat {
+//        let vertical = abs(button.frame.midY - anchor.frame.midY)
+//        let horizontal = abs(button.frame.midX - anchor.frame.midX)
+//        return vertical * 3 + horizontal
+//    }
+
     private func tapSafely(_ el: XCUIElement) {
         if el.isHittable {
             el.tap()
         } else {
             el.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         }
+    }
+
+    private func waitForRecoveryPrompt(in app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let labels = ["Resume", "Finish now", "Keep for later", "Discard"]
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while Date() < deadline {
+            if labels.allSatisfy({ app.buttons[$0].exists }) {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        }
+
+        return labels.allSatisfy { app.buttons[$0].exists }
+    }
+
+    private func revealAndTap(_ el: XCUIElement, in app: XCUIApplication) {
+        let scrollView = app.scrollViews.firstMatch
+        XCTAssertTrue(scrollView.waitForExistence(timeout: t(2)), "Expected Day timeline scroll view.")
+
+        var attempts = 0
+        while !el.isHittable && attempts < 4 {
+            scrollView.swipeUp()
+            attempts += 1
+        }
+
+        if !el.isHittable {
+            attachUITestDebug(app, name: "DayTimelineResume_OpenControlStillNotHittable")
+        }
+        XCTAssertTrue(el.isHittable, "Expected Day timeline workout-open control to become hittable after scrolling into view.")
+        el.tap()
+    }
+    
+    private func todayResumeButton(in app: XCUIApplication) -> XCUIElement {
+        app.buttons["Home.ActiveSessions.Resume.Today"]
+    }
+
+    private func staleResumeButton(in app: XCUIApplication) -> XCUIElement {
+        app.buttons["Home.ActiveSessions.Resume.PreviousDay"]
+    }
+
+    private func staleFinishButton(in app: XCUIApplication) -> XCUIElement {
+        app.buttons["Home.ActiveSessions.Finish.PreviousDay"]
     }
 }

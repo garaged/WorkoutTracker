@@ -218,18 +218,74 @@ final class FreshInstallWorkoutRoutineSmokeUITests: XCTestCase {
             return
         }
 
-        tapSafely(blockTitle)
+        func nearestButton(identifier: String, to anchor: XCUIElement) -> XCUIElement? {
+            let buttons = app.buttons.matching(identifier: identifier)
+                .allElementsBoundByIndex
+                .filter { $0.exists && !$0.frame.isEmpty }
 
-        let startOverlay = app.buttons.matching(identifier: "DayTimeline.WorkoutOverlay.Start").firstMatch
-        if startOverlay.waitForExistence(timeout: t(2)) {
-            tapSafely(startOverlay)
+            guard !buttons.isEmpty else { return nil }
+
+            let ax = anchor.frame.midX
+            let ay = anchor.frame.midY
+
+            return buttons.min { lhs, rhs in
+                let ld = hypot(lhs.frame.midX - ax, lhs.frame.midY - ay)
+                let rd = hypot(rhs.frame.midX - ax, rhs.frame.midY - ay)
+                return ld < rd
+            }
+        }
+
+        func waitForSessionScreen() -> Bool {
+            any(app, id: "WorkoutSession.Screen").waitForExistence(timeout: t(6))
+        }
+
+        // Preferred path: tap the Start overlay that belongs to this exact card.
+        if let startOverlay = nearestButton(identifier: "DayTimeline.WorkoutOverlay.Start", to: blockTitle),
+           startOverlay.isHittable {
+            startOverlay.tap()
+            if waitForSessionScreen() { return }
+        }
+
+        // Fallback: tap the card default action, then accept the popover Start path if it appears.
+        guard let defaultAction = nearestButton(identifier: "DayTimeline.WorkoutCard.DefaultAction", to: blockTitle) else {
+            attachUITestDebug(app, name: "FreshInstallWorkout_DefaultActionMissing")
+            XCTFail("Expected DayTimeline.WorkoutCard.DefaultAction near \(title).")
             return
         }
 
-        // If tapping the title didn’t bring the overlay into view, try one more time after a small scroll.
-        swipeScrollableUp(app)
-        if startOverlay.waitForExistence(timeout: t(1.5)) {
-            tapSafely(startOverlay)
+        if !defaultAction.isHittable {
+            for _ in 0..<4 {
+                if defaultAction.isHittable { break }
+                if blockTitle.frame.maxY > app.frame.maxY - 120 {
+                    swipeScrollableUp(app)
+                } else if blockTitle.frame.minY < 120 {
+                    swipeScrollableDown(app)
+                } else {
+                    swipeScrollableUp(app)
+                }
+            }
+        }
+
+        if !defaultAction.isHittable {
+            attachUITestDebug(app, name: "FreshInstallWorkout_DefaultActionNotHittable")
+            XCTFail("Expected DayTimeline.WorkoutCard.DefaultAction near \(title) to be hittable.")
+            return
+        }
+
+        defaultAction.tap()
+
+        // If the app chooses the launch popover path, confirm it with Start.
+        let launchSheet = app.sheets.firstMatch
+        if launchSheet.waitForExistence(timeout: t(2)) {
+            let startInSheet = launchSheet.buttons["Start"].firstMatch
+            if startInSheet.waitForExistence(timeout: t(2)) {
+                startInSheet.tap()
+            }
+        }
+
+        if !waitForSessionScreen() {
+            attachUITestDebug(app, name: "FreshInstallWorkout_SessionDidNotOpen")
+            XCTFail("Expected tapping \(title) to open WorkoutSession.Screen.")
         }
     }
 

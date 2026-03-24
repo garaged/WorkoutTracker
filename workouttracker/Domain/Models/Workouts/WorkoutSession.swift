@@ -25,6 +25,10 @@ final class WorkoutSession {
     var pausedAt: Date?
     var accumulatedPausedSeconds: Int
 
+    // Session lifecycle metadata
+    var lastResumedAt: Date?
+    var dismissedStalePromptAt: Date?
+
     // ✅ Explicit inverse breaks SwiftData macro cycles
     @Relationship(deleteRule: .cascade)
     var exercises: [WorkoutSessionExercise]
@@ -61,12 +65,26 @@ final class WorkoutSession {
         self.isPaused = false
         self.pausedAt = nil
         self.accumulatedPausedSeconds = 0
+        self.lastResumedAt = nil
+        self.dismissedStalePromptAt = nil
         self.exercises = []
     }
 
     var status: WorkoutSessionStatus {
         get { WorkoutSessionStatus(rawValue: statusRaw) ?? .inProgress }
         set { statusRaw = newValue.rawValue }
+    }
+
+    var isTerminal: Bool {
+        status == .completed || status == .abandoned
+    }
+
+    var isUnfinished: Bool {
+        !isTerminal && endedAt == nil
+    }
+
+    var isLiveMutable: Bool {
+        status == .inProgress && !isPaused && endedAt == nil
     }
 
     func pause(at now: Date = Date()) {
@@ -76,10 +94,14 @@ final class WorkoutSession {
     }
 
     func resume(at now: Date = Date()) {
-        guard isPaused, let pausedAt else { return }
-        accumulatedPausedSeconds += max(0, Int(now.timeIntervalSince(pausedAt)))
-        isPaused = false
-        self.pausedAt = nil
+        if isPaused, let pausedAt {
+            accumulatedPausedSeconds += max(0, Int(now.timeIntervalSince(pausedAt)))
+            isPaused = false
+            self.pausedAt = nil
+        }
+
+        lastResumedAt = now
+        dismissedStalePromptAt = nil
     }
 
     func elapsedSeconds(at now: Date = Date()) -> Int {
@@ -92,10 +114,16 @@ final class WorkoutSession {
     }
 
     /// Reopens a finished/abandoned session so the user can continue logging without losing data.
-    func reopenForContinuation() {
-        if isPaused { resume() }
+    func reopenForContinuation(at now: Date = Date()) {
+        if isPaused {
+            resume(at: now)
+        }
         endedAt = nil
         status = .inProgress
+        isPaused = false
+        pausedAt = nil
+        lastResumedAt = now
+        dismissedStalePromptAt = nil
     }
 }
 

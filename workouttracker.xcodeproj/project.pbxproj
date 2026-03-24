@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		35A4C0842F5E174900F30117 /* watchkitapp Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 35A4C07A2F5E174800F30117 /* watchkitapp Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		35F8F98A2F721A71001EFDC1 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 35F8F9892F721A71001EFDC1 /* ZIPFoundation */; };
+		35F8F98C2F721A87001EFDC1 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 35F8F98B2F721A87001EFDC1 /* ZIPFoundation */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -160,6 +162,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				35F8F98C2F721A87001EFDC1 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -174,6 +177,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				35F8F98A2F721A71001EFDC1 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -197,6 +201,7 @@
 				35BA2D602F11D33300EEE02C /* workouttrackerUITests */,
 				35D84B2E2F32EB85000BEFC0 /* workouttrackerUITestHost */,
 				35A4C07B2F5E174800F30117 /* watchkitapp Watch App */,
+				35F8F9882F721A71001EFDC1 /* Frameworks */,
 				35BA2D452F11D33200EEE02C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -211,6 +216,13 @@
 				35A4C07A2F5E174800F30117 /* watchkitapp Watch App.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		35F8F9882F721A71001EFDC1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -258,6 +270,7 @@
 			);
 			name = workouttracker;
 			packageProductDependencies = (
+				35F8F98B2F721A87001EFDC1 /* ZIPFoundation */,
 			);
 			productName = workouttracker;
 			productReference = 35BA2D442F11D33200EEE02C /* workouttracker.app */;
@@ -305,6 +318,7 @@
 			);
 			name = workouttrackerUITests;
 			packageProductDependencies = (
+				35F8F9892F721A71001EFDC1 /* ZIPFoundation */,
 			);
 			productName = workouttrackerUITests;
 			productReference = 35BA2D5D2F11D33300EEE02C /* workouttrackerUITests.xctest */;
@@ -716,7 +730,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.8;
+				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -755,7 +769,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.8;
+				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -991,6 +1005,19 @@
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		35F8F9892F721A71001EFDC1 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 35D849C32F2F239B000BEFC0 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+		35F8F98B2F721A87001EFDC1 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 35D849C32F2F239B000BEFC0 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 35BA2D3C2F11D33200EEE02C /* Project object */;
 }

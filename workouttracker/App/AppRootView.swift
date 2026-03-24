@@ -41,7 +41,7 @@ struct AppRootView: View {
     @AppStorage("workouttracker.starterPackVersion") private var starterPackVersion = 0
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var selection: RootDestination? = .home
-    @State private var presentedSession: WorkoutSession? = nil
+    @State private var presentedSessionRoute: SessionPresentationRoute? = nil
 
     @State private var timelineJump: TimelineJump? = nil
 
@@ -51,6 +51,7 @@ struct AppRootView: View {
     }
 
     private let cal = Calendar.current
+    private let sessionResumePlanner = SessionResumePlanner()
 
     var body: some View {
         Group {
@@ -58,10 +59,8 @@ struct AppRootView: View {
                 bootstrapView
             } else if let start = uiTestStartRoute {
                 uiTestRoot(for: start)
-            } else if platform.prefersSplitNavigation {
-                splitRoot
             } else {
-                compactRoot
+                appShellRoot
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("workouttracker.openTimelineForDate"))) { note in
@@ -141,7 +140,7 @@ struct AppRootView: View {
                 onResumeSession: openSession
             )
         case .routines:
-            RoutinesScreen()
+            RoutinesScreen(onOpenSession: openSession)
         case .history:
             HistoryRootPlaceholder()
         case .progress:
@@ -169,13 +168,13 @@ struct AppRootView: View {
         case "session":
             NavigationStack { DayTimelineEntryScreen() }
         case "routines":
-            NavigationStack { RoutinesScreen() }
+            NavigationStack { RoutinesScreen(onOpenSession: openSession) }
         case "workouts":
             NavigationStack { WorkoutSessionsScreen() }
         case "home":
-            compactRoot
+            appShellRoot
         default:
-            compactRoot
+            appShellRoot
         }
     }
 
@@ -204,7 +203,7 @@ struct AppRootView: View {
                 subtitle: String(localized: "Build plans and reuse them"),
                 systemImage: "list.bullet.rectangle.portrait",
                 tint: .purple,
-                destination: { AnyView(RoutinesScreen()) }
+                destination: { AnyView(RoutinesScreen(onOpenSession: openSession)) }
             ),
             HomeTile(
                 title: String(localized: "Schedule templates"),
@@ -260,8 +259,11 @@ struct AppRootView: View {
                 tiles: tiles,
                 onResumeSession: openSession
             )
-            .navigationDestination(item: $presentedSession) { session in
-                WorkoutSessionScreen(session: session)
+            .navigationDestination(item: $presentedSessionRoute) { route in
+                WorkoutSessionScreen(
+                    session: route.session,
+                    initialResumeTarget: route.initialResumeTarget
+                )
             }
         }
     }
@@ -272,23 +274,41 @@ struct AppRootView: View {
         } detail: {
             NavigationStack {
                 detail(for: selection ?? .home)
-                    .navigationDestination(item: $presentedSession) { session in
-                        WorkoutSessionScreen(session: session)
+                    .navigationDestination(item: $presentedSessionRoute) { route in
+                        WorkoutSessionScreen(
+                            session: route.session,
+                            initialResumeTarget: route.initialResumeTarget
+                        )
                     }
             }
         }
     }
 
     private func openSession(_ session: WorkoutSession) {
-        let sameSession = presentedSession?.persistentModelID == session.persistentModelID
+        let route = SessionPresentationRoute(
+            session: session,
+            initialResumeTarget: sessionResumePlanner.target(for: session)
+        )
+
+        let sameSession = presentedSessionRoute?.session.persistentModelID == session.persistentModelID
 
         if sameSession {
-            presentedSession = nil
+            presentedSessionRoute = nil
             Task { @MainActor in
-                presentedSession = session
+                presentedSessionRoute = route
             }
         } else {
-            presentedSession = session
+            presentedSessionRoute = route
+        }
+    }
+    
+    private var appShellRoot: some View {
+        Group {
+            if platform.isPad && platform.prefersSplitNavigation {
+                splitRoot
+            } else {
+                compactRoot
+            }
         }
     }
 }

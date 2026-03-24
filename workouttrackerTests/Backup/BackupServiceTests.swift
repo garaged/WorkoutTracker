@@ -94,6 +94,54 @@ final class BackupServiceTests: XCTestCase {
     }
 
     // MARK: - Tests
+    func testExportNamingFormatter_backupJSONFilename_isReadableAndStable() {
+        let date = Date(timeIntervalSince1970: 1_774_279_440) // 2026-03-23 15:24 UTC
+
+        let filename = ExportNamingFormatter.backupJSONFilename(
+            appVersion: "2.0.1",
+            build: "45",
+            date: date
+        )
+
+        XCTAssertEqual(filename, "workouttracker-backup-2026-03-23-1524-v2.0.1-b45.json")
+    }
+
+    func testExportNamingFormatter_supportBundleBaseName_sanitizesUnsafeComponents() {
+        let date = Date(timeIntervalSince1970: 1_774_279_440) // 2026-03-23 15:24 UTC
+
+        let baseName = ExportNamingFormatter.supportBundleBaseName(
+            appVersion: "2.0 beta/1",
+            build: "45 (TestFlight)",
+            date: date
+        )
+
+        XCTAssertEqual(baseName, "workouttracker-support-bundle-2026-03-23-1524-v2.0-beta-1-b45-TestFlight")
+    }
+
+    func testExportNamingFormatter_backupContentsDescription_handlesEmptyBackupHonesty() {
+        let description = ExportNamingFormatter.backupContentsDescription(
+            totalEntities: 0,
+            hasPreferencesSnapshot: true
+        )
+
+        XCTAssertEqual(
+            description,
+            "Backup ready. It includes your settings snapshot, but no workout records yet."
+        )
+    }
+
+    func testExportNamingFormatter_metadataDisplayTimestamp_usesReadableDisplay() {
+        let date = Date(timeIntervalSince1970: 1_774_279_440) // 2026-03-23 15:24 UTC
+        let display = ExportNamingFormatter.metadataDisplayTimestamp(
+            date,
+            locale: Locale(identifier: "en_US_POSIX"),
+            timeZone: TimeZone(secondsFromGMT: 0)!
+        )
+
+        XCTAssertTrue(display.contains("March"), "Expected long month name in display timestamp. Actual: \(display)")
+        XCTAssertTrue(display.contains("2026"), "Expected year in display timestamp. Actual: \(display)")
+        XCTAssertTrue(display.contains("3:24"), "Expected readable time in display timestamp. Actual: \(display)")
+    }
 
     func testExportJSON_producesDecodableBackupFile() throws {
         let context = try makeExerciseOnlyContext()

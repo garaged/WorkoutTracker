@@ -188,6 +188,59 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertEqual(weightValue, sourceWeight, "Expected copied set weight to match source.")
     }
 
+    func test_restTimer_goesOverdue_untilContinueExplicitlyFinishesIt() {
+        relaunchForShortRestTimerSession()
+        completeFirstSetAndWaitForRestTimer()
+        XCTAssertTrue(waitForRestTimerToGoOverdue(in: app, timeout: 8),
+                      "Expected rest timer to stay visible and go overdue instead of stopping at zero.")
+
+        app.buttons["WorkoutSession.ContinueButton"].tap()
+
+        XCTAssertTrue(waitForElementToDisappear(app.buttons["RestTimerView.FinishButton"], timeout: 5),
+                      "Expected Continue to explicitly finish the active rest timer.")
+    }
+
+    func test_restTimer_finishButton_explicitlyFinishesTimer() {
+        relaunchForShortRestTimerSession()
+        completeFirstSetAndWaitForRestTimer()
+        XCTAssertTrue(waitForRestTimerToGoOverdue(in: app, timeout: 8),
+                      "Expected rest timer to stay visible and go overdue before explicit finish.")
+
+        let finishRest = app.buttons["RestTimerView.FinishButton"]
+        finishRest.tap()
+
+        XCTAssertTrue(waitForElementToDisappear(finishRest, timeout: 5),
+                      "Expected Finish rest to dismiss the active rest timer.")
+    }
+    
+    func test_restTimer_pauseWorkout_doesNotSilentlyFinishActiveRest() {
+        relaunchForShortRestTimerSession()
+        completeFirstSetAndWaitForRestTimer()
+
+        XCTAssertTrue(
+            waitForRestTimerToGoOverdue(in: app, timeout: 8),
+            "Expected rest timer to stay visible and go overdue before pausing workout."
+        )
+
+        let pauseWorkout = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Pause")).firstMatch
+        if !pauseWorkout.waitForExistence(timeout: 5) {
+            attachUITestDebug(app, name: "Phase1_PauseWorkoutButtonMissing")
+        }
+        XCTAssertTrue(pauseWorkout.exists, "Expected pause workout button.")
+
+        pauseWorkout.tap()
+
+        let finishRest = app.buttons["RestTimerView.FinishButton"]
+        if !finishRest.waitForExistence(timeout: 5) {
+            attachUITestDebug(app, name: "Phase1_RestTimerHiddenByPause")
+        }
+
+        XCTAssertTrue(
+            finishRest.exists,
+            "Expected pausing workout not to silently finish or hide the active rest timer."
+        )
+    }
+
     // MARK: - Navigation to Session
 
     private func startFirstRoutineSessionIfNeeded(_ app: XCUIApplication) {
@@ -231,6 +284,59 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
             in: app,
             debugName: "Continue actionable row"
         )
+    }
+
+    private func relaunchForShortRestTimerSession() {
+        app.terminate()
+        app = UITestLaunch.app(
+            start: "session",
+            reset: true,
+            seed: true,
+            extraEnv: ["UITESTS_REST_TIMER_SHORT": "1"]
+        )
+        app.launch()
+        startFirstRoutineSessionIfNeeded(app)
+        assertOnSessionScreen(app)
+    }
+
+    private func completeFirstSetAndWaitForRestTimer() {
+        let doneToggle = firstDoneToggle(in: app)
+        XCTAssertTrue(doneToggle.waitForExistence(timeout: 10), "Expected at least one set row.")
+        doneToggle.tap()
+
+        let finishRest = app.buttons["RestTimerView.FinishButton"]
+        if !finishRest.waitForExistence(timeout: 10) {
+            attachUITestDebug(app, name: "Phase1_RestTimerFinishButtonMissing")
+        }
+        XCTAssertTrue(finishRest.exists, "Expected Finish rest button after completing a set.")
+    }
+
+    private func waitForRestTimerToGoOverdue(in app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let timeLabel = app.staticTexts["RestTimerView.TimeLabel"]
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while Date() < deadline {
+            if timeLabel.exists, timeLabel.label.hasPrefix("-") {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+
+        attachUITestDebug(app, name: "Phase1_RestTimerDidNotGoOverdue")
+        return false
+    }
+
+    private func waitForElementToDisappear(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while Date() < deadline {
+            if !element.exists {
+                return true
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+
+        return !element.exists
     }
 
     // MARK: - Set Row Identification

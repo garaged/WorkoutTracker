@@ -6,14 +6,15 @@ import UIKit
 final class RestTimerController: ObservableObject {
 
     static let shared = RestTimerController()
-    
+
     private var tickerTask: Task<Void, Never>?
 
     @Published private(set) var isRunning: Bool = false
     @Published private(set) var totalSeconds: Int = 0
     @Published private(set) var remainingSeconds: Int = 0
 
-    /// Changes when the timer naturally reaches 0 (useful for UI auto-dismiss).
+    /// Changes once when the timer first reaches / crosses 0.
+    /// This is useful for one-time cues, but should not auto-stop the timer.
     @Published private(set) var didFinishToken: UUID? = nil
 
     private var endsAt: Date? = nil
@@ -26,7 +27,20 @@ final class RestTimerController: ObservableObject {
     private init() {}
 
     var hasConfiguredTimer: Bool {
-        totalSeconds > 0 && remainingSeconds > 0
+        totalSeconds > 0
+    }
+
+    /// Planned rest plus any overdue time already spent.
+    /// Example:
+    /// - planned 60, remaining 25  -> elapsed 35
+    /// - planned 60, remaining -15 -> elapsed 75
+    var actualElapsedSeconds: Int {
+        guard totalSeconds > 0 else { return 0 }
+        return max(0, totalSeconds - remainingSeconds)
+    }
+
+    var isOverdue: Bool {
+        totalSeconds > 0 && remainingSeconds < 0
     }
 
     /// Absolute end time for a running timer. Views/companions should prefer this
@@ -72,9 +86,9 @@ final class RestTimerController: ObservableObject {
     }
 
     func pause() {
-        guard isRunning, let end = endsAt else { return }
+        guard isRunning else { return }
 
-        remainingSeconds = max(0, Int(end.timeIntervalSinceNow.rounded(.up)))
+        remainingSeconds = currentRemainingSeconds(at: Date())
         isRunning = false
         endsAt = nil
         stopTicking()
@@ -82,7 +96,7 @@ final class RestTimerController: ObservableObject {
     }
 
     func resume() {
-        guard !isRunning, remainingSeconds > 0 else { return }
+        guard !isRunning, totalSeconds > 0 else { return }
 
         endsAt = Date().addingTimeInterval(TimeInterval(remainingSeconds))
         isRunning = true
@@ -112,6 +126,14 @@ final class RestTimerController: ObservableObject {
         didFinishToken = nil
     }
 
+    /// Returns the actual rest used, including overdue time, before clearing timer state.
+    @discardableResult
+    func stopAndCaptureElapsedSeconds() -> Int {
+        let elapsed = actualElapsedSeconds
+        stop()
+        return elapsed
+    }
+
     func toggle(defaultSeconds: Int) {
         if isRunning {
             stop()
@@ -120,14 +142,11 @@ final class RestTimerController: ObservableObject {
         }
     }
 
-    /// Adjust remaining time while running (supports negative values).
+    /// Adjust remaining time while running.
+    /// Negative values move the timer closer to / deeper past zero.
     func extend(by seconds: Int) {
         guard isRunning, let end = endsAt else { return }
-        let newEnd = end.addingTimeInterval(TimeInterval(seconds))
-
-        // Clamp so it doesn't go "past" now.
-        let minEnd = Date().addingTimeInterval(1)
-        endsAt = max(newEnd, minEnd)
+        endsAt = end.addingTimeInterval(TimeInterval(seconds))
         scheduleRestFinishedNotification()
         tick()
     }
@@ -140,8 +159,14 @@ final class RestTimerController: ObservableObject {
             return
         }
 
+        let secondsUntilEnd = end.timeIntervalSinceNow
+        guard secondsUntilEnd > 0 else {
+            notificationScheduler.cancelActiveRestNotification()
+            return
+        }
+
         notificationScheduler.scheduleRestFinished(
-            after: end.timeIntervalSinceNow,
+            after: secondsUntilEnd,
             soundEnabled: prefs.restSoundCuesEnabled
         )
     }
@@ -168,9 +193,9 @@ final class RestTimerController: ObservableObject {
     }
 
     private func tick() {
-        guard let end = endsAt else { return }
+        guard endsAt != nil else { return }
 
-        let remaining = max(0, Int(end.timeIntervalSinceNow.rounded(.up)))
+        let remaining = currentRemainingSeconds(at: Date())
         if remaining != remainingSeconds {
             remainingSeconds = remaining
         }
@@ -181,20 +206,32 @@ final class RestTimerController: ObservableObject {
         }
 
         if remaining <= 0 {
-            let lateness = max(0, Date().timeIntervalSince(end))
-
-            isRunning = false
-            endsAt = nil
-            stopTicking()
             notificationScheduler.cancelActiveRestNotification()
-            didFinishToken = UUID()
 
-            // If the timer expired while the app was backgrounded for a while,
-            // the local notification already handled the user-facing cue.
-            if lateness < 2.0, UIApplication.shared.applicationState == .active {
-                cuePlayer.play(.restEnd)
-                Haptics.success()
+            if didFinishToken == nil {
+                didFinishToken = UUID()
+
+                if UIApplication.shared.applicationState == .active {
+                    cuePlayer.play(.restEnd)
+                    Haptics.success()
+                }
             }
         }
+    }
+
+    private func currentRemainingSeconds(at now: Date) -> Int {
+        guard let end = endsAt else { return remainingSeconds }
+
+        let delta = end.timeIntervalSince(now)
+
+        if delta > 0 {
+            return Int(delta.rounded(.up))
+        }
+
+        if delta < 0 {
+            return -Int(abs(delta).rounded(.down))
+        }
+
+        return 0
     }
 }

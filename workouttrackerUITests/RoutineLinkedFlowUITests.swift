@@ -75,20 +75,57 @@ final class RoutineLinkedFlowUITests: XCTestCase {
         XCTAssertTrue(notNow.exists, "Expected session completion to present reflection after skipping cool-down.")
         notNow.tap()
 
-        XCTAssertTrue(waitForSessionScreenToDisappear(timeout: 10), "Expected the linked session flow to finish after skipping cool-down.")
+        let finishSummary = app.otherElements["WorkoutSession.FinishSummary"]
+        if !finishSummary.waitForExistence(timeout: 10) {
+            attachUITestDebug(app, name: "LinkedFlow_FinishSummaryMissing")
+        }
+        XCTAssertTrue(finishSummary.exists, "Expected the linked session flow to remain on the finish summary screen.")
+
+        XCTAssertTrue(
+            waitForFinishSummarySegmentRow("warmUp", timeout: 8),
+            "Expected warm-up segment row in finish summary."
+        )
+        XCTAssertTrue(
+            waitForFinishSummarySegmentRow("main", timeout: 8),
+            "Expected main segment row in finish summary."
+        )
+        XCTAssertTrue(
+            waitForFinishSummarySegmentRow("coolDown", timeout: 8),
+            "Expected cool-down segment row in finish summary."
+        )
     }
 
+    private func waitForFinishSummarySegmentRow(_ id: String, timeout: TimeInterval) -> Bool {
+        let row = identifiedElement("WorkoutSession.FinishSummary.Segment.\(id)")
+        if row.waitForExistence(timeout: 1.5) { return true }
+
+        let summary = identifiedElement("WorkoutSession.FinishSummary")
+        let start = Date()
+
+        while Date().timeIntervalSince(start) < timeout {
+            if row.exists { return true }
+
+            if summary.exists {
+                summary.swipeUp()
+            } else {
+                app.swipeUp()
+            }
+
+            RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+        }
+
+        return row.exists
+    }
+    
     private func dismissSessionOverlaysIfVisible() {
         let dismissCoach = app.buttons["Dismiss coach suggestion"]
         if dismissCoach.exists {
             tapSafely(dismissCoach)
         }
 
-        if isRestTimerOverlayVisible() {
-            let restTimerToggle = app.buttons["WorkoutSession.RestTimerButton"]
-            if restTimerToggle.exists {
-                tapSafely(restTimerToggle)
-            }
+        let finishRest = app.buttons["RestTimerView.FinishButton"]
+        if finishRest.exists {
+            tapSafely(finishRest)
         }
     }
 
@@ -244,5 +281,11 @@ final class RoutineLinkedFlowUITests: XCTestCase {
         }
 
         return app.buttons.matching(doneTogglePredicate).firstMatch
+    }
+    
+    private func identifiedElement(_ id: String) -> XCUIElement {
+        app.descendants(matching: .any)
+            .matching(identifier: id)
+            .firstMatch
     }
 }

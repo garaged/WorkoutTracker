@@ -10,36 +10,91 @@ struct ActiveSessionsSection: View {
     @Query
     private var activities: [Activity]
 
+    @State private var recoveryPromptSession: WorkoutSession? = nil
+
     var onResume: (WorkoutSession) -> Void = { _ in }
 
     private let calendar = Calendar.current
+    private let sessionResumePlanner = SessionResumePlanner()
+    private let attentionEvaluator = SessionAttentionEvaluator()
 
     private var activityByID: [UUID: Activity] {
         Dictionary(uniqueKeysWithValues: activities.map { ($0.id, $0) })
     }
 
     private var activeSessions: [WorkoutSession] {
-        sessions
-            .filter { $0.status == .inProgress && $0.endedAt == nil }
-            .sorted(by: activeSessionSort)
+        sessionResumePlanner.sortedActiveSessions(
+            sessions,
+            activitiesByID: activityByID
+        )
     }
 
     var body: some View {
         if !activeSessions.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 header
-
+                
                 ForEach(activeSessions) { session in
+                    let attention = attentionState(for: session)
                     ActiveSessionCard(
                         session: session,
                         isPastDay: isPastDay(session),
+                        attentionState: attention,
                         subtitle: subtitle(for: session),
-                        resumeAction: { onResume(session) },
+                        resumeAccessibilityID: isPastDay(session)
+                            ? "Home.ActiveSessions.Resume.PreviousDay"
+                            : "Home.ActiveSessions.Resume.Today",
+                        finishAccessibilityID: isPastDay(session)
+                            ? "Home.ActiveSessions.Finish.PreviousDay"
+                            : nil,
+                        cardAccessibilityID: isPastDay(session)
+                            ? "Home.ActiveSessions.Card.PreviousDay"
+                            : "Home.ActiveSessions.Card.Today",
+                        resumeAction: { handleResumeTap(for: session) },
                         finishAction: { finish(session) }
                     )
                 }
             }
             .accessibilityIdentifier("Home.ActiveSessions.Section")
+            .sheet(item: $recoveryPromptSession) { session in
+                SessionRecoveryPrompt(
+                    title: String(localized: "session.recovery.previous_day.title"),
+                    message: recoveryPromptMessage(for: session),
+                    onResume: {
+                        do {
+                            try WorkoutSessionStarter.resumeForActiveLogging(session, context: modelContext)
+                            recoveryPromptSession = nil
+                            onResume(session)
+                        } catch {
+                            assertionFailure("Failed to resume stale session from Home: \(error)")
+                        }
+                    },
+                    onFinishNow: {
+                        do {
+                            try WorkoutSessionStarter.finishFromRecovery(session, context: modelContext)
+                            recoveryPromptSession = nil
+                        } catch {
+                            assertionFailure("Failed to finish stale session from Home: \(error)")
+                        }
+                    },
+                    onDiscard: {
+                        do {
+                            try WorkoutSessionStarter.discardUnfinishedSession(session, context: modelContext)
+                            recoveryPromptSession = nil
+                        } catch {
+                            assertionFailure("Failed to discard stale session from Home: \(error)")
+                        }
+                    },
+                    onKeepForLater: {
+                        do {
+                            try WorkoutSessionStarter.keepForLater(session, context: modelContext)
+                            recoveryPromptSession = nil
+                        } catch {
+                            assertionFailure("Failed to keep stale session for later from Home: \(error)")
+                        }
+                    }
+                )
+            }
         }
     }
 
@@ -56,7 +111,7 @@ struct ActiveSessionsSection: View {
                     .foregroundStyle(.secondary)
             }
 
-            Text(AppFormatting.localized("Resume unfinished workouts here. Sessions from previous days can be finished quickly so they stop appearing on Home."))
+            Text(String(localized: "home.active_sessions.help"))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
@@ -73,29 +128,15 @@ struct ActiveSessionsSection: View {
         linkedActivity(for: session)?.startAt ?? session.startedAt
     }
 
-    private func activeSessionSort(_ lhs: WorkoutSession, _ rhs: WorkoutSession) -> Bool {
-        let lhsOwningDay = calendar.startOfDay(for: owningDayDate(for: lhs))
-        let rhsOwningDay = calendar.startOfDay(for: owningDayDate(for: rhs))
-
-        let lhsToday = calendar.isDateInToday(lhsOwningDay)
-        let rhsToday = calendar.isDateInToday(rhsOwningDay)
-
-        if lhsToday != rhsToday {
-            return lhsToday && !rhsToday
-        }
-
-        if lhsOwningDay != rhsOwningDay {
-            return lhsOwningDay > rhsOwningDay
-        }
-
-        return lhs.startedAt > rhs.startedAt
+    private func attentionState(for session: WorkoutSession) -> SessionAttentionState {
+        attentionEvaluator.evaluate(session: session, owningDay: owningDayDate(for: session)).state
     }
 
     private func isPastDay(_ session: WorkoutSession) -> Bool {
         let todayStart = calendar.startOfDay(for: Date())
         return calendar.startOfDay(for: owningDayDate(for: session)) < todayStart
     }
-
+    
     private func subtitle(for session: WorkoutSession) -> String {
         let startedText: String
         if calendar.isDateInToday(session.startedAt) {
@@ -142,29 +183,69 @@ struct ActiveSessionsSection: View {
         return base
     }
 
-    private func finish(_ session: WorkoutSession) {
-        withAnimation(.snappy) {
-            if session.isPaused {
-                session.resume()
-            }
-            session.endedAt = Date()
-            session.status = .completed
+    private func recoveryPromptMessage(for session: WorkoutSession) -> String {
+        let owningDay = owningDayDate(for: session)
+        let dayText = owningDay.formatted(date: .abbreviated, time: .omitted)
+        return String(
+            format: String(localized: "session.recovery.previous_day.message"),
+            locale: .autoupdatingCurrent,
+            dayText
+        )
+    }
 
-            do {
-                try modelContext.save()
-            } catch {
-                assertionFailure("Failed to finish active session from Home: \(error)")
-            }
+    private func handleResumeTap(for session: WorkoutSession) {
+        let evaluation = attentionEvaluator.evaluate(session: session, owningDay: owningDayDate(for: session))
+        if evaluation.shouldShowRecoveryPrompt {
+            recoveryPromptSession = session
+        } else {
+            onResume(session)
         }
     }
+    
+    private func finish(_ session: WorkoutSession) {
+            withAnimation(.snappy) {
+                if session.isPaused {
+                    session.resume()
+                }
+                session.endedAt = Date()
+                session.status = .completed
+
+                do {
+                    try modelContext.save()
+                } catch {
+                    assertionFailure("Failed to finish active session from Home: \(error)")
+                }
+            }
+        }
 }
 
 private struct ActiveSessionCard: View {
     let session: WorkoutSession
     let isPastDay: Bool
+    let attentionState: SessionAttentionState
     let subtitle: String
+    let resumeAccessibilityID: String
+    let finishAccessibilityID: String?
+    let cardAccessibilityID: String
     let resumeAction: () -> Void
     let finishAction: () -> Void
+    
+    private var isStale: Bool {
+        switch attentionState {
+        case .fresh:
+            return false
+        case .staleSuppressed, .staleNeedsPrompt:
+            return true
+        }
+    }
+
+    private var badgeTitle: String {
+        isStale ? AppFormatting.localized("Previous day") : AppFormatting.localized("Today")
+    }
+
+    private var badgeForeground: Color {
+        isStale ? .orange : .green
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -181,38 +262,35 @@ private struct ActiveSessionCard: View {
 
                 Spacer()
 
-                if isPastDay {
-                    Text(AppFormatting.localized("Previous day"))
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.orange)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(.orange.opacity(0.12), in: Capsule())
-                } else {
-                    Text(AppFormatting.localized("Today"))
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.green)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(.green.opacity(0.12), in: Capsule())
-                }
+                Text(badgeTitle)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(badgeForeground)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(badgeForeground.opacity(0.12), in: Capsule())
             }
-
-            HStack(spacing: 10) {
+            
+            if attentionState == .staleNeedsPrompt {
+                Text(String(localized: "session.attention.needs_attention"))
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+            
+            HStack(alignment: .top, spacing: 10) {
                 Button(action: resumeAction) {
                     Label(AppFormatting.localized("Resume"), systemImage: "play.circle.fill")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .accessibilityIdentifier("Home.ActiveSessions.Resume")
-
+                .accessibilityIdentifier(resumeAccessibilityID)
+                
                 if isPastDay {
                     Button(action: finishAction) {
-                        Label(AppFormatting.localized("Finish"), systemImage: "checkmark.circle")
+                        Label(String(localized: "Finish now"), systemImage:  "checkmark.circle")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
-                    .accessibilityIdentifier("Home.ActiveSessions.Finish")
+                    .accessibilityIdentifier(finishAccessibilityID ?? "Home.ActiveSessions.Finish")
                 }
             }
         }
@@ -227,5 +305,6 @@ private struct ActiveSessionCard: View {
         )
         .shadow(radius: 10, y: 6)
         .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(cardAccessibilityID)
     }
 }

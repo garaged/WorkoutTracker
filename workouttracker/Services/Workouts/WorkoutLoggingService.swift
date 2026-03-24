@@ -25,6 +25,7 @@ final class WorkoutLoggingService: ObservableObject {
 
     private let now: () -> Date
     private let toastDurationSeconds: Double
+    private let lifecyclePolicy = SessionLifecyclePolicy()
 
     init(now: @escaping () -> Date = Date.init) {
         self.now = now
@@ -50,6 +51,8 @@ final class WorkoutLoggingService: ObservableObject {
         template: WorkoutSetLog? = nil,
         context: ModelContext
     ) -> WorkoutSetLog? {
+
+        guard requireMutableSession(for: ex) else { return nil }
 
         // ✅ Always work off a stable ordering first.
         Self.normalizeSetLogArrayOrder(in: ex)
@@ -85,6 +88,8 @@ final class WorkoutLoggingService: ObservableObject {
         context: ModelContext
     ) -> WorkoutSetLog? {
 
+        guard requireMutableSession(for: ex) else { return nil }
+
         Self.normalizeSetLogArrayOrder(in: ex)
 
         let copied = Self.makeSetCopy(source, for: ex)
@@ -111,6 +116,8 @@ final class WorkoutLoggingService: ObservableObject {
         from ex: WorkoutSessionExercise,
         context: ModelContext
     ) {
+        guard requireMutableSession(for: ex) else { return }
+
         Self.normalizeSetLogArrayOrder(in: ex)
 
         guard let idx = ex.setLogs.firstIndex(where: { $0.id == set.id }) else { return }
@@ -125,6 +132,7 @@ final class WorkoutLoggingService: ObservableObject {
         let rpe = set.rpe
         let completed = set.completed
         let completedAt = set.completedAt
+        let actualRestSeconds = set.actualRestSeconds
 
         let targetReps = set.targetReps
         let targetWeight = set.targetWeight
@@ -156,6 +164,7 @@ final class WorkoutLoggingService: ObservableObject {
                 targetRestSeconds: targetRestSeconds,
                 sessionExercise: ex
             )
+            restored.actualRestSeconds = actualRestSeconds
 
             // Being explicit makes undo behavior more predictable across SwiftData versions.
             ctx.insert(restored)
@@ -173,19 +182,37 @@ final class WorkoutLoggingService: ObservableObject {
         _ set: WorkoutSetLog,
         context: ModelContext
     ) {
+        guard requireMutableSession(for: set) else { return }
+
         let oldCompleted = set.completed
         let oldCompletedAt = set.completedAt
+        let oldActualRestSeconds = set.actualRestSeconds
 
         set.completed.toggle()
         set.completedAt = set.completed ? now() : nil
+        if !set.completed {
+            set.actualRestSeconds = nil
+        }
 
         pushUndo(message: set.completed ? "Marked done" : "Marked not done") { ctx in
             set.completed = oldCompleted
             set.completedAt = oldCompletedAt
+            set.actualRestSeconds = oldActualRestSeconds
             try ctx.save()
         }
 
         save(context, label: "toggle completed")
+    }
+
+    func setActualRestSeconds(
+        _ seconds: Int?,
+        for set: WorkoutSetLog,
+        context: ModelContext
+    ) {
+        guard requireMutableSession(for: set) else { return }
+
+        set.actualRestSeconds = seconds.map { max(0, $0) }
+        save(context, label: "set actual rest")
     }
 
     /// Quick stepper: reps +/-.
@@ -194,6 +221,7 @@ final class WorkoutLoggingService: ObservableObject {
         delta: Int,
         context: ModelContext
     ) {
+        guard requireMutableSession(for: set) else { return }
         guard delta != 0 else { return }
 
         let oldReps = set.reps
@@ -214,6 +242,7 @@ final class WorkoutLoggingService: ObservableObject {
         delta: Double,
         context: ModelContext
     ) {
+        guard requireMutableSession(for: set) else { return }
         guard delta != 0 else { return }
 
         let oldWeight = set.weight
@@ -253,6 +282,22 @@ final class WorkoutLoggingService: ObservableObject {
 
     // MARK: - Internals
 
+    private func requireMutableSession(for ex: WorkoutSessionExercise) -> Bool {
+        guard let session = ex.session else {
+            assertionFailure("WorkoutLoggingService expected session for exercise")
+            return false
+        }
+        return lifecyclePolicy.canMutateProgress(session)
+    }
+
+    private func requireMutableSession(for set: WorkoutSetLog) -> Bool {
+        guard let session = set.sessionExercise?.session else {
+            assertionFailure("WorkoutLoggingService expected session for set")
+            return false
+        }
+        return lifecyclePolicy.canMutateProgress(session)
+    }
+
     private func save(_ context: ModelContext, label: String) {
         do { try context.save() }
         catch { assertionFailure("Failed to save (\(label)): \(error)") }
@@ -277,7 +322,7 @@ final class WorkoutLoggingService: ObservableObject {
         dismissTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(delaySeconds * 1_000_000_000))
             guard let self else { return }
-if self.undoToast?.id == toast.id {
+            if self.undoToast?.id == toast.id {
                 self.undoToast = nil
             }
         }

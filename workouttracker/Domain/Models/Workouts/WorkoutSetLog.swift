@@ -15,6 +15,7 @@ final class WorkoutSetLog {
     var rpe: Double?
     var completed: Bool
     var completedAt: Date?
+    var actualRestSeconds: Int? = nil
 
     // Plan snapshot
     var targetReps: Int?
@@ -39,6 +40,7 @@ final class WorkoutSetLog {
         rpe: Double? = nil,
         completed: Bool = false,
         completedAt: Date? = nil,
+        actualRestSeconds: Int? = nil,
         targetReps: Int? = nil,
         targetWeight: Double? = nil,
         targetWeightUnit: WeightUnit = .kg,
@@ -56,6 +58,7 @@ final class WorkoutSetLog {
         self.rpe = rpe
         self.completed = completed
         self.completedAt = completedAt
+        self.actualRestSeconds = actualRestSeconds
 
         self.targetReps = targetReps
         self.targetWeight = targetWeight

@@ -13,10 +13,12 @@ struct BackupRestoreScreen: View {
     // JSON backup (restore-friendly)
     @State private var exportURL: URL?
     @State private var exportError: String?
+    @State private var exportStatusMessage: String?
 
-    // Full diagnostic backup (ZIP) via AppBackupExporter
+    // ZIP support bundle for troubleshooting via AppBackupExporter
     @State private var fullExportURL: URL?
     @State private var fullExportError: String?
+    @State private var fullExportStatusMessage: String?
 
     @State private var showImporter = false
     @State private var importedData: Data?
@@ -45,6 +47,12 @@ struct BackupRestoreScreen: View {
                         .foregroundStyle(.secondary)
                 }
 
+                if let exportStatusMessage {
+                    Text(exportStatusMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
                 if let exportError {
                     Text(exportError)
                         .foregroundStyle(.red)
@@ -56,7 +64,7 @@ struct BackupRestoreScreen: View {
                 Button {
                     exportFullBackupZIP()
                 } label: {
-                    Label(AppFormatting.localized("Generate Full Backup (ZIP)"), systemImage: "ladybug")
+                    Label(String(localized: "backup.export.generate_support_bundle"), systemImage: "ladybug")
                 }
                 .disabled(backupExporter == nil)
                 .accessibilityLabel(AccessibilityLabels.Buttons.exportBackup)
@@ -64,7 +72,7 @@ struct BackupRestoreScreen: View {
 
                 if let url = fullExportURL {
                     ShareLink(item: url) {
-                        Label(AppFormatting.localized("Share Full Backup"), systemImage: "square.and.arrow.up.on.square")
+                        Label(String(localized: "backup.export.share_support_bundle"), systemImage: "square.and.arrow.up.on.square")
                     }
                     .padding(.top, 4)
 
@@ -73,8 +81,14 @@ struct BackupRestoreScreen: View {
                         .foregroundStyle(.secondary)
                 }
 
+                if let fullExportStatusMessage {
+                    Text(fullExportStatusMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
                 if backupExporter == nil {
-                    Text(AppFormatting.localized("Full backup export isn’t configured yet. Add an exporter in SettingsScreen via .environment(\\.backupExporter, AppBackupExporter())."))
+                    Text(String(localized: "backup.export.support_bundle_unavailable"))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .padding(.top, 2)
@@ -86,7 +100,7 @@ struct BackupRestoreScreen: View {
                         .font(.footnote)
                 }
 
-                Text(AppFormatting.localized("JSON is best for restore. ZIP is best for debugging (logs + settings + data snapshot)."))
+                Text(String(localized: "backup.export.guidance"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.top, 2)
@@ -101,7 +115,7 @@ struct BackupRestoreScreen: View {
 
                 if let v = importedValidation {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(AppFormatting.localized("Backup found"))
+                        Text(String(localized: "backup.import.file_loaded"))
                             .font(.subheadline)
                             .fontWeight(.semibold)
 
@@ -128,11 +142,21 @@ struct BackupRestoreScreen: View {
                                 .foregroundStyle(.secondary)
                         }
 
-                        Text(AppFormatting.localizedFormat("Created: %@", v.createdAt.formatted(date: .abbreviated, time: .shortened)))
+                        Text(AppFormatting.localizedFormat(
+                            "Created: %@",
+                            ExportNamingFormatter.metadataDisplayTimestamp(v.createdAt)
+                        ))
                             .font(.footnote)
                             .foregroundStyle(.secondary)
 
-                        Text(AppFormatting.localizedFormat("Preferences snapshot: %@", v.hasPreferencesSnapshot ? AppFormatting.localized("Yes") : AppFormatting.localized("No")))
+                        Text(AppFormatting.localizedFormat("backup.import.settings_snapshot", v.hasPreferencesSnapshot ? AppFormatting.localized("Yes") : AppFormatting.localized("No")))
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+
+                        Text(ExportNamingFormatter.backupContentsDescription(
+                            totalEntities: v.totalEntities,
+                            hasPreferencesSnapshot: v.hasPreferencesSnapshot
+                        ))
                             .font(.footnote)
                             .foregroundStyle(.secondary)
 
@@ -194,7 +218,7 @@ struct BackupRestoreScreen: View {
                         .font(.footnote)
                 }
 
-                Text(AppFormatting.localized("Workout restore replaces the current backed-up data snapshot in this app install. Use a fresh JSON backup first if you want a rollback point."))
+                Text(String(localized: "backup.restore.replace_warning"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -230,27 +254,36 @@ struct BackupRestoreScreen: View {
 
     private func exportBackupJSON() {
         do {
+            let exportDate = Date()
             let data = try backupService.exportJSON(
                 context: context,
                 types: BackupManifest.userDataTypes(),
                 preferences: prefs,
                 prettyPrinted: true
             )
+            let validation = try backupService.validate(data)
 
             let info = Bundle.main.infoDictionary
-            let appV = (info?["CFBundleShortVersionString"] as? String) ?? "0"
-            let build = (info?["CFBundleVersion"] as? String) ?? "0"
-            let ts = timestampString(Date())
-
-            let filename = "workouttracker-backup-v\(appV)-b\(build)-\(ts).json"
+            let appV = info?["CFBundleShortVersionString"] as? String
+            let build = info?["CFBundleVersion"] as? String
+            let filename = ExportNamingFormatter.backupJSONFilename(
+                appVersion: appV,
+                build: build,
+                date: exportDate
+            )
             let url = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
 
             try data.write(to: url, options: [.atomic])
             exportURL = url
             exportError = nil
-            prefs.lastBackupAt = Date()
+            exportStatusMessage = ExportNamingFormatter.backupContentsDescription(
+                totalEntities: validation.totalEntities,
+                hasPreferencesSnapshot: validation.hasPreferencesSnapshot
+            )
+            prefs.lastBackupAt = exportDate
         } catch {
             exportURL = nil
+            exportStatusMessage = nil
             exportError = "Export failed: \(error.localizedDescription)"
         }
     }
@@ -258,6 +291,7 @@ struct BackupRestoreScreen: View {
     private func exportFullBackupZIP() {
         guard let exporter = backupExporter else {
             fullExportURL = nil
+            fullExportStatusMessage = nil
             fullExportError = "Full backup exporter is not configured."
             return
         }
@@ -265,10 +299,12 @@ struct BackupRestoreScreen: View {
         do {
             let url = try exporter.exportBackup()
             fullExportURL = url
+            fullExportStatusMessage = ExportNamingFormatter.supportBundleDescription()
             fullExportError = nil
             prefs.lastBackupAt = Date()
         } catch {
             fullExportURL = nil
+            fullExportStatusMessage = nil
             fullExportError = "Full backup failed: \(error.localizedDescription)"
         }
     }
@@ -297,13 +333,5 @@ struct BackupRestoreScreen: View {
         } catch {
             restoreError = error.localizedDescription
         }
-    }
-
-    private func timestampString(_ d: Date) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(secondsFromGMT: 0)
-        f.dateFormat = "yyyyMMdd-HHmmss'Z'"
-        return f.string(from: d)
     }
 }

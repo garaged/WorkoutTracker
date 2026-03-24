@@ -31,6 +31,14 @@ Non-goals:
 
 ## Changelog
 
+## v2.0.1
+
+- Improved session resume reliability from Home and Calendar.
+- Added clearer stale-session recovery options: Resume, Finish now, Discard, and Keep for later.
+- Polished the finish summary with clearer completed/skipped set counts, elapsed time, PR highlights, and segment-aware details.
+- Refined export and backup wording, naming, and empty states.
+- Standardized copy across key session flows and improved localization consistency.
+
 ### v2.0.0
 
 - New Progress Hub with strength, volume, consistency, and recovery insights

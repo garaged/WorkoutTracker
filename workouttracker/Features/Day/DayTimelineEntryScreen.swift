@@ -10,7 +10,7 @@ struct DayTimelineEntryScreen: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var day: Date
-    @State private var presentedSession: WorkoutSession? = nil
+    @State private var presentedSessionRoute: SessionPresentationRoute? = nil
     @State private var editorItem: EditorItem? = nil
 
     init(initialDay: Date = Date()) {
@@ -28,7 +28,7 @@ struct DayTimelineEntryScreen: View {
     var body: some View {
         DayTimelineScreen(
             day: dayStart,
-            presentedSession: $presentedSession,
+            presentedSessionRoute: $presentedSessionRoute,
             onEdit: { a in
                 openEditor(for: a, isNew: false)
             },
@@ -46,8 +46,11 @@ struct DayTimelineEntryScreen: View {
             guard let date = note.object as? Date else { return }
             day = cal.startOfDay(for: date)
         }
-        .navigationDestination(item: $presentedSession) { s in
-            WorkoutSessionScreen(session: s)
+        .navigationDestination(item: $presentedSessionRoute) { route in
+            WorkoutSessionScreen(
+                session: route.session,
+                initialResumeTarget: route.initialResumeTarget
+            )
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { headerToolbar }
