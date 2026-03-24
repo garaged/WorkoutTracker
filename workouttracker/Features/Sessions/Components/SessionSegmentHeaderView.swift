@@ -7,6 +7,8 @@ struct SessionSegmentHeaderView: View {
     var showsSkipAction: Bool = false
     var onSkip: (() -> Void)? = nil
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     private var title: String {
         switch kind {
         case .warmUp: return String(localized: "session.segment.warm_up")
@@ -34,33 +36,22 @@ struct SessionSegmentHeaderView: View {
         isCurrent ? "SessionSegmentHeaderView.Current.\(kind.rawValue)" : "SessionSegmentHeaderView.\(kind.rawValue)"
     }
 
+    private var stacksProgress: Bool {
+        AdaptiveLayoutMetrics.shouldStackSegmentHeaderProgress(dynamicTypeSize: dynamicTypeSize)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 10) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(subtitle)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(isCurrent ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Color.secondary))
-                        .accessibilityIdentifier(isCurrent ? "SessionSegmentHeaderView.CurrentLabel" : "SessionSegmentHeaderView.Label")
-
-                    Text(title)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                        .accessibilityIdentifier("SessionSegmentHeaderView.Title.\(kind.rawValue)")
+            if stacksProgress {
+                VStack(alignment: .leading, spacing: 10) {
+                    headerTextBlock
+                    progressCapsule
                 }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
-
-                Spacer(minLength: 12)
-
-                if let progressText {
-                    Text(progressText)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(.ultraThinMaterial, in: Capsule())
-                        .accessibilityIdentifier("SessionSegmentHeaderView.Progress.\(kind.rawValue)")
+            } else {
+                HStack(alignment: .center, spacing: 10) {
+                    headerTextBlock
+                    Spacer(minLength: 12)
+                    progressCapsule
                 }
             }
 
@@ -71,7 +62,7 @@ struct SessionSegmentHeaderView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .accessibilityLabel(Text(verbatim: skipTitle))
-                .accessibilityValue(Text(verbatim: title))
+                .accessibilityHint(Text(verbatim: AccessibilityLabels.Hints.skipSegment(title)))
                 .accessibilityIdentifier("WorkoutSession.SkipSegmentButton")
             }
         }
@@ -83,8 +74,48 @@ struct SessionSegmentHeaderView: View {
                 .stroke(borderColor, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier(containerID)
+        .accessibilityCardSummary(
+            label: title,
+            value: AccessibilityLabels.Segments.value(isCurrent: isCurrent, progressText: progressText),
+            identifier: containerID
+        )
+    }
+
+    private var headerTextBlock: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                if isCurrent {
+                    Image(systemName: "location.fill")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Color.accentColor)
+                        .accessibilityDecorative()
+                }
+
+                Text(subtitle)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(isCurrent ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Color.secondary))
+                    .accessibilityIdentifier(isCurrent ? "SessionSegmentHeaderView.CurrentLabel" : "SessionSegmentHeaderView.Label")
+            }
+
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(.primary)
+                .accessibilityIdentifier("SessionSegmentHeaderView.Title.\(kind.rawValue)")
+        }
+    }
+
+    @ViewBuilder
+    private var progressCapsule: some View {
+        if let progressText {
+            Text(progressText)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial, in: Capsule())
+                .accessibilityIdentifier("SessionSegmentHeaderView.Progress.\(kind.rawValue)")
+                .accessibilityHidden(true)
+        }
     }
 
     private var backgroundStyle: some ShapeStyle {
@@ -92,14 +123,6 @@ struct SessionSegmentHeaderView: View {
             return AnyShapeStyle(Color.accentColor.opacity(0.12))
         }
         return AnyShapeStyle(Color.secondary.opacity(0.04))
-    }
-
-    private var headerAccessibilityLabel: String {
-        var parts = [subtitle, title]
-        if let progressText, !progressText.isEmpty {
-            parts.append(progressText)
-        }
-        return parts.joined(separator: ". ")
     }
 
     private var borderColor: Color {

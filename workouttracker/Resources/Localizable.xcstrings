@@ -802,6 +802,38 @@
         }
       }
     },
+    "a11y.button.decrease_reps" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decrease reps"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reducir repeticiones"
+          }
+        }
+      }
+    },
+    "a11y.button.decrease_weight" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decrease weight (%@)"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reducir peso (%@)"
+          }
+        }
+      }
+    },
     "a11y.button.export_backup" : {
       "localizations" : {
         "en" : {
@@ -882,6 +914,70 @@
         }
       }
     },
+    "a11y.button.finish_now_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish this unfinished workout session"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finalizar esta sesión de entrenamiento sin terminar"
+          }
+        }
+      }
+    },
+    "a11y.button.finish_rest" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish rest timer"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finalizar temporizador de descanso"
+          }
+        }
+      }
+    },
+    "a11y.button.increase_reps" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Increase reps"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumentar repeticiones"
+          }
+        }
+      }
+    },
+    "a11y.button.increase_weight" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Increase weight (%@)"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aumentar peso (%@)"
+          }
+        }
+      }
+    },
     "a11y.button.mark_complete" : {
       "localizations" : {
         "en" : {
@@ -914,6 +1010,22 @@
         }
       }
     },
+    "a11y.button.pause_rest" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause rest timer"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar temporizador de descanso"
+          }
+        }
+      }
+    },
     "a11y.button.pause_workout" : {
       "localizations" : {
         "en" : {
@@ -926,6 +1038,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pausar entrenamiento"
+          }
+        }
+      }
+    },
+    "a11y.button.reset_rest" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset rest timer"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reiniciar temporizador de descanso"
+          }
+        }
+      }
+    },
+    "a11y.button.resume_workout_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open this unfinished workout session"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir esta sesión de entrenamiento sin terminar"
           }
         }
       }
@@ -958,6 +1102,86 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Programar planes"
+          }
+        }
+      }
+    },
+    "a11y.button.set_add" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add set"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agregar serie"
+          }
+        }
+      }
+    },
+    "a11y.button.set_copy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy set"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicar serie"
+          }
+        }
+      }
+    },
+    "a11y.button.set_delete" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete set"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar serie"
+          }
+        }
+      }
+    },
+    "a11y.button.set_rest_preset" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set rest timer to %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustar descanso a %@"
+          }
+        }
+      }
+    },
+    "a11y.button.settings_hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open settings"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir ajustes"
           }
         }
       }
@@ -1026,6 +1250,22 @@
         }
       }
     },
+    "a11y.button.start_rest" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start rest timer"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar temporizador de descanso"
+          }
+        }
+      }
+    },
     "a11y.empty_state.generic.message" : {
       "localizations" : {
         "en" : {
@@ -1090,6 +1330,38 @@
         }
       }
     },
+    "a11y.field.reps" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reps"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        }
+      }
+    },
+    "a11y.field.weight" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weight (%@)"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peso (%@)"
+          }
+        }
+      }
+    },
     "a11y.hint.open_routine_editor" : {
       "localizations" : {
         "en" : {
@@ -1102,6 +1374,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abre el editor de rutinas"
+          }
+        }
+      }
+    },
+    "a11y.hint.rest_timer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage the rest timer for this workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Administrar el temporizador de descanso para este entrenamiento"
+          }
+        }
+      }
+    },
+    "a11y.hint.segment.skip" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip %@ and move on"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omitir %@ y continuar"
           }
         }
       }
@@ -1198,6 +1502,214 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cuando está activado, la app escribe registros de depuración adicionales para ayudar a diagnosticar problemas."
+          }
+        }
+      }
+    },
+    "a11y.value.home.needs_attention" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Needs attention"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Necesita atención"
+          }
+        }
+      }
+    },
+    "a11y.value.rest.overdue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overdue by %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excedido por %@"
+          }
+        }
+      }
+    },
+    "a11y.value.rest.paused" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused at %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pausa en %@"
+          }
+        }
+      }
+    },
+    "a11y.value.rest.ready" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready for %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo para %@"
+          }
+        }
+      }
+    },
+    "a11y.value.rest.running" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Running, %@ remaining"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En curso, quedan %@"
+          }
+        }
+      }
+    },
+    "a11y.value.segment.current" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current segment"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segmento actual"
+          }
+        }
+      }
+    },
+    "a11y.value.segment.standard" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segment"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segmento"
+          }
+        }
+      }
+    },
+    "a11y.value.set.number" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serie %@"
+          }
+        }
+      }
+    },
+    "a11y.value.set.state.behind" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Earlier unfinished set"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serie anterior sin terminar"
+          }
+        }
+      }
+    },
+    "a11y.value.set.state.completed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed set"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serie completada"
+          }
+        }
+      }
+    },
+    "a11y.value.set.state.current" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current set"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serie actual"
+          }
+        }
+      }
+    },
+    "a11y.value.set.state.pending" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pending set"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serie pendiente"
+          }
+        }
+      }
+    },
+    "a11y.value.set.target" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Target %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meta %@"
           }
         }
       }
@@ -1822,6 +2334,7 @@
       }
     },
     "backup.export.contents.settings_and_workouts.plural" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1838,6 +2351,7 @@
       }
     },
     "backup.export.contents.settings_and_workouts.singular" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1870,6 +2384,7 @@
       }
     },
     "backup.export.contents.workouts_only.plural" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1886,6 +2401,7 @@
       }
     },
     "backup.export.contents.workouts_only.singular" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1966,6 +2482,7 @@
       }
     },
     "backup.export.note.swiftdata.included.plural" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1982,6 +2499,7 @@
       }
     },
     "backup.export.note.swiftdata.included.singular" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2030,6 +2548,7 @@
       }
     },
     "backup.export.note.userdefaults.included.plural" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2046,6 +2565,7 @@
       }
     },
     "backup.export.note.userdefaults.included.singular" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2126,6 +2646,7 @@
       }
     },
     "backup.import.settings_snapshot" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4958,6 +5479,7 @@
       }
     },
     "Mark set completed" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -4968,6 +5490,7 @@
       }
     },
     "Mark set not completed" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -8418,6 +8941,7 @@
       }
     },
     "Reps" : {
+      "comment" : "Accessibility label for reps value",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -9785,7 +10309,6 @@
       }
     },
     "session.rest.overdue" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9802,7 +10325,6 @@
       }
     },
     "session.rest.paused" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9819,7 +10341,6 @@
       }
     },
     "session.rest.ready" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -12026,6 +12547,7 @@
       }
     },
     "Weight" : {
+      "comment" : "Accessibility label for weight value",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {

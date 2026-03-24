@@ -1,22 +1,33 @@
 // File: workouttrackerUITests/Support/UITestSupport.swift
 import XCTest
+import UIKit
 
 enum UITestLaunch {
     static func app(
         start: String,
         reset: Bool = true,
         seed: Bool = false,
+        preferredContentSizeCategory: UIContentSizeCategory? = nil,
+        disableAnimations: Bool = true,
         extraEnv: [String: String] = [:],
         extraArgs: [String] = []
     ) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTesting"] + extraArgs
 
+        if let preferredContentSizeCategory {
+            app.launchArguments += [
+                "-UIPreferredContentSizeCategoryName",
+                preferredContentSizeCategory.rawValue
+            ]
+        }
+
         var env = app.launchEnvironment
         env["UITESTS"] = "1"
         env["UITESTS_START"] = start
         env["UITESTS_RESET"] = reset ? "1" : "0"
         env["UITESTS_SEED"] = seed ? "1" : "0"
+        env["UITESTS_DISABLE_ANIMATIONS"] = disableAnimations ? "1" : "0"
         for (k, v) in extraEnv { env[k] = v }
         app.launchEnvironment = env
         return app
@@ -30,7 +41,6 @@ extension XCUIApplication {
 }
 
 extension XCTestCase {
-    // RENAMED: attachDebug -> attachUITestDebug
     func attachUITestDebug(_ app: XCUIApplication,
                            name: String,
                            file: StaticString = #filePath,
@@ -50,7 +60,6 @@ extension XCTestCase {
 
 @discardableResult
 func tapNewActivityButton(_ app: XCUIApplication, timeout: TimeInterval = 6.0) -> Bool {
-    // Prefer identifier if you have one
     let byId = app.descendants(matching: .any).matching(identifier: "timeline.newActivityButton").firstMatch
     if byId.waitForExistence(timeout: timeout) {
         if byId.isHittable { byId.tap() }
@@ -58,7 +67,6 @@ func tapNewActivityButton(_ app: XCUIApplication, timeout: TimeInterval = 6.0) -
         return true
     }
 
-    // Fallback: label search
     let byLabel = app.descendants(matching: .any)
         .matching(NSPredicate(format: "label CONTAINS[c] %@", "New activity"))
         .firstMatch

@@ -10,22 +10,34 @@ import UIKit
 /// - clearer "done" state
 struct WorkoutSetEditorRow: View {
     @Bindable var set: WorkoutSetLog
-    
+
     @AppStorage(UnitPreferences.Keys.weightUnitRaw)
     private var preferredUnitRaw: String = WeightUnit.kg.rawValue
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var preferredUnit: WeightUnit {
         WeightUnit(rawValue: preferredUnitRaw) ?? .kg
     }
 
     private var isCompact: Bool { horizontalSizeClass == .compact }
-    private var repsFieldWidth: CGFloat { isCompact ? 54 : 62 }
-    private var weightFieldWidth: CGFloat { isCompact ? 68 : 84 }
+    private var stacksEditorsVertically: Bool {
+        AdaptiveLayoutMetrics.shouldStackSetEditorFields(
+            horizontalSizeClass: horizontalSizeClass,
+            dynamicTypeSize: dynamicTypeSize
+        )
+    }
+    private var repsFieldWidth: CGFloat {
+        AdaptiveLayoutMetrics.compactFieldWidth(base: isCompact ? 54 : 62, dynamicTypeSize: dynamicTypeSize)
+    }
+    private var weightFieldWidth: CGFloat {
+        AdaptiveLayoutMetrics.compactFieldWidth(base: isCompact ? 68 : 84, dynamicTypeSize: dynamicTypeSize)
+    }
 
     let setNumber: Int
     let isReadOnly: Bool
+    var accessibilityStateText: String? = nil
 
     /// Called only when a set transitions from not-done -> done. Parameter is suggested rest seconds.
     var onCompleted: ((Int?) -> Void)? = nil
@@ -41,7 +53,7 @@ struct WorkoutSetEditorRow: View {
     var onBumpReps: ((Int) -> Void)? = nil
     var onBumpWeight: ((Double) -> Void)? = nil
 
-    /// UI-only tuning: default weight step if you don't provide a custom one.
+    /// UI-only tuning: default weight step if you do not provide a custom one.
     var weightStep: Double = 2.5
 
     @State private var persistDebounceTask: Task<Void, Never>?
@@ -60,7 +72,7 @@ struct WorkoutSetEditorRow: View {
             }
         )
     }
-    
+
     private var weightBinding: Binding<String> {
         preferredWeightBinding(for: set)
     }
@@ -88,7 +100,7 @@ struct WorkoutSetEditorRow: View {
 
     private var targetHint: String? {
         var parts: [String] = []
-        if let tr = set.targetReps { parts.append("\(tr) reps") }
+        if let tr = set.targetReps { parts.append("\(tr) \(String(localized: "Reps"))") }
         if let tw = set.targetWeight(in: preferredUnit) {
             parts.append("@ \(formatWeight(tw)) \(preferredUnit.label)")
         }
@@ -97,48 +109,33 @@ struct WorkoutSetEditorRow: View {
         return "Target: " + parts.joined(separator: " ")
     }
 
+    private var rowAccessibilityValue: String {
+        AccessibilityLabels.SessionSet.rowValue(
+            repsText: repsBinding.wrappedValue,
+            weightText: weightBinding.wrappedValue,
+            unit: preferredUnit.label,
+            targetHint: targetHint.map(AccessibilityLabels.SessionSet.targetValue),
+            stateText: accessibilityStateText
+        )
+    }
+
     var body: some View {
-        HStack(alignment: .center, spacing: 8) {
-            // Fixed left index column so it never gets squeezed.
+        HStack(alignment: stacksEditorsVertically ? .top : .center, spacing: 8) {
             Text("\(setNumber)")
                 .font(.headline)
                 .frame(width: 28, alignment: .leading)
                 .foregroundStyle(set.completed ? .secondary : .primary)
                 .layoutPriority(2)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: isCompact ? 8 : 12) {
-                    valueEditor(
-                        title: "Reps",
-                        text: repsBinding,
-                        keyboard: .numberPad,
-                        width: repsFieldWidth,
-                        minus: { bumpReps(-1) },
-                        plus: { bumpReps(+1) },
-                        idBase: "\(a11yPrefix).Reps"
-                    )
-
-                    valueEditor(
-                        title: isCompact ? "Wt (\(preferredUnit.label))" : "Weight",
-                        text: weightBinding,
-                        keyboard: .decimalPad,
-                        width: weightFieldWidth,
-                        minus: { bumpWeight(-weightStep) },
-                        plus: { bumpWeight(+weightStep) },
-                        trailing: isCompact ? nil : AnyView(
-                            Text(preferredUnit.label)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        ),
-                        idBase: "\(a11yPrefix).Weight"
-                    )
-                }
+                editorsBlock
 
                 if let hint = targetHint {
                     Text(hint)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                        .lineLimit(stacksEditorsVertically ? 2 : 1)
                         .minimumScaleFactor(0.85)
                 }
 
@@ -168,23 +165,80 @@ struct WorkoutSetEditorRow: View {
                     .font(.title3)
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(set.completed ? .green : .secondary)
+                    .accessibilityDecorative()
             }
             .buttonStyle(.plain)
             .frame(width: 44, alignment: .trailing)
             .layoutPriority(2)
             .disabled(isReadOnly)
-            .accessibilityLabel(set.completed ? "Mark set not completed" : "Mark set completed")
-            .accessibilityIdentifier("\(a11yPrefix).DoneToggle")
+            .accessibilityIconControl(
+                label: AccessibilityLabels.SessionSet.doneToggleLabel(isCompleted: set.completed),
+                hint: accessibilityStateText,
+                identifier: "\(a11yPrefix).DoneToggle"
+            )
         }
         .accessibilityElement(children: .contain)
+        .accessibilityLabel(AccessibilityLabels.SessionSet.rowLabel(setNumber: setNumber))
+        .accessibilityValue(rowAccessibilityValue)
         .accessibilityIdentifier("\(a11yPrefix).Row")
         .padding(.vertical, 6)
         .onDisappear {
-            // Don’t drop the last typed values if the row/screen disappears.
             persistDebounceTask?.cancel()
             persistDebounceTask = nil
-            onPersist?() // flush immediately
+            onPersist?()
         }
+    }
+
+    private var editorsBlock: some View {
+        Group {
+            if stacksEditorsVertically {
+                VStack(alignment: .leading, spacing: 10) {
+                    repsEditor
+                    weightEditor
+                }
+            } else {
+                HStack(alignment: .top, spacing: isCompact ? 8 : 12) {
+                    repsEditor
+                    weightEditor
+                }
+            }
+        }
+    }
+
+    private var repsEditor: some View {
+        valueEditor(
+            title: String(localized: "Reps"),
+            accessibilityFieldLabel: AccessibilityLabels.Fields.reps,
+            text: repsBinding,
+            keyboard: .numberPad,
+            width: repsFieldWidth,
+            minusAccessibilityLabel: AccessibilityLabels.Buttons.decreaseReps,
+            plusAccessibilityLabel: AccessibilityLabels.Buttons.increaseReps,
+            minus: { bumpReps(-1) },
+            plus: { bumpReps(+1) },
+            idBase: "\(a11yPrefix).Reps"
+        )
+    }
+
+    private var weightEditor: some View {
+        valueEditor(
+            title: isCompact ? "Wt (\(preferredUnit.label))" : String(localized: "Weight"),
+            accessibilityFieldLabel: AccessibilityLabels.Fields.weight(unit: preferredUnit.label),
+            text: weightBinding,
+            keyboard: .decimalPad,
+            width: weightFieldWidth,
+            minusAccessibilityLabel: AccessibilityLabels.Buttons.decreaseWeight(unit: preferredUnit.label),
+            plusAccessibilityLabel: AccessibilityLabels.Buttons.increaseWeight(unit: preferredUnit.label),
+            minus: { bumpWeight(-weightStep) },
+            plus: { bumpWeight(+weightStep) },
+            trailing: isCompact ? nil : AnyView(
+                Text(preferredUnit.label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            ),
+            idBase: "\(a11yPrefix).Weight"
+        )
     }
 
     // MARK: - Actions
@@ -194,8 +248,6 @@ struct WorkoutSetEditorRow: View {
 
         if let onToggleComplete {
             onToggleComplete()
-
-            // Defer the completion check so SwiftUI/SwiftData have applied the mutation.
             DispatchQueue.main.async {
                 if !wasCompleted && set.completed {
                     fireCompletionHaptic()
@@ -205,7 +257,6 @@ struct WorkoutSetEditorRow: View {
             return
         }
 
-        // Fallback path (no service)
         set.completed.toggle()
         set.completedAt = set.completed ? Date() : nil
         onPersist?()
@@ -215,7 +266,6 @@ struct WorkoutSetEditorRow: View {
             onCompleted?(set.targetRestSeconds)
         }
     }
-
 
     private func bumpReps(_ delta: Int) {
         guard !isReadOnly else { return }
@@ -246,7 +296,7 @@ struct WorkoutSetEditorRow: View {
 
         persistDebounceTask?.cancel()
         persistDebounceTask = Task {
-            try? await Task.sleep(nanoseconds: 350_000_000) // ~0.35s debounce
+            try? await Task.sleep(nanoseconds: 350_000_000)
             if Task.isCancelled { return }
             await MainActor.run { onPersist() }
         }
@@ -256,9 +306,12 @@ struct WorkoutSetEditorRow: View {
 
     private func valueEditor(
         title: String,
+        accessibilityFieldLabel: String,
         text: Binding<String>,
         keyboard: UIKeyboardType,
         width: CGFloat,
+        minusAccessibilityLabel: String,
+        plusAccessibilityLabel: String,
         minus: @escaping () -> Void,
         plus: @escaping () -> Void,
         trailing: AnyView? = nil,
@@ -268,14 +321,16 @@ struct WorkoutSetEditorRow: View {
             Text(title)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
 
             HStack(spacing: 6) {
                 StepIconButton(
                     systemName: "minus.circle",
                     action: minus,
+                    accessibilityLabel: minusAccessibilityLabel,
                     accessibilityID: "\(idBase).Minus"
                 )
-                    .disabled(isReadOnly)
+                .disabled(isReadOnly)
 
                 TextField("—", text: text)
                     .multilineTextAlignment(.trailing)
@@ -283,14 +338,16 @@ struct WorkoutSetEditorRow: View {
                     .frame(width: width)
                     .textFieldStyle(.roundedBorder)
                     .disabled(isReadOnly)
+                    .accessibilityLabel(accessibilityFieldLabel)
                     .accessibilityIdentifier("\(idBase).Field")
 
                 StepIconButton(
                     systemName: "plus.circle",
                     action: plus,
+                    accessibilityLabel: plusAccessibilityLabel,
                     accessibilityID: "\(idBase).Plus"
                 )
-                    .disabled(isReadOnly)
+                .disabled(isReadOnly)
 
                 if let trailing { trailing }
             }
@@ -300,6 +357,7 @@ struct WorkoutSetEditorRow: View {
     private struct StepIconButton: View {
         let systemName: String
         let action: () -> Void
+        let accessibilityLabel: String
         let accessibilityID: String
 
         var body: some View {
@@ -307,13 +365,12 @@ struct WorkoutSetEditorRow: View {
                 Image(systemName: systemName)
                     .font(.title3)
                     .foregroundStyle(.secondary)
+                    .accessibilityDecorative()
             }
             .buttonStyle(.plain)
-            .accessibilityIdentifier(accessibilityID)
+            .accessibilityIconControl(label: accessibilityLabel, identifier: accessibilityID)
         }
     }
-
-    // MARK: Formatting
 
     private func formatWeight(_ w: Double) -> String {
         if w.rounded() == w { return String(Int(w)) }
@@ -324,7 +381,7 @@ struct WorkoutSetEditorRow: View {
         if r.rounded() == r { return String(Int(r)) }
         return String(r)
     }
-    
+
     private func fireCompletionHaptic() {
     #if canImport(UIKit)
         let g = UIImpactFeedbackGenerator(style: .light)

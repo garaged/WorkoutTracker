@@ -7,6 +7,8 @@ struct RestTimerView: View {
 
     @ObservedObject private var timer = SessionRestTimerController.shared
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
 
     private let cornerRadius: CGFloat = 16
 
@@ -18,8 +20,33 @@ struct RestTimerView: View {
         self.onFinish = onFinish
     }
 
-    private var isCompactLayout: Bool {
-        verticalSizeClass == .compact
+    private var usesStackedLayout: Bool {
+        AdaptiveLayoutMetrics.shouldStackRestTimerControls(
+            verticalSizeClass: verticalSizeClass,
+            dynamicTypeSize: dynamicTypeSize
+        )
+    }
+
+    private var statusText: String? {
+        guard timer.hasConfiguredTimer else { return nil }
+        if timer.displaySeconds < 0 {
+            return String(localized: "session.rest.overdue")
+        }
+        if timer.isRunning {
+            return nil
+        }
+        return timer.displaySeconds == max(0, timer.totalSeconds)
+            ? String(localized: "session.rest.ready")
+            : String(localized: "session.rest.paused")
+    }
+
+    private var accessibilityValue: String {
+        AccessibilityLabels.RestTimer.value(
+            displaySeconds: timer.displaySeconds,
+            isRunning: timer.isRunning,
+            hasConfiguredTimer: timer.hasConfiguredTimer,
+            totalSeconds: timer.totalSeconds
+        )
     }
 
     var body: some View {
@@ -27,74 +54,113 @@ struct RestTimerView: View {
             topBar
             presetBar
         }
-        .padding(isCompactLayout ? 9 : 10)
+        .padding(usesStackedLayout ? 12 : 10)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .stroke(Color(uiColor: .separator).opacity(0.30), lineWidth: 1)
         }
         .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 4)
+        .accessibilityCardSummary(
+            label: AccessibilityLabels.RestTimer.title,
+            value: accessibilityValue,
+            hint: AccessibilityLabels.RestTimer.hint,
+            identifier: "RestTimerView.Container"
+        )
+        .animation(.workoutAdaptive(reducedMotion: accessibilityReduceMotion), value: timer.displaySeconds)
+        .animation(.workoutAdaptive(reducedMotion: accessibilityReduceMotion), value: timer.isRunning)
     }
 
     @ViewBuilder
     private var topBar: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 10) {
-                titleAndTimer
-                Spacer(minLength: 8)
-                startPauseButton
-                finishButton
-                resetButton
-            }
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .firstTextBaseline) {
+        if usesStackedLayout {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
                     titleAndTimer
-                    Spacer()
+                    Spacer(minLength: 8)
                 }
 
-                HStack(spacing: 8) {
-                    startPauseButton
-                    finishButton
-                    resetButton
+                controlsRow
+            }
+        } else {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) {
+                    titleAndTimer
+                    Spacer(minLength: 8)
+                    controlsRow
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .firstTextBaseline) {
+                        titleAndTimer
+                        Spacer()
+                    }
+
+                    controlsRow
                 }
             }
         }
     }
 
-    private var titleAndTimer: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(String(localized: "session.rest.title"))
-                .font(.subheadline.weight(.semibold))
-
-            Text(signedDuration(timer.displaySeconds))
-                .font(
-                    .system(
-                        isCompactLayout ? .title3 : .title2,
-                        design: .rounded
-                    )
-                    .weight(.semibold)
-                )
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .accessibilityIdentifier("RestTimerView.TimeLabel")
+    private var controlsRow: some View {
+        HStack(spacing: 8) {
+            startPauseButton
+            finishButton
+            resetButton
         }
+    }
+
+    private var titleAndTimer: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(String(localized: "session.rest.title"))
+                    .font(.subheadline.weight(.semibold))
+
+                Text(signedDuration(timer.displaySeconds))
+                    .font(
+                        .system(
+                            usesStackedLayout ? .title3 : .title2,
+                            design: .rounded
+                        )
+                        .weight(.semibold)
+                    )
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .accessibilityIdentifier("RestTimerView.TimeLabel")
+            }
+
+            if let statusText {
+                Text(statusText)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(statusForeground)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(statusForeground.opacity(0.12), in: Capsule())
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
+    private var statusForeground: Color {
+        if timer.displaySeconds < 0 { return .orange }
+        if timer.isRunning { return .accentColor }
+        return .secondary
     }
 
     @ViewBuilder
     private var presetBar: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 6) {
-                ForEach(presets, id: \.self) { s in
-                    presetChip(seconds: s)
+                ForEach(presets, id: \.self) { seconds in
+                    presetChip(seconds: seconds)
                 }
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    ForEach(presets, id: \.self) { s in
-                        presetChip(seconds: s)
+                    ForEach(presets, id: \.self) { seconds in
+                        presetChip(seconds: seconds)
                     }
                 }
                 .padding(.vertical, 1)
@@ -117,6 +183,7 @@ struct RestTimerView: View {
                 .background(Color.secondary.opacity(0.08), in: Capsule())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(AccessibilityLabels.Buttons.restPreset(seconds: seconds))
     }
 
     private var startPauseButton: some View {
@@ -137,6 +204,7 @@ struct RestTimerView: View {
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.small)
+        .accessibilityLabel(timer.isRunning ? AccessibilityLabels.Buttons.pauseRest : AccessibilityLabels.Buttons.startRest)
     }
 
     private var finishButton: some View {
@@ -151,6 +219,7 @@ struct RestTimerView: View {
                 .font(.subheadline.weight(.semibold))
         }
         .accessibilityIdentifier("RestTimerView.FinishButton")
+        .accessibilityLabel(AccessibilityLabels.Buttons.finishRest)
         .buttonStyle(.bordered)
         .controlSize(.small)
         .disabled(!timer.hasConfiguredTimer)
@@ -163,6 +232,7 @@ struct RestTimerView: View {
             Label(String(localized: "common.reset"), systemImage: "arrow.counterclockwise")
                 .font(.subheadline.weight(.semibold))
         }
+        .accessibilityLabel(AccessibilityLabels.Buttons.resetRest)
         .buttonStyle(.bordered)
         .controlSize(.small)
         .disabled(timer.totalSeconds <= 0)

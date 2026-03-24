@@ -14,8 +14,11 @@ struct workouttrackerUITestHostApp: App {
     init() {
         let env = ProcessInfo.processInfo.environment
 
-        // Keep UI tests deterministic.
-        UIView.setAnimationsEnabled(false)
+        // Keep UI tests deterministic, but allow specific suites to opt back into animation-driven behavior.
+        if env["UITESTS"] == "1" {
+            let disableAnimations = env["UITESTS_DISABLE_ANIMATIONS"] != "0"
+            UIView.setAnimationsEnabled(!disableAnimations ? true : false)
+        }
 
         // Reset UserDefaults for the host bundle when requested.
         if env["UITESTS"] == "1", env["UITESTS_RESET"] == "1",

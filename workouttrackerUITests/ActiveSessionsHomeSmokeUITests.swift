@@ -105,7 +105,7 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
         XCTAssertTrue(staleResume.waitForExistence(timeout: t(4)), "Expected stale session Resume button.")
         tapSafely(staleResume)
 
-        let finishNow = app.buttons["Finish now"]
+        let finishNow = recoveryPromptFinishButton(in: app)
         XCTAssertTrue(finishNow.waitForExistence(timeout: t(4)), "Expected Finish now action for stale active sessions.")
         tapSafely(finishNow)
 
@@ -217,12 +217,6 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
         )
     }
 
-//    private func score(_ button: XCUIElement, anchor: XCUIElement) -> CGFloat {
-//        let vertical = abs(button.frame.midY - anchor.frame.midY)
-//        let horizontal = abs(button.frame.midX - anchor.frame.midX)
-//        return vertical * 3 + horizontal
-//    }
-
     private func tapSafely(_ el: XCUIElement) {
         if el.isHittable {
             el.tap()
@@ -272,5 +266,15 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
 
     private func staleFinishButton(in app: XCUIApplication) -> XCUIElement {
         app.buttons["Home.ActiveSessions.Finish.PreviousDay"]
+    }
+
+    private func recoveryPromptFinishButton(in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(
+            NSPredicate(
+                format: "label == %@ AND identifier != %@",
+                "Finish now",
+                "Home.ActiveSessions.Finish.PreviousDay"
+            )
+        ).firstMatch
     }
 }

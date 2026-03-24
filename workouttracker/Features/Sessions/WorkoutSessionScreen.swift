@@ -9,6 +9,7 @@ struct WorkoutSessionScreen: View {
     @EnvironmentObject private var goalPrefill: GoalPrefillStore
     @Environment(\.modelContext) private var modelContext
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
 
 
     @Bindable var session: WorkoutSession
@@ -118,7 +119,7 @@ struct WorkoutSessionScreen: View {
     }
 
     private var shouldShowRestTimerCard: Bool {
-        showRestTimer && canMutateProgress && restTimerSnapshot.shouldShow
+        showRestTimer && restTimerSnapshot.shouldShow
     }
 
     var body: some View {
@@ -140,11 +141,11 @@ struct WorkoutSessionScreen: View {
                 .safeAreaInset(edge: .top) {
                     if let banner = targetAppliedBanner {
                         TargetAppliedBannerView(text: banner.text) {
-                            withAnimation(.snappy) { targetAppliedBanner = nil }
+                            withAdaptiveAnimation { targetAppliedBanner = nil }
                         }
                         .padding(.horizontal, 12)
                         .padding(.top, 6)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .transition(bannerTransition)
                     }
                 }
                 .toolbar { toolbarContent }
@@ -186,11 +187,11 @@ struct WorkoutSessionScreen: View {
                         PRToastView(
                             title: prToast.title,
                             subtitle: prToast.subtitle,
-                            onDismiss: { withAnimation(.snappy) { self.prToast = nil } }
+                            onDismiss: { withAdaptiveAnimation { self.prToast = nil } }
                         )
                         .padding(.horizontal, 12)
                         .padding(.top, 6)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .transition(bannerTransition)
                     }
                 }
             }
@@ -592,7 +593,7 @@ struct WorkoutSessionScreen: View {
 
         finishActiveRestTimerIfNeeded()
 
-        withAnimation(.snappy) {
+        withAdaptiveAnimation {
             skippedSegmentKinds.insert(kind)
             coachPrompt = nil
             showRestTimer = false
@@ -719,13 +720,27 @@ struct WorkoutSessionScreen: View {
 
         restTimerOwnerSetID = set.id
 
-        // Start rest timer using coach suggestion
+        // Start rest timer using coach suggestion unless UITests explicitly request
+        // a short deterministic timer. The UITestHost seeds 2s target rest, but the
+        // coach suggestion flow can still expand that duration; keep the test override
+        // centralized here so the real user path remains unchanged.
+        startRestTimer(seconds: prompt.suggestedRestSeconds)
+        withAnimation { showRestTimer = true }
+    }
+
+    private var uiTestsShortRestSecondsOverride: Int? {
+        let env = ProcessInfo.processInfo.environment
+        guard env["UITESTS"] == "1", env["UITESTS_REST_TIMER_SHORT"] == "1" else { return nil }
+        return 2
+    }
+
+    private func startRestTimer(seconds: Int) {
+        let effectiveSeconds = uiTestsShortRestSecondsOverride ?? seconds
         restTimer.configure(
-            seconds: max(1, prompt.suggestedRestSeconds),
+            seconds: max(1, effectiveSeconds),
             startImmediately: prefs.autoStartRest,
             playStartCue: prefs.restTimerCueEnabled
         )
-        withAnimation { showRestTimer = true }
     }
 
     private func finishActiveRestTimerIfNeeded(
@@ -861,8 +876,12 @@ struct WorkoutSessionScreen: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .background(setRowChrome(state: state))
+                    .overlay(alignment: .topLeading) {
+                        setRowStatusBadge(state: state)
+                    }
                     .contentShape(Rectangle())
                     .accessibilityElement(children: .contain)
+                    .accessibilityValue(accessibilityStateText(for: state))
                     .accessibilityIdentifier(setRowAccessibilityIdentifier(for: set, state: state))
                     .id(set.id)
                     .simultaneousGesture(
@@ -986,6 +1005,14 @@ struct WorkoutSessionScreen: View {
 
     // MARK: - Row styling
 
+    private var bannerTransition: AnyTransition {
+        accessibilityReduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity)
+    }
+
+    private func withAdaptiveAnimation(_ updates: @escaping () -> Void) {
+        withAnimation(.workoutAdaptive(reducedMotion: accessibilityReduceMotion), updates)
+    }
+
     private enum SetRowVisualState: Equatable {
         case pending
         case current
@@ -1005,6 +1032,41 @@ struct WorkoutSessionScreen: View {
             return "WorkoutSession.ActionableSetRow"
         }
         return "WorkoutSession.SetRow.\(set.id.uuidString)"
+    }
+
+    private func accessibilityStateText(for state: SetRowVisualState) -> String {
+        switch state {
+        case .pending:
+            return AccessibilityLabels.SessionSet.stateText(currentState: .pending)
+        case .current:
+            return AccessibilityLabels.SessionSet.stateText(currentState: .current)
+        case .done:
+            return AccessibilityLabels.SessionSet.stateText(currentState: .completed)
+        case .behind:
+            return AccessibilityLabels.SessionSet.stateText(currentState: .behind)
+        }
+    }
+
+    @ViewBuilder
+    private func setRowStatusBadge(state: SetRowVisualState) -> some View {
+        if let title = AccessibilityLabels.SessionSet.visibleBadge(for: {
+            switch state {
+            case .pending: return .pending
+            case .current: return .current
+            case .done: return .completed
+            case .behind: return .behind
+            }
+        }()) {
+            Text(title)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(state == .current ? Color.accentColor : Color.orange)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background((state == .current ? Color.accentColor : Color.orange).opacity(0.12), in: Capsule())
+                .padding(.leading, 10)
+                .padding(.top, 8)
+                .accessibilityHidden(true)
+        }
     }
 
     private var behindSetIDs: Set<UUID> {
@@ -1135,11 +1197,7 @@ struct WorkoutSessionScreen: View {
             onApplyWeight: ctx.prompt.weightDelta == nil ? nil : { applyCoachWeight(ctx, proxy: proxy) },
             onApplyReps: ctx.prompt.repsDelta == nil ? nil : { applyCoachReps(ctx, proxy: proxy) },
             onStartRest: {
-                restTimer.configure(
-                    seconds: max(1, ctx.prompt.suggestedRestSeconds),
-                    startImmediately: prefs.autoStartRest,
-                    playStartCue: prefs.restTimerCueEnabled
-                )
+                startRestTimer(seconds: ctx.prompt.suggestedRestSeconds)
                 withAnimation { showRestTimer = true }
             },
             onDismiss: { withAnimation { coachPrompt = nil } }
@@ -1214,11 +1272,7 @@ struct WorkoutSessionScreen: View {
                         withAnimation { showRestTimer = false }
                     } else {
                         restTimerOwnerSetID = nil
-                        restTimer.configure(
-                            seconds: max(1, prefs.defaultRestSeconds),
-                            startImmediately: prefs.autoStartRest,
-                            playStartCue: prefs.restTimerCueEnabled
-                        )
+                        startRestTimer(seconds: prefs.defaultRestSeconds)
                         withAnimation { showRestTimer = true }
                     }
                 } label: {
@@ -1270,7 +1324,7 @@ struct WorkoutSessionScreen: View {
         saveOrAssert("finish")
 
         coachPrompt = nil
-        withAnimation(.snappy) { showRestTimer = false }
+        withAdaptiveAnimation { showRestTimer = false }
         refreshFinishSummaryIfNeeded()
 
         guard !hasReflection else { return }
@@ -1379,10 +1433,12 @@ struct WorkoutSessionScreen: View {
                 }
             )
         } else {
+            let state = setRowVisualState(for: set)
             WorkoutSetEditorRow(
                 set: set,
                 setNumber: displaySetNumber(for: set, in: ex),
                 isReadOnly: isReadOnly,
+                accessibilityStateText: accessibilityStateText(for: state),
                 onCompleted: { suggestedRest in
                     handleSetCompleted(ex: ex, set: set, suggestedRest: suggestedRest)
                 },
@@ -1549,13 +1605,13 @@ struct WorkoutSessionScreen: View {
     @MainActor
     private func showTargetAppliedBanner(_ text: String) {
         let banner = TargetAppliedBanner(text: text)
-        withAnimation(.snappy) { targetAppliedBanner = banner }
+        withAdaptiveAnimation { targetAppliedBanner = banner }
 
         Task { [id = banner.id] in
             try? await Task.sleep(nanoseconds: 2_200_000_000) // ~2.2s
             await MainActor.run {
                 guard targetAppliedBanner?.id == id else { return }
-                withAnimation(.snappy) { targetAppliedBanner = nil }
+                withAdaptiveAnimation { targetAppliedBanner = nil }
             }
         }
     }
@@ -1639,22 +1695,22 @@ struct WorkoutSessionScreen: View {
         let preferredAnchor = UnitPoint(x: 0.5, y: 0.30)
 
         Task { @MainActor in
-            withAnimation(.snappy) {
+            withAdaptiveAnimation {
                 proxy.scrollTo(id, anchor: preferredAnchor)
             }
 
             try? await Task.sleep(nanoseconds: 120_000_000)
-            withAnimation(.snappy) {
+            withAdaptiveAnimation {
                 proxy.scrollTo(id, anchor: preferredAnchor)
             }
 
             try? await Task.sleep(nanoseconds: 250_000_000)
-            withAnimation(.snappy) {
+            withAdaptiveAnimation {
                 proxy.scrollTo(id, anchor: preferredAnchor)
             }
 
             try? await Task.sleep(nanoseconds: 350_000_000)
-            withAnimation(.snappy) {
+            withAdaptiveAnimation {
                 proxy.scrollTo(id, anchor: preferredAnchor)
             }
         }
@@ -1808,7 +1864,7 @@ struct WorkoutSessionScreen: View {
             .map { "\($0.kind.rawValue): \($0.valueText)" }
             .joined(separator: " • ")
 
-        withAnimation(.snappy) {
+        withAdaptiveAnimation {
             prToast = PRToast(title: headline, subtitle: subtitle)
             confettiToken = UUID()
         }
@@ -1817,7 +1873,7 @@ struct WorkoutSessionScreen: View {
         Task {
             try? await Task.sleep(nanoseconds: 2_200_000_000)
             await MainActor.run {
-                withAnimation(.snappy) {
+                withAdaptiveAnimation {
                     prToast = nil
                     confettiToken = nil
                 }
