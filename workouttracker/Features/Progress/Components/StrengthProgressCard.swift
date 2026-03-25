@@ -1,17 +1,27 @@
 import SwiftUI
 
 struct StrengthProgressCard: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let model: ProgressDashboardViewModel.StrengthCardModel
     let onSelectExercise: (UUID) -> Void
+
+    private var summary: ChartAccessibilitySummary {
+        ChartAccessibilitySummaryBuilder.strengthCard(model)
+    }
+
+    private var stacksHeader: Bool {
+        AdaptiveLayoutMetrics.shouldStackProgressCardHeader(dynamicTypeSize: dynamicTypeSize)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
 
-            Text(model.summaryText)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            AccessibleChartSummaryView(
+                summary: summary,
+                identifier: "Progress.Dashboard.StrengthSummary"
+            )
 
             if let emptyMessage = model.emptyMessage {
                 lowDataCallout(
@@ -31,6 +41,7 @@ struct StrengthProgressCard: View {
                                             .font(.body.weight(.semibold))
                                             .foregroundStyle(.primary)
                                             .multilineTextAlignment(.leading)
+                                            .fixedSize(horizontal: false, vertical: true)
 
                                         badge(exercise.badgeText, availability: exercise.availability)
                                     }
@@ -47,6 +58,7 @@ struct StrengthProgressCard: View {
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(.tertiary)
                                     .padding(.top, 4)
+                                    .accessibilityHidden(true)
                             }
                             .padding(12)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -67,26 +79,44 @@ struct StrengthProgressCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(cardBackground)
         .overlay(cardBorder)
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("Progress.Dashboard.StrengthCard")
+        .accessibilityCardSummary(
+            label: String(localized: "progress.dashboard.strength.title"),
+            value: summary.accessibilityValue,
+            hint: summary.accessibilityHint,
+            identifier: "Progress.Dashboard.StrengthCard"
+        )
     }
 
+    @ViewBuilder
     private var header: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 5) {
-                Label("progress.dashboard.strength.title", systemImage: "figure.strengthtraining.traditional")
-                    .font(.headline)
-                Text(model.headline)
-                    .font(.title3.weight(.semibold))
+        if stacksHeader {
+            VStack(alignment: .leading, spacing: 10) {
+                headerText
+                availabilityPill
+                    .accessibilityHidden(true)
             }
-
-            Spacer(minLength: 8)
-
-            availabilityPill
-                .accessibilityHidden(true)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
+        } else {
+            HStack(alignment: .top, spacing: 12) {
+                headerText
+                Spacer(minLength: 8)
+                availabilityPill
+                    .accessibilityHidden(true)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
+    }
+
+    private var headerText: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Label("progress.dashboard.strength.title", systemImage: "figure.strengthtraining.traditional")
+                .font(.headline)
+            Text(model.headline)
+                .font(.title3.weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private var availabilityPill: some View {

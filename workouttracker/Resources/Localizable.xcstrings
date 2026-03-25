@@ -6780,6 +6780,123 @@
         }
       }
     },
+    "progress.a11y.summary.best_week" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Best week was %@."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La mejor semana fue %@."
+          }
+        }
+      }
+    },
+    "progress.a11y.summary.finish.detail" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ completed. %@ skipped. %@ elapsed."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ completadas. %@ omitidas. %@ transcurridos."
+          }
+        }
+      }
+    },
+    "progress.a11y.summary.trend.down" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ volume is down over the last %2$lld weeks."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El volumen de %1$@ baja en las últimas %2$lld semanas."
+          }
+        }
+      }
+    },
+    "progress.a11y.summary.trend.flat" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ volume is steady over the last %2$lld weeks."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El volumen de %1$@ se mantiene estable en las últimas %2$lld semanas."
+          }
+        }
+      }
+    },
+    "progress.a11y.summary.trend.limited.one" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only %lld week of data is available, so the trend is limited."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo hay %lld semana de datos, así que la tendencia es limitada."
+          }
+        }
+      }
+    },
+    "progress.a11y.summary.trend.limited.other" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only %lld weeks of data are available, so the trend is limited."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo hay %lld semanas de datos, así que la tendencia es limitada."
+          }
+        }
+      }
+    },
+    "progress.a11y.summary.trend.up" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ volume is up over the last %2$lld weeks."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El volumen de %1$@ sube en las últimas %2$lld semanas."
+          }
+        }
+      }
+    },
     "progress.availability.low_data" : {
       "localizations" : {
         "en" : {

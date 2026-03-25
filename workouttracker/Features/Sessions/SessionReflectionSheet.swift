@@ -4,6 +4,7 @@ import SwiftData
 struct SessionReflectionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @Bindable private var session: WorkoutSession
     private let service: SessionReflectionService
@@ -85,7 +86,7 @@ struct SessionReflectionSheet: View {
                 Text(AppFormatting.localized("Mood"))
                     .font(.headline)
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 10)], spacing: 10) {
+                LazyVGrid(columns: moodColumns, spacing: 10) {
                     ForEach(SessionReflectionMood.allCases) { mood in
                         MoodChip(
                             title: mood.title,
@@ -174,9 +175,17 @@ struct SessionReflectionSheet: View {
             showError = true
         }
     }
-}
+
 
 // MARK: - UI Helpers
+
+    private var moodColumns: [GridItem] {
+        if AdaptiveLayoutMetrics.shouldUseSingleColumnReflectionMoodGrid(dynamicTypeSize: dynamicTypeSize) {
+            return [GridItem(.flexible())]
+        }
+        return [GridItem(.adaptive(minimum: 120), spacing: 10)]
+    }
+}
 
 private struct Card<Content: View>: View {
     @ViewBuilder var content: Content
@@ -205,7 +214,7 @@ private struct MoodChip: View {
             HStack(spacing: 8) {
                 Text(emoji)
                 Text(title)
-                    .lineLimit(1)
+                    .lineLimit(2)
             }
             .font(.subheadline.weight(.semibold))
             .padding(.vertical, 10)

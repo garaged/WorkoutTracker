@@ -3,6 +3,7 @@ import SwiftData
 
 struct ProgressDashboardView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @StateObject private var viewModel = ProgressDashboardViewModel()
 
     var body: some View {
@@ -113,9 +114,7 @@ struct ProgressDashboardView: View {
                     )
 
                     ConsistencyCard(model: content.consistency)
-                        .accessibilityIdentifier("Progress.Dashboard.ConsistencyCard")
                     RecoveryInsightCard(model: content.recovery)
-                        .accessibilityIdentifier("Progress.Dashboard.RecoveryCard")
                 }
             }
             .padding()
@@ -132,10 +131,12 @@ struct ProgressDashboardView: View {
             Text("progress.dashboard.header_subtitle")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
 
             Text(viewModel.localizedWindowLabel(content.windowTitle))
-                .font(.caption)
+                .font(dynamicTypeSize.isAccessibilitySize ? .body : .caption)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)

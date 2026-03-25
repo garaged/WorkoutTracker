@@ -8,6 +8,7 @@ import SwiftUI
 enum AdaptiveLayoutMetrics {
 
     static let setEditorMiddleWeights: [CGFloat] = [0.42, 0.58]
+
     static func shouldStackRestTimerControls(
         verticalSizeClass: UserInterfaceSizeClass?,
         dynamicTypeSize: DynamicTypeSize
@@ -50,6 +51,30 @@ enum AdaptiveLayoutMetrics {
     }
 
     static func shouldUseSingleColumnHomeTiles(dynamicTypeSize: DynamicTypeSize) -> Bool {
+        dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .accessibility1
+    }
+
+    static func shouldStackProgressCardHeader(dynamicTypeSize: DynamicTypeSize) -> Bool {
+        dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxxLarge
+    }
+
+    static func shouldUseSingleColumnProgressStats(dynamicTypeSize: DynamicTypeSize) -> Bool {
+        dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .accessibility1
+    }
+
+    static func shouldStackExerciseDetailHeader(dynamicTypeSize: DynamicTypeSize) -> Bool {
+        dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxxLarge
+    }
+
+    static func shouldStackExerciseDetailMetrics(dynamicTypeSize: DynamicTypeSize) -> Bool {
+        dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .accessibility1
+    }
+
+    static func shouldStackProgressDetailRow(dynamicTypeSize: DynamicTypeSize) -> Bool {
+        dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .xxxLarge
+    }
+
+    static func shouldUseSingleColumnReflectionMoodGrid(dynamicTypeSize: DynamicTypeSize) -> Bool {
         dynamicTypeSize.isAccessibilitySize || dynamicTypeSize >= .accessibility1
     }
 

@@ -118,6 +118,11 @@ struct WorkoutSessionScreen: View {
         )
     }
 
+    private var finishSummaryMetricColumns: [GridItem] {
+        let count = stacksSessionSummaryMetrics ? 1 : 3
+        return Array(repeating: GridItem(.flexible(), spacing: 12), count: count)
+    }
+
     private var stacksBottomActionBar: Bool {
         AdaptiveLayoutMetrics.shouldStackBottomActionBar(dynamicTypeSize: dynamicTypeSize)
     }
@@ -382,7 +387,14 @@ struct WorkoutSessionScreen: View {
                                 .accessibilityIdentifier("WorkoutSession.FinishSummary.Date")
                         }
 
-                        HStack(spacing: 12) {
+                        Text(finishSummaryCompanionText(summary))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityIdentifier("WorkoutSession.FinishSummary.AccessibleSummary")
+
+                        LazyVGrid(columns: finishSummaryMetricColumns, spacing: 12) {
                             finishSummaryMetricTile(
                                 title: String(localized: "session.summary.completed_sets"),
                                 value: summary.completedSetsText,
@@ -396,7 +408,7 @@ struct WorkoutSessionScreen: View {
                             )
 
                             finishSummaryMetricTile(
-                                title: "Elapsed",
+                                title: String(localized: "session.summary.elapsed"),
                                 value: summary.elapsedText,
                                 accessibilityIdentifier: "WorkoutSession.FinishSummary.Elapsed"
                             )
@@ -1022,18 +1034,34 @@ struct WorkoutSessionScreen: View {
         valueColor: Color = .primary,
         accessibilityIdentifier: String? = nil
     ) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Text(label)
-                .font(.subheadline)
-                .foregroundStyle(.primary)
+        Group {
+            if stacksSessionSummaryMetrics {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(label)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
 
-            Spacer(minLength: 12)
+                    Text(value)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(valueColor)
+                        .multilineTextAlignment(.leading)
+                        .monospacedDigit()
+                }
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    Text(label)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
 
-            Text(value)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(valueColor)
-                .multilineTextAlignment(.trailing)
-                .monospacedDigit()
+                    Spacer(minLength: 12)
+
+                    Text(value)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(valueColor)
+                        .multilineTextAlignment(.trailing)
+                        .monospacedDigit()
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 10)
@@ -1077,6 +1105,16 @@ struct WorkoutSessionScreen: View {
         .padding(.horizontal, 16)
         .padding(.top, 12)
         .padding(.bottom, 8)
+    }
+
+    private func finishSummaryCompanionText(_ summary: WorkoutSessionSummaryViewData) -> String {
+        String(
+            format: String(localized: "progress.a11y.summary.finish.detail"),
+            locale: .autoupdatingCurrent,
+            summary.completedSetsText,
+            summary.skippedSetsText,
+            summary.elapsedText
+        )
     }
 
     private func finishSummaryMetricTile(
@@ -2321,7 +2359,7 @@ struct WorkoutSessionScreen: View {
     
 }
 
-private extension View {
+extension View {
     @ViewBuilder
     func applyIfLet<Value, Content: View>(
         _ value: Value?,

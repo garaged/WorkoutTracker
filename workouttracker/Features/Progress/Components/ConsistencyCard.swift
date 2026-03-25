@@ -1,25 +1,39 @@
 import SwiftUI
 
 struct ConsistencyCard: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let model: ProgressDashboardViewModel.ConsistencyCardModel
+
+    private var summary: ChartAccessibilitySummary {
+        ChartAccessibilitySummaryBuilder.consistencyCard(model)
+    }
+
+    private var stacksHeader: Bool {
+        AdaptiveLayoutMetrics.shouldStackProgressCardHeader(dynamicTypeSize: dynamicTypeSize)
+    }
+
+    private var statsColumns: [GridItem] {
+        let count = AdaptiveLayoutMetrics.shouldUseSingleColumnProgressStats(dynamicTypeSize: dynamicTypeSize) ? 1 : 2
+        return Array(repeating: GridItem(.flexible(), spacing: 12), count: count)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
 
-            HStack(alignment: .top, spacing: 12) {
+            AccessibleChartSummaryView(
+                summary: summary,
+                identifier: "Progress.Dashboard.ConsistencySummary"
+            )
+
+            LazyVGrid(columns: statsColumns, spacing: 12) {
                 statBlock(title: String(localized: "progress.dashboard.consistency.stat.active_weeks"), value: model.activeWeeksText)
                 statBlock(title: String(localized: "progress.dashboard.consistency.stat.average"), value: model.averageText)
+                if let completionText = model.completionText {
+                    statBlock(title: String(localized: "progress.dashboard.consistency.stat.completion"), value: completionText)
+                }
             }
-
-            if let completionText = model.completionText {
-                statBlock(title: String(localized: "progress.dashboard.consistency.stat.completion"), value: completionText)
-            }
-
-            Text(model.supportingText)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
 
             if let emptyMessage = model.emptyMessage {
                 Text(emptyMessage)
@@ -37,25 +51,41 @@ struct ConsistencyCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(cardBackground)
         .overlay(cardBorder)
-        .accessibilityElement(children: .contain)
+        .accessibilityCardSummary(
+            label: String(localized: "progress.dashboard.consistency.title"),
+            value: summary.accessibilityValue,
+            identifier: "Progress.Dashboard.ConsistencyCard"
+        )
     }
 
+    @ViewBuilder
     private var header: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 5) {
-                Label("progress.dashboard.consistency.title", systemImage: "calendar.badge.clock")
-                    .font(.headline)
-                Text(model.headline)
-                    .font(.title3.weight(.semibold))
+        if stacksHeader {
+            VStack(alignment: .leading, spacing: 10) {
+                headerText
+                availabilityPill.accessibilityHidden(true)
             }
-
-            Spacer(minLength: 8)
-
-            availabilityPill
-                .accessibilityHidden(true)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
+        } else {
+            HStack(alignment: .top, spacing: 12) {
+                headerText
+                Spacer(minLength: 8)
+                availabilityPill.accessibilityHidden(true)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
+    }
+
+    private var headerText: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Label("progress.dashboard.consistency.title", systemImage: "calendar.badge.clock")
+                .font(.headline)
+            Text(model.headline)
+                .font(.title3.weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private func statBlock(title: String, value: String) -> some View {

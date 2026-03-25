@@ -5,7 +5,17 @@ struct ExerciseProgressDetailView: View {
     let exerciseID: UUID
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @StateObject private var viewModel = ExerciseProgressDetailViewModel()
+
+    private var stacksHeader: Bool {
+        AdaptiveLayoutMetrics.shouldStackExerciseDetailHeader(dynamicTypeSize: dynamicTypeSize)
+    }
+
+    private var keyMetricColumns: [GridItem] {
+        let count = AdaptiveLayoutMetrics.shouldStackExerciseDetailMetrics(dynamicTypeSize: dynamicTypeSize) ? 1 : 2
+        return Array(repeating: GridItem(.flexible(), spacing: 12), count: count)
+    }
 
     var body: some View {
         Group {
@@ -90,14 +100,28 @@ struct ExerciseProgressDetailView: View {
                 .font(.title2.weight(.semibold))
                 .accessibilityIdentifier("Progress.Detail.ExerciseName")
 
-            HStack(spacing: 10) {
-                availabilityPill(content.availability)
+            if stacksHeader {
+                VStack(alignment: .leading, spacing: 8) {
+                    availabilityPill(content.availability)
 
-                if let latestTopSet = content.latestTopSet {
-                    Text(latestTopSet.valueText)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                    if let latestTopSet = content.latestTopSet {
+                        Text(latestTopSet.valueText)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            } else {
+                HStack(spacing: 10) {
+                    availabilityPill(content.availability)
+
+                    if let latestTopSet = content.latestTopSet {
+                        Text(latestTopSet.valueText)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
+                    }
                 }
             }
 
@@ -114,7 +138,7 @@ struct ExerciseProgressDetailView: View {
     private func keyMetrics(_ content: ExerciseProgressDetailViewModel.DetailContent) -> some View {
         Group {
             if content.estimatedOneRepMax != nil || content.latestTopSet != nil {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                LazyVGrid(columns: keyMetricColumns, spacing: 12) {
                     if let estimated = content.estimatedOneRepMax {
                         keyMetricTile(estimated)
                             .accessibilityIdentifier("Progress.Detail.Estimated1RM")
@@ -136,6 +160,7 @@ struct ExerciseProgressDetailView: View {
                 .foregroundStyle(.secondary)
             Text(metric.valueText)
                 .font(.title3.weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true)
             Text(metric.subtitleText)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -176,8 +201,12 @@ struct ExerciseProgressDetailView: View {
     }
 
     private func weeklyVolumeSection(_ content: ExerciseProgressDetailViewModel.DetailContent) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let summary = ChartAccessibilitySummaryBuilder.exerciseVolumeTrend(content.summary.weeklyVolumeTrend)
+
+        return VStack(alignment: .leading, spacing: 12) {
             sectionHeader(title: String(localized: "progress.detail.section.recent_volume"), systemImage: "chart.bar.fill")
+
+            AccessibleChartSummaryView(summary: summary, identifier: "Progress.Detail.VolumeSummary")
 
             if content.weeklyVolumeRows.isEmpty {
                 ProgressEmptyStateView(
@@ -217,34 +246,61 @@ struct ExerciseProgressDetailView: View {
         }
     }
 
+    @ViewBuilder
     private func detailRow(title: String, value: String, subtitle: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
+        let stackValue = AdaptiveLayoutMetrics.shouldStackProgressDetailRow(dynamicTypeSize: dynamicTypeSize)
+        if stackValue {
+            VStack(alignment: .leading, spacing: 8) {
                 Text(title)
                     .font(.subheadline.weight(.semibold))
+                Text(value)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(.quaternary)
+            )
+            .accessibilityElement(children: .combine)
+        } else {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
 
-            Spacer(minLength: 8)
+                Spacer(minLength: 8)
 
-            Text(value)
-                .font(.subheadline.weight(.semibold))
-                .multilineTextAlignment(.trailing)
+                Text(value)
+                    .font(.subheadline.weight(.semibold))
+                    .multilineTextAlignment(.trailing)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(.quaternary)
+            )
+            .accessibilityElement(children: .combine)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(.quaternary)
-        )
-        .accessibilityElement(children: .combine)
     }
 
     private func sectionHeader(title: String, systemImage: String) -> some View {
@@ -253,17 +309,17 @@ struct ExerciseProgressDetailView: View {
     }
 
     private func availabilityPill(_ availability: ProgressDataAvailability) -> some View {
-        Text(verbatim: availabilityLabel(for: availability))
+        Text(verbatim: availabilityText(for: availability))
             .font(.caption.weight(.semibold))
-            .foregroundStyle(color(for: availability))
+            .foregroundStyle(availabilityColor(for: availability))
             .padding(.horizontal, 8)
             .padding(.vertical, 5)
-            .background(color(for: availability).opacity(0.12), in: Capsule())
+            .background(availabilityColor(for: availability).opacity(0.12), in: Capsule())
             .accessibilityHidden(true)
     }
 
     private func headerAccessibilityLabel(_ content: ExerciseProgressDetailViewModel.DetailContent) -> String {
-        var parts = [content.exerciseName, availabilityLabel(for: content.availability)]
+        var parts = [content.exerciseName, availabilityText(for: content.availability)]
         if let latestTopSet = content.latestTopSet {
             parts.append(latestTopSet.valueText)
         }
@@ -271,19 +327,25 @@ struct ExerciseProgressDetailView: View {
         return parts.joined(separator: ". ")
     }
 
-    private func availabilityLabel(for availability: ProgressDataAvailability) -> String {
+    private func availabilityText(for availability: ProgressDataAvailability) -> String {
         switch availability {
-        case .full: return NSLocalizedString("progress.availability.ready", comment: "")
-        case .partial: return NSLocalizedString("progress.availability.low_data", comment: "")
-        case .insufficient: return NSLocalizedString("progress.availability.unavailable", comment: "")
+        case .full:
+            return String(localized: "progress.availability.ready")
+        case .partial:
+            return String(localized: "progress.availability.low_data")
+        case .insufficient:
+            return String(localized: "progress.availability.unavailable")
         }
     }
 
-    private func color(for availability: ProgressDataAvailability) -> Color {
+    private func availabilityColor(for availability: ProgressDataAvailability) -> Color {
         switch availability {
-        case .full: return .secondary
-        case .partial: return .orange
-        case .insufficient: return .red
+        case .full:
+            return .secondary
+        case .partial:
+            return .orange
+        case .insufficient:
+            return .red
         }
     }
 }

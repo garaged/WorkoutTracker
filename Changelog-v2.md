@@ -1,3 +1,27 @@
+# Changelog v2.0.2
+
+This update improves accessibility, layout resilience, and readability across key parts of the app.
+
+## Accessibility and readability
+
+- improved spoken labels and accessibility semantics across session, home, progress, and summary flows
+- clearer state communication for current, completed, overdue, and paused states
+- better support for larger Dynamic Type sizes across dense screens
+
+## Session and Home resilience
+
+- improved workout set row layout across phone sizes
+- made session controls and active-session cards more resilient on compact and large phones
+- improved visibility and behavior of current-set and active-rest states
+- reduced cramped layouts and improved wrapping on key session and home screens
+
+## Progress and summary resilience
+
+- added accessible text summaries for progress insights and trends
+- improved exercise progress detail readability without relying only on charts
+- made progress cards and finish-summary sections adapt more gracefully to larger text
+- improved low-data states so they remain clear and informative
+
 # Changelog v2.0.1
 
 ## v2.0.1 — Session polish and trust pass

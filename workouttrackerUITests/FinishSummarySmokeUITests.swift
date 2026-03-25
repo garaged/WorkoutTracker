@@ -38,6 +38,7 @@ final class FinishSummarySmokeUITests: XCTestCase {
         XCTAssertTrue(identifiedElement("WorkoutSession.FinishSummary.SkippedSets").exists)
         XCTAssertTrue(identifiedElement("WorkoutSession.FinishSummary.Elapsed").exists)
         XCTAssertTrue(identifiedElement("WorkoutSession.FinishSummary.Status").exists)
+        XCTAssertTrue(identifiedElement("WorkoutSession.FinishSummary.AccessibleSummary").exists)
     }
 
     func test_finishSummary_lowDataSession_showsHonestyNote() {
