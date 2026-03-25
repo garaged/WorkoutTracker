@@ -14,10 +14,12 @@ struct HomeTile: Identifiable {
 struct HomeScreen: View {
     let tiles: [HomeTile]
     var onResumeSession: (WorkoutSession) -> Void = { _ in }
-    
-    private let columns: [GridItem] = [
-        GridItem(.adaptive(minimum: 160), spacing: 14)
-    ]
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var columns: [GridItem] {
+        [GridItem(.adaptive(minimum: AdaptiveLayoutMetrics.shouldUseSingleColumnHomeTiles(dynamicTypeSize: dynamicTypeSize) ? 260 : 160), spacing: 14)]
+    }
 
     var body: some View {
         ZStack {
@@ -61,36 +63,47 @@ struct HomeScreen: View {
     }
 
     private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(AppFormatting.localized("Workout Tracker"))
-                    .font(.largeTitle.bold())
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(AppFormatting.localized("Workout Tracker"))
+                        .font(.largeTitle.bold())
+                        .fixedSize(horizontal: false, vertical: true)
 
-                Text(Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    Text(Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 8)
+
+                settingsLink
             }
-
-            Spacer()
-
-            // ✅ Better placement: in the header, not in a blank nav bar.
-            NavigationLink {
-                SettingsScreen()
-            } label: {
-                Image(systemName: "gearshape")
-                    .font(.system(size: 18, weight: .semibold))
-                    .symbolRenderingMode(.hierarchical)
-                    .padding(10)
-                    .background(.ultraThinMaterial, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(AppFormatting.localized("Settings"))
         }
+    }
+
+    private var settingsLink: some View {
+        NavigationLink {
+            SettingsScreen()
+        } label: {
+            Image(systemName: "gearshape")
+                .font(.system(size: 18, weight: .semibold))
+                .symbolRenderingMode(.hierarchical)
+                .padding(10)
+                .background(.ultraThinMaterial, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIconControl(
+            label: AccessibilityLabels.Buttons.settings,
+            hint: AccessibilityLabels.Buttons.settingsHint,
+            identifier: UIAccessibilityIdentifiers.Settings.toolbarLink
+        )
     }
 }
 
 private struct HomeTileCard: View {
     let tile: HomeTile
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -111,16 +124,18 @@ private struct HomeTileCard: View {
             Text(tile.title)
                 .font(.headline)
                 .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
 
             Text(tile.subtitle)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-                .lineLimit(2)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? 4 : 2)
+                .fixedSize(horizontal: false, vertical: true)
 
             Spacer(minLength: 0)
         }
         .padding(14)
-        .frame(height: 130)
+        .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 156 : 130, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(.ultraThinMaterial)

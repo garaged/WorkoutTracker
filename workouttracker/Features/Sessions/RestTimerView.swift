@@ -49,16 +49,31 @@ struct RestTimerView: View {
         )
     }
 
+    private var borderColor: Color {
+        if timer.displaySeconds < 0 { return .orange.opacity(0.45) }
+        if timer.isRunning { return .accentColor.opacity(0.28) }
+        return Color(uiColor: .separator).opacity(0.30)
+    }
+
+    private var statusForeground: Color {
+        if timer.displaySeconds < 0 { return .orange }
+        if timer.isRunning { return .accentColor }
+        return .secondary
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             topBar
+                .accessibilityReadingOrder(3)
+
             presetBar
+                .accessibilityReadingOrder(1)
         }
         .padding(usesStackedLayout ? 12 : 10)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        .background(cardBackground)
         .overlay {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .stroke(Color(uiColor: .separator).opacity(0.30), lineWidth: 1)
+                .stroke(borderColor, lineWidth: 1)
         }
         .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 4)
         .accessibilityCardSummary(
@@ -71,15 +86,22 @@ struct RestTimerView: View {
         .animation(.workoutAdaptive(reducedMotion: accessibilityReduceMotion), value: timer.isRunning)
     }
 
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(.regularMaterial)
+            .overlay {
+                if timer.displaySeconds < 0 {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(Color.orange.opacity(0.10))
+                }
+            }
+    }
+
     @ViewBuilder
     private var topBar: some View {
         if usesStackedLayout {
             VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    titleAndTimer
-                    Spacer(minLength: 8)
-                }
-
+                titleAndTimer
                 controlsRow
             }
         } else {
@@ -90,23 +112,11 @@ struct RestTimerView: View {
                     controlsRow
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(alignment: .firstTextBaseline) {
-                        titleAndTimer
-                        Spacer()
-                    }
-
+                VStack(alignment: .leading, spacing: 10) {
+                    titleAndTimer
                     controlsRow
                 }
             }
-        }
-    }
-
-    private var controlsRow: some View {
-        HStack(spacing: 8) {
-            startPauseButton
-            finishButton
-            resetButton
         }
     }
 
@@ -136,16 +146,35 @@ struct RestTimerView: View {
                     .foregroundStyle(statusForeground)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(statusForeground.opacity(0.12), in: Capsule())
+                    .background(statusForeground.opacity(0.14), in: Capsule())
                     .accessibilityHidden(true)
             }
         }
     }
 
-    private var statusForeground: Color {
-        if timer.displaySeconds < 0 { return .orange }
-        if timer.isRunning { return .accentColor }
-        return .secondary
+    @ViewBuilder
+    private var controlsRow: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                startPauseButton
+                finishButton
+                resetButton
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                startPauseButton
+                HStack(spacing: 8) {
+                    finishButton
+                    resetButton
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                startPauseButton
+                finishButton
+                resetButton
+            }
+        }
     }
 
     @ViewBuilder
@@ -201,6 +230,7 @@ struct RestTimerView: View {
                 systemImage: timer.isRunning ? "pause.fill" : "play.fill"
             )
             .font(.subheadline.weight(.semibold))
+            .frame(maxWidth: usesStackedLayout ? .infinity : nil)
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.small)
@@ -217,6 +247,7 @@ struct RestTimerView: View {
         } label: {
             Label(String(localized: "session.rest.finish"), systemImage: "checkmark.circle")
                 .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: usesStackedLayout ? .infinity : nil)
         }
         .accessibilityIdentifier("RestTimerView.FinishButton")
         .accessibilityLabel(AccessibilityLabels.Buttons.finishRest)
@@ -231,6 +262,7 @@ struct RestTimerView: View {
         } label: {
             Label(String(localized: "common.reset"), systemImage: "arrow.counterclockwise")
                 .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: usesStackedLayout ? .infinity : nil)
         }
         .accessibilityLabel(AccessibilityLabels.Buttons.resetRest)
         .buttonStyle(.bordered)

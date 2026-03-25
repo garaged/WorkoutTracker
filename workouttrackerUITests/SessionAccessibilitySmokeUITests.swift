@@ -49,5 +49,9 @@ final class SessionAccessibilitySmokeUITests: XCTestCase {
         }
         XCTAssertTrue(finishRest.exists, "Expected Finish rest control.")
         XCTAssertTrue(finishRest.isHittable, "Expected Finish rest control to remain hittable under large text.")
+
+        let continueButton = app.buttons["WorkoutSession.ContinueButton"]
+        XCTAssertTrue(continueButton.waitForExistence(timeout: t(4)), "Expected Continue button under large text.")
+        XCTAssertTrue(continueButton.isHittable, "Expected Continue button to remain hittable under large text.")
     }
 }

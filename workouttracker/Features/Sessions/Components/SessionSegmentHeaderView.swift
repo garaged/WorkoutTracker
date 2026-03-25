@@ -8,6 +8,7 @@ struct SessionSegmentHeaderView: View {
     var onSkip: (() -> Void)? = nil
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     private var title: String {
         switch kind {
@@ -37,7 +38,15 @@ struct SessionSegmentHeaderView: View {
     }
 
     private var stacksProgress: Bool {
-        AdaptiveLayoutMetrics.shouldStackSegmentHeaderProgress(dynamicTypeSize: dynamicTypeSize)
+        verticalSizeClass == .compact || AdaptiveLayoutMetrics.shouldStackSegmentHeaderProgress(dynamicTypeSize: dynamicTypeSize)
+    }
+
+    private var segmentIcon: String {
+        switch kind {
+        case .warmUp: return "flame.fill"
+        case .main: return "figure.strengthtraining.traditional"
+        case .coolDown: return "wind"
+        }
     }
 
     var body: some View {
@@ -71,7 +80,7 @@ struct SessionSegmentHeaderView: View {
         .background(backgroundStyle)
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(borderColor, lineWidth: 1)
+                .stroke(borderColor, lineWidth: isCurrent ? 1.5 : 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .accessibilityCardSummary(
@@ -82,25 +91,36 @@ struct SessionSegmentHeaderView: View {
     }
 
     private var headerTextBlock: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                if isCurrent {
-                    Image(systemName: "location.fill")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(Color.accentColor)
-                        .accessibilityDecorative()
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: segmentIcon)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(isCurrent ? Color.accentColor : Color.secondary)
+                .padding(8)
+                .background((isCurrent ? Color.accentColor : Color.secondary).opacity(0.10), in: Circle())
+                .accessibilityDecorative()
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    if isCurrent {
+                        Text(subtitle)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Color.accentColor)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.accentColor.opacity(0.12), in: Capsule())
+                    } else {
+                        Text(subtitle)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
                 }
+                .accessibilityIdentifier(isCurrent ? "SessionSegmentHeaderView.CurrentLabel" : "SessionSegmentHeaderView.Label")
 
-                Text(subtitle)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(isCurrent ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Color.secondary))
-                    .accessibilityIdentifier(isCurrent ? "SessionSegmentHeaderView.CurrentLabel" : "SessionSegmentHeaderView.Label")
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                    .accessibilityIdentifier("SessionSegmentHeaderView.Title.\(kind.rawValue)")
             }
-
-            Text(title)
-                .font(.headline)
-                .foregroundStyle(.primary)
-                .accessibilityIdentifier("SessionSegmentHeaderView.Title.\(kind.rawValue)")
         }
     }
 
@@ -109,10 +129,10 @@ struct SessionSegmentHeaderView: View {
         if let progressText {
             Text(progressText)
                 .font(.caption.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(isCurrent ? Color.accentColor : Color.secondary)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(.ultraThinMaterial, in: Capsule())
+                .background((isCurrent ? Color.accentColor : Color.secondary).opacity(0.10), in: Capsule())
                 .accessibilityIdentifier("SessionSegmentHeaderView.Progress.\(kind.rawValue)")
                 .accessibilityHidden(true)
         }
@@ -126,6 +146,6 @@ struct SessionSegmentHeaderView: View {
     }
 
     private var borderColor: Color {
-        isCurrent ? Color.accentColor.opacity(0.28) : Color.secondary.opacity(0.12)
+        isCurrent ? Color.accentColor.opacity(0.32) : Color.secondary.opacity(0.12)
     }
 }

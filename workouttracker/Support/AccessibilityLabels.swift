@@ -232,7 +232,9 @@ enum AccessibilityLabels {
                 return String(localized: "a11y.value.set.state.current")
             case .behind:
                 return String(localized: "a11y.value.set.state.behind")
-            case .pending, .completed:
+            case .completed:
+                return String(localized: "a11y.value.set.state.completed")
+            case .pending:
                 return nil
             }
         }

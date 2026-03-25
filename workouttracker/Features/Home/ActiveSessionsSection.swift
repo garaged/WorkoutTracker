@@ -4,6 +4,7 @@ import SwiftData
 struct ActiveSessionsSection: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
     private var sessions: [WorkoutSession]
@@ -100,21 +101,33 @@ struct ActiveSessionsSection: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Label(AppFormatting.localized("Active Sessions"), systemImage: "figure.strengthtraining.traditional")
-                    .font(.headline)
+        VStack(alignment: .leading, spacing: 6) {
+            if AdaptiveLayoutMetrics.shouldStackActiveSessionCardHeader(dynamicTypeSize: dynamicTypeSize) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(AppFormatting.localized("Active Sessions"), systemImage: "figure.strengthtraining.traditional")
+                        .font(.headline)
 
-                Spacer()
+                    Text("\(activeSessions.count)")
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                HStack {
+                    Label(AppFormatting.localized("Active Sessions"), systemImage: "figure.strengthtraining.traditional")
+                        .font(.headline)
 
-                Text("\(activeSessions.count)")
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    Spacer()
+
+                    Text("\(activeSessions.count)")
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Text(String(localized: "home.active_sessions.help"))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -252,28 +265,23 @@ private struct ActiveSessionCard: View {
         AdaptiveLayoutMetrics.shouldStackActiveSessionButtons(dynamicTypeSize: dynamicTypeSize)
     }
 
+    private var stacksHeader: Bool {
+        AdaptiveLayoutMetrics.shouldStackActiveSessionCardHeader(dynamicTypeSize: dynamicTypeSize)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 10) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(session.sourceRoutineNameSnapshot ?? String(localized: "Workout"))
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-
-                    Text(subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+            if stacksHeader {
+                VStack(alignment: .leading, spacing: 8) {
+                    titleBlock
+                    badgeView
                 }
-
-                Spacer()
-
-                Text(badgeTitle)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(badgeForeground)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(badgeForeground.opacity(0.12), in: Capsule())
-                    .accessibilityHidden(true)
+            } else {
+                HStack(alignment: .top, spacing: 10) {
+                    titleBlock
+                    Spacer()
+                    badgeView
+                }
             }
 
             if attentionState == .staleNeedsPrompt {
@@ -303,6 +311,30 @@ private struct ActiveSessionCard: View {
             ),
             identifier: cardAccessibilityID
         )
+    }
+
+    private var titleBlock: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(session.sourceRoutineNameSnapshot ?? String(localized: "Workout"))
+                .font(.headline)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(subtitle)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var badgeView: some View {
+        Text(badgeTitle)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(badgeForeground)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(badgeForeground.opacity(0.12), in: Capsule())
+            .accessibilityHidden(true)
     }
 
     @ViewBuilder

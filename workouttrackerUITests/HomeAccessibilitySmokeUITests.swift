@@ -17,6 +17,10 @@ final class HomeAccessibilitySmokeUITests: XCTestCase {
         )
         app.launch()
 
+        let settingsButton = app.buttons["settings.toolbarLink"]
+        XCTAssertTrue(settingsButton.waitForExistence(timeout: t(4)), "Expected Settings button under large text.")
+        XCTAssertTrue(settingsButton.isHittable, "Expected Settings button to remain hittable under large text.")
+
         let section = app.el("Home.ActiveSessions.Section")
         if !section.waitForExistence(timeout: t(6)) {
             attachUITestDebug(app, name: "HomeAccessibility_SectionMissing")

@@ -69,6 +69,10 @@ extension View {
         accessibilityHidden(true)
     }
 
+    func accessibilityReadingOrder(_ priority: Double) -> some View {
+        accessibilitySortPriority(priority)
+    }
+
     @ViewBuilder
     fileprivate func appAccessibilityValue(_ value: String?) -> some View {
         if let value, !value.isEmpty {

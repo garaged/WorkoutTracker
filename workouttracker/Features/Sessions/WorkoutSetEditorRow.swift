@@ -28,11 +28,26 @@ struct WorkoutSetEditorRow: View {
             dynamicTypeSize: dynamicTypeSize
         )
     }
-    private var repsFieldWidth: CGFloat {
-        AdaptiveLayoutMetrics.compactFieldWidth(base: isCompact ? 54 : 62, dynamicTypeSize: dynamicTypeSize)
+    private var repsFieldMinWidth: CGFloat {
+        AdaptiveLayoutMetrics.compactFieldWidth(base: isCompact ? 44 : 58, dynamicTypeSize: dynamicTypeSize)
     }
-    private var weightFieldWidth: CGFloat {
-        AdaptiveLayoutMetrics.compactFieldWidth(base: isCompact ? 68 : 84, dynamicTypeSize: dynamicTypeSize)
+    private var weightFieldMinWidth: CGFloat {
+        AdaptiveLayoutMetrics.compactFieldWidth(base: isCompact ? 56 : 78, dynamicTypeSize: dynamicTypeSize)
+    }
+    private var editorSpacing: CGFloat {
+        isCompact ? 8 : 12
+    }
+    private var usesExpandedDoneControl: Bool {
+        dynamicTypeSize.isAccessibilitySize
+    }
+    private var compactControlVisualSize: CGFloat {
+        dynamicTypeSize.isAccessibilitySize ? 44 : (isCompact ? 32 : 36)
+    }
+    private var doneControlWidth: CGFloat {
+        usesExpandedDoneControl ? 92 : (isCompact ? 34 : 40)
+    }
+    private var rowNumberWidth: CGFloat {
+        isCompact ? 20 : 28
     }
 
     let setNumber: Int
@@ -123,65 +138,33 @@ struct WorkoutSetEditorRow: View {
         HStack(alignment: stacksEditorsVertically ? .top : .center, spacing: 8) {
             Text("\(setNumber)")
                 .font(.headline)
-                .frame(width: 28, alignment: .leading)
+                .frame(width: rowNumberWidth, alignment: .leading)
                 .foregroundStyle(set.completed ? .secondary : .primary)
                 .layoutPriority(2)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: isCompact ? 6 : 8) {
                 editorsBlock
-
-                if let hint = targetHint {
-                    Text(hint)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(stacksEditorsVertically ? 2 : 1)
-                        .minimumScaleFactor(0.85)
-                }
-
-                SetRowActionsBar(
-                    isReadOnly: isReadOnly,
-                    onAction: { action in
-                        switch action {
-                        case .copy:
-                            onCopySet?()
-                        case .add:
-                            onAddSet?()
-                        case .delete:
-                            onDeleteSet?()
-                        }
-                    },
-                    idPrefix: "\(a11yPrefix).Actions"
-                )
+                supportingContent
             }
             .layoutPriority(1)
 
-            Spacer(minLength: 0)
-
-            Button {
-                toggleDone()
-            } label: {
-                Image(systemName: set.completed ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(set.completed ? .green : .secondary)
-                    .accessibilityDecorative()
-            }
-            .buttonStyle(.plain)
-            .frame(width: 44, alignment: .trailing)
-            .layoutPriority(2)
-            .disabled(isReadOnly)
-            .accessibilityIconControl(
-                label: AccessibilityLabels.SessionSet.doneToggleLabel(isCompleted: set.completed),
-                hint: accessibilityStateText,
-                identifier: "\(a11yPrefix).DoneToggle"
-            )
+            doneToggleButton
+                .frame(width: doneControlWidth, alignment: .trailing)
+                .frame(minHeight: compactControlVisualSize)
+                .layoutPriority(2)
+                .disabled(isReadOnly)
+                .accessibilityIconControl(
+                    label: AccessibilityLabels.SessionSet.doneToggleLabel(isCompleted: set.completed),
+                    hint: accessibilityStateText,
+                    identifier: "\(a11yPrefix).DoneToggle"
+                )
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(AccessibilityLabels.SessionSet.rowLabel(setNumber: setNumber))
         .accessibilityValue(rowAccessibilityValue)
         .accessibilityIdentifier("\(a11yPrefix).Row")
-        .padding(.vertical, 6)
+        .padding(.vertical, isCompact ? 4 : 6)
         .onDisappear {
             persistDebounceTask?.cancel()
             persistDebounceTask = nil
@@ -189,20 +172,97 @@ struct WorkoutSetEditorRow: View {
         }
     }
 
-    private var editorsBlock: some View {
-        Group {
-            if stacksEditorsVertically {
-                VStack(alignment: .leading, spacing: 10) {
-                    repsEditor
-                    weightEditor
-                }
-            } else {
-                HStack(alignment: .top, spacing: isCompact ? 8 : 12) {
-                    repsEditor
-                    weightEditor
+    @ViewBuilder
+    private var doneToggleButton: some View {
+        let baseButton = Button {
+            toggleDone()
+        } label: {
+            Group {
+                if usesExpandedDoneControl {
+                    Label(
+                        set.completed ? String(localized: "common.done") : String(localized: "a11y.button.mark_complete"),
+                        systemImage: set.completed ? "checkmark.circle.fill" : "circle"
+                    )
+                    .font(.subheadline.weight(.semibold))
+                } else {
+                    Image(systemName: set.completed ? "checkmark.circle.fill" : "circle")
+                        .font(isCompact ? .title3 : .title2)
                 }
             }
+            .symbolRenderingMode(.hierarchical)
+            .foregroundStyle(set.completed ? .green : .secondary)
+            .accessibilityDecorative()
         }
+
+        if usesExpandedDoneControl {
+            baseButton.buttonStyle(.bordered)
+        } else {
+            baseButton.buttonStyle(.plain)
+        }
+    }
+
+    @ViewBuilder
+    private var editorsBlock: some View {
+        if stacksEditorsVertically {
+            VStack(alignment: .leading, spacing: 6) {
+                repsEditor
+                weightEditor
+            }
+        } else {
+            WeightedEditorRowLayout(weights: AdaptiveLayoutMetrics.setEditorMiddleWeights, spacing: editorSpacing) {
+                repsEditor
+                weightEditor
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var supportingContent: some View {
+        if let hint = targetHint {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: 10) {
+                    Text(hint)
+                        .font(isCompact ? .caption2 : .caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .layoutPriority(1)
+
+                    Spacer(minLength: 8)
+
+                    rowActions
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(hint)
+                        .font(isCompact ? .caption2 : .caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? 4 : 2)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    rowActions
+                }
+            }
+        } else {
+            rowActions
+        }
+    }
+
+    private var rowActions: some View {
+        SetRowActionsBar(
+            isReadOnly: isReadOnly,
+            onAction: { action in
+                switch action {
+                case .copy:
+                    onCopySet?()
+                case .add:
+                    onAddSet?()
+                case .delete:
+                    onDeleteSet?()
+                }
+            },
+            idPrefix: "\(a11yPrefix).Actions"
+        )
     }
 
     private var repsEditor: some View {
@@ -211,7 +271,7 @@ struct WorkoutSetEditorRow: View {
             accessibilityFieldLabel: AccessibilityLabels.Fields.reps,
             text: repsBinding,
             keyboard: .numberPad,
-            width: repsFieldWidth,
+            width: repsFieldMinWidth,
             minusAccessibilityLabel: AccessibilityLabels.Buttons.decreaseReps,
             plusAccessibilityLabel: AccessibilityLabels.Buttons.increaseReps,
             minus: { bumpReps(-1) },
@@ -226,14 +286,14 @@ struct WorkoutSetEditorRow: View {
             accessibilityFieldLabel: AccessibilityLabels.Fields.weight(unit: preferredUnit.label),
             text: weightBinding,
             keyboard: .decimalPad,
-            width: weightFieldWidth,
+            width: weightFieldMinWidth,
             minusAccessibilityLabel: AccessibilityLabels.Buttons.decreaseWeight(unit: preferredUnit.label),
             plusAccessibilityLabel: AccessibilityLabels.Buttons.increaseWeight(unit: preferredUnit.label),
             minus: { bumpWeight(-weightStep) },
             plus: { bumpWeight(+weightStep) },
             trailing: isCompact ? nil : AnyView(
                 Text(preferredUnit.label)
-                    .font(.caption)
+                    .font(isCompact ? .caption2 : .caption)
                     .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
             ),
@@ -317,40 +377,91 @@ struct WorkoutSetEditorRow: View {
         trailing: AnyView? = nil,
         idBase: String
     ) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: isCompact ? 2 : 4) {
             Text(title)
-                .font(.caption)
+                .font(isCompact ? .caption2 : .caption)
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
 
-            HStack(spacing: 6) {
+            HStack(spacing: isCompact ? 4 : 6) {
                 StepIconButton(
                     systemName: "minus.circle",
                     action: minus,
                     accessibilityLabel: minusAccessibilityLabel,
-                    accessibilityID: "\(idBase).Minus"
+                    accessibilityID: "\(idBase).Minus",
+                    visualSize: compactControlVisualSize
                 )
                 .disabled(isReadOnly)
 
                 TextField("—", text: text)
                     .multilineTextAlignment(.trailing)
                     .keyboardType(keyboard)
-                    .frame(width: width)
+                    .frame(minWidth: width, maxWidth: .infinity)
                     .textFieldStyle(.roundedBorder)
                     .disabled(isReadOnly)
                     .accessibilityLabel(accessibilityFieldLabel)
+                    .accessibilityHint(targetHint ?? "")
                     .accessibilityIdentifier("\(idBase).Field")
 
                 StepIconButton(
                     systemName: "plus.circle",
                     action: plus,
                     accessibilityLabel: plusAccessibilityLabel,
-                    accessibilityID: "\(idBase).Plus"
+                    accessibilityID: "\(idBase).Plus",
+                    visualSize: compactControlVisualSize
                 )
                 .disabled(isReadOnly)
 
                 if let trailing { trailing }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private struct WeightedEditorRowLayout: Layout {
+        let weights: [CGFloat]
+        let spacing: CGFloat
+
+        func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+            let measuredWidth = proposal.width ?? subviews.reduce(0) { partial, subview in
+                partial + subview.sizeThatFits(.unspecified).width
+            } + spacing * CGFloat(max(0, subviews.count - 1))
+            let widths = allocatedWidths(totalWidth: measuredWidth, count: subviews.count)
+            var maxHeight: CGFloat = 0
+            for (index, subview) in subviews.enumerated() {
+                let size = subview.sizeThatFits(ProposedViewSize(width: widths[index], height: proposal.height))
+                maxHeight = max(maxHeight, size.height)
+            }
+            return CGSize(width: measuredWidth, height: maxHeight)
+        }
+
+        func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+            let widths = allocatedWidths(totalWidth: bounds.width, count: subviews.count)
+            var x = bounds.minX
+            for (index, subview) in subviews.enumerated() {
+                let width = widths[index]
+                subview.place(
+                    at: CGPoint(x: x, y: bounds.minY),
+                    anchor: .topLeading,
+                    proposal: ProposedViewSize(width: width, height: proposal.height)
+                )
+                x += width + spacing
+            }
+        }
+
+        private func allocatedWidths(totalWidth: CGFloat, count: Int) -> [CGFloat] {
+            guard count > 0 else { return [] }
+            let totalSpacing = spacing * CGFloat(max(0, count - 1))
+            let availableWidth = max(0, totalWidth - totalSpacing)
+            let normalizedWeights = weights.count == count && weights.reduce(0, +) > 0
+                ? weights
+                : Array(repeating: 1, count: count)
+            let totalWeight = normalizedWeights.reduce(0, +)
+            guard totalWeight > 0 else {
+                return Array(repeating: availableWidth / CGFloat(count), count: count)
+            }
+            return normalizedWeights.map { availableWidth * ($0 / totalWeight) }
         }
     }
 
@@ -359,12 +470,15 @@ struct WorkoutSetEditorRow: View {
         let action: () -> Void
         let accessibilityLabel: String
         let accessibilityID: String
+        let visualSize: CGFloat
 
         var body: some View {
             Button(action: action) {
                 Image(systemName: systemName)
-                    .font(.title3)
+                    .font(visualSize <= 32 ? .body : .title3)
                     .foregroundStyle(.secondary)
+                    .frame(width: visualSize, height: visualSize)
+                    .contentShape(Rectangle())
                     .accessibilityDecorative()
             }
             .buttonStyle(.plain)
@@ -374,12 +488,12 @@ struct WorkoutSetEditorRow: View {
 
     private func formatWeight(_ w: Double) -> String {
         if w.rounded() == w { return String(Int(w)) }
-        return String(w)
+        return String(format: "%.1f", w)
     }
 
     private func formatRPE(_ r: Double) -> String {
         if r.rounded() == r { return String(Int(r)) }
-        return String(r)
+        return String(format: "%.1f", r)
     }
 
     private func fireCompletionHaptic() {
