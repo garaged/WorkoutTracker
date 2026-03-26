@@ -3,6 +3,8 @@ import SwiftData
 
 struct ActiveSessionsSection: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
     private var sessions: [WorkoutSession]
@@ -33,7 +35,7 @@ struct ActiveSessionsSection: View {
         if !activeSessions.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 header
-                
+
                 ForEach(activeSessions) { session in
                     let attention = attentionState(for: session)
                     ActiveSessionCard(
@@ -99,21 +101,33 @@ struct ActiveSessionsSection: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Label(AppFormatting.localized("Active Sessions"), systemImage: "figure.strengthtraining.traditional")
-                    .font(.headline)
+        VStack(alignment: .leading, spacing: 6) {
+            if AdaptiveLayoutMetrics.shouldStackActiveSessionCardHeader(dynamicTypeSize: dynamicTypeSize) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(AppFormatting.localized("Active Sessions"), systemImage: "figure.strengthtraining.traditional")
+                        .font(.headline)
 
-                Spacer()
+                    Text("\(activeSessions.count)")
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                HStack {
+                    Label(AppFormatting.localized("Active Sessions"), systemImage: "figure.strengthtraining.traditional")
+                        .font(.headline)
 
-                Text("\(activeSessions.count)")
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    Spacer()
+
+                    Text("\(activeSessions.count)")
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Text(String(localized: "home.active_sessions.help"))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -122,8 +136,6 @@ struct ActiveSessionsSection: View {
         return activityByID[id]
     }
 
-    /// The day this session *belongs to*.
-    /// Prefer the linked workout activity date; fall back to when the session record was started.
     private func owningDayDate(for session: WorkoutSession) -> Date {
         linkedActivity(for: session)?.startAt ?? session.startedAt
     }
@@ -136,7 +148,7 @@ struct ActiveSessionsSection: View {
         let todayStart = calendar.startOfDay(for: Date())
         return calendar.startOfDay(for: owningDayDate(for: session)) < todayStart
     }
-    
+
     private func subtitle(for session: WorkoutSession) -> String {
         let startedText: String
         if calendar.isDateInToday(session.startedAt) {
@@ -201,22 +213,22 @@ struct ActiveSessionsSection: View {
             onResume(session)
         }
     }
-    
-    private func finish(_ session: WorkoutSession) {
-            withAnimation(.snappy) {
-                if session.isPaused {
-                    session.resume()
-                }
-                session.endedAt = Date()
-                session.status = .completed
 
-                do {
-                    try modelContext.save()
-                } catch {
-                    assertionFailure("Failed to finish active session from Home: \(error)")
-                }
+    private func finish(_ session: WorkoutSession) {
+        withAnimation(.workoutAdaptive(reducedMotion: accessibilityReduceMotion)) {
+            if session.isPaused {
+                session.resume()
+            }
+            session.endedAt = Date()
+            session.status = .completed
+
+            do {
+                try modelContext.save()
+            } catch {
+                assertionFailure("Failed to finish active session from Home: \(error)")
             }
         }
+    }
 }
 
 private struct ActiveSessionCard: View {
@@ -229,7 +241,9 @@ private struct ActiveSessionCard: View {
     let cardAccessibilityID: String
     let resumeAction: () -> Void
     let finishAction: () -> Void
-    
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     private var isStale: Bool {
         switch attentionState {
         case .fresh:
@@ -247,52 +261,36 @@ private struct ActiveSessionCard: View {
         isStale ? .orange : .green
     }
 
+    private var stacksButtons: Bool {
+        AdaptiveLayoutMetrics.shouldStackActiveSessionButtons(dynamicTypeSize: dynamicTypeSize)
+    }
+
+    private var stacksHeader: Bool {
+        AdaptiveLayoutMetrics.shouldStackActiveSessionCardHeader(dynamicTypeSize: dynamicTypeSize)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 10) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(session.sourceRoutineNameSnapshot ?? String(localized: "Workout"))
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-
-                    Text(subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+            if stacksHeader {
+                VStack(alignment: .leading, spacing: 8) {
+                    titleBlock
+                    badgeView
                 }
-
-                Spacer()
-
-                Text(badgeTitle)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(badgeForeground)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(badgeForeground.opacity(0.12), in: Capsule())
+            } else {
+                HStack(alignment: .top, spacing: 10) {
+                    titleBlock
+                    Spacer()
+                    badgeView
+                }
             }
-            
+
             if attentionState == .staleNeedsPrompt {
-                Text(String(localized: "session.attention.needs_attention"))
-                    .font(.caption)
+                Label(String(localized: "session.attention.needs_attention"), systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(.orange)
             }
-            
-            HStack(alignment: .top, spacing: 10) {
-                Button(action: resumeAction) {
-                    Label(AppFormatting.localized("Resume"), systemImage: "play.circle.fill")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .accessibilityIdentifier(resumeAccessibilityID)
-                
-                if isPastDay {
-                    Button(action: finishAction) {
-                        Label(String(localized: "Finish now"), systemImage:  "checkmark.circle")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .accessibilityIdentifier(finishAccessibilityID ?? "Home.ActiveSessions.Finish")
-                }
-            }
+
+            actionButtons
         }
         .padding(14)
         .background(
@@ -304,7 +302,73 @@ private struct ActiveSessionCard: View {
                 .strokeBorder(.white.opacity(0.08))
         )
         .shadow(radius: 10, y: 6)
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier(cardAccessibilityID)
+        .accessibilityCardSummary(
+            label: session.sourceRoutineNameSnapshot ?? String(localized: "Workout"),
+            value: AccessibilityLabels.Home.cardValue(
+                subtitle: subtitle,
+                badgeTitle: badgeTitle,
+                needsAttention: attentionState == .staleNeedsPrompt
+            ),
+            identifier: cardAccessibilityID
+        )
+    }
+
+    private var titleBlock: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(session.sourceRoutineNameSnapshot ?? String(localized: "Workout"))
+                .font(.headline)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(subtitle)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var badgeView: some View {
+        Text(badgeTitle)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(badgeForeground)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(badgeForeground.opacity(0.12), in: Capsule())
+            .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        if stacksButtons {
+            VStack(alignment: .leading, spacing: 10) {
+                resumeButton
+                if isPastDay { finishButton }
+            }
+        } else {
+            HStack(alignment: .top, spacing: 10) {
+                resumeButton
+                if isPastDay { finishButton }
+            }
+        }
+    }
+
+    private var resumeButton: some View {
+        Button(action: resumeAction) {
+            Label(AccessibilityLabels.Buttons.resumeWorkout, systemImage: "play.circle.fill")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderedProminent)
+        .accessibilityHint(AccessibilityLabels.Buttons.resumeWorkoutHint)
+        .accessibilityIdentifier(resumeAccessibilityID)
+    }
+
+    private var finishButton: some View {
+        Button(action: finishAction) {
+            Label(AccessibilityLabels.Buttons.finishNow, systemImage:  "checkmark.circle")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityHint(AccessibilityLabels.Buttons.finishNowHint)
+        .accessibilityIdentifier(finishAccessibilityID ?? "Home.ActiveSessions.Finish")
     }
 }

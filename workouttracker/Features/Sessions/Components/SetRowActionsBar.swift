@@ -21,7 +21,7 @@ struct SetRowActionsBar: View {
         HStack(spacing: 14) {
             actionButton(
                 systemName: "doc.on.doc",
-                accessibilityLabel: "Copy set",
+                accessibilityLabel: AccessibilityLabels.Buttons.copySet,
                 accessibilityIdentifier: "\(idPrefix).CopyButton"
             ) {
                 onAction(.copy)
@@ -29,7 +29,7 @@ struct SetRowActionsBar: View {
 
             actionButton(
                 systemName: "plus.circle",
-                accessibilityLabel: "Add set",
+                accessibilityLabel: AccessibilityLabels.Buttons.addSet,
                 accessibilityIdentifier: "\(idPrefix).AddButton"
             ) {
                 onAction(.add)
@@ -37,7 +37,7 @@ struct SetRowActionsBar: View {
 
             actionButton(
                 systemName: "trash",
-                accessibilityLabel: "Delete set",
+                accessibilityLabel: AccessibilityLabels.Buttons.deleteSet,
                 accessibilityIdentifier: "\(idPrefix).DeleteButton",
                 role: .destructive
             ) {
@@ -61,9 +61,12 @@ struct SetRowActionsBar: View {
             Image(systemName: systemName)
                 .frame(width: 28, height: 28)
                 .contentShape(Rectangle())
+                .accessibilityDecorative()
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(accessibilityLabel)
-        .accessibilityIdentifier(accessibilityIdentifier)
+        .accessibilityIconControl(
+            label: accessibilityLabel,
+            identifier: accessibilityIdentifier
+        )
     }
 }

@@ -1,28 +1,43 @@
 import SwiftUI
 
 struct RecoveryInsightCard: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let model: ProgressDashboardViewModel.RecoveryCardModel
+
+    private var summary: ChartAccessibilitySummary {
+        ChartAccessibilitySummaryBuilder.recoveryCard(model)
+    }
+
+    private var stacksHeader: Bool {
+        AdaptiveLayoutMetrics.shouldStackProgressCardHeader(dynamicTypeSize: dynamicTypeSize)
+    }
+
+    private var statsColumns: [GridItem] {
+        let count = AdaptiveLayoutMetrics.shouldUseSingleColumnProgressStats(dynamicTypeSize: dynamicTypeSize) ? 1 : 2
+        return Array(repeating: GridItem(.flexible(), spacing: 12), count: count)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
 
-            HStack(alignment: .top, spacing: 12) {
+            AccessibleChartSummaryView(
+                summary: summary,
+                identifier: "Progress.Dashboard.RecoverySummary"
+            )
+
+            LazyVGrid(columns: statsColumns, spacing: 12) {
                 statBlock(title: String(localized: "progress.dashboard.recovery.stat.avg_session"), value: model.sessionDurationText)
 
                 if let plannedRestText = model.plannedRestText {
                     statBlock(title: String(localized: "progress.dashboard.recovery.stat.planned_rest"), value: plannedRestText)
                 }
-            }
 
-            if let actualRestText = model.actualRestText {
-                statBlock(title: String(localized: "progress.dashboard.recovery.stat.actual_rest"), value: actualRestText)
+                if let actualRestText = model.actualRestText {
+                    statBlock(title: String(localized: "progress.dashboard.recovery.stat.actual_rest"), value: actualRestText)
+                }
             }
-
-            Text(model.comparisonText)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
 
             if let emptyMessage = model.emptyMessage {
                 Text(emptyMessage)
@@ -40,25 +55,41 @@ struct RecoveryInsightCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(cardBackground)
         .overlay(cardBorder)
-        .accessibilityElement(children: .contain)
+        .accessibilityCardSummary(
+            label: String(localized: "progress.dashboard.recovery.title"),
+            value: summary.accessibilityValue,
+            identifier: "Progress.Dashboard.RecoveryCard"
+        )
     }
 
+    @ViewBuilder
     private var header: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 5) {
-                Label("progress.dashboard.recovery.title", systemImage: "timer")
-                    .font(.headline)
-                Text(model.headline)
-                    .font(.title3.weight(.semibold))
+        if stacksHeader {
+            VStack(alignment: .leading, spacing: 10) {
+                headerText
+                availabilityPill.accessibilityHidden(true)
             }
-
-            Spacer(minLength: 8)
-
-            availabilityPill
-                .accessibilityHidden(true)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
+        } else {
+            HStack(alignment: .top, spacing: 12) {
+                headerText
+                Spacer(minLength: 8)
+                availabilityPill.accessibilityHidden(true)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text(verbatim: headerAccessibilityLabel))
+    }
+
+    private var headerText: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Label("progress.dashboard.recovery.title", systemImage: "timer")
+                .font(.headline)
+            Text(model.headline)
+                .font(.title3.weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private func statBlock(title: String, value: String) -> some View {

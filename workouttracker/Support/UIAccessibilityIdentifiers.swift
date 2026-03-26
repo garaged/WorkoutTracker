@@ -24,5 +24,6 @@ enum UIAccessibilityIdentifiers {
 
     enum Settings {
         static let verboseLoggingToggle = "settings.verboseLoggingToggle"
+        static let toolbarLink = "settings.toolbarLink"
     }
 }

@@ -470,7 +470,13 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
                 guard let uuid = uuidFromDoneToggleIdentifier(t.identifier) else { continue }
                 let reps = app.textFields["WorkoutSetEditorRow.\(uuid).Reps.Field"]
                 let weight = app.textFields["WorkoutSetEditorRow.\(uuid).Weight.Field"]
-                if reps.exists && weight.exists { return uuid }
+                guard reps.exists, weight.exists else { continue }
+
+                let repsValue = normalizedTextFieldValue(reps)
+                let weightValue = normalizedTextFieldValue(weight)
+                if !repsValue.isEmpty && !weightValue.isEmpty {
+                    return uuid
+                }
             }
             return nil
         }

@@ -18,6 +18,8 @@ final class ProgressHubUITests: XCTestCase {
 
         let strengthCard = app.el("Progress.Dashboard.StrengthCard")
         XCTAssertTrue(strengthCard.waitForExistence(timeout: t(4)), "Expected Strength card on the Progress dashboard.")
+        XCTAssertTrue(app.el("Progress.Dashboard.StrengthSummary").exists, "Expected visible strength summary companion text.")
+        XCTAssertTrue(app.el("Progress.Dashboard.VolumeSummary").exists, "Expected visible volume summary companion text.")
 
         XCTAssertTrue(
             app.staticTexts["UITest Bench Press"].waitForExistence(timeout: t(4)),
@@ -52,6 +54,11 @@ final class ProgressHubUITests: XCTestCase {
             app.el("Progress.Detail.PersonalRecordsSection").waitForExistence(timeout: t(4)),
             "Expected personal records section in exercise detail."
         )
+        let volumeSummary = app.el("Progress.Detail.VolumeSummary")
+        if !volumeSummary.waitForExistence(timeout: t(4)) {
+            attachUITestDebug(app, name: "ProgressHub_DetailVolumeSummaryMissing")
+        }
+        XCTAssertTrue(volumeSummary.exists, "Expected accessible recent-volume summary in exercise detail.")
         XCTAssertTrue(
             app.el("Progress.Detail.RecentPerformanceSection").waitForExistence(timeout: t(4)),
             "Expected recent performance section in exercise detail."

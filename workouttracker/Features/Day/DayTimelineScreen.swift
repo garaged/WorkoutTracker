@@ -4,6 +4,7 @@ import SwiftUI
 struct DayTimelineScreen: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.platform) private var platform
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Query private var activities: [Activity]
     @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
     private var sessions: [WorkoutSession]
@@ -1208,22 +1209,47 @@ struct DayTimelineScreen: View {
         if let s = latestSession(for: a) {
             switch s.status {
             case .inProgress:
-                HStack(spacing: 10) {
-                    Button {
-                        togglePause(s)
-                    } label: {
-                        Image(systemName: s.isPaused ? "play.fill" : "pause.fill")
-                    }
-                    .accessibilityLabel(s.isPaused ? String(localized: "day.workout_overlay.resume_workout") : String(localized: "day.workout_overlay.pause_workout"))
-                    .accessibilityIdentifier("DayTimeline.WorkoutOverlay.PauseResume")
+                Group {
+                    if dynamicTypeSize.isAccessibilitySize {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Button {
+                                togglePause(s)
+                            } label: {
+                                Label(
+                                    s.isPaused ? String(localized: "day.workout_overlay.resume_workout") : String(localized: "day.workout_overlay.pause_workout"),
+                                    systemImage: s.isPaused ? "play.fill" : "pause.fill"
+                                )
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .accessibilityIdentifier("DayTimeline.WorkoutOverlay.PauseResume")
 
-                    Button(role: .destructive) {
-                        stopSession(s)
-                    } label: {
-                        Image(systemName: "stop.fill")
+                            Button(role: .destructive) {
+                                stopSession(s)
+                            } label: {
+                                Label(AppFormatting.localized("Stop workout"), systemImage: "stop.fill")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .accessibilityIdentifier("DayTimeline.WorkoutOverlay.Stop")
+                        }
+                    } else {
+                        HStack(spacing: 10) {
+                            Button {
+                                togglePause(s)
+                            } label: {
+                                Image(systemName: s.isPaused ? "play.fill" : "pause.fill")
+                            }
+                            .accessibilityLabel(s.isPaused ? String(localized: "day.workout_overlay.resume_workout") : String(localized: "day.workout_overlay.pause_workout"))
+                            .accessibilityIdentifier("DayTimeline.WorkoutOverlay.PauseResume")
+
+                            Button(role: .destructive) {
+                                stopSession(s)
+                            } label: {
+                                Image(systemName: "stop.fill")
+                            }
+                            .accessibilityLabel(AppFormatting.localized("Stop workout"))
+                            .accessibilityIdentifier("DayTimeline.WorkoutOverlay.Stop")
+                        }
                     }
-                    .accessibilityLabel(AppFormatting.localized("Stop workout"))
-                    .accessibilityIdentifier("DayTimeline.WorkoutOverlay.Stop")
                 }
                 .font(.caption2.weight(.semibold))
                 .padding(.horizontal, 10)
