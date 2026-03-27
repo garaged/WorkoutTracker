@@ -46,6 +46,7 @@ enum ProgramPackExportService {
         let routinesAll = (try? context.fetch(FetchDescriptor<WorkoutRoutine>())) ?? []
         let exercisesAll = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
         let routineById = Dictionary(uniqueKeysWithValues: routinesAll.map { ($0.id, $0) })
+        let exerciseById = Dictionary(uniqueKeysWithValues: exercisesAll.map { ($0.id, $0) })
 
         var routineDTOs: [RoutineDTO] = []
         var usedExerciseIds: Set<UUID> = []
@@ -60,7 +61,8 @@ enum ProgramPackExportService {
                     let ex = item.exercise
                     if let exId = ex?.id { usedExerciseIds.insert(exId) }
 
-                    let exSlug = ProgramPackHelpers.slugify(ex?.name ?? "exercise")
+                    let exSlug = ex.map { ProgramPackHelpers.stableExerciseSlug(name: $0.name, catalogKey: $0.catalogKey) }
+                        ?? ProgramPackHelpers.slugify("exercise")
                     let plans = item.setPlans.sorted(by: { $0.order < $1.order }).map { p in
                         SetPlanDTO(
                             order: p.order,
@@ -88,18 +90,18 @@ enum ProgramPackExportService {
             )
         }
 
-        let exerciseDTOs: [ExerciseDTO] = exercisesAll
-            .filter { usedExerciseIds.contains($0.id) }
-            .map { ex in
-                ExerciseDTO(
-                    slug: ProgramPackHelpers.slugify(ex.name),
-                    name: ex.name,
-                    modality: ex.modalityRaw,
-                    instructions: ex.instructions,
-                    notes: ex.notes,
-                    equipmentTags: ex.equipmentTags
-                )
-            }
+        let exerciseDTOs: [ExerciseDTO] = usedExerciseIds.sorted(by: { $0.uuidString < $1.uuidString }).compactMap { id in
+            guard let ex = exerciseById[id] else { return nil }
+            return ExerciseDTO(
+                slug: ProgramPackHelpers.stableExerciseSlug(name: ex.name, catalogKey: ex.catalogKey),
+                name: ex.name,
+                catalogKey: ProgramPackHelpers.persistedCatalogKey(ex.catalogKey),
+                modality: ex.modalityRaw,
+                instructions: ex.instructions,
+                notes: ex.notes,
+                equipmentTags: ex.equipmentTags
+            )
+        }
 
         let pack = ProgramPackV2(
             formatVersion: 2,
@@ -126,5 +128,37 @@ enum ProgramPackExportService {
 enum ProgramPackHelpers {
     static func slugify(_ input: String) -> String {
         TrainingProgram.makeSlug(input)
+    }
+
+    static func normalizedSlug(_ slug: String) -> String {
+        slug.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    static func normalizedName(_ name: String) -> String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    static func normalizedCatalogKey(_ input: String?) -> String? {
+        guard let input else { return nil }
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return trimmed.lowercased()
+    }
+
+    static func persistedCatalogKey(_ input: String?) -> String? {
+        guard let input else { return nil }
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    static func stableExerciseSlug(name: String, catalogKey: String?) -> String {
+        if let catalogKey = normalizedCatalogKey(catalogKey) {
+            return slugify(catalogKey)
+        }
+        return slugify(name)
+    }
+
+    static func exerciseLookupSlug(for exercise: Exercise) -> String {
+        stableExerciseSlug(name: exercise.name, catalogKey: exercise.catalogKey)
     }
 }

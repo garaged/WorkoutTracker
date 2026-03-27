@@ -11,8 +11,18 @@ struct ProgramPackV2: Codable {
 }
 
 struct ExerciseDTO: Codable, Hashable {
+    /// Slug remains part of the pack contract for compatibility.
+    /// - Built-in exercises should export a slug derived from `catalogKey`.
+    /// - Custom exercises should export a slug derived from `name`.
     var slug: String
+
+    /// Human-readable display name used for previews and fallback import behavior.
     var name: String
+
+    /// Stable built-in exercise identity when this DTO represents a bundled/catalog exercise.
+    /// Custom exercises leave this nil and continue to rely on `slug + name`.
+    var catalogKey: String?
+
     var modality: String   // ExerciseModality.rawValue
     var instructions: String?
     var notes: String?

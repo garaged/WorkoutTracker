@@ -115,7 +115,13 @@ struct ProgramCatalogService {
       "format_version": 2,
       "generated_at": "2026-02-22T00:00:00Z",
       "exercises": [
-        { "slug": "goblet-squat", "name": "Goblet Squat", "modality": "strength", "equipment_tags": ["dumbbell"] }
+        {
+          "slug": "goblet-squat",
+          "name": "Goblet Squat",
+          "catalog_key": "goblet-squat",
+          "modality": "strength",
+          "equipment_tags": ["dumbbell"]
+        }
       ],
       "routines": [
         {

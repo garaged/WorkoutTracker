@@ -3,6 +3,9 @@ import Foundation
 import Combine
 
 struct ProgramPackAssetMap: Codable {
+    /// Slug → UUID mappings remain the compatibility bridge for already-installed packs.
+    /// No schema change is required for catalog-key-based matching; install now uses
+    /// these saved mappings first and falls back to catalog-aware resolution only when needed.
     var routinesBySlug: [String: UUID]
     var exercisesBySlug: [String: UUID]
 

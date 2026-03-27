@@ -187,6 +187,38 @@ public actor ProgramImportExportService {
         if pack.exercises.isEmpty { w.append("V2 pack has 0 exercises (will create placeholder exercises for routine items).") }
         if pack.routines.isEmpty { w.append("V2 pack has 0 routines (program scheduling will be disabled).") }
 
+        let duplicateExerciseSlugs = Dictionary(grouping: pack.exercises.map { ProgramPackHelpers.normalizedSlug($0.slug) }, by: { $0 })
+            .filter { $1.count > 1 }
+            .keys
+            .sorted()
+        if !duplicateExerciseSlugs.isEmpty {
+            w.append("V2 pack has duplicate exercise slugs (\(duplicateExerciseSlugs.count)); older imports may resolve them ambiguously.")
+        }
+
+        let duplicateCatalogKeys = Dictionary(
+            grouping: pack.exercises.compactMap { ProgramPackHelpers.normalizedCatalogKey($0.catalogKey) },
+            by: { $0 }
+        )
+        .filter { $1.count > 1 }
+        .keys
+        .sorted()
+        if !duplicateCatalogKeys.isEmpty {
+            w.append("V2 pack has duplicate built-in catalog keys (\(duplicateCatalogKeys.count)); built-in exercise matching may be ambiguous.")
+        }
+
+        let availableExerciseSlugs = Set(pack.exercises.map { ProgramPackHelpers.normalizedSlug($0.slug) })
+        let missingRoutineExerciseRefs = Set(
+            pack.routines.flatMap { routine in
+                routine.items.compactMap { item in
+                    let exerciseSlug = ProgramPackHelpers.normalizedSlug(item.exerciseSlug)
+                    return availableExerciseSlugs.contains(exerciseSlug) ? nil : exerciseSlug
+                }
+            }
+        )
+        if !missingRoutineExerciseRefs.isEmpty {
+            w.append("V2 pack has routines that reference missing exercise slugs (\(missingRoutineExerciseRefs.count)); placeholder exercises may be created during install.")
+        }
+
         // V2 rule: each TrainingDay should reference a routine slug
         for p in pack.programs {
             for week in p.weeks {

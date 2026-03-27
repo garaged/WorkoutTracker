@@ -47,6 +47,7 @@ struct workouttrackerUITestHostApp: App {
                 // Calendar-style UI tests expect data seeded up-front. DayTimelineScreen intentionally
                 // does NOT auto-seed on the "calendar" route (to avoid hijacking navigation).
                 if env["UITESTS_SEED"] == "1" {
+                    try assertProgramCatalogUITestSeed()
                     try seedCalendarUITestDataIfNeeded(context: context)
 
                     if env["UITESTS_LINKED_FLOW"] == "1" {
@@ -714,5 +715,33 @@ private func assertUITestLaunchConfiguration(_ env: [String: String]) {
         if needsLocalizedSeededData, env["UITESTS_SEED"] != "1" {
             fatalError("UITESTS assertion failed: Localization smoke tests that cover Progress or linked sessions must launch with UITESTS_SEED=1.")
         }
+    }
+}
+
+
+@MainActor
+private func assertProgramCatalogUITestSeed() throws {
+    let catalog = try ProgramCatalogService().loadCatalog()
+    guard let pack = catalog.packV2 else {
+        fatalError("UITESTS assertion failed: seeded program catalog should decode as a V2 pack.")
+    }
+
+    guard pack.programs.contains(where: { $0.slug == "seed-program-v2" }) else {
+        fatalError("UITESTS assertion failed: seeded program catalog must include seed-program-v2.")
+    }
+
+    guard let goblet = pack.exercises.first(where: { ProgramPackHelpers.normalizedSlug($0.slug) == "goblet-squat" }) else {
+        fatalError("UITESTS assertion failed: seeded program catalog must include goblet-squat exercise metadata.")
+    }
+
+    guard ProgramPackHelpers.normalizedCatalogKey(goblet.catalogKey) == "goblet-squat" else {
+        fatalError("UITESTS assertion failed: seeded program catalog should carry catalog_key for goblet-squat.")
+    }
+
+    let hasRoutineReference = pack.routines.contains { routine in
+        routine.items.contains { ProgramPackHelpers.normalizedSlug($0.exerciseSlug) == "goblet-squat" }
+    }
+    guard hasRoutineReference else {
+        fatalError("UITESTS assertion failed: seeded program routine must reference goblet-squat by stable exercise slug.")
     }
 }
