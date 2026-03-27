@@ -3,8 +3,8 @@ import SwiftData
 
 @MainActor
 enum StarterPackSeeder {
-    // Bump when you expand/adjust the starter pack.
-    private static let version = 2
+    // Bump when you expand/adjust the starter pack or the reconciliation behavior.
+    private static let version = 3
     private static let key = "workouttracker.starterPackVersion"
 
     static func seedIfNeeded(context: ModelContext) {

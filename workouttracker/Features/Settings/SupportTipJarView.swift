@@ -5,9 +5,9 @@ struct SupportTipJarView: View {
 
     @StateObject private var store = TipJarStore(productIDs: [
         // Must match App Store Connect product IDs
-        "tip_small",
-        "tip_medium",
-        "tip_large"
+        "workoutracker2603",
+        "workoutracker2603m",
+        "workoutracker2603l"
     ])
 
     @State private var showThanks = false

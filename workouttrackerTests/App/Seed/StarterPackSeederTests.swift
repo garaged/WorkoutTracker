@@ -24,9 +24,10 @@ final class StarterPackSeederTests: XCTestCase {
 
         XCTAssertGreaterThan(try context.fetchCount(FetchDescriptor<Exercise>()), 0)
         XCTAssertGreaterThan(try context.fetchCount(FetchDescriptor<WorkoutRoutine>()), 0)
-        XCTAssertEqual(UserDefaults.standard.integer(forKey: versionKey), 2)
+        XCTAssertEqual(UserDefaults.standard.integer(forKey: versionKey), 3)
 
         let walking = try fetchExercise(named: "Walking", context: context)
+        XCTAssertEqual(walking.catalogKey, "walking")
         XCTAssertEqual(walking.routineRoles, [.warmUp, .coolDown])
     }
 
@@ -38,14 +39,15 @@ final class StarterPackSeederTests: XCTestCase {
         context.insert(walking)
         try context.save()
 
-        UserDefaults.standard.set(1, forKey: versionKey)
+        UserDefaults.standard.set(2, forKey: versionKey)
 
         StarterPackSeeder.seedIfNeeded(context: context)
 
         let reloaded = try fetchExercise(named: "Walking", context: context)
+        XCTAssertEqual(reloaded.catalogKey, "walking")
         XCTAssertEqual(reloaded.modality, .cardio)
         XCTAssertEqual(reloaded.routineRoles, [.warmUp, .coolDown])
-        XCTAssertEqual(UserDefaults.standard.integer(forKey: versionKey), 2)
+        XCTAssertEqual(UserDefaults.standard.integer(forKey: versionKey), 3)
 
         XCTAssertEqual(try context.fetchCount(FetchDescriptor<WorkoutRoutine>()), 0, "Existing non-empty stores should reconcile the exercise catalog without auto-importing starter routines.")
         XCTAssertNotNil(try fetchExercise(named: "Breathing Reset", context: context))

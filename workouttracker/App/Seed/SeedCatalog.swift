@@ -39,6 +39,14 @@ struct SeedCatalog: Codable {
     let exercises: [SeedExercise]
     let routines: [SeedRoutine]
 
+    var exercisesByKey: [String: SeedExercise] {
+        Dictionary(uniqueKeysWithValues: exercises.map { ($0.key, $0) })
+    }
+
+    func exercise(forKey key: String) -> SeedExercise? {
+        exercisesByKey[key]
+    }
+
     static func loadFromBundle() throws -> SeedCatalog {
         guard let url = Bundle.main.url(forResource: "seed_v1", withExtension: "json") else {
             throw NSError(domain: "Seed", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing seed_v1.json in bundle"])

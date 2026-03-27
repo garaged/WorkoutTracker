@@ -6,6 +6,7 @@ import SwiftData
 final class Exercise {
     @Attribute(.unique) var id: UUID
     var name: String
+    var catalogKey: String?
     var modalityRaw: String
 
     var instructions: String?
@@ -21,7 +22,7 @@ final class Exercise {
     var isArchived: Bool
     var createdAt: Date
     var updatedAt: Date
-    
+
     // ✅ Minimal equipment tagging (Phase D)
     // Stored as comma-separated tags: "dumbbell,barbell,bench"
     var equipmentTagsRaw: String
@@ -33,18 +34,20 @@ final class Exercise {
     init(
         id: UUID = UUID(),
         name: String,
+        catalogKey: String? = nil,
         modality: ExerciseModality = .strength,
         instructions: String? = nil,
         notes: String? = nil,
         mediaKind: ExerciseMediaKind = .none,
         mediaAssetName: String? = nil,
         mediaURLString: String? = nil,
-        equipmentTagsRaw: String = "",              // ✅ NEW
+        equipmentTagsRaw: String = "",
         routineRolesRaw: String? = nil,
         isArchived: Bool = false
     ) {
         self.id = id
         self.name = name
+        self.catalogKey = Exercise.normalizedCatalogKey(catalogKey)
         self.modalityRaw = modality.rawValue
         self.instructions = instructions
         self.notes = notes
@@ -52,8 +55,8 @@ final class Exercise {
         self.mediaKindRaw = mediaKind.rawValue
         self.mediaAssetName = mediaAssetName
         self.mediaURLString = mediaURLString
-        
-        self.equipmentTagsRaw = equipmentTagsRaw    // ✅ NEW
+
+        self.equipmentTagsRaw = equipmentTagsRaw
         self.routineRolesRaw = routineRolesRaw
 
         self.isArchived = isArchived
@@ -70,7 +73,12 @@ final class Exercise {
         get { ExerciseMediaKind(rawValue: mediaKindRaw) ?? .none }
         set { mediaKindRaw = newValue.rawValue }
     }
-    
+
+    var isCatalogExercise: Bool {
+        guard let catalogKey else { return false }
+        return !catalogKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var equipmentTags: [String] {
         equipmentTagsRaw
             .split(separator: ",")
@@ -86,7 +94,7 @@ final class Exercise {
 
         updatedAt = Date()
     }
-    
+
     var equipmentTagSet: Set<String> {
         Set(equipmentTags)
     }
@@ -112,4 +120,9 @@ final class Exercise {
         routineRoles.contains(role)
     }
 
+    static func normalizedCatalogKey(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
 }
