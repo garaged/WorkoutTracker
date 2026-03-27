@@ -60,6 +60,7 @@ final class ExerciseProgressDetailViewModel: ObservableObject {
     @Published private(set) var state: State = .idle
 
     private var service: (any ProgressAnalyticsServicing)?
+    private var modelContext: ModelContext?
     private let calendar: Calendar
     private let locale: Locale
     private let now: () -> Date
@@ -80,6 +81,7 @@ final class ExerciseProgressDetailViewModel: ObservableObject {
     }
 
     func configureIfNeeded(context: ModelContext) {
+        modelContext = context
         guard service == nil else { return }
 
         service = ProgressAnalyticsService(
@@ -102,7 +104,7 @@ final class ExerciseProgressDetailViewModel: ObservableObject {
                 for: exerciseID,
                 window: detailWindow()
             )
-            let content = makeContent(from: summary)
+            let content = makeContent(from: localizedSummary(summary))
             state = summary.hasLowData ? .lowData(content) : .content(content)
         } catch {
             state = .failed(error.localizedDescription)
@@ -111,6 +113,44 @@ final class ExerciseProgressDetailViewModel: ObservableObject {
 
     func refresh(exerciseID: UUID) {
         load(exerciseID: exerciseID)
+    }
+
+    private func localizedSummary(_ summary: ExerciseProgressDetailSummary) -> ExerciseProgressDetailSummary {
+        let exercisesByID = currentExercisesByID
+
+        return ExerciseProgressDetailSummary(
+            exerciseID: summary.exerciseID,
+            exerciseName: ExerciseLocalizationService.displayName(
+                exerciseID: summary.exerciseID,
+                fallbackName: summary.exerciseName,
+                exercisesByID: exercisesByID
+            ),
+            personalRecords: summary.personalRecords,
+            weeklyVolumeTrend: ExerciseVolumeTrendSummary(
+                exerciseID: summary.weeklyVolumeTrend.exerciseID,
+                exerciseName: ExerciseLocalizationService.displayName(
+                    exerciseID: summary.weeklyVolumeTrend.exerciseID,
+                    fallbackName: summary.weeklyVolumeTrend.exerciseName,
+                    exercisesByID: exercisesByID
+                ),
+                weeklyBuckets: summary.weeklyVolumeTrend.weeklyBuckets,
+                totalSets: summary.weeklyVolumeTrend.totalSets,
+                totalReps: summary.weeklyVolumeTrend.totalReps,
+                totalLoad: summary.weeklyVolumeTrend.totalLoad,
+                trendDirection: summary.weeklyVolumeTrend.trendDirection,
+                dataAvailability: summary.weeklyVolumeTrend.dataAvailability
+            ),
+            recentPerformanceSamples: summary.recentPerformanceSamples,
+            estimatedOneRepMax: summary.estimatedOneRepMax,
+            latestTopSet: summary.latestTopSet,
+            dataAvailability: summary.dataAvailability,
+            hasLowData: summary.hasLowData
+        )
+    }
+
+    private var currentExercisesByID: [UUID: Exercise] {
+        guard let modelContext else { return [:] }
+        return ExerciseLocalizationService.loadExercisesByID(context: modelContext)
     }
 
     private func detailWindow() -> DateInterval {

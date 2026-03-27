@@ -19,7 +19,7 @@ public struct ExerciseIllustrationSetPickerSection: View {
             }
             .accessibilityIdentifier("settings.exerciseIllustrationSetPicker")
 
-            Text(AppFormatting.localized("Changes which bundled exercise art set is shown for seeded and catalog exercises. Default uses the neutral dummy artwork."))
+            Text(AppFormatting.localized("Changes which bundled exercise art set is shown for catalog exercise thumbnails and details. Default uses the neutral dummy artwork."))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }

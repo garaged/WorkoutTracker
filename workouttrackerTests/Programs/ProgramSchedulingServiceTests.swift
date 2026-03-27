@@ -15,10 +15,14 @@ final class ProgramSchedulingServiceTests: XCTestCase {
         let pack = makeSamplePackV2(programDays: [1, 3])
         _ = try ProgramPackInstallService.installAssets(from: pack, context: context)
 
+        let calendar = Calendar.current
+        let startDate = calendar.startOfDay(for: Date())
+        let startTime = try XCTUnwrap(calendar.date(bySettingHour: 12, minute: 0, second: 0, of: startDate))
+
         let program = pack.programs[0]
         let options = ProgramSchedulingService.Options(
-            startDate: Date(),
-            startTime: Date(),
+            startDate: startDate,
+            startTime: startTime,
             includeRestDays: true,
             conflictStrategy: .skipConflicts
         )
@@ -43,12 +47,16 @@ final class ProgramSchedulingServiceTests: XCTestCase {
         let context = try makeInMemoryContext()
         try ProgramPackAssetMapStore.save(.empty)
 
+        let calendar = Calendar.current
+        let startDate = calendar.startOfDay(for: Date())
+        let startTime = try XCTUnwrap(calendar.date(bySettingHour: 12, minute: 0, second: 0, of: startDate))
+
         let pack = makeSamplePackV2(programDays: [1])
         let program = pack.programs[0]
 
         let options = ProgramSchedulingService.Options(
-            startDate: Date(),
-            startTime: Date(),
+            startDate: startDate,
+            startTime: startTime,
             includeRestDays: true,
             conflictStrategy: .skipConflicts
         )
@@ -76,7 +84,14 @@ final class ProgramSchedulingServiceTests: XCTestCase {
     }
 
     private func makeSamplePackV2(programDays: [Int]) -> ProgramPackV2 {
-        let ex = ExerciseDTO(slug: "goblet-squat", name: "Goblet Squat", modality: "strength", instructions: nil, notes: nil, equipmentTags: nil)
+        let ex = ExerciseDTO(
+            slug: "goblet-squat",
+            name: "Goblet Squat",
+            modality: "strength",
+            instructions: nil,
+            notes: nil,
+            equipmentTags: nil
+        )
 
         let routine = RoutineDTO(
             slug: "beginner-full-body-a",
@@ -88,7 +103,18 @@ final class ProgramSchedulingServiceTests: XCTestCase {
                     exerciseSlug: "goblet-squat",
                     trackingStyle: "strength",
                     notes: nil,
-                    setPlans: [SetPlanDTO(order: 1, targetReps: 8, targetWeight: nil, weightUnit: "kg", targetDurationSeconds: nil, targetDistance: nil, targetRpe: nil, restSeconds: 90)]
+                    setPlans: [
+                        SetPlanDTO(
+                            order: 1,
+                            targetReps: 8,
+                            targetWeight: nil,
+                            weightUnit: "kg",
+                            targetDurationSeconds: nil,
+                            targetDistance: nil,
+                            targetRpe: nil,
+                            restSeconds: 90
+                        )
+                    ]
                 )
             ]
         )
@@ -98,13 +124,28 @@ final class ProgramSchedulingServiceTests: XCTestCase {
                 index: idx,
                 title: "Full Body A",
                 blocks: [
-                    .init(kind: .workout, title: "Routine", estimatedMinutes: 60,
-                          reference: .init(kind: .routine, slug: "beginner-full-body-a"))
+                    .init(
+                        kind: .workout,
+                        title: "Routine",
+                        estimatedMinutes: 60,
+                        reference: .init(kind: .routine, slug: "beginner-full-body-a")
+                    )
                 ]
             )
         }
 
-        let program = TrainingProgram(slug: "sample-program", name: "Sample Program", weeks: [TrainingWeek(index: 1, days: days)])
-        return ProgramPackV2(formatVersion: 2, generatedAt: Date(), exercises: [ex], routines: [routine], programs: [program])
+        let program = TrainingProgram(
+            slug: "sample-program",
+            name: "Sample Program",
+            weeks: [TrainingWeek(index: 1, days: days)]
+        )
+
+        return ProgramPackV2(
+            formatVersion: 2,
+            generatedAt: Date(),
+            exercises: [ex],
+            routines: [routine],
+            programs: [program]
+        )
     }
 }

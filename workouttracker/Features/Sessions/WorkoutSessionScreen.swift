@@ -12,7 +12,6 @@ struct WorkoutSessionScreen: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
 
-
     @Bindable var session: WorkoutSession
     let initialResumeTarget: SessionResumeTarget?
 
@@ -130,14 +129,26 @@ struct WorkoutSessionScreen: View {
     private var currentExerciseName: String? {
         if let activeExerciseID,
            let match = sortedExercises.first(where: { $0.id == activeExerciseID }) {
-            return match.exerciseNameSnapshot
+            return localizedExerciseName(for: match)
         }
 
         if let target = firstIncompleteVisibleTarget() {
-            return target.exercise.exerciseNameSnapshot
+            return localizedExerciseName(for: target.exercise)
         }
 
-        return sortedExercises.first?.exerciseNameSnapshot
+        return sortedExercises.first.map(localizedExerciseName)
+    }
+
+    private var currentExercisesByID: [UUID: Exercise] {
+        ExerciseLocalizationService.loadExercisesByID(context: modelContext)
+    }
+
+    private func localizedExerciseName(for exercise: WorkoutSessionExercise) -> String {
+        ExerciseLocalizationService.displayName(
+            exerciseID: exercise.exerciseId,
+            fallbackName: exercise.exerciseNameSnapshot,
+            exercisesByID: currentExercisesByID
+        )
     }
 
     private var shouldShowCoachPrompt: Bool {
@@ -918,7 +929,7 @@ struct WorkoutSessionScreen: View {
     @ViewBuilder
     private func titleRow(for ex: WorkoutSessionExercise) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(ex.exerciseNameSnapshot)
+            Text(localizedExerciseName(for: ex))
                 .font(.headline)
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1692,7 +1703,7 @@ struct WorkoutSessionScreen: View {
                     Button {
                         prDetails = PRDetailsContext(
                             setId: set.id,
-                            exerciseName: ex.exerciseNameSnapshot,
+                            exerciseName: localizedExerciseName(for: ex),
                             setNumber: displaySetNumber(for: set, in: ex),
                             achievements: ach,
                             weight: set.weight,

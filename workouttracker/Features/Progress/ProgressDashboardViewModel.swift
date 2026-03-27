@@ -80,6 +80,7 @@ final class ProgressDashboardViewModel: ObservableObject {
     @Published private(set) var selectedExerciseID: UUID?
 
     private var service: (any ProgressAnalyticsServicing)?
+    private var modelContext: ModelContext?
     private let calendar: Calendar
     private let locale: Locale
     private let now: () -> Date
@@ -100,6 +101,7 @@ final class ProgressDashboardViewModel: ObservableObject {
     }
 
     func configureIfNeeded(context: ModelContext) {
+        modelContext = context
         guard service == nil else { return }
 
         service = ProgressAnalyticsService(
@@ -119,7 +121,7 @@ final class ProgressDashboardViewModel: ObservableObject {
 
         do {
             let summary = try service.dashboardSummary(for: dashboardWindow())
-            state = map(summary: summary)
+            state = map(summary: localizedSummary(summary))
         } catch {
             state = .failed(error.localizedDescription)
         }
@@ -160,6 +162,67 @@ final class ProgressDashboardViewModel: ObservableObject {
         }
 
         return .content(content)
+    }
+
+    private func localizedSummary(_ summary: ProgressDashboardSummary) -> ProgressDashboardSummary {
+        let exercisesByID = currentExercisesByID
+
+        let featuredExercises = summary.featuredExercises.map { exercise in
+            ExerciseProgressSummary(
+                exerciseID: exercise.exerciseID,
+                exerciseName: ExerciseLocalizationService.displayName(
+                    exerciseID: exercise.exerciseID,
+                    fallbackName: exercise.exerciseName,
+                    exercisesByID: exercisesByID
+                ),
+                bestWeight: exercise.bestWeight,
+                bestReps: exercise.bestReps,
+                bestSetVolume: exercise.bestSetVolume,
+                bestSessionVolume: exercise.bestSessionVolume,
+                bestEstimatedOneRepMax: exercise.bestEstimatedOneRepMax,
+                latestTopSet: exercise.latestTopSet,
+                latestPerformedAt: exercise.latestPerformedAt,
+                personalRecords: exercise.personalRecords,
+                dataAvailability: exercise.dataAvailability
+            )
+        }
+
+        let efficiency = summary.efficiency.map { efficiency in
+            SessionEfficiencySummary(
+                averageSessionDurationSeconds: efficiency.averageSessionDurationSeconds,
+                averagePlannedRestSeconds: efficiency.averagePlannedRestSeconds,
+                averageActualRestSeconds: efficiency.averageActualRestSeconds,
+                averageRestOverrunSeconds: efficiency.averageRestOverrunSeconds,
+                highestAverageRestOverrunExercises: efficiency.highestAverageRestOverrunExercises.map { exercise in
+                    SessionEfficiencySummary.ExerciseRestOverrunSummary(
+                        exerciseID: exercise.exerciseID,
+                        exerciseName: ExerciseLocalizationService.displayName(
+                            exerciseID: exercise.exerciseID,
+                            fallbackName: exercise.exerciseName,
+                            exercisesByID: exercisesByID
+                        ),
+                        averageOverrunSeconds: exercise.averageOverrunSeconds,
+                        sampleCount: exercise.sampleCount
+                    )
+                },
+                availability: efficiency.availability
+            )
+        }
+
+        return ProgressDashboardSummary(
+            featuredExercises: featuredExercises,
+            weeklySummary: summary.weeklySummary,
+            consistency: summary.consistency,
+            efficiency: efficiency,
+            dataAvailability: summary.dataAvailability,
+            isEmpty: summary.isEmpty,
+            hasLowData: summary.hasLowData
+        )
+    }
+
+    private var currentExercisesByID: [UUID: Exercise] {
+        guard let modelContext else { return [:] }
+        return ExerciseLocalizationService.loadExercisesByID(context: modelContext)
     }
 
     private func dashboardWindow() -> DateInterval {

@@ -5,10 +5,14 @@ struct RoutineItemEditorScreen: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var item: WorkoutRoutineItem
 
+    private var exerciseDisplayName: String {
+        item.exercise.map { ExerciseLocalizationService.displayName(for: $0) } ?? AppFormatting.localized("Unknown")
+    }
+
     var body: some View {
         List {
             Section(AppFormatting.localized("Exercise")) {
-                Text(item.exercise?.name ?? AppFormatting.localized("Unknown"))
+                Text(exerciseDisplayName)
                     .font(.headline)
 
                 TextField(AppFormatting.localized("Notes"), text: Binding(
@@ -48,7 +52,7 @@ struct RoutineItemEditorScreen: View {
 
             Section(AppFormatting.localized("Insights")) {
                 if let ex = item.exercise {
-                    ExerciseInsightsSectionView(exerciseId: ex.id, exerciseName: ex.name)
+                    ExerciseInsightsSectionView(exerciseId: ex.id, exerciseName: ExerciseLocalizationService.displayName(for: ex))
                 } else {
                     ContentUnavailableView(AppFormatting.localized("No exercise selected"),
                         systemImage: "dumbbell",
@@ -88,7 +92,7 @@ struct RoutineItemEditorScreen: View {
                 }
             }
         }
-        .navigationTitle(item.exercise?.name ?? "Exercise")
+        .navigationTitle(item.exercise != nil ? exerciseDisplayName : AppFormatting.localized("Exercise"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { EditButton() } }
         .onChange(of: item.setPlans.count) { _, _ in normalizePlanOrders() }

@@ -250,7 +250,9 @@ final class ProgramsV2SmokeUITests: XCTestCase {
     }
 
     private func tapWorkoutDefaultActionOrFail(_ app: XCUIApplication, name: String) {
-        let action = app.buttons["DayTimeline.WorkoutCard.DefaultAction"].firstMatch
+        let action = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == %@", "DayTimeline.WorkoutCard.DefaultAction"))
+            .firstMatch
         let timeline = app.scrollViews.firstMatch
 
         if !action.waitForExistence(timeout: 8) {
@@ -264,7 +266,7 @@ final class ProgramsV2SmokeUITests: XCTestCase {
         // First search later in the day.
         for _ in 0..<12 {
             if action.isHittable {
-                action.tap()
+                tapSafely(action)
                 if app.el("WorkoutSession.Screen").waitForExistence(timeout: 3) { return }
 
                 let newActivityNav = app.navigationBars["New Activity"].firstMatch
@@ -284,7 +286,7 @@ final class ProgramsV2SmokeUITests: XCTestCase {
         // Safety pass in the other direction.
         for _ in 0..<6 {
             if action.isHittable {
-                action.tap()
+                tapSafely(action)
                 if app.el("WorkoutSession.Screen").waitForExistence(timeout: 3) { return }
 
                 let newActivityNav = app.navigationBars["New Activity"].firstMatch

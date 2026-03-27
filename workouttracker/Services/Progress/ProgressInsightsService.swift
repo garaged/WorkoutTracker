@@ -66,6 +66,8 @@ final class ProgressInsightsService {
             .filter { $0.startedAt >= start && $0.startedAt <= end }
             .filter { $0.status == .completed }
 
+        let currentExercisesByID = ExerciseLocalizationService.loadExercisesByID(context: context)
+
         // Build per-exercise time series of session-volume.
         struct Point {
             let date: Date
@@ -81,7 +83,12 @@ final class ProgressInsightsService {
                 guard vol > 0 else { continue }
 
                 if series[ex.exerciseId] == nil {
-                    series[ex.exerciseId] = (ex.exerciseNameSnapshot, [])
+                    let displayName = ExerciseLocalizationService.displayName(
+                        exerciseID: ex.exerciseId,
+                        fallbackName: ex.exerciseNameSnapshot,
+                        exercisesByID: currentExercisesByID
+                    )
+                    series[ex.exerciseId] = (displayName, [])
                 }
                 series[ex.exerciseId]?.points.append(Point(date: s.startedAt, volume: vol))
             }

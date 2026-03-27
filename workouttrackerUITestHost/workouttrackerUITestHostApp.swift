@@ -70,6 +70,10 @@ struct workouttrackerUITestHostApp: App {
                     try assertLocalizationUITestSeed(context: context)
                 }
 
+                if env["UITESTS_THUMBNAILS"] == "1", env["UITESTS_SEED"] == "1" {
+                    try assertExerciseThumbnailUITestSeed(context: context)
+                }
+
                 if env["UITESTS_ACTIVE_SESSIONS"] == "1" {
                     try seedHomeActiveSessionsUITestDataIfNeeded(context: context)
 
@@ -721,6 +725,10 @@ private func assertUITestLaunchConfiguration(_ env: [String: String]) {
             fatalError("UITESTS assertion failed: Localization smoke tests that cover seeded browse, Progress, or linked-session flows must launch with UITESTS_SEED=1.")
         }
     }
+
+    if env["UITESTS_THUMBNAILS"] == "1", env["UITESTS_SEED"] != "1" {
+        fatalError("UITESTS assertion failed: Thumbnail smoke tests require UITESTS_SEED=1 so image-capable catalog exercises are available.")
+    }
 }
 
 
@@ -735,6 +743,19 @@ private func assertLocalizationUITestSeed(context: ModelContext) throws {
     let displayName = ExerciseLocalizationService.displayName(for: benchPress, locale: Locale(identifier: "es-MX"))
     guard displayName == "Press de banca" else {
         fatalError("UITESTS assertion failed: Bench Press should resolve to 'Press de banca' under es-MX localization smoke tests.")
+    }
+}
+
+@MainActor
+private func assertExerciseThumbnailUITestSeed(context: ModelContext) throws {
+    let exercises = try context.fetch(FetchDescriptor<Exercise>())
+
+    guard let benchPress = exercises.first(where: { $0.catalogKey == "bench-press" }) else {
+        fatalError("UITESTS assertion failed: Thumbnail seed should include a built-in Bench Press exercise with catalogKey=bench-press.")
+    }
+
+    guard let assetName = ExerciseImageResolver.assetName(for: benchPress, illustrationSet: .dummyV1), !assetName.isEmpty else {
+        fatalError("UITESTS assertion failed: Seeded Bench Press exercise should resolve to a bundled illustration asset for thumbnail smoke tests.")
     }
 }
 

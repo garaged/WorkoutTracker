@@ -37,6 +37,7 @@ struct ExercisePickerSheet: View {
     @State private var showCreate = false
     @State private var searchText = ""
     @State private var selectedScope: PickerScope
+    @ScaledMetric(relativeTo: .body) private var thumbnailSize: CGFloat = 44
 
     init(
         title: String? = nil,
@@ -170,19 +171,28 @@ struct ExercisePickerSheet: View {
             onPick(ex)
             dismiss()
         } label: {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(ExerciseLocalizationService.displayName(for: ex))
-                    .foregroundStyle(.primary)
+            HStack(alignment: .center, spacing: 12) {
+                if let assetName = ExerciseImageResolver.assetName(for: ex) {
+                    ExercisePickerThumbnail(assetName: assetName, size: thumbnailSize)
+                }
 
-                HStack(spacing: 6) {
-                    pill(ex.modality.rawValue.capitalized)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(ExerciseLocalizationService.displayName(for: ex))
+                        .foregroundStyle(.primary)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
 
-                    ForEach(Array(ex.routineRoles).sorted(by: { $0.rawValue < $1.rawValue })) { role in
-                        pill(role.displayName)
+                    HStack(spacing: 6) {
+                        pill(ex.modality.rawValue.capitalized)
+
+                        ForEach(Array(ex.routineRoles).sorted(by: { $0.rawValue < $1.rawValue })) { role in
+                            pill(role.displayName)
+                        }
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -195,6 +205,22 @@ struct ExercisePickerSheet: View {
             .padding(.vertical, 4)
             .background(.thinMaterial, in: Capsule())
     }
+}
 
+private struct ExercisePickerThumbnail: View {
+    let assetName: String
+    let size: CGFloat
 
+    var body: some View {
+        Image(assetName)
+            .resizable()
+            .scaledToFill()
+            .frame(width: size, height: size)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(.quaternary, lineWidth: 1)
+            }
+            .accessibilityHidden(true)
+    }
 }

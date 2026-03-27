@@ -14,7 +14,7 @@ final class RoutineEditorSmokeUITests: XCTestCase {
         app = UITestLaunch.app(start: "routines", reset: true, seed: true)
         app.launch()
 
-        let createButton = app.buttons["Create routine"]
+        let createButton = createRoutineButton(in: app)
         XCTAssertTrue(createButton.waitForExistence(timeout: t(8)), "Expected Routines screen")
 
         let beforeCount = waitForStableRoutineRowCount(in: app, minimum: 1, timeout: t(8))
@@ -22,7 +22,7 @@ final class RoutineEditorSmokeUITests: XCTestCase {
 
         tapSafely(createButton)
 
-        XCTAssertTrue(app.navigationBars["New Routine"].waitForExistence(timeout: t(6)), "Expected New Routine editor")
+        XCTAssertTrue(newRoutineNavigationBar(in: app).waitForExistence(timeout: t(6)), "Expected New Routine editor")
 
         let cancelButton = app.buttons["Cancel"]
         XCTAssertTrue(cancelButton.waitForExistence(timeout: t(4)), "Expected Cancel button in New Routine editor")
@@ -40,6 +40,81 @@ final class RoutineEditorSmokeUITests: XCTestCase {
             afterCount,
             beforeCount,
             "Canceling routine creation should not leave an extra blank/orphan routine row"
+        )
+    }
+
+    func test_seededRoutine_showsLocalizedBuiltInExercise_underSpanishMexicoLocale() {
+        app = UITestLaunch.app(
+            start: "routines",
+            reset: true,
+            seed: true,
+            extraEnv: ["UITESTS_LOCALIZATION": "1"],
+            extraArgs: ["-AppleLanguages", "(es-MX)", "-AppleLocale", "es_MX"]
+        )
+        app.launch()
+
+        let createButton = createRoutineButton(in: app)
+        XCTAssertTrue(createButton.waitForExistence(timeout: t(8)), "Expected Routines screen")
+
+        let starterRoutine = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", "Starter — Full Body A"))
+            .firstMatch
+
+        if !starterRoutine.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "RoutineEditor_esMX_StarterRoutineMissing")
+        }
+        XCTAssertTrue(starterRoutine.exists, "Expected seeded starter routine to appear.")
+        tapSafely(starterRoutine)
+
+        let localizedBench = app.staticTexts["Press de banca"].firstMatch
+        if !localizedBench.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "RoutineEditor_esMX_LocalizedExerciseMissing")
+        }
+        XCTAssertTrue(localizedBench.exists, "Expected routine flow to show a localized built-in exercise name.")
+    }
+
+    func test_createRoutine_exercisePickerRowsRemainSelectable_whenThumbnailsAreEnabled() {
+        app = UITestLaunch.app(
+            start: "routines",
+            reset: true,
+            seed: true,
+            extraEnv: ["UITESTS_THUMBNAILS": "1"]
+        )
+        app.launch()
+
+        let createButton = createRoutineButton(in: app)
+        XCTAssertTrue(createButton.waitForExistence(timeout: t(8)), "Expected Routines screen")
+        tapSafely(createButton)
+
+        let editorNav = newRoutineNavigationBar(in: app)
+        XCTAssertTrue(editorNav.waitForExistence(timeout: t(6)), "Expected New Routine editor")
+
+        let addExercise = addExerciseButton(in: app)
+        if !addExercise.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "RoutineEditor_Thumbnail_AddExerciseMissing")
+        }
+        XCTAssertTrue(addExercise.exists, "Expected Add exercise action in routine editor.")
+        tapSafely(addExercise)
+
+        let searchField = app.searchFields.firstMatch
+        if !searchField.waitForExistence(timeout: t(8)) {
+            attachUITestDebug(app, name: "RoutineEditor_Thumbnail_PickerMissing")
+        }
+        XCTAssertTrue(searchField.exists, "Expected Exercise picker search field.")
+        XCTAssertTrue(searchField.waitForExistence(timeout: t(6)), "Expected Exercise picker search field.")
+        searchField.tap()
+        searchField.typeText("Bench Press")
+
+        let benchLabel = app.staticTexts["Bench Press"].firstMatch
+        if !benchLabel.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "RoutineEditor_Thumbnail_BenchRowMissing")
+        }
+        XCTAssertTrue(benchLabel.exists, "Expected Bench Press picker row to remain present with thumbnails enabled.")
+        tapSafely(benchLabel)
+
+        XCTAssertTrue(
+            addExerciseButton(in: app).waitForExistence(timeout: t(6)),
+            "Expected to return to the routine editor after choosing an exercise."
         )
     }
 
@@ -83,9 +158,6 @@ final class RoutineEditorSmokeUITests: XCTestCase {
     }
 
     private func routineRowCount(in app: XCUIApplication) -> Int {
-        // RoutinesScreen is a plain SwiftUI List of routine rows, so table/cell count is the
-        // best low-coupling proxy for "how many routines are visible in the list".
-        // Using a count rather than a specific title lets the test catch an accidental blank row.
         let tableCells = app.tables.cells.count
         if tableCells > 0 { return tableCells }
 
@@ -93,5 +165,23 @@ final class RoutineEditorSmokeUITests: XCTestCase {
         if directCells > 0 { return directCells }
 
         return 0
+    }
+    
+    private func createRoutineButton(in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(
+            NSPredicate(format: "label == %@ OR label == %@", "Create routine", "Crear rutina")
+        ).firstMatch
+    }
+
+    private func addExerciseButton(in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(
+            NSPredicate(format: "label == %@ OR label == %@", "Add exercise", "Agregar ejercicio")
+        ).firstMatch
+    }
+
+    private func newRoutineNavigationBar(in app: XCUIApplication) -> XCUIElement {
+        let english = app.navigationBars["New Routine"]
+        if english.exists { return english }
+        return app.navigationBars["Nueva rutina"]
     }
 }

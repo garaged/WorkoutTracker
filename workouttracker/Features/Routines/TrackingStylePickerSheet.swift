@@ -10,7 +10,7 @@ struct TrackingStylePickerSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Track \(exerciseName) as") {
+                Section(AppFormatting.localizedFormat("Track %@ as", exerciseName)) {
                     Picker(AppFormatting.localized("Style"), selection: $selection) {
                         ForEach(ExerciseTrackingStyle.allCases) { style in
                             Text(style.displayName).tag(style)

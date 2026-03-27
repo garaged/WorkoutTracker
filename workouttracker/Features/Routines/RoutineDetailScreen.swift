@@ -166,7 +166,7 @@ private struct RoutineItemCard: View {
     let onPlanChanged: () -> Void
 
     private var exerciseName: String {
-        item.exercise?.name ?? AppFormatting.localized("Pick exercise")
+        item.exercise.map { ExerciseLocalizationService.displayName(for: $0) } ?? AppFormatting.localized("Pick exercise")
     }
 
     private var sortedPlans: [WorkoutSetPlan] {

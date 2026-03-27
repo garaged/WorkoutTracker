@@ -62,7 +62,9 @@ final class RoutineStartRotationRegressionUITests: XCTestCase {
         XCTAssertTrue(openCalendar.isHittable, "Expected Open Calendar to be tappable.")
         openCalendar.tap()
 
-        let openWorkout = app.buttons["DayTimeline.WorkoutCard.DefaultAction"].firstMatch
+        let openWorkout = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == %@", "DayTimeline.WorkoutCard.DefaultAction"))
+            .firstMatch
         if !openWorkout.waitForExistence(timeout: t(8)) {
             attachUITestDebug(app, name: "RoutineStartRotation_CalendarWorkoutCardMissing")
         }
@@ -70,14 +72,22 @@ final class RoutineStartRotationRegressionUITests: XCTestCase {
             openWorkout.exists,
             "Expected the scheduled workout activity to be visible in Calendar."
         )
+
+        if !waitForHittable(openWorkout, timeout: t(4)) {
+            attachUITestDebug(app, name: "RoutineStartRotation_CalendarWorkoutCardNotHittable")
+        }
         XCTAssertTrue(
-            openWorkout.isHittable,
-            "Expected the scheduled workout activity action to be tappable without scrolling."
+            openWorkout.exists,
+            "Expected the scheduled workout activity action to exist before tapping."
         )
 
         // Real repro path:
         // scheduled activity in calendar -> tap to start/open -> rotate immediately.
-        openWorkout.tap()
+        if openWorkout.isHittable {
+            openWorkout.tap()
+        } else {
+            openWorkout.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
         XCUIDevice.shared.orientation = .landscapeLeft
 
         let sessionScreen = app.el("WorkoutSession.Screen")

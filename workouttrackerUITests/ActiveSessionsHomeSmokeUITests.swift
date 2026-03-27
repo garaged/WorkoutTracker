@@ -149,12 +149,21 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["DayTimeline.Debug.ActivitiesCount"].label, "Activities: 1")
         XCTAssertEqual(app.staticTexts["DayTimeline.Debug.WorkoutsCount"].label, "Workouts: 1")
 
-        let openWorkout = app.buttons["DayTimeline.WorkoutCard.DefaultAction"].firstMatch
+        let openWorkout = app.descendants(matching: .any)
+            .matching(
+                NSPredicate(
+                    format: "identifier == %@ OR label == %@",
+                    "DayTimeline.WorkoutCard.DefaultAction",
+                    "UITest — Active Scroll"
+                )
+            )
+            .firstMatch
+
         if !openWorkout.waitForExistence(timeout: t(6)) {
             attachUITestDebug(app, name: "DayTimelineResume_OpenControlMissing")
         }
         XCTAssertTrue(openWorkout.exists, "Expected DayTimeline.WorkoutCard.DefaultAction.")
-        tapSafely(openWorkout)
+        revealAndTap(openWorkout, in: app)
 
         let sessionScreen = app.el("WorkoutSession.Screen")
         if !sessionScreen.waitForExistence(timeout: t(8)) {

@@ -45,6 +45,10 @@ struct WorkoutHistoryScreen: View {
     private let historyService = WorkoutHistoryService()
     private let calendar = Calendar.current
 
+    private var currentExercisesByID: [UUID: Exercise] {
+        ExerciseLocalizationService.loadExercisesByID(context: modelContext)
+    }
+
     init(filter: Filter = .all, onOpenSession: ((WorkoutSession) -> Void)? = nil) {
         self.filter = filter
         self.onOpenSession = onOpenSession
@@ -273,10 +277,10 @@ struct WorkoutHistoryScreen: View {
         var dict: [UUID: String] = [:]
         for s in sessions {
             for ex in s.exercises {
-                dict[ex.exerciseId] = ex.exerciseNameSnapshot
+                dict[ex.exerciseId] = localizedExerciseName(exerciseId: ex.exerciseId, fallbackName: ex.exerciseNameSnapshot)
             }
         }
-        return dict.map { ($0.key, $0.value) }.sorted { $0.name < $1.name }
+        return dict.map { ($0.key, $0.value) }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     private var routinePickerRow: some View {
@@ -310,6 +314,14 @@ struct WorkoutHistoryScreen: View {
             .labelsHidden()
             .pickerStyle(.menu)
         }
+    }
+
+    private func localizedExerciseName(exerciseId: UUID, fallbackName: String) -> String {
+        ExerciseLocalizationService.displayName(
+            exerciseID: exerciseId,
+            fallbackName: fallbackName,
+            exercisesByID: currentExercisesByID
+        )
     }
 
     // MARK: - Row rendering
@@ -464,15 +476,22 @@ struct WorkoutHistoryScreen: View {
             }
         }
 
-        var items = counts.map { (id: $0.key, name: $0.value.name, count: $0.value.count) }
+        var items = counts.map { (id: $0.key, name: localizedExerciseName(exerciseId: $0.key, fallbackName: $0.value.name), count: $0.value.count) }
         items.sort {
             if $0.count != $1.count { return $0.count > $1.count }
-            return $0.name < $1.name
+            return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
         }
 
-        let q = search.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let q = search.trimmingCharacters(in: .whitespacesAndNewlines)
         if !q.isEmpty {
-            items = items.filter { $0.name.lowercased().contains(q) }
+            items = items.filter { item in
+                ExerciseLocalizationService.matchesSearch(
+                    exerciseID: item.id,
+                    fallbackName: counts[item.id]?.name ?? item.name,
+                    query: q,
+                    exercisesByID: currentExercisesByID
+                )
+            }
         }
 
         // Keep it tight so History feels curated

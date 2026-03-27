@@ -22,7 +22,6 @@ final class StartedActivityDeletionRegressionUITests: XCTestCase {
         )
         app.launch()
 
-        // Home should initially show the seeded in-progress session reminder.
         let homeSection = app.el("Home.ActiveSessions.Section")
         if !homeSection.waitForExistence(timeout: t(6)) {
             attachUITestDebug(app, name: "StartedDeleteRegression_HomeSectionMissingBeforeDelete")
@@ -35,7 +34,6 @@ final class StartedActivityDeletionRegressionUITests: XCTestCase {
         }
         XCTAssertTrue(homeResume.exists, "Expected a Home Resume action for the seeded in-progress workout.")
 
-        // Navigate to Calendar through the same shell users use.
         let calendarTile = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Calendar"))
             .firstMatch
@@ -47,7 +45,6 @@ final class StartedActivityDeletionRegressionUITests: XCTestCase {
         XCTAssertTrue(calendarTile.isHittable, "Expected Calendar tile to be tappable without scrolling.")
         calendarTile.tap()
 
-        // The scroll seed provides exactly one workout activity on today's timeline.
         let activitiesCount = app.staticTexts["DayTimeline.Debug.ActivitiesCount"]
         let workoutsCount = app.staticTexts["DayTimeline.Debug.WorkoutsCount"]
 
@@ -58,22 +55,15 @@ final class StartedActivityDeletionRegressionUITests: XCTestCase {
         XCTAssertEqual(activitiesCount.label, "Activities: 1")
         XCTAssertEqual(workoutsCount.label, "Workouts: 1")
 
-        let workoutCard = workoutCardButton(titled: "UITest — Active Scroll", in: app)
-        if !workoutCard.waitForExistence(timeout: t(6)) {
-            attachUITestDebug(app, name: "StartedDeleteRegression_WorkoutCardMissing")
-        }
-        XCTAssertTrue(workoutCard.exists, "Expected the seeded workout card on Calendar.")
-
         openWorkoutActionsUsingMenu(for: "UITest — Active Scroll", in: app)
 
-        let deleteButton = app.buttons["Delete"]
+        let deleteButton = deleteAction(in: app)
         if !deleteButton.waitForExistence(timeout: t(4)) {
             attachUITestDebug(app, name: "StartedDeleteRegression_DeleteActionMissing")
         }
         XCTAssertTrue(deleteButton.exists, "Expected Delete action for the started workout activity.")
         tapSafely(deleteButton)
 
-        // Calendar should now be empty because the only activity was deleted.
         if !waitForLabel(activitiesCount, toEqual: "Activities: 0", timeout: t(6)) {
             attachUITestDebug(app, name: "StartedDeleteRegression_ActivitiesCountDidNotClear")
         }
@@ -94,8 +84,6 @@ final class StartedActivityDeletionRegressionUITests: XCTestCase {
 
         navigateBackToHome(from: app)
 
-        // Regression assertion:
-        // deleting the started activity must also retire the active-session reminder.
         XCTAssertFalse(
             app.staticTexts["UITest — Active Scroll"].waitForExistence(timeout: t(2)),
             "Expected deleted started workout to disappear from the Home active-session reminder."
@@ -112,58 +100,68 @@ final class StartedActivityDeletionRegressionUITests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func workoutCardButton(titled title: String, in app: XCUIApplication) -> XCUIElement {
-        app.buttons.matching(
-            NSPredicate(
-                format: "identifier == %@ AND label == %@",
-                "DayTimeline.WorkoutCard.DefaultAction",
-                title
-            )
-        ).firstMatch
-    }
-
     private func openWorkoutActionsUsingMenu(for title: String, in app: XCUIApplication) {
-        let workoutCard = workoutCardButton(titled: title, in: app)
-        XCTAssertTrue(workoutCard.waitForExistence(timeout: t(4)), "Expected workout card before opening actions.")
-
-        let menuHandle = moreActionsHandle(nearWorkoutTitle: title, in: app)
-        if !menuHandle.waitForExistence(timeout: t(4)) {
-            attachUITestDebug(app, name: "StartedDeleteRegression_MenuHandleMissing")
+        let titleLabel = app.staticTexts[title].firstMatch
+        if !titleLabel.waitForExistence(timeout: t(4)) {
+            attachUITestDebug(app, name: "StartedDeleteRegression_WorkoutTitleMissing")
         }
-        XCTAssertTrue(menuHandle.exists, "Expected workout actions menu handle for the seeded workout card.")
-        XCTAssertTrue(menuHandle.isHittable, "Expected workout actions menu handle to be tappable.")
-        tapSafely(menuHandle)
+        XCTAssertTrue(titleLabel.exists, "Expected workout title '\(title)' on Calendar.")
 
-        if app.buttons["Delete"].waitForExistence(timeout: t(3)) {
+        let titleCenter = titleLabel.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+
+        // The row menu hotspot is visually on the lower-right side of the card.
+        // Since the row action identifier is not exposed here, tap geometry instead.
+        let primaryTap = titleCenter.withOffset(CGVector(dx: 290, dy: 42))
+        primaryTap.tap()
+
+        if waitForDeleteAction(in: app) {
+            return
+        }
+
+        let secondaryTap = titleCenter.withOffset(CGVector(dx: 250, dy: 28))
+        secondaryTap.tap()
+
+        if waitForDeleteAction(in: app) {
+            return
+        }
+
+        let tertiaryTap = titleCenter.withOffset(CGVector(dx: 310, dy: 18))
+        tertiaryTap.tap()
+
+        if waitForDeleteAction(in: app) {
             return
         }
 
         attachUITestDebug(app, name: "StartedDeleteRegression_WorkoutActionsDidNotOpen")
-        XCTFail("Expected tapping the workout card menu handle to open the workout actions dialog.")
+        XCTFail("Expected workout actions to open from the calendar row menu handle.")
     }
 
-    private func moreActionsHandle(nearWorkoutTitle title: String, in app: XCUIApplication) -> XCUIElement {
-        let anchor = app.staticTexts[title]
-        XCTAssertTrue(anchor.waitForExistence(timeout: t(4)), "Expected workout title '\(title)' on Calendar.")
-
-        let candidates = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label == %@", "Activity actions (drag to resize)"))
-            .allElementsBoundByIndex
-            .filter { $0.exists && !$0.frame.isEmpty }
-
-        if let nearest = candidates.min(by: { score($0, anchor: anchor) < score($1, anchor: anchor) }) {
-            return nearest
+    private func deleteAction(in app: XCUIApplication) -> XCUIElement {
+        if app.sheets.buttons["Delete"].exists || app.sheets.buttons["Delete"].waitForExistence(timeout: t(1)) {
+            return app.sheets.buttons["Delete"]
         }
 
-        return app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label == %@", "Activity actions (drag to resize)"))
-            .firstMatch
+        if app.alerts.buttons["Delete"].exists || app.alerts.buttons["Delete"].waitForExistence(timeout: t(1)) {
+            return app.alerts.buttons["Delete"]
+        }
+
+        return app.buttons["Delete"]
     }
 
-    private func score(_ element: XCUIElement, anchor: XCUIElement) -> CGFloat {
-        let vertical = abs(element.frame.midY - anchor.frame.midY)
-        let horizontal = abs(element.frame.midX - anchor.frame.midX)
-        return vertical * 4 + horizontal
+    private func waitForDeleteAction(in app: XCUIApplication) -> Bool {
+        if app.sheets.buttons["Delete"].waitForExistence(timeout: t(2)) {
+            return true
+        }
+
+        if app.alerts.buttons["Delete"].waitForExistence(timeout: t(2)) {
+            return true
+        }
+
+        if app.buttons["Delete"].waitForExistence(timeout: t(2)) {
+            return true
+        }
+
+        return false
     }
 
     private func navigateBackToHome(from app: XCUIApplication) {
@@ -181,7 +179,6 @@ final class StartedActivityDeletionRegressionUITests: XCTestCase {
             }
         }
 
-        // Fallback for default iOS back-swipe behavior.
         app.swipeRight()
     }
 

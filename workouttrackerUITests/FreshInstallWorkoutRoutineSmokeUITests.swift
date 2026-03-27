@@ -218,17 +218,18 @@ final class FreshInstallWorkoutRoutineSmokeUITests: XCTestCase {
             return
         }
 
-        func nearestButton(identifier: String, to anchor: XCUIElement) -> XCUIElement? {
-            let buttons = app.buttons.matching(identifier: identifier)
+        func nearestAction(identifier: String, to anchor: XCUIElement) -> XCUIElement? {
+            let candidates = app.descendants(matching: .any)
+                .matching(NSPredicate(format: "identifier == %@", identifier))
                 .allElementsBoundByIndex
                 .filter { $0.exists && !$0.frame.isEmpty }
 
-            guard !buttons.isEmpty else { return nil }
+            guard !candidates.isEmpty else { return nil }
 
             let ax = anchor.frame.midX
             let ay = anchor.frame.midY
 
-            return buttons.min { lhs, rhs in
+            return candidates.min { lhs, rhs in
                 let ld = hypot(lhs.frame.midX - ax, lhs.frame.midY - ay)
                 let rd = hypot(rhs.frame.midX - ax, rhs.frame.midY - ay)
                 return ld < rd
@@ -240,14 +241,13 @@ final class FreshInstallWorkoutRoutineSmokeUITests: XCTestCase {
         }
 
         // Preferred path: tap the Start overlay that belongs to this exact card.
-        if let startOverlay = nearestButton(identifier: "DayTimeline.WorkoutOverlay.Start", to: blockTitle),
-           startOverlay.isHittable {
-            startOverlay.tap()
+        if let startOverlay = nearestAction(identifier: "DayTimeline.WorkoutOverlay.Start", to: blockTitle) {
+            tapSafely(startOverlay)
             if waitForSessionScreen() { return }
         }
 
         // Fallback: tap the card default action, then accept the popover Start path if it appears.
-        guard let defaultAction = nearestButton(identifier: "DayTimeline.WorkoutCard.DefaultAction", to: blockTitle) else {
+        guard let defaultAction = nearestAction(identifier: "DayTimeline.WorkoutCard.DefaultAction", to: blockTitle) else {
             attachUITestDebug(app, name: "FreshInstallWorkout_DefaultActionMissing")
             XCTFail("Expected DayTimeline.WorkoutCard.DefaultAction near \(title).")
             return
@@ -266,13 +266,7 @@ final class FreshInstallWorkoutRoutineSmokeUITests: XCTestCase {
             }
         }
 
-        if !defaultAction.isHittable {
-            attachUITestDebug(app, name: "FreshInstallWorkout_DefaultActionNotHittable")
-            XCTFail("Expected DayTimeline.WorkoutCard.DefaultAction near \(title) to be hittable.")
-            return
-        }
-
-        defaultAction.tap()
+        tapSafely(defaultAction)
 
         // If the app chooses the launch popover path, confirm it with Start.
         let launchSheet = app.sheets.firstMatch

@@ -91,6 +91,31 @@ final class ProgressHubUITests: XCTestCase {
         XCTAssertTrue(lowData.exists, "Expected exercise detail to present an honest low-data state.")
     }
 
+    func test_progressDashboard_underSpanishMexicoLocale_keepsExerciseLabelsReadable() {
+        let app = UITestLaunch.app(
+            start: "progress",
+            reset: true,
+            seed: true,
+            extraEnv: ["UITESTS_PROGRESS": "1", "UITESTS_LOCALIZATION": "1"],
+            extraArgs: ["-AppleLanguages", "(es-MX)", "-AppleLocale", "es_MX"]
+        )
+        app.launch()
+
+        let dashboard = app.el("Progress.Dashboard.Screen")
+        if !dashboard.waitForExistence(timeout: t(8)) {
+            attachUITestDebug(app, name: "ProgressHub_esMX_DashboardMissing")
+        }
+        XCTAssertTrue(dashboard.exists, "Expected Progress dashboard screen under es-MX.")
+
+        let readableExerciseLabel = app.staticTexts.matching(
+            NSPredicate(format: "label == %@ OR label == %@", "Press de banca", "UITest Bench Press")
+        ).firstMatch
+        if !readableExerciseLabel.waitForExistence(timeout: t(4)) {
+            attachUITestDebug(app, name: "ProgressHub_esMX_ExerciseLabelMissing")
+        }
+        XCTAssertTrue(readableExerciseLabel.exists, "Expected featured exercise labels to remain readable under es-MX.")
+    }
+
     private func makeApp() -> XCUIApplication {
         UITestLaunch.app(
             start: "progress",

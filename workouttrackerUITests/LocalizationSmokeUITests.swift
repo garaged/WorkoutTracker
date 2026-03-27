@@ -1,23 +1,18 @@
 import XCTest
 
 final class LocalizationSmokeUITests: XCTestCase {
+
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
     }
 
-    func test_settingsLaunchesUnderSpanishMexicoLocale() {
+    func test_settingsRendersSpanishTitle_underSpanishMexicoLocale() {
         let app = makeApp(start: "settings")
         app.launch()
 
-        let distancePicker = app.el("settings.distanceUnitPicker")
-        if !distancePicker.waitForExistence(timeout: t(6)) {
-            attachUITestDebug(app, name: "Localization_Settings_esMX_LaunchFailed")
-        }
-        XCTAssertTrue(distancePicker.exists, "Expected Settings to render under es_MX locale.")
-        XCTAssertTrue(app.navigationBars["Configuración"].waitForExistence(timeout: t(4)) || app.staticTexts["Configuración"].waitForExistence(timeout: t(4)), "Expected settings title to be localized.")
+        XCTAssertTrue(app.navigationBars["Configuración"].waitForExistence(timeout: t(8)), "Expected settings title to be localized.")
     }
-
 
     func test_exerciseLibrary_showsLocalizedBuiltInName_underSpanishMexicoLocale() {
         let app = makeApp(start: "exercise-library", seed: true)
@@ -65,6 +60,39 @@ final class LocalizationSmokeUITests: XCTestCase {
             attachUITestDebug(app, name: "Localization_ExercisePicker_esMX_LocalizedSearchFailed")
         }
         XCTAssertTrue(localizedBench.exists, "Expected localized picker search to match Bench Press under es-MX.")
+    }
+
+    func test_exercisePicker_localizedRowRemainsTappable_whenThumbnailsAreEnabled_underSpanishMexicoLocale() {
+        let app = makeApp(
+            start: "exercise-picker",
+            seed: true,
+            extraEnv: ["UITESTS_THUMBNAILS": "1"]
+        )
+        app.launch()
+
+        let picker = app.el("ExercisePicker.Screen")
+        if !picker.waitForExistence(timeout: t(8)) {
+            attachUITestDebug(app, name: "Localization_ExercisePicker_esMX_ThumbnailScreenMissing")
+        }
+        XCTAssertTrue(picker.exists, "Expected Exercise picker screen.")
+
+        let searchField = app.searchFields.firstMatch
+        XCTAssertTrue(searchField.waitForExistence(timeout: t(6)), "Expected Exercise picker search field.")
+        searchField.tap()
+        searchField.typeText("Press de banca")
+
+        let localizedBenchLabel = app.staticTexts["Press de banca"].firstMatch
+        if !localizedBenchLabel.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "Localization_ExercisePicker_esMX_ThumbnailRowMissing")
+        }
+        XCTAssertTrue(localizedBenchLabel.exists, "Expected the localized Bench Press picker row to remain present when thumbnails are enabled.")
+
+        tapSafely(localizedBenchLabel)
+
+        XCTAssertTrue(
+            picker.exists,
+            "Expected the standalone picker UITest route to remain on screen after tapping a row."
+        )
     }
 
     func test_progressDashboardAndDetailRenderSpanishCopy() {

@@ -31,7 +31,39 @@ Non-goals:
 
 ## Changelog
 
-## v2.0.1
+### 2.0.3
+
+- Added the first wave of built-in exercise localization
+- Improved localized exercise search and naming consistency across the app
+- Added exercise thumbnails in the picker when illustrations are available
+- Improved program import/export compatibility for localized built-in exercises
+- Fixed and hardened several data, browsing, and UI reliability paths
+
+### 2.0.2 
+
+This release improves accessibility, readability, and layout resilience across key parts of WorkoutTracker.
+
+#### Accessibility and readability
+
+- improved accessibility labels and spoken summaries across sessions, Home, Progress, and summary flows
+- clearer communication for current, completed, overdue, paused, and low-data states
+- better support for larger text sizes on dense screens
+
+#### Session and Home resilience
+
+- improved workout set row layout across different phone sizes
+- made session controls and active-session cards more resilient on compact and large phones
+- improved visibility and behavior for current-set and active-rest states
+- reduced cramped layouts and improved wrapping in key session and Home flows
+
+#### Progress and summary resilience
+
+- added accessible text summaries for progress trends and chart-based insights
+- improved exercise progress detail readability without relying only on charts
+- made progress cards, finish summary, and reflection layouts adapt better to larger text
+- improved low-data states so they remain clear and informative
+
+### v2.0.1
 
 - Improved session resume reliability from Home and Calendar.
 - Added clearer stale-session recovery options: Resume, Finish now, Discard, and Keep for later.

@@ -18,11 +18,18 @@ public enum ExerciseIllustrationCatalog {
     }
 
     public static func assetName(for exerciseName: String, set: ExerciseIllustrationSet) -> String? {
-        guard let key = exerciseKey(for: exerciseName),
-              let assets = assetMap[key] else {
+        guard let key = exerciseKey(for: exerciseName) else {
             return nil
         }
+        return assetName(forStableKey: key, set: set)
+    }
 
+    public static func assetName(forExerciseKey key: String, set: ExerciseIllustrationSet) -> String? {
+        assetName(forStableKey: key, set: set)
+    }
+
+    public static func assetName(forStableKey key: String, set: ExerciseIllustrationSet) -> String? {
+        guard let assets = assetMap[normalizedStableKey(key)] else { return nil }
         switch set {
         case .dummyV1: return assets.dummyV1
         case .femaleV1: return assets.femaleV1
@@ -30,13 +37,59 @@ public enum ExerciseIllustrationCatalog {
         }
     }
 
-    public static func assetName(forExerciseKey key: String, set: ExerciseIllustrationSet) -> String? {
-        guard let assets = assetMap[key] else { return nil }
-        switch set {
-        case .dummyV1: return assets.dummyV1
-        case .femaleV1: return assets.femaleV1
-        case .maleV1: return assets.maleV1
+    public static func stableKey(
+        fromCatalogKey catalogKey: String?,
+        storedMediaAssetName stored: String?,
+        exerciseName: String
+    ) -> String? {
+        if let catalogKey,
+           let normalizedCatalogKey = normalizedStableKeyIfKnown(catalogKey) {
+            return normalizedCatalogKey
         }
+
+        let rawStored = stored?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !rawStored.isEmpty {
+            if let normalizedStored = normalizedStableKeyIfKnown(rawStored) {
+                return normalizedStored
+            }
+
+            if let reverse = reverseAssetMap[rawStored] {
+                return reverse
+            }
+
+            if catalogKey == nil, let alias = exerciseKey(for: rawStored) {
+                return alias
+            }
+        }
+
+        guard catalogKey == nil else {
+            return nil
+        }
+
+        return exerciseKey(for: exerciseName)
+    }
+
+    public static func stableKey(
+        fromStoredMediaAssetName stored: String?,
+        exerciseName: String
+    ) -> String? {
+        stableKey(fromCatalogKey: nil, storedMediaAssetName: stored, exerciseName: exerciseName)
+    }
+
+    private static func normalizedStableKeyIfKnown(_ raw: String) -> String? {
+        let normalized = normalizedStableKey(raw)
+        if assetMap[normalized] != nil {
+            return normalized
+        }
+        return nil
+    }
+
+    public static func normalizedStableKey(_ raw: String) -> String {
+        raw
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: "-", with: "_")
+            .replacingOccurrences(of: " ", with: "_")
     }
 
     private static func normalize(_ raw: String) -> String {
@@ -129,29 +182,6 @@ public enum ExerciseIllustrationCatalog {
             maleV1: "exercise_mobility_flow_male_v1"
         ),
     ]
-
-    public static func stableKey(
-        fromStoredMediaAssetName stored: String?,
-        exerciseName: String
-    ) -> String? {
-        let raw = stored?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-
-        if !raw.isEmpty {
-            if assetMap[raw] != nil {
-                return raw
-            }
-
-            if let reverse = reverseAssetMap[raw] {
-                return reverse
-            }
-
-            if let alias = exerciseKey(for: raw) {
-                return alias
-            }
-        }
-
-        return exerciseKey(for: exerciseName)
-    }
 
     private static let reverseAssetMap: [String: String] = {
         var result: [String: String] = [:]

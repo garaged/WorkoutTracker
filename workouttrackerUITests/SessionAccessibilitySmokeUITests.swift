@@ -54,4 +54,31 @@ final class SessionAccessibilitySmokeUITests: XCTestCase {
         XCTAssertTrue(continueButton.waitForExistence(timeout: t(4)), "Expected Continue button under large text.")
         XCTAssertTrue(continueButton.isHittable, "Expected Continue button to remain hittable under large text.")
     }
+
+
+    func test_session_underSpanishMexicoLocale_keepsExerciseLabelsReadable() {
+        let app = UITestLaunch.app(
+            start: "session",
+            reset: true,
+            seed: true,
+            extraEnv: ["UITESTS_LOCALIZATION": "1"],
+            extraArgs: ["-AppleLanguages", "(es-MX)", "-AppleLocale", "es_MX"]
+        )
+        app.launch()
+
+        let sessionScreen = app.el("WorkoutSession.Screen")
+        if !sessionScreen.waitForExistence(timeout: t(8)) {
+            attachUITestDebug(app, name: "SessionAccessibility_esMX_SessionMissing")
+        }
+        XCTAssertTrue(sessionScreen.exists, "Expected WorkoutSession screen under es-MX.")
+
+        let readableExerciseLabel = app.staticTexts.matching(
+            NSPredicate(format: "label == %@ OR label == %@ OR label == %@", "Press de banca", "Sentadilla trasera", "Peso muerto")
+        ).firstMatch
+        if !readableExerciseLabel.waitForExistence(timeout: t(4)) {
+            attachUITestDebug(app, name: "SessionAccessibility_esMX_ExerciseLabelMissing")
+        }
+        XCTAssertTrue(readableExerciseLabel.exists, "Expected a readable localized built-in exercise label in the session UI.")
+    }
+
 }

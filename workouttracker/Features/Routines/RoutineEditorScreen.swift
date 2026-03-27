@@ -51,7 +51,7 @@ struct RoutineEditorScreen: View {
                 }
                 .sheet(isPresented: $showTrackingStylePicker) {
                     TrackingStylePickerSheet(
-                        exerciseName: pendingExerciseToAdd?.name ?? AppFormatting.localized("Exercise"),
+                        exerciseName: pendingExerciseToAdd.map { ExerciseLocalizationService.displayName(for: $0) } ?? AppFormatting.localized("Exercise"),
                         selection: $pendingTrackingStyle
                     ) {
                         guard let ex = pendingExerciseToAdd else { return }
@@ -371,7 +371,7 @@ private struct RoutineItemRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
-                Text(item.exercise?.name ?? AppFormatting.localized("Unknown Exercise"))
+                Text(item.exercise.map { ExerciseLocalizationService.displayName(for: $0) } ?? AppFormatting.localized("Unknown Exercise"))
                     .font(.headline)
                     .lineLimit(1)
 

@@ -1,3 +1,37 @@
+# Version 2.0.3 — Exercise localization foundation + picker recognition
+
+This release makes built-in exercises more language-aware and more visually recognizable, while keeping older data and custom exercises safe.
+
+## Added
+
+Stable built-in exercise identity using internal catalog keys
+Initial localized built-in exercise names
+Localized built-in exercise search in exercise browse surfaces
+Shared exercise localization service for consistent built-in naming across the app
+Picker thumbnails for exercises with available illustrations
+Shared image-resolution service for exercise thumbnails
+
+## Improved
+
+Exercise picker now shows localized built-in names and supports localized search
+Exercise library now shows localized built-in names for catalog exercises
+Routine editor and routine detail views now use localized built-in names
+Session screens now prefer the current localized built-in name when the exercise can still be resolved
+History and progress surfaces now show more consistent built-in exercise naming
+Program pack import/export now preserves stable built-in exercise identity across locales
+Built-in exercise matching is safer during seed, starter-pack, and routine reconciliation
+Kept intentionally stable
+Custom exercise names are not auto-translated
+Session snapshots and analytics calculations were not changed
+Illustration-set choices in Settings remain the same
+No new image overlay or preview modal was added in this version
+
+## Reliability
+
+Better compatibility with older stores and legacy packs
+Cleaner fallback behavior when localized names or illustrations are missing
+Test hardening across localized, routine, session, history, and picker flows
+
 # Changelog v2.0.2
 
 This update improves accessibility, layout resilience, and readability across key parts of the app.

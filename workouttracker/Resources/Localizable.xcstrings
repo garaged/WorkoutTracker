@@ -10066,7 +10066,7 @@
         "es-MX" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Programar programa"
+            "value" : "Programar plan"
           }
         }
       }
@@ -12573,6 +12573,7 @@
       }
     },
     "Track %@ as" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
