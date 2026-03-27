@@ -7,6 +7,7 @@ struct ExerciseInsightsSectionView: View {
 
     let exerciseId: UUID
     let exerciseName: String
+    let exerciseCatalogKey: String?
 
     /// Optional: if provided, “Start workout and apply” will be shown.
     let startWorkoutAction: (() -> Void)?
@@ -22,11 +23,17 @@ struct ExerciseInsightsSectionView: View {
     init(
         exerciseId: UUID,
         exerciseName: String,
+        exerciseCatalogKey: String? = nil,
         startWorkoutAction: (() -> Void)? = nil
     ) {
         self.exerciseId = exerciseId
         self.exerciseName = exerciseName
+        self.exerciseCatalogKey = exerciseCatalogKey
         self.startWorkoutAction = startWorkoutAction
+    }
+
+    private var resolvedExerciseName: String {
+        ExerciseLocalizationService.displayName(catalogKey: exerciseCatalogKey, storedName: exerciseName)
     }
 
     var body: some View {
@@ -45,7 +52,7 @@ struct ExerciseInsightsSectionView: View {
             ExerciseTrendChartView(points: trendPoints)
 
             NavigationLink {
-                WorkoutHistoryScreen(filter: .exercise(exerciseId: exerciseId, exerciseName: exerciseName))
+                WorkoutHistoryScreen(filter: .exercise(exerciseId: exerciseId, exerciseName: resolvedExerciseName))
             } label: {
                 Label(AppFormatting.localized("View full history"), systemImage: "clock.arrow.circlepath")
                     .font(.subheadline.weight(.semibold))

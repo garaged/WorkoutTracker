@@ -24,6 +24,10 @@ struct UITestHostRootView: View {
                 ProgressDashboardView()
             case "routines":
                 RoutinesScreen()
+            case "exercise-library":
+                ExerciseLibraryScreen()
+            case "exercise-picker":
+                ExercisePickerSheet(onPick: { _ in })
             case "session":
                 UITestStrengthSessionBootstrapView()
             case "calendar", "":

@@ -66,6 +66,10 @@ struct workouttrackerUITestHostApp: App {
                     }
                 }
 
+                if env["UITESTS_LOCALIZATION"] == "1", env["UITESTS_SEED"] == "1" {
+                    try assertLocalizationUITestSeed(context: context)
+                }
+
                 if env["UITESTS_ACTIVE_SESSIONS"] == "1" {
                     try seedHomeActiveSessionsUITestDataIfNeeded(context: context)
 
@@ -712,12 +716,27 @@ private func assertUITestLaunchConfiguration(_ env: [String: String]) {
 
     if env["UITESTS_LOCALIZATION"] == "1" {
         let needsLocalizedSeededData = env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1" || env["UITESTS_LINKED_FLOW"] == "1"
-        if needsLocalizedSeededData, env["UITESTS_SEED"] != "1" {
-            fatalError("UITESTS assertion failed: Localization smoke tests that cover Progress or linked sessions must launch with UITESTS_SEED=1.")
+        let exerciseBrowseStarts = start == "exercise-library" || start == "exercise-picker"
+        if (needsLocalizedSeededData || exerciseBrowseStarts), env["UITESTS_SEED"] != "1" {
+            fatalError("UITESTS assertion failed: Localization smoke tests that cover seeded browse, Progress, or linked-session flows must launch with UITESTS_SEED=1.")
         }
     }
 }
 
+
+@MainActor
+private func assertLocalizationUITestSeed(context: ModelContext) throws {
+    let exercises = try context.fetch(FetchDescriptor<Exercise>())
+
+    guard let benchPress = exercises.first(where: { $0.catalogKey == "bench-press" }) else {
+        fatalError("UITESTS assertion failed: Localization seed should include a built-in Bench Press exercise with catalogKey=bench-press.")
+    }
+
+    let displayName = ExerciseLocalizationService.displayName(for: benchPress, locale: Locale(identifier: "es-MX"))
+    guard displayName == "Press de banca" else {
+        fatalError("UITESTS assertion failed: Bench Press should resolve to 'Press de banca' under es-MX localization smoke tests.")
+    }
+}
 
 @MainActor
 private func assertProgramCatalogUITestSeed() throws {

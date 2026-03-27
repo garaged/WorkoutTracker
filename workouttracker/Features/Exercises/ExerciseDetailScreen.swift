@@ -40,6 +40,10 @@ struct ExerciseDetailScreen: View {
         catch { return (try! JSONDecoder().decode(T.self, from: Data("[]".utf8))) }
     }
     
+    private var displayName: String {
+        ExerciseLocalizationService.displayName(for: exercise)
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -96,7 +100,7 @@ struct ExerciseDetailScreen: View {
             }
             .padding()
         }
-        .navigationTitle(exercise.name)
+        .navigationTitle(displayName)
         .navigationBarTitleDisplayMode(.inline)
         .task(id: exercise.id) {
             await loadAll()
@@ -127,7 +131,7 @@ struct ExerciseDetailScreen: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                Text(exercise.name)
+                Text(displayName)
                     .font(.title2.weight(.bold))
                 Spacer()
                 Text(exercise.modality.rawValue.capitalized)
@@ -202,7 +206,7 @@ struct ExerciseDetailScreen: View {
                     .font(.headline)
                 Spacer()
                 NavigationLink {
-                    WorkoutHistoryScreen(filter: .exercise(exerciseId: exercise.id, exerciseName: exercise.name))
+                    WorkoutHistoryScreen(filter: .exercise(exerciseId: exercise.id, exerciseName: displayName))
                 } label: {
                     Text(AppFormatting.localized("See all"))
                 }
@@ -394,7 +398,7 @@ struct ExerciseDetailScreen: View {
         }
         .sheet(isPresented: $showEquipmentEditor) {
             EquipmentTagsEditorSheet(
-                title: exercise.name,
+                title: displayName,
                 initialTags: Set(exercise.equipmentTags),
                 customLabels: customEquipmentLabels,
                 onSave: { tags in

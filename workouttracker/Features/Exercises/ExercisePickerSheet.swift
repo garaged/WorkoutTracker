@@ -11,9 +11,9 @@ struct ExercisePickerSheet: View {
 
         var title: String {
             switch self {
-            case .all: return "All"
-            case .warmUp: return "Warm-up"
-            case .coolDown: return "Cool-down"
+            case .all: return AppFormatting.localized("All")
+            case .warmUp: return AppFormatting.localized("Warm-up")
+            case .coolDown: return AppFormatting.localized("Cool-down")
             }
         }
 
@@ -39,11 +39,11 @@ struct ExercisePickerSheet: View {
     @State private var selectedScope: PickerScope
 
     init(
-        title: String = "Pick Exercise",
+        title: String? = nil,
         preferredRole: ExerciseRoutineRole? = nil,
         onPick: @escaping (Exercise?) -> Void
     ) {
-        self.title = title
+        self.title = title ?? AppFormatting.localized("Pick Exercise")
         self.preferredRole = preferredRole
         self.onPick = onPick
         switch preferredRole {
@@ -74,7 +74,7 @@ struct ExercisePickerSheet: View {
                             }
                         }
 
-                        Section(selectedScope == .all ? "Exercises" : "All exercises") {
+                        Section(selectedScope == .all ? AppFormatting.localized("Exercises") : AppFormatting.localized("All exercises")) {
                             ForEach(remainingExercises) { ex in
                                 pickButton(for: ex)
                             }
@@ -82,6 +82,7 @@ struct ExercisePickerSheet: View {
                     }
                 }
             }
+            .accessibilityIdentifier("ExercisePicker.Screen")
             .navigationTitle(title)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
             .safeAreaInset(edge: .top) {
@@ -130,10 +131,11 @@ struct ExercisePickerSheet: View {
             .filter { !$0.isArchived }
             .filter { ex in
                 guard !query.isEmpty else { return true }
-                return ex.name.localizedCaseInsensitiveContains(query)
+                return ExerciseLocalizationService.matchesSearch(ex, query: query)
             }
             .sorted { lhs, rhs in
-                lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+                ExerciseLocalizationService.sortDisplayName(for: lhs)
+                    .localizedCaseInsensitiveCompare(ExerciseLocalizationService.sortDisplayName(for: rhs)) == .orderedAscending
             }
     }
 
@@ -169,7 +171,7 @@ struct ExercisePickerSheet: View {
             dismiss()
         } label: {
             VStack(alignment: .leading, spacing: 6) {
-                Text(ex.name)
+                Text(ExerciseLocalizationService.displayName(for: ex))
                     .foregroundStyle(.primary)
 
                 HStack(spacing: 6) {

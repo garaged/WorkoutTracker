@@ -18,6 +18,55 @@ final class LocalizationSmokeUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Configuración"].waitForExistence(timeout: t(4)) || app.staticTexts["Configuración"].waitForExistence(timeout: t(4)), "Expected settings title to be localized.")
     }
 
+
+    func test_exerciseLibrary_showsLocalizedBuiltInName_underSpanishMexicoLocale() {
+        let app = makeApp(start: "exercise-library", seed: true)
+        app.launch()
+
+        let library = app.el("ExerciseLibrary.Screen")
+        if !library.waitForExistence(timeout: t(8)) {
+            attachUITestDebug(app, name: "Localization_ExerciseLibrary_esMX_ScreenMissing")
+        }
+        XCTAssertTrue(library.exists, "Expected Exercise library screen.")
+
+        let searchField = app.searchFields.firstMatch
+        if !searchField.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "Localization_ExerciseLibrary_esMX_SearchMissing")
+        }
+        XCTAssertTrue(searchField.exists, "Expected Exercise library search field.")
+
+        searchField.tap()
+        searchField.typeText("Press de banca")
+
+        let localizedBench = app.staticTexts["Press de banca"].firstMatch
+        if !localizedBench.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "Localization_ExerciseLibrary_esMX_BenchMissing")
+        }
+        XCTAssertTrue(localizedBench.exists, "Expected the library search to show a localized built-in Bench Press row.")
+    }
+
+    func test_exercisePicker_searchesLocalizedBuiltInName_underSpanishMexicoLocale() {
+        let app = makeApp(start: "exercise-picker", seed: true)
+        app.launch()
+
+        let picker = app.el("ExercisePicker.Screen")
+        if !picker.waitForExistence(timeout: t(8)) {
+            attachUITestDebug(app, name: "Localization_ExercisePicker_esMX_ScreenMissing")
+        }
+        XCTAssertTrue(picker.exists, "Expected Exercise picker screen.")
+
+        let searchField = app.searchFields.firstMatch
+        XCTAssertTrue(searchField.waitForExistence(timeout: t(6)), "Expected Exercise picker search field.")
+        searchField.tap()
+        searchField.typeText("Press de banca")
+
+        let localizedBench = app.staticTexts["Press de banca"].firstMatch
+        if !localizedBench.waitForExistence(timeout: t(6)) {
+            attachUITestDebug(app, name: "Localization_ExercisePicker_esMX_LocalizedSearchFailed")
+        }
+        XCTAssertTrue(localizedBench.exists, "Expected localized picker search to match Bench Press under es-MX.")
+    }
+
     func test_progressDashboardAndDetailRenderSpanishCopy() {
         let app = makeApp(start: "progress", seed: true, extraEnv: ["UITESTS_PROGRESS": "1"])
         app.launch()

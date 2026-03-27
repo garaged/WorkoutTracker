@@ -33,7 +33,7 @@ struct ExerciseLibraryScreen: View {
             .filter {
                 let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !q.isEmpty else { return true }
-                return $0.name.localizedCaseInsensitiveContains(q)
+                return ExerciseLocalizationService.matchesSearch($0, query: q)
             }
             .filter {
                 // ✅ Equipment filter composed with existing filters
@@ -41,6 +41,10 @@ struct ExerciseLibraryScreen: View {
                 let selected = selectedEquipmentTags
                 guard !selected.isEmpty else { return true }
                 return $0.matchesEquipmentFilter(selected)
+            }
+            .sorted { lhs, rhs in
+                ExerciseLocalizationService.sortDisplayName(for: lhs)
+                    .localizedCaseInsensitiveCompare(ExerciseLocalizationService.sortDisplayName(for: rhs)) == .orderedAscending
             }
     }
 
@@ -76,6 +80,7 @@ struct ExerciseLibraryScreen: View {
                 }
             }
         }
+        .accessibilityIdentifier("ExerciseLibrary.Screen")
         .navigationTitle(AppFormatting.localized("Exercises"))
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
         .toolbar {
@@ -230,7 +235,7 @@ private struct ExerciseRow: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(exercise.name).font(.headline)
+                    Text(ExerciseLocalizationService.displayName(for: exercise)).font(.headline)
 
                     Text(exercise.modality.rawValue.capitalized)
                         .font(.subheadline)

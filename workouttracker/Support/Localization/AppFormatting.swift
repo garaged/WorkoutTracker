@@ -138,6 +138,21 @@ enum AppFormatting {
 
 
 
+    static func exerciseCatalogNameKey(for catalogKey: String) -> String {
+        let token = catalogKey
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .map { character in
+                if character.isLetter || character.isNumber {
+                    return String(character)
+                }
+                return "_"
+            }
+            .joined()
+
+        return "exercise.catalog.\(token).name"
+    }
+
     static func localized(_ key: String, locale: Locale = .autoupdatingCurrent) -> String {
         localizedString(key, locale: locale)
     }
