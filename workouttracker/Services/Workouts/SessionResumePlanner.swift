@@ -61,6 +61,68 @@ struct SessionResumePlanner {
         sortedActiveSessions(sessions, activitiesByID: activitiesByID).first
     }
 
+    func currentActiveSession(
+        from sessions: [WorkoutSession],
+        activitiesByID: [UUID: Activity]
+    ) -> WorkoutSession? {
+        preferredActiveSession(from: sessions, activitiesByID: activitiesByID)
+    }
+
+    func currentResumeTarget(for session: WorkoutSession) -> SessionResumeTarget? {
+        target(for: session)
+    }
+
+    func openRoute(for session: WorkoutSession) -> AppRoute {
+        .session(sessionID: session.id)
+    }
+
+    @MainActor
+    func resumeRoute(
+        for session: WorkoutSession,
+        activeExerciseID: UUID? = nil,
+        activeSetID: UUID? = nil,
+        visibleExercises: [WorkoutSessionExercise]? = nil
+    ) -> AppRoute? {
+        resumeRoute(
+            for: session,
+            activeExerciseID: activeExerciseID,
+            activeSetID: activeSetID,
+            visibleExercises: visibleExercises,
+            hasConfiguredRestTimer: SessionRestTimerController.shared.hasConfiguredTimer
+        )
+    }
+
+    func resumeRoute(
+        for session: WorkoutSession,
+        activeExerciseID: UUID? = nil,
+        activeSetID: UUID? = nil,
+        visibleExercises: [WorkoutSessionExercise]? = nil,
+        hasConfiguredRestTimer: Bool
+    ) -> AppRoute? {
+        guard session.status == .inProgress, session.endedAt == nil else {
+            return nil
+        }
+
+        if hasConfiguredRestTimer {
+            return .sessionRest(sessionID: session.id)
+        }
+
+        guard let target = target(
+            for: session,
+            activeExerciseID: activeExerciseID,
+            activeSetID: activeSetID,
+            visibleExercises: visibleExercises
+        ) else {
+            return .session(sessionID: session.id)
+        }
+
+        guard let exerciseID = target.exerciseID else {
+            return .session(sessionID: session.id)
+        }
+
+        return .sessionExercise(sessionID: session.id, exerciseID: exerciseID)
+    }
+
     func target(
         for session: WorkoutSession,
         activeExerciseID: UUID? = nil,

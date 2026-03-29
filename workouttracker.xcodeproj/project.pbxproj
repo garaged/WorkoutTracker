@@ -82,6 +82,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Seed/seed_v1.json,
+				Info.plist,
 			);
 			target = 35BA2D432F11D33200EEE02C /* workouttracker */;
 		};
@@ -97,6 +98,7 @@
 			membershipExceptions = (
 				App/Seed/seed_v1.json,
 				App/workouttrackerApp.swift,
+				Info.plist,
 				Resources/program_catalog.json,
 				Services/Watch/WatchConnectivityService.swift,
 				Services/Watch/WatchMessages.swift,
@@ -629,6 +631,7 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_WARN_UNUSED_DYLIBS = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
@@ -695,6 +698,7 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_WARN_UNUSED_DYLIBS = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
@@ -723,7 +727,10 @@
 				DEVELOPMENT_TEAM = T3CCJTUTJ5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = workouttracker/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Workout Tracker";
 				"INFOPLIST_KEY_CFBundleDisplayName[sdk=*]" = "Workout Tracker";
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleTypeRole = Editor;\n    CFBundleURLName = \"garaged.org.workouttracker.deeplink\";\n    CFBundleURLSchemes =     (\n        workouttracker\n    );\n}";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -762,7 +769,10 @@
 				DEVELOPMENT_TEAM = T3CCJTUTJ5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = workouttracker/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Workout Tracker";
 				"INFOPLIST_KEY_CFBundleDisplayName[sdk=*]" = "Workout Tracker";
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleTypeRole = Editor;\n    CFBundleURLName = \"garaged.org.workouttracker.deeplink\";\n    CFBundleURLSchemes =     (\n        workouttracker\n    );\n}";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -883,6 +893,8 @@
 				DEVELOPMENT_TEAM = T3CCJTUTJ5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = workouttrackerUITestHost/Info.plist;
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleTypeRole = Editor;\n    CFBundleURLName = \"garaged.org.workouttracker.deeplink\";\n    CFBundleURLSchemes =     (\n        workouttracker\n    );\n}";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -916,6 +928,8 @@
 				DEVELOPMENT_TEAM = T3CCJTUTJ5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = workouttrackerUITestHost/Info.plist;
+				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleTypeRole = Editor;\n    CFBundleURLName = \"garaged.org.workouttracker.deeplink\";\n    CFBundleURLSchemes =     (\n        workouttracker\n    );\n}";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

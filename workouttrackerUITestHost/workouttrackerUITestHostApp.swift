@@ -713,6 +713,16 @@ private func assertUITestLaunchConfiguration(_ env: [String: String]) {
         )
     }
 
+    if env["UITESTS_DEEP_LINK_SMOKE"] == "1" {
+        guard start == "home" else {
+            fatalError("UITESTS assertion failed: Deep-link smoke test must launch with UITESTS_START=home.")
+        }
+
+        guard env["UITESTS_ACTIVE_SESSIONS_SCROLL"] == "1" else {
+            fatalError("UITESTS assertion failed: Deep-link smoke test requires UITESTS_ACTIVE_SESSIONS_SCROLL=1 so the host can build a deterministic session-exercise route.")
+        }
+    }
+
     let needsSeededData = start == "session" || env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1" || env["UITESTS_LINKED_FLOW"] == "1"
     if needsSeededData, env["UITESTS_SEED"] != "1" {
         fatalError("UITESTS assertion failed: Session and Progress UITest routes require UITESTS_SEED=1 so starter-pack and scenario data are available.")

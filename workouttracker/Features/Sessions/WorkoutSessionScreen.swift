@@ -14,6 +14,7 @@ struct WorkoutSessionScreen: View {
 
     @Bindable var session: WorkoutSession
     let initialResumeTarget: SessionResumeTarget?
+    let initialRoute: AppRoute?
 
     @StateObject private var logging = WorkoutLoggingService()
     @StateObject private var prefs = UserPreferences.shared
@@ -21,10 +22,12 @@ struct WorkoutSessionScreen: View {
     
     init(
         session: WorkoutSession,
-        initialResumeTarget: SessionResumeTarget? = nil
+        initialResumeTarget: SessionResumeTarget? = nil,
+        initialRoute: AppRoute? = nil
     ) {
         self.session = session
         self.initialResumeTarget = initialResumeTarget
+        self.initialRoute = initialRoute
     }
 
     /// Display numbering for set rows.
@@ -751,14 +754,24 @@ struct WorkoutSessionScreen: View {
         let targetToApply: ActionableSetTarget?
 
         if !didApplyInitialResumeTarget,
-           let initialResumeTarget,
-           initialResumeTarget.sessionID == session.id,
-           let exerciseID = initialResumeTarget.exerciseID,
-           let setID = initialResumeTarget.setID {
+           let routeTarget = initialTargetFromRoute() {
+            targetToApply = routeTarget
+            didApplyInitialResumeTarget = true
+        } else if !didApplyInitialResumeTarget,
+                  let initialResumeTarget,
+                  initialResumeTarget.sessionID == session.id,
+                  let exerciseID = initialResumeTarget.exerciseID,
+                  let setID = initialResumeTarget.setID {
             targetToApply = ActionableSetTarget(exerciseID: exerciseID, setID: setID)
             didApplyInitialResumeTarget = true
         } else {
             targetToApply = nextActionableTarget()
+        }
+
+        if case .sessionRest(let sessionID) = initialRoute,
+           sessionID == session.id,
+           (restTimer.hasConfiguredTimer || restTimerSnapshot.shouldShow) {
+            withAdaptiveAnimation { showRestTimer = true }
         }
 
         guard let target = targetToApply else { return }
@@ -1565,6 +1578,37 @@ struct WorkoutSessionScreen: View {
     private struct ActionableSetTarget {
         let exerciseID: UUID
         let setID: UUID
+    }
+
+
+    private func initialTargetFromRoute() -> ActionableSetTarget? {
+        guard let initialRoute else { return nil }
+
+        switch initialRoute {
+        case .sessionExercise(let sessionID, let exerciseID):
+            guard sessionID == session.id else { return nil }
+            return actionableTarget(for: exerciseID)
+        default:
+            return nil
+        }
+    }
+
+    private func actionableTarget(for exerciseID: UUID) -> ActionableSetTarget? {
+        guard let exercise = sortedExercises.first(where: { $0.id == exerciseID }) else {
+            return nil
+        }
+
+        let orderedSets = sortedSets(for: exercise)
+
+        if let nextIncomplete = orderedSets.first(where: { !$0.completed }) {
+            return ActionableSetTarget(exerciseID: exercise.id, setID: nextIncomplete.id)
+        }
+
+        if let first = orderedSets.first {
+            return ActionableSetTarget(exerciseID: exercise.id, setID: first.id)
+        }
+
+        return nil
     }
     
     @ViewBuilder

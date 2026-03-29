@@ -37,12 +37,20 @@ struct AppRootView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.platform) private var platform
 
+    @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
+    private var sessions: [WorkoutSession]
+
+    @Query(sort: [SortDescriptor(\WorkoutRoutine.name, order: .forward)])
+    private var routines: [WorkoutRoutine]
+
+    @Query
+    private var activities: [Activity]
+
     @State private var didSeed = false
     @AppStorage("workouttracker.starterPackVersion") private var starterPackVersion = 0
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var selection: RootDestination? = .home
     @State private var presentedSessionRoute: SessionPresentationRoute? = nil
-
     @State private var timelineJump: TimelineJump? = nil
 
     private struct TimelineJump: Identifiable {
@@ -52,6 +60,8 @@ struct AppRootView: View {
 
     private let cal = Calendar.current
     private let sessionResumePlanner = SessionResumePlanner()
+    private let routeResolver = RouteResolver()
+    private let snapshotBuilder = CurrentSessionSnapshotBuilder()
 
     var body: some View {
         Group {
@@ -65,7 +75,15 @@ struct AppRootView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("workouttracker.openTimelineForDate"))) { note in
             guard let date = note.object as? Date else { return }
-            timelineJump = TimelineJump(day: cal.startOfDay(for: date))
+            open(.calendarDay(date: date))
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("workouttracker.openURLForTesting"))) { note in
+            guard ProcessInfo.processInfo.environment["UITESTS"] == "1",
+                  let url = note.object as? URL,
+                  let route = routeResolver.route(for: url, sessions: sessions, routines: routines) else {
+                return
+            }
+            open(route)
         }
         .fullScreenCover(item: $timelineJump) { jump in
             NavigationStack {
@@ -93,6 +111,12 @@ struct AppRootView: View {
             } catch {
                 assertionFailure("Exercise illustration migration failed: \(error)")
             }
+        }
+        .onOpenURL { url in
+            guard let route = routeResolver.route(for: url, sessions: sessions, routines: routines) else {
+                return
+            }
+            open(route)
         }
     }
 
@@ -137,10 +161,12 @@ struct AppRootView: View {
         case .home:
             HomeScreen(
                 tiles: tiles,
-                onResumeSession: openSession
+                onResumeRoute: open
             )
         case .routines:
-            RoutinesScreen(onOpenSession: openSession)
+            RoutinesScreen(onOpenSession: { session in
+                open(sessionResumePlanner.resumeRoute(for: session) ?? sessionResumePlanner.openRoute(for: session))
+            })
         case .history:
             HistoryRootPlaceholder()
         case .progress:
@@ -168,7 +194,11 @@ struct AppRootView: View {
         case "session":
             NavigationStack { DayTimelineEntryScreen() }
         case "routines":
-            NavigationStack { RoutinesScreen(onOpenSession: openSession) }
+            NavigationStack {
+                RoutinesScreen(onOpenSession: { session in
+                    open(sessionResumePlanner.resumeRoute(for: session) ?? sessionResumePlanner.openRoute(for: session))
+                })
+            }
         case "workouts":
             NavigationStack { WorkoutSessionsScreen() }
         case "home":
@@ -203,7 +233,13 @@ struct AppRootView: View {
                 subtitle: String(localized: "Build plans and reuse them"),
                 systemImage: "list.bullet.rectangle.portrait",
                 tint: .purple,
-                destination: { AnyView(RoutinesScreen(onOpenSession: openSession)) }
+                destination: {
+                    AnyView(
+                        RoutinesScreen(onOpenSession: { session in
+                            open(sessionResumePlanner.resumeRoute(for: session) ?? sessionResumePlanner.openRoute(for: session))
+                        })
+                    )
+                }
             ),
             HomeTile(
                 title: String(localized: "Schedule templates"),
@@ -252,17 +288,18 @@ struct AppRootView: View {
             .navigationTitle(AppFormatting.localized("History"))
         }
     }
-    
+
     private var compactRoot: some View {
         NavigationStack {
             HomeScreen(
                 tiles: tiles,
-                onResumeSession: openSession
+                onResumeRoute: open
             )
             .navigationDestination(item: $presentedSessionRoute) { route in
                 WorkoutSessionScreen(
                     session: route.session,
-                    initialResumeTarget: route.initialResumeTarget
+                    initialResumeTarget: route.initialResumeTarget,
+                    initialRoute: route.launchRoute
                 )
             }
         }
@@ -277,31 +314,108 @@ struct AppRootView: View {
                     .navigationDestination(item: $presentedSessionRoute) { route in
                         WorkoutSessionScreen(
                             session: route.session,
-                            initialResumeTarget: route.initialResumeTarget
+                            initialResumeTarget: route.initialResumeTarget,
+                            initialRoute: route.launchRoute
                         )
                     }
             }
         }
     }
 
-    private func openSession(_ session: WorkoutSession) {
-        let route = SessionPresentationRoute(
-            session: session,
-            initialResumeTarget: sessionResumePlanner.target(for: session)
-        )
-
-        let sameSession = presentedSessionRoute?.session.persistentModelID == session.persistentModelID
-
-        if sameSession {
+    private func open(_ route: AppRoute) {
+        switch route {
+        case .home:
+            selection = .home
             presentedSessionRoute = nil
-            Task { @MainActor in
-                presentedSessionRoute = route
+            timelineJump = nil
+
+        case .calendarDay(let date):
+            selection = .home
+            timelineJump = TimelineJump(day: cal.startOfDay(for: date))
+
+        case .routine:
+            selection = .routines
+
+        case .session, .sessionExercise, .sessionRest:
+            guard let presentation = sessionPresentationRoute(for: route) else {
+                selection = .home
+                presentedSessionRoute = nil
+                return
             }
-        } else {
-            presentedSessionRoute = route
+
+            let sameSession = presentedSessionRoute?.session.persistentModelID == presentation.session.persistentModelID
+            let sameLaunchRoute = presentedSessionRoute?.launchRoute == presentation.launchRoute
+
+            if sameSession && sameLaunchRoute {
+                presentedSessionRoute = nil
+                Task { @MainActor in
+                    presentedSessionRoute = presentation
+                }
+            } else {
+                presentedSessionRoute = presentation
+            }
         }
     }
-    
+
+    private func sessionPresentationRoute(for route: AppRoute) -> SessionPresentationRoute? {
+        guard let sessionID = route.sessionID,
+              let session = sessions.first(where: { $0.id == sessionID }) else {
+            return nil
+        }
+
+        let initialResumeTarget: SessionResumeTarget?
+        switch route {
+        case .sessionExercise(_, let exerciseID):
+            initialResumeTarget = explicitResumeTarget(for: session, exerciseID: exerciseID)
+        case .sessionRest:
+            initialResumeTarget = sessionResumePlanner.currentResumeTarget(for: session)
+        case .session:
+            initialResumeTarget = sessionResumePlanner.currentResumeTarget(for: session)
+        default:
+            initialResumeTarget = nil
+        }
+
+        return SessionPresentationRoute(
+            session: session,
+            initialResumeTarget: initialResumeTarget,
+            launchRoute: route
+        )
+    }
+
+    private func explicitResumeTarget(
+        for session: WorkoutSession,
+        exerciseID: UUID
+    ) -> SessionResumeTarget? {
+        guard let exercise = session.exercises.first(where: { $0.id == exerciseID }) else {
+            return sessionResumePlanner.currentResumeTarget(for: session)
+        }
+
+        let orderedSets = exercise.setLogs.sorted { lhs, rhs in
+            if lhs.order != rhs.order { return lhs.order < rhs.order }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
+
+        if let nextIncomplete = orderedSets.first(where: { !$0.completed }) {
+            return SessionResumeTarget(
+                sessionID: session.id,
+                exerciseID: exercise.id,
+                setID: nextIncomplete.id,
+                reason: .nextIncompleteSet
+            )
+        }
+
+        if let first = orderedSets.first {
+            return SessionResumeTarget(
+                sessionID: session.id,
+                exerciseID: exercise.id,
+                setID: first.id,
+                reason: .fallbackLastSet
+            )
+        }
+
+        return sessionResumePlanner.currentResumeTarget(for: session)
+    }
+
     private var appShellRoot: some View {
         Group {
             if platform.isPad && platform.prefersSplitNavigation {
@@ -310,5 +424,9 @@ struct AppRootView: View {
                 compactRoot
             }
         }
+    }
+
+    private var currentSessionSnapshot: CurrentSessionSnapshot {
+        snapshotBuilder.build(sessions: sessions, activities: activities)
     }
 }

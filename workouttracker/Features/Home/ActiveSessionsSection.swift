@@ -14,7 +14,7 @@ struct ActiveSessionsSection: View {
 
     @State private var recoveryPromptSession: WorkoutSession? = nil
 
-    var onResume: (WorkoutSession) -> Void = { _ in }
+    var onResumeRoute: (AppRoute) -> Void = { _ in }
 
     private let calendar = Calendar.current
     private let sessionResumePlanner = SessionResumePlanner()
@@ -66,7 +66,7 @@ struct ActiveSessionsSection: View {
                         do {
                             try WorkoutSessionStarter.resumeForActiveLogging(session, context: modelContext)
                             recoveryPromptSession = nil
-                            onResume(session)
+                            onResumeRoute(sessionResumePlanner.resumeRoute(for: session) ?? sessionResumePlanner.openRoute(for: session))
                         } catch {
                             assertionFailure("Failed to resume stale session from Home: \(error)")
                         }
@@ -210,7 +210,7 @@ struct ActiveSessionsSection: View {
         if evaluation.shouldShowRecoveryPrompt {
             recoveryPromptSession = session
         } else {
-            onResume(session)
+            onResumeRoute(sessionResumePlanner.resumeRoute(for: session) ?? sessionResumePlanner.openRoute(for: session))
         }
     }
 
@@ -279,26 +279,42 @@ private struct ActiveSessionCard: View {
             } else {
                 HStack(alignment: .top, spacing: 10) {
                     titleBlock
-                    Spacer()
+                    Spacer(minLength: 8)
                     badgeView
                 }
             }
 
+            Text(subtitle)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            
             if attentionState == .staleNeedsPrompt {
                 Label(String(localized: "session.attention.needs_attention"), systemImage: "exclamationmark.triangle.fill")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.orange)
             }
 
-            actionButtons
+            if stacksButtons {
+                VStack(alignment: .leading, spacing: 10) {
+                    resumeButton
+                    if isPastDay { finishButton }
+                }
+            } else {
+                HStack(spacing: 10) {
+                    resumeButton
+                    if isPastDay { finishButton }
+                }
+            }
         }
         .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .strokeBorder(.white.opacity(0.08))
         )
         .shadow(radius: 10, y: 6)
@@ -315,15 +331,15 @@ private struct ActiveSessionCard: View {
 
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(session.sourceRoutineNameSnapshot ?? String(localized: "Workout"))
+            Text(session.sourceRoutineNameSnapshot ?? AppFormatting.localized("Workout session"))
                 .font(.headline)
-                .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            if session.isPaused {
+                Text(AppFormatting.localized("Paused"))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.orange)
+            }
         }
     }
 
@@ -331,30 +347,15 @@ private struct ActiveSessionCard: View {
         Text(badgeTitle)
             .font(.caption.weight(.semibold))
             .foregroundStyle(badgeForeground)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(badgeForeground.opacity(0.12), in: Capsule())
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(badgeForeground.opacity(0.15), in: Capsule())
             .accessibilityHidden(true)
-    }
-
-    @ViewBuilder
-    private var actionButtons: some View {
-        if stacksButtons {
-            VStack(alignment: .leading, spacing: 10) {
-                resumeButton
-                if isPastDay { finishButton }
-            }
-        } else {
-            HStack(alignment: .top, spacing: 10) {
-                resumeButton
-                if isPastDay { finishButton }
-            }
-        }
     }
 
     private var resumeButton: some View {
         Button(action: resumeAction) {
-            Label(AccessibilityLabels.Buttons.resumeWorkout, systemImage: "play.circle.fill")
+            Label(AccessibilityLabels.Buttons.resumeWorkout, systemImage: "play.fill")
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
@@ -363,8 +364,8 @@ private struct ActiveSessionCard: View {
     }
 
     private var finishButton: some View {
-        Button(action: finishAction) {
-            Label(AccessibilityLabels.Buttons.finishNow, systemImage:  "checkmark.circle")
+        Button(role: .destructive, action: finishAction) {
+            Label(AccessibilityLabels.Buttons.finishNow, systemImage: "checkmark.circle")
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)

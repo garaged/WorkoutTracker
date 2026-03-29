@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import SwiftData
+import UIKit
 
 struct UITestHostRootView: View {
     private let env = ProcessInfo.processInfo.environment
@@ -19,7 +20,7 @@ struct UITestHostRootView: View {
             case "settings":
                 SettingsScreen()
             case "home":
-                AppRootView()
+                UITestHomeRouteLauncherView()
             case "progress":
                 ProgressDashboardView()
             case "routines":
@@ -244,5 +245,59 @@ private struct UITestStrengthSessionBootstrapView: View {
             }
         }
         return nil
+    }
+}
+
+
+private struct UITestHomeRouteLauncherView: View {
+    @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
+    private var sessions: [WorkoutSession]
+
+    @State private var didInjectDeepLink = false
+
+    private let env = ProcessInfo.processInfo.environment
+    private let planner = SessionResumePlanner()
+
+    var body: some View {
+        AppRootView()
+            .task(id: sessions.count) {
+                await injectDeepLinkIfNeeded()
+            }
+    }
+
+    @MainActor
+    private func injectDeepLinkIfNeeded() async {
+        guard env["UITESTS_DEEP_LINK_SMOKE"] == "1" else { return }
+        guard !didInjectDeepLink else { return }
+        guard let url = deepLinkURL() else { return }
+
+        didInjectDeepLink = true
+        try? await Task.sleep(nanoseconds: 350_000_000)
+        NotificationCenter.default.post(
+            name: Notification.Name("workouttracker.openURLForTesting"),
+            object: url
+        )
+    }
+
+    @MainActor
+    private func deepLinkURL() -> URL? {
+        guard let session = sessions.first(where: { $0.sourceRoutineNameSnapshot == "UITest — Active Scroll" }) else {
+            fatalError("UITESTS assertion failed: Deep-link smoke route expected the seeded 'UITest — Active Scroll' session to exist.")
+        }
+
+        guard session.status == .inProgress, session.endedAt == nil else {
+            fatalError("UITESTS assertion failed: Deep-link smoke route expected 'UITest — Active Scroll' to be in-progress and not ended.")
+        }
+
+        guard let target = planner.target(for: session),
+              let exerciseID = target.exerciseID else {
+            fatalError("UITESTS assertion failed: Deep-link smoke route expected the scrollable active session to produce a session-exercise planner target.")
+        }
+
+        let raw = "workouttracker://session/\(session.id.uuidString)/exercise/\(exerciseID.uuidString)"
+        guard let url = URL(string: raw) else {
+            fatalError("UITESTS assertion failed: Could not build a valid deep-link URL for the seeded session-exercise route.")
+        }
+        return url
     }
 }

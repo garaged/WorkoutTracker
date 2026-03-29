@@ -13,7 +13,7 @@ struct HomeTile: Identifiable {
 
 struct HomeScreen: View {
     let tiles: [HomeTile]
-    var onResumeSession: (WorkoutSession) -> Void = { _ in }
+    var onResumeRoute: (AppRoute) -> Void = { _ in }
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -37,7 +37,7 @@ struct HomeScreen: View {
                 VStack(alignment: .leading, spacing: 14) {
                     header
 
-                    ActiveSessionsSection(onResume: onResumeSession)
+                    ActiveSessionsSection(onResumeRoute: onResumeRoute)
 
                     LazyVGrid(columns: columns, spacing: 14) {
                         ForEach(tiles) { tile in
