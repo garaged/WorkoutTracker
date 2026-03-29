@@ -68,6 +68,16 @@ struct SessionResumePlanner {
         preferredActiveSession(from: sessions, activitiesByID: activitiesByID)
     }
 
+    func currentResumeTarget(
+        from sessions: [WorkoutSession],
+        activitiesByID: [UUID: Activity]
+    ) -> SessionResumeTarget? {
+        guard let session = currentActiveSession(from: sessions, activitiesByID: activitiesByID) else {
+            return nil
+        }
+        return currentResumeTarget(for: session)
+    }
+
     func currentResumeTarget(for session: WorkoutSession) -> SessionResumeTarget? {
         target(for: session)
     }
@@ -175,6 +185,42 @@ struct SessionResumePlanner {
             setID: targetSetID,
             reason: (targetSet?.completed == false) ? .nextIncompleteSet : .fallbackLastSet
         )
+    }
+
+    func targetSet(
+        for session: WorkoutSession,
+        activeExerciseID: UUID? = nil,
+        activeSetID: UUID? = nil,
+        visibleExercises: [WorkoutSessionExercise]? = nil
+    ) -> WorkoutSetLog? {
+        guard let target = target(
+            for: session,
+            activeExerciseID: activeExerciseID,
+            activeSetID: activeSetID,
+            visibleExercises: visibleExercises
+        ) else {
+            return nil
+        }
+
+        return targetSet(for: session, target: target, visibleExercises: visibleExercises)
+    }
+
+    func targetSet(
+        for session: WorkoutSession,
+        target: SessionResumeTarget,
+        visibleExercises: [WorkoutSessionExercise]? = nil
+    ) -> WorkoutSetLog? {
+        guard let exerciseID = target.exerciseID,
+              let setID = target.setID else {
+            return nil
+        }
+
+        let exercises = visibleExercises ?? session.exercises
+        guard let exercise = exercises.first(where: { $0.id == exerciseID }) else {
+            return nil
+        }
+
+        return exercise.setLogs.first(where: { $0.id == setID })
     }
 
     func owningDay(

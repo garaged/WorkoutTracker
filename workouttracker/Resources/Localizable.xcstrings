@@ -71,6 +71,9 @@
         }
       }
     },
+    "%@" : {
+
+    },
     "%@ %@" : {
       "localizations" : {
         "en" : {
@@ -9600,7 +9603,6 @@
       }
     },
     "Routine" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -10218,6 +10220,9 @@
           }
         }
       }
+    },
+    "Session" : {
+
     },
     "Session recovery" : {
       "extractionState" : "stale",
