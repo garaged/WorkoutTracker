@@ -219,10 +219,13 @@ struct RestTimerView: View {
         Button {
             if timer.isRunning {
                 timer.pause()
-            } else if timer.hasConfiguredTimer {
+            } else if timer.isPaused {
                 timer.resume()
             } else {
-                timer.start(seconds: max(1, timer.totalSeconds))
+                timer.start(
+                    seconds: max(1, timer.totalSeconds),
+                    playStartCue: UserPreferences.shared.restTimerCueEnabled
+                )
             }
         } label: {
             Label(

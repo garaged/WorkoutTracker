@@ -259,9 +259,11 @@ struct WorkoutSessionScreen: View {
         .onAppear {
             syncRestTimerVisibility()
             refreshFinishSummaryIfNeeded()
+            WidgetRefreshCoordinator().refresh(context: modelContext)
         }
         .onChange(of: restTimer.hasConfiguredTimer, initial: false) { _, hasConfiguredTimer in
             withAdaptiveAnimation { showRestTimer = hasConfiguredTimer ? showRestTimer || hasConfiguredTimer : false }
+            WidgetRefreshCoordinator().refresh(context: modelContext)
         }
         .onChange(of: restTimer.isRunning, initial: false) { _, isRunning in
             if isRunning {
@@ -269,6 +271,7 @@ struct WorkoutSessionScreen: View {
             } else if !restTimer.hasConfiguredTimer {
                 withAdaptiveAnimation { showRestTimer = false }
             }
+            WidgetRefreshCoordinator().refresh(context: modelContext)
         }
         .onChange(of: restTimer.didFinishToken, initial: false) { _, token in
             guard token != nil else { return }
@@ -1522,6 +1525,7 @@ struct WorkoutSessionScreen: View {
         session.status = .completed
         session.dismissedStalePromptAt = nil
         saveOrAssert("finish")
+        WidgetRefreshCoordinator().refresh(context: modelContext)
 
         coachPrompt = nil
         withAdaptiveAnimation { showRestTimer = false }
@@ -1547,6 +1551,7 @@ struct WorkoutSessionScreen: View {
         session.status = .abandoned
         session.dismissedStalePromptAt = nil
         saveOrAssert("abandon")
+        WidgetRefreshCoordinator().refresh(context: modelContext)
         dismiss()
     }
 

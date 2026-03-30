@@ -21,6 +21,48 @@ struct CurrentSessionSnapshotBuilder {
     }
 
     @MainActor
+    func buildWidgetSnapshot(context: ModelContext) -> WidgetExternalSnapshot {
+        let sessions = (try? context.fetch(FetchDescriptor<WorkoutSession>())) ?? []
+        let activities = (try? context.fetch(FetchDescriptor<Activity>())) ?? []
+        let currentSession = build(sessions: sessions, activities: activities)
+
+        let progressSummary = (try? ProgressSummaryService(calendar: calendar).summarize(weeksBack: 12, context: context))
+        let workoutsThisWeek = progressSummary?.weeks.last?.workoutsCompleted ?? 0
+
+        let activeSession: WidgetExternalSnapshot.ActiveSession?
+        if let sessionID = currentSession.sessionID {
+            activeSession = WidgetExternalSnapshot.ActiveSession(
+                sessionID: sessionID,
+                title: currentSession.sessionTitle,
+                currentExerciseName: currentSession.currentExerciseName,
+                currentSetIndex: currentSession.currentSetIndex,
+                totalSets: currentSession.totalSets,
+                elapsedSeconds: Int(max(0, currentSession.elapsedSeconds ?? 0).rounded()),
+                restState: widgetRestState(for: currentSession.restState),
+                restSeconds: currentSession.restSeconds,
+                isResumable: currentSession.isResumable,
+                isFinishable: currentSession.isFinishable,
+                openRouteURL: urlString(for: currentSession.openRoute),
+                resumeRouteURL: urlString(for: currentSession.resumeRoute),
+                restRouteURL: urlString(for: currentSession.restRoute)
+            )
+        } else {
+            activeSession = nil
+        }
+
+        return WidgetExternalSnapshot(
+            generatedAt: Date(),
+            activeSession: activeSession,
+            streak: .init(
+                currentStreakDays: progressSummary?.currentStreakDays ?? 0,
+                longestStreakDays: progressSummary?.longestStreakDays ?? 0,
+                workoutsThisWeek: workoutsThisWeek
+            ),
+            schemaVersion: WidgetExternalSnapshot.currentSchemaVersion
+        )
+    }
+
+    @MainActor
     func build(
         sessions: [WorkoutSession],
         activities: [Activity]
@@ -82,5 +124,37 @@ struct CurrentSessionSnapshotBuilder {
             resumeRoute: resumeRoute,
             restRoute: restRoute
         )
+    }
+
+    private func widgetRestState(for state: CurrentSessionSnapshot.RestState) -> WidgetExternalSnapshot.ActiveSession.RestState {
+        switch state {
+        case .inactive: .inactive
+        case .running: .running
+        case .overdue: .overdue
+        }
+    }
+
+    private func urlString(for route: AppRoute?) -> String? {
+        guard let route else { return nil }
+
+        switch route {
+        case .home:
+            return "workouttracker://home"
+        case .session(let sessionID):
+            return "workouttracker://session/\(sessionID.uuidString)"
+        case .sessionExercise(let sessionID, let exerciseID):
+            return "workouttracker://session/\(sessionID.uuidString)/exercise/\(exerciseID.uuidString)"
+        case .sessionRest(let sessionID):
+            return "workouttracker://session/\(sessionID.uuidString)/rest"
+        case .routine(let routineID):
+            return "workouttracker://routine/\(routineID.uuidString)"
+        case .calendarDay(let date):
+            let formatter = DateFormatter()
+            formatter.calendar = calendar
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = calendar.timeZone
+            formatter.dateFormat = "yyyy-MM-dd"
+            return "workouttracker://calendar/\(formatter.string(from: date))"
+        }
     }
 }

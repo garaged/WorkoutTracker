@@ -118,11 +118,13 @@ struct AppRootView: View {
         .onAppear {
             refreshPendingIntentURLIfNeeded()
             attemptPendingIntentRouteResolution()
+            WidgetRefreshCoordinator().refresh(context: modelContext)
         }
         .onChange(of: scenePhase) { _, newPhase in
             guard newPhase == .active else { return }
             refreshPendingIntentURLIfNeeded()
             attemptPendingIntentRouteResolution()
+            WidgetRefreshCoordinator().refresh(context: modelContext)
         }
         .onChange(of: sessions.count) { _, _ in
             attemptPendingIntentRouteResolution()

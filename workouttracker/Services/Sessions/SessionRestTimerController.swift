@@ -18,6 +18,7 @@ final class SessionRestTimerController: ObservableObject {
     private init() {}
 
     var isRunning: Bool { snapshot.isRunning }
+    var isPaused: Bool { snapshot.isPaused }
     var hasConfiguredTimer: Bool { snapshot.shouldShow }
     var remainingSeconds: Int { snapshot.remainingSeconds }
     var displaySeconds: Int { snapshot.displaySeconds }

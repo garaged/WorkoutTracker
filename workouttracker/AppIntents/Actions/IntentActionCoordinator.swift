@@ -93,6 +93,7 @@ final class IntentActionCoordinator {
 
         context.insert(session)
         try context.save()
+        WidgetRefreshCoordinator().refresh(context: context)
 
         return .opened(.session(sessionID: session.id))
     }
@@ -115,6 +116,7 @@ final class IntentActionCoordinator {
         session.status = .completed
         session.endedAt = now()
         try context.save()
+        WidgetRefreshCoordinator().refresh(context: context)
 
         return .opened(.home)
     }

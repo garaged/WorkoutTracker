@@ -299,8 +299,12 @@ final class WorkoutLoggingService: ObservableObject {
     }
 
     private func save(_ context: ModelContext, label: String) {
-        do { try context.save() }
-        catch { assertionFailure("Failed to save (\(label)): \(error)") }
+        do {
+            try context.save()
+            WidgetRefreshCoordinator().refresh(context: context)
+        } catch {
+            assertionFailure("Failed to save (\(label)): \(error)")
+        }
     }
 
     private func pushUndo(message: String, undo: @escaping (ModelContext) throws -> Void) {

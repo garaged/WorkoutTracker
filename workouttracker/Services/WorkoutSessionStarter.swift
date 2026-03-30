@@ -50,6 +50,7 @@ enum WorkoutSessionStarter {
         activity.workoutSessionId = session.id
 
         try context.save()
+        WidgetRefreshCoordinator().refresh(context: context)
         return session
     }
 
@@ -61,6 +62,7 @@ enum WorkoutSessionStarter {
         guard session.status == .inProgress, session.endedAt == nil else { return }
         session.resume(at: now)
         try context.save()
+        WidgetRefreshCoordinator().refresh(context: context)
     }
 
     static func keepForLater(
@@ -74,6 +76,7 @@ enum WorkoutSessionStarter {
             session.pause(at: now)
         }
         try context.save()
+        WidgetRefreshCoordinator().refresh(context: context)
     }
 
     static func finishFromRecovery(
@@ -89,6 +92,7 @@ enum WorkoutSessionStarter {
         session.status = .completed
         session.dismissedStalePromptAt = nil
         try context.save()
+        WidgetRefreshCoordinator().refresh(context: context)
     }
 
     static func discardUnfinishedSession(
@@ -104,6 +108,7 @@ enum WorkoutSessionStarter {
         session.status = .abandoned
         session.dismissedStalePromptAt = nil
         try context.save()
+        WidgetRefreshCoordinator().refresh(context: context)
     }
 
     static func canMutateProgress(_ session: WorkoutSession) -> Bool {

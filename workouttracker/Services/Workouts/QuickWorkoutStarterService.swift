@@ -61,6 +61,7 @@ final class QuickWorkoutStarterService {
         try ensureIncompleteSetExists(for: ex, context: context)
 
         try? context.save()
+        WidgetRefreshCoordinator().refresh(context: context)
     }
 
     // MARK: - Reuse rules
