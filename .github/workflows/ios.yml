@@ -174,3 +174,4 @@ PY
         with:
           name: xcresults
           path: TestResults/*.xcresult
+
