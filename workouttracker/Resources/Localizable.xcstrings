@@ -3606,6 +3606,9 @@
         }
       }
     },
+    "Current Session" : {
+
+    },
     "Current streak" : {
       "localizations" : {
         "es-MX" : {
@@ -4772,6 +4775,9 @@
         }
       }
     },
+    "Finish Current Session" : {
+
+    },
     "Finish now" : {
       "localizations" : {
         "en" : {
@@ -4787,6 +4793,15 @@
           }
         }
       }
+    },
+    "Finish Session" : {
+
+    },
+    "Finish your current workout session and return to Workout Tracker." : {
+
+    },
+    "Finishing your workout session in Workout Tracker." : {
+
     },
     "format.duration.short.hours_minutes" : {
       "extractionState" : "stale",
@@ -4978,6 +4993,9 @@
           }
         }
       }
+    },
+    "Go to Current Session" : {
+
     },
     "Go to today" : {
       "localizations" : {
@@ -6608,6 +6626,18 @@
           }
         }
       }
+    },
+    "Open the rest timer when your current workout session is ready for one." : {
+
+    },
+    "Open your current workout session." : {
+
+    },
+    "Opening the rest timer in Workout Tracker." : {
+
+    },
+    "Opening your current workout session in Workout Tracker." : {
+
     },
     "Optional" : {
       "extractionState" : "stale",
@@ -9585,6 +9615,15 @@
         }
       }
     },
+    "Resume Workout" : {
+
+    },
+    "Resume your current workout session and jump to the best next target." : {
+
+    },
+    "Resuming your workout in Workout Tracker." : {
+
+    },
     "Review past sessions" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -11850,6 +11889,9 @@
         }
       }
     },
+    "Start ${routine}" : {
+
+    },
     "Start a routine to create your first session." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -11877,6 +11919,9 @@
           }
         }
       }
+    },
+    "Start a workout routine in WorkoutTracker." : {
+
     },
     "Start date" : {
       "localizations" : {
@@ -11915,6 +11960,15 @@
           }
         }
       }
+    },
+    "Start Rest" : {
+
+    },
+    "Start Rest Timer" : {
+
+    },
+    "Start Routine" : {
+
     },
     "Start sessions and review history" : {
       "localizations" : {
@@ -12238,6 +12292,9 @@
         }
       }
     },
+    "That routine is no longer available." : {
+
+    },
     "The attached routine could not be found. Please reattach a routine." : {
       "localizations" : {
         "en" : {
@@ -12253,6 +12310,15 @@
           }
         }
       }
+    },
+    "There isn't an active workout session ready for a rest timer right now." : {
+
+    },
+    "There isn't an active workout session to resume right now." : {
+
+    },
+    "There isn't an active workout session you can finish right now." : {
+
     },
     "Thigh" : {
       "extractionState" : "stale",

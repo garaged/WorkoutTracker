@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 import UIKit
 import Foundation
+import AppIntents
 
 @main
 struct workouttrackerApp: App {
@@ -18,6 +19,8 @@ struct workouttrackerApp: App {
         // ✅ WatchConnectivity should not run in UI tests (avoids extra flakiness + overhead).
         // Note: avoid capturing `self` from an escaping Task in a struct init.
         if env["UITESTS"] != "1" {
+            WorkoutTrackerShortcutsProvider.updateAppShortcutParameters()
+
             let container = sharedModelContainer
             Task { @MainActor in
                 WorkoutRemoteControlRouter.shared.start(modelContainer: container)

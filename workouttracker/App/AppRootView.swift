@@ -2,6 +2,7 @@
 import SwiftUI
 import SwiftData
 import Combine
+import AppIntents
 
 enum RootDestination: String, CaseIterable, Identifiable {
     case home
@@ -36,6 +37,7 @@ enum RootDestination: String, CaseIterable, Identifiable {
 struct AppRootView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.platform) private var platform
+    @Environment(\.scenePhase) private var scenePhase
 
     @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
     private var sessions: [WorkoutSession]
@@ -52,6 +54,7 @@ struct AppRootView: View {
     @State private var selection: RootDestination? = .home
     @State private var presentedSessionRoute: SessionPresentationRoute? = nil
     @State private var timelineJump: TimelineJump? = nil
+    @State private var pendingIntentURL: URL? = nil
 
     private struct TimelineJump: Identifiable {
         let id = UUID()
@@ -111,6 +114,25 @@ struct AppRootView: View {
             } catch {
                 assertionFailure("Exercise illustration migration failed: \(error)")
             }
+        }
+        .onAppear {
+            refreshPendingIntentURLIfNeeded()
+            attemptPendingIntentRouteResolution()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            refreshPendingIntentURLIfNeeded()
+            attemptPendingIntentRouteResolution()
+        }
+        .onChange(of: sessions.count) { _, _ in
+            attemptPendingIntentRouteResolution()
+        }
+        .onChange(of: routines.count) { _, _ in
+            attemptPendingIntentRouteResolution()
+        }
+        .onChange(of: shortcutRoutineFingerprint) { _, _ in
+            guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
+            WorkoutTrackerShortcutsProvider.updateAppShortcutParameters()
         }
         .onOpenURL { url in
             guard let route = routeResolver.route(for: url, sessions: sessions, routines: routines) else {
@@ -322,6 +344,68 @@ struct AppRootView: View {
         }
     }
 
+
+    private func refreshPendingIntentURLIfNeeded() {
+        guard pendingIntentURL == nil,
+              let url = IntentLaunchBridge.peekPendingURL() else {
+            return
+        }
+
+        pendingIntentURL = url
+    }
+
+    private func attemptPendingIntentRouteResolution() {
+        guard let url = pendingIntentURL else { return }
+        guard let payload = routeResolver.payload(for: url) else {
+            IntentLaunchBridge.clearPendingURL()
+            pendingIntentURL = nil
+            return
+        }
+
+        switch payload {
+        case .home, .calendarDay:
+            guard let route = routeResolver.route(for: payload, sessions: sessions, routines: routines) else {
+                IntentLaunchBridge.clearPendingURL()
+                pendingIntentURL = nil
+                return
+            }
+
+            open(route)
+            IntentLaunchBridge.clearPendingURL()
+            pendingIntentURL = nil
+
+        case .routine(let payload):
+            guard routines.contains(where: { $0.id == payload.routineID }) else {
+                return
+            }
+
+            guard let route = routeResolver.route(for: .routine(payload), sessions: sessions, routines: routines) else {
+                IntentLaunchBridge.clearPendingURL()
+                pendingIntentURL = nil
+                return
+            }
+
+            open(route)
+            IntentLaunchBridge.clearPendingURL()
+            pendingIntentURL = nil
+
+        case .session(let payload):
+            guard sessions.contains(where: { $0.id == payload.sessionID }) else {
+                return
+            }
+
+            guard let route = routeResolver.route(for: .session(payload), sessions: sessions, routines: routines) else {
+                IntentLaunchBridge.clearPendingURL()
+                pendingIntentURL = nil
+                return
+            }
+
+            open(route)
+            IntentLaunchBridge.clearPendingURL()
+            pendingIntentURL = nil
+        }
+    }
+
     private func open(_ route: AppRoute) {
         switch route {
         case .home:
@@ -428,5 +512,11 @@ struct AppRootView: View {
 
     private var currentSessionSnapshot: CurrentSessionSnapshot {
         snapshotBuilder.build(sessions: sessions, activities: activities)
+    }
+
+    private var shortcutRoutineFingerprint: [String] {
+        routines
+            .map { "\($0.id.uuidString)|\($0.name)|\($0.notes ?? "")" }
+            .sorted()
     }
 }

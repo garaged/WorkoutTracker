@@ -1,5 +1,6 @@
 # Xcode
 .DS_Store
+.derivedData-pr3
 xcuserdata/
 *.xcuserstate
 *.xccheckout
