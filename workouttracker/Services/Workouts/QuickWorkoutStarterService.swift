@@ -62,6 +62,13 @@ final class QuickWorkoutStarterService {
 
         try? context.save()
         WidgetRefreshCoordinator().refresh(context: context)
+
+        if #available(iOS 16.1, *) {
+            let snapshot = CurrentSessionSnapshotBuilder().buildWidgetSnapshot(context: context)
+            Task { @MainActor in
+                await LiveActivityCoordinator().sync(using: snapshot)
+            }
+        }
     }
 
     // MARK: - Reuse rules

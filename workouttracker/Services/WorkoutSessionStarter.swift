@@ -1,4 +1,3 @@
-// File: workouttracker/Services/WorkoutSessionStarter.swift
 import Foundation
 import SwiftData
 
@@ -50,7 +49,7 @@ enum WorkoutSessionStarter {
         activity.workoutSessionId = session.id
 
         try context.save()
-        WidgetRefreshCoordinator().refresh(context: context)
+        syncSystemIntegrations(context: context)
         return session
     }
 
@@ -62,7 +61,7 @@ enum WorkoutSessionStarter {
         guard session.status == .inProgress, session.endedAt == nil else { return }
         session.resume(at: now)
         try context.save()
-        WidgetRefreshCoordinator().refresh(context: context)
+        syncSystemIntegrations(context: context)
     }
 
     static func keepForLater(
@@ -76,7 +75,7 @@ enum WorkoutSessionStarter {
             session.pause(at: now)
         }
         try context.save()
-        WidgetRefreshCoordinator().refresh(context: context)
+        syncSystemIntegrations(context: context)
     }
 
     static func finishFromRecovery(
@@ -92,7 +91,7 @@ enum WorkoutSessionStarter {
         session.status = .completed
         session.dismissedStalePromptAt = nil
         try context.save()
-        WidgetRefreshCoordinator().refresh(context: context)
+        syncSystemIntegrations(context: context)
     }
 
     static func discardUnfinishedSession(
@@ -108,10 +107,21 @@ enum WorkoutSessionStarter {
         session.status = .abandoned
         session.dismissedStalePromptAt = nil
         try context.save()
-        WidgetRefreshCoordinator().refresh(context: context)
+        syncSystemIntegrations(context: context)
     }
 
     static func canMutateProgress(_ session: WorkoutSession) -> Bool {
         SessionLifecyclePolicy().canMutateProgress(session)
+    }
+
+    private static func syncSystemIntegrations(context: ModelContext) {
+        WidgetRefreshCoordinator().refresh(context: context)
+
+        guard #available(iOS 16.1, *) else { return }
+        let snapshot = CurrentSessionSnapshotBuilder().buildWidgetSnapshot(context: context)
+
+        Task { @MainActor in
+            await LiveActivityCoordinator().sync(using: snapshot)
+        }
     }
 }

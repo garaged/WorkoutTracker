@@ -110,6 +110,8 @@ final class WorkoutRemoteControlRouter {
             break
         }
         
+        syncLiveActivity(context: context)
+
         let afterSetID = cursorBySessionID[session.id]?.setID
         if beforeSetID != afterSetID {
             postSelectedSetEvent(sessionID: session.id)
@@ -233,6 +235,16 @@ final class WorkoutRemoteControlRouter {
         return 90
     }
     
+    private func syncLiveActivity(context: ModelContext) {
+        guard #available(iOS 16.1, *) else { return }
+
+        let snapshot = CurrentSessionSnapshotBuilder().buildWidgetSnapshot(context: context)
+
+        Task { @MainActor in
+            await LiveActivityCoordinator().sync(using: snapshot)
+        }
+    }
+
     // MARK: - Watch state pushing
     
     private func pushNowPlayingIfNeeded() {

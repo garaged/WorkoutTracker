@@ -302,6 +302,13 @@ final class WorkoutLoggingService: ObservableObject {
         do {
             try context.save()
             WidgetRefreshCoordinator().refresh(context: context)
+
+            guard #available(iOS 16.1, *) else { return }
+            let snapshot = CurrentSessionSnapshotBuilder().buildWidgetSnapshot(context: context)
+
+            Task { @MainActor in
+                await LiveActivityCoordinator().sync(using: snapshot)
+            }
         } catch {
             assertionFailure("Failed to save (\(label)): \(error)")
         }

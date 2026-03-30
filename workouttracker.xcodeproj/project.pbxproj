@@ -120,6 +120,13 @@
 			);
 			target = 36A0A0042F90000100AAA001 /* workouttrackerWidgets */;
 		};
+		3560E1AE2F7B29CF00C77A24 /* Exceptions for "workouttrackerWidgets" folder in "workouttracker" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				ActiveWorkoutActivityAttributes.swift,
+			);
+			target = 35BA2D432F11D33200EEE02C /* workouttracker */;
+		};
 		35D84C342F3CCA92000BEFC0 /* Exceptions for "workouttracker" folder in "workouttrackerUITestHost" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -181,6 +188,7 @@
 		36A0A0032F90000100AAA001 /* workouttrackerWidgets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				3560E1AE2F7B29CF00C77A24 /* Exceptions for "workouttrackerWidgets" folder in "workouttracker" target */,
 				3560E1A12F7AE52A00C77A24 /* Exceptions for "workouttrackerWidgets" folder in "workouttrackerWidgets" target */,
 			);
 			path = workouttrackerWidgets;
@@ -720,6 +728,7 @@
 				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_WARN_UNUSED_DYLIBS = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
@@ -787,6 +796,7 @@
 				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_WARN_UNUSED_DYLIBS = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
@@ -820,6 +830,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Workout Tracker";
 				"INFOPLIST_KEY_CFBundleDisplayName[sdk=*]" = "Workout Tracker";
 				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleTypeRole = Editor;\n    CFBundleURLName = \"garaged.org.workouttracker.deeplink\";\n    CFBundleURLSchemes =     (\n        workouttracker\n    );\n}";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -863,6 +874,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Workout Tracker";
 				"INFOPLIST_KEY_CFBundleDisplayName[sdk=*]" = "Workout Tracker";
 				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleTypeRole = Editor;\n    CFBundleURLName = \"garaged.org.workouttracker.deeplink\";\n    CFBundleURLSchemes =     (\n        workouttracker\n    );\n}";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

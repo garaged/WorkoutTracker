@@ -67,81 +67,28 @@ struct AppRootView: View {
     private let snapshotBuilder = CurrentSessionSnapshotBuilder()
 
     var body: some View {
-        Group {
-            if shouldWaitForStarterPackBootstrap {
-                bootstrapView
-            } else if let start = uiTestStartRoute {
-                uiTestRoot(for: start)
-            } else {
-                appShellRoot
+        rootContent
+            .onReceive(openTimelinePublisher, perform: handleOpenTimelineNotification)
+            .onReceive(openURLForTestingPublisher, perform: handleOpenURLForTestingNotification)
+            .fullScreenCover(item: $timelineJump, content: timelineJumpCover)
+            .task { await handleInitialTask() }
+            .onAppear(perform: handleAppear)
+            .onChange(of: scenePhase) { oldPhase, newPhase in
+                handleScenePhaseChange(oldPhase, newPhase)
             }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("workouttracker.openTimelineForDate"))) { note in
-            guard let date = note.object as? Date else { return }
-            open(.calendarDay(date: date))
-        }
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("workouttracker.openURLForTesting"))) { note in
-            guard ProcessInfo.processInfo.environment["UITESTS"] == "1",
-                  let url = note.object as? URL,
-                  let route = routeResolver.route(for: url, sessions: sessions, routines: routines) else {
-                return
+            .onChange(of: sessions.count) { _, _ in
+                handleSessionsChanged()
             }
-            open(route)
-        }
-        .fullScreenCover(item: $timelineJump) { jump in
-            NavigationStack {
-                DayTimelineEntryScreen(initialDay: jump.day)
-                    .toolbar {
-                        ToolbarItem(placement: .topBarLeading) {
-                            Button(AppFormatting.localized("Close")) { timelineJump = nil }
-                        }
-                    }
+            .onChange(of: routines.count) { _, _ in
+                handleRoutinesChanged()
             }
-        }
-        .task {
-            guard !didSeed else { return }
-
-            guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else {
-                didSeed = true
-                return
+            .onChange(of: shortcutRoutineFingerprint) { _, _ in
+                handleShortcutRoutineFingerprintChanged()
             }
-
-            StarterPackSeeder.seedIfNeeded(context: modelContext)
-            didSeed = true
-
-            do {
-                _ = try ExerciseIllustrationBackfill.migrateIfNeeded(context: modelContext)
-            } catch {
-                assertionFailure("Exercise illustration migration failed: \(error)")
+            .onReceive(liveActivityRefreshTimer) { _ in
+                handleLiveActivityRefreshTick()
             }
-        }
-        .onAppear {
-            refreshPendingIntentURLIfNeeded()
-            attemptPendingIntentRouteResolution()
-            WidgetRefreshCoordinator().refresh(context: modelContext)
-        }
-        .onChange(of: scenePhase) { _, newPhase in
-            guard newPhase == .active else { return }
-            refreshPendingIntentURLIfNeeded()
-            attemptPendingIntentRouteResolution()
-            WidgetRefreshCoordinator().refresh(context: modelContext)
-        }
-        .onChange(of: sessions.count) { _, _ in
-            attemptPendingIntentRouteResolution()
-        }
-        .onChange(of: routines.count) { _, _ in
-            attemptPendingIntentRouteResolution()
-        }
-        .onChange(of: shortcutRoutineFingerprint) { _, _ in
-            guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
-            WorkoutTrackerShortcutsProvider.updateAppShortcutParameters()
-        }
-        .onOpenURL { url in
-            guard let route = routeResolver.route(for: url, sessions: sessions, routines: routines) else {
-                return
-            }
-            open(route)
-        }
+            .onOpenURL(perform: handleOpenURL)
     }
 
     private var shouldWaitForStarterPackBootstrap: Bool {
@@ -198,6 +145,30 @@ struct AppRootView: View {
         case .settings:
             SettingsScreen()
         }
+    }
+    
+    private var rootContent: some View {
+        Group {
+            if shouldWaitForStarterPackBootstrap {
+                bootstrapView
+            } else if let start = uiTestStartRoute {
+                uiTestRoot(for: start)
+            } else {
+                appShellRoot
+            }
+        }
+    }
+
+    private var openTimelinePublisher: NotificationCenter.Publisher {
+        NotificationCenter.default.publisher(for: Notification.Name("workouttracker.openTimelineForDate"))
+    }
+
+    private var openURLForTestingPublisher: NotificationCenter.Publisher {
+        NotificationCenter.default.publisher(for: Notification.Name("workouttracker.openURLForTesting"))
+    }
+
+    private var liveActivityRefreshTimer: Publishers.Autoconnect<Timer.TimerPublisher> {
+        Timer.publish(every: 15, on: .main, in: .common).autoconnect()
     }
 
     // MARK: - UI test routing
@@ -512,13 +483,108 @@ struct AppRootView: View {
         }
     }
 
-    private var currentSessionSnapshot: CurrentSessionSnapshot {
-        snapshotBuilder.build(sessions: sessions, activities: activities)
-    }
-
     private var shortcutRoutineFingerprint: [String] {
         routines
             .map { "\($0.id.uuidString)|\($0.name)|\($0.notes ?? "")" }
             .sorted()
+    }
+    
+    private func handleOpenTimelineNotification(_ note: Notification) {
+        guard let date = note.object as? Date else { return }
+        open(.calendarDay(date: date))
+    }
+
+    private func handleOpenURLForTestingNotification(_ note: Notification) {
+        guard ProcessInfo.processInfo.environment["UITESTS"] == "1",
+              let url = note.object as? URL,
+              let route = routeResolver.route(for: url, sessions: sessions, routines: routines) else {
+            return
+        }
+        open(route)
+    }
+
+    @ViewBuilder
+    private func timelineJumpCover(_ jump: TimelineJump) -> some View {
+        NavigationStack {
+            DayTimelineEntryScreen(initialDay: jump.day)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(AppFormatting.localized("Close")) { timelineJump = nil }
+                    }
+                }
+        }
+    }
+
+    private func handleInitialTask() async {
+        guard !didSeed else { return }
+
+        guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else {
+            didSeed = true
+            return
+        }
+
+        StarterPackSeeder.seedIfNeeded(context: modelContext)
+        didSeed = true
+
+        do {
+            _ = try ExerciseIllustrationBackfill.migrateIfNeeded(context: modelContext)
+        } catch {
+            assertionFailure("Exercise illustration migration failed: \(error)")
+        }
+    }
+
+    private func handleAppear() {
+        refreshPendingIntentURLIfNeeded()
+        attemptPendingIntentRouteResolution()
+        syncSystemIntegrations()
+    }
+
+    private func handleScenePhaseChange(_ oldPhase: ScenePhase, _ newPhase: ScenePhase) {
+        guard newPhase == .active else { return }
+        refreshPendingIntentURLIfNeeded()
+        attemptPendingIntentRouteResolution()
+        syncSystemIntegrations()
+    }
+
+    private func handleSessionsChanged() {
+        attemptPendingIntentRouteResolution()
+        syncLiveActivity()
+    }
+
+    private func handleRoutinesChanged() {
+        attemptPendingIntentRouteResolution()
+        syncLiveActivity()
+    }
+
+    private func handleShortcutRoutineFingerprintChanged() {
+        guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
+        WorkoutTrackerShortcutsProvider.updateAppShortcutParameters()
+    }
+
+    private func handleLiveActivityRefreshTick() {
+        guard scenePhase == .active,
+              ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
+        syncLiveActivity()
+    }
+
+    private func handleOpenURL(_ url: URL) {
+        guard let route = routeResolver.route(for: url, sessions: sessions, routines: routines) else {
+            return
+        }
+        open(route)
+    }
+    
+    private func syncSystemIntegrations() {
+        WidgetRefreshCoordinator().refresh(context: modelContext)
+        syncLiveActivity()
+    }
+
+    private func syncLiveActivity() {
+        guard #available(iOS 16.1, *) else { return }
+        let snapshot = CurrentSessionSnapshotBuilder().buildWidgetSnapshot(context: modelContext)
+
+        Task { @MainActor in
+            await LiveActivityCoordinator().sync(using: snapshot)
+        }
     }
 }
