@@ -28,8 +28,14 @@ final class LiveActivityCoordinator {
 
         if let existing = WorkoutActivity.activities.first(where: { $0.attributes.sessionID == mapped.sessionID }) {
             await existing.update(content)
+
+            // Clean up any stale activities for other sessions.
+            await endAll(except: mapped.sessionID)
             return
         }
+
+        // Prevent multiple simultaneous workout activities for different sessions.
+        await endAll(except: mapped.sessionID)
 
         do {
             _ = try WorkoutActivity.request(
@@ -55,6 +61,15 @@ final class LiveActivityCoordinator {
 
     func end(sessionID: UUID) async {
         for activity in WorkoutActivity.activities where activity.attributes.sessionID == sessionID {
+            await activity.end(
+                nil as WorkoutContent?,
+                dismissalPolicy: ActivityKit.ActivityUIDismissalPolicy.immediate
+            )
+        }
+    }
+
+    private func endAll(except sessionID: UUID) async {
+        for activity in WorkoutActivity.activities where activity.attributes.sessionID != sessionID {
             await activity.end(
                 nil as WorkoutContent?,
                 dismissalPolicy: ActivityKit.ActivityUIDismissalPolicy.immediate

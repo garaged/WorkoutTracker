@@ -82,18 +82,11 @@ final class IntentActionCoordinator {
             return .blocked(gate.failure ?? .routineNotFound)
         }
 
-        let templates = WorkoutRoutineMapper.toExerciseTemplates(routine: routine)
-        let session = WorkoutSessionFactory.makeSession(
-            startedAt: now(),
-            linkedActivityId: nil,
-            sourceRoutineId: routine.id,
-            sourceRoutineNameSnapshot: routine.name,
-            exercises: templates
+        let session = try WorkoutSessionStarter.startSession(
+            from: routine,
+            context: context,
+            now: now()
         )
-
-        context.insert(session)
-        try context.save()
-        WidgetRefreshCoordinator().refresh(context: context)
 
         return .opened(.session(sessionID: session.id))
     }
@@ -113,10 +106,11 @@ final class IntentActionCoordinator {
             return .blocked(gate.failure ?? .noFinishableSession)
         }
 
-        session.status = .completed
-        session.endedAt = now()
-        try context.save()
-        WidgetRefreshCoordinator().refresh(context: context)
+        try WorkoutSessionStarter.finishSession(
+            session,
+            context: context,
+            now: now()
+        )
 
         return .opened(.home)
     }

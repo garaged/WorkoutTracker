@@ -124,4 +124,35 @@ enum WorkoutSessionStarter {
             await LiveActivityCoordinator().sync(using: snapshot)
         }
     }
+    
+    static func startSession(
+        from routine: WorkoutRoutine,
+        context: ModelContext,
+        now: Date = Date()
+    ) throws -> WorkoutSession {
+        let executionSegments = WorkoutRoutineMapper.toExecutionSegments(routine: routine)
+        let templates = WorkoutRoutineMapper.toExerciseTemplates(executionSegments: executionSegments)
+
+        let session = WorkoutSessionFactory.makeSession(
+            startedAt: now,
+            linkedActivityId: nil,
+            sourceRoutineId: routine.id,
+            sourceRoutineNameSnapshot: routine.name,
+            exercises: templates,
+            prefillActualsFromTargets: true
+        )
+
+        context.insert(session)
+        try context.save()
+        syncSystemIntegrations(context: context)
+        return session
+    }
+    
+    static func finishSession(
+        _ session: WorkoutSession,
+        context: ModelContext,
+        now: Date = Date()
+    ) throws {
+        try finishFromRecovery(session, context: context, now: now)
+    }
 }
