@@ -31,6 +31,18 @@ Non-goals:
 
 ## Changelog
 
+### v2.1.0 — System Integrations
+
+WorkoutTracker now connects much more cleanly with system surfaces across iPhone, widgets, Live Activities, Shortcuts, and Apple Watch. This release adds a shared routing and snapshot foundation so external entry points open the correct place, stay safer around workout state, and behave more consistently.
+
+Highlights:
+- Canonical deep-link and route handling
+- Safer App Intents foundation
+- Shortcuts for common workout actions
+- Home Screen widgets for active session and streaks
+- Live Activity for active workouts
+- Apple Watch quick entry points and working watch controls
+
 ### 2.0.3
 
 - Added the first wave of built-in exercise localization

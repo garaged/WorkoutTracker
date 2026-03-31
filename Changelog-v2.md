@@ -1,3 +1,32 @@
+# Version 2.1.0 - System integrations
+
+What’s New:
+WorkoutTracker 2.1.0 brings major system integration improvements across iPhone, widgets, Live Activities, Shortcuts, and Apple Watch.
+
+New in this release:
+- Added smarter deep-link routing so external entry points open the correct workout, routine, or day
+- Added Shortcuts support for:
+  - Start Routine
+  - Resume Workout
+  - Go to Current Session
+  - Start Rest Timer
+  - Finish Current Session
+- Added Home Screen widgets:
+  - Active Session
+  - Streak
+- Added Live Activity support for active workouts, including current exercise, set progress, elapsed time, and rest state
+- Added Apple Watch quick entry points and improved watch workout controls
+
+## Improved
+
+- More consistent resume/open behavior across system surfaces
+- Safer action handling for resume, finish, and rest actions
+- Better synchronization between phone, widgets, Live Activity, and watch
+- Stronger routing and snapshot foundations for future integrations
+
+## Notes
+Next planned workout widget was intentionally deferred until planning data is reliable enough to surface honestly
+
 # Version 2.0.3 — Exercise localization foundation + picker recognition
 
 This release makes built-in exercises more language-aware and more visually recognizable, while keeping older data and custom exercises safe.

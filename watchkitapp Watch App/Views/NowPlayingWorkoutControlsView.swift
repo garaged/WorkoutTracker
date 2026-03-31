@@ -2,7 +2,12 @@ import SwiftUI
 
 struct NowPlayingWorkoutControlsView: View {
 
+    let onClose: () -> Void
     @StateObject private var client = WatchConnectivityClient.shared
+
+    init(onClose: @escaping () -> Void = {}) {
+        self.onClose = onClose
+    }
 
     var body: some View {
         VStack(spacing: 10) {
@@ -13,6 +18,11 @@ struct NowPlayingWorkoutControlsView: View {
             restRow
         }
         .padding(.vertical, 8)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Back", action: onClose)
+            }
+        }
         .onAppear { client.start() }
     }
 

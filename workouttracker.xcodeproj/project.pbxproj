@@ -120,12 +120,12 @@
 			);
 			target = 36A0A0042F90000100AAA001 /* workouttrackerWidgets */;
 		};
-		3560E1AE2F7B29CF00C77A24 /* Exceptions for "workouttrackerWidgets" folder in "workouttracker" target */ = {
+		3560E1B62F7B659100C77A24 /* Exceptions for "workouttracker" folder in "workouttrackerWidgets" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				ActiveWorkoutActivityAttributes.swift,
+				Services/SystemIntegrations/ActiveWorkoutActivityAttributes.swift,
 			);
-			target = 35BA2D432F11D33200EEE02C /* workouttracker */;
+			target = 36A0A0042F90000100AAA001 /* workouttrackerWidgets */;
 		};
 		35D84C342F3CCA92000BEFC0 /* Exceptions for "workouttracker" folder in "workouttrackerUITestHost" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -163,6 +163,7 @@
 				353429C72F47E79400FFEE78 /* Exceptions for "workouttracker" folder in "workouttracker" target */,
 				35D84C342F3CCA92000BEFC0 /* Exceptions for "workouttracker" folder in "workouttrackerUITestHost" target */,
 				354CE5BC2F60FD7B00D12FB3 /* Exceptions for "workouttracker" folder in "watchkitapp Watch App" target */,
+				3560E1B62F7B659100C77A24 /* Exceptions for "workouttracker" folder in "workouttrackerWidgets" target */,
 			);
 			path = workouttracker;
 			sourceTree = "<group>";
@@ -188,7 +189,6 @@
 		36A0A0032F90000100AAA001 /* workouttrackerWidgets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				3560E1AE2F7B29CF00C77A24 /* Exceptions for "workouttrackerWidgets" folder in "workouttracker" target */,
 				3560E1A12F7AE52A00C77A24 /* Exceptions for "workouttrackerWidgets" folder in "workouttrackerWidgets" target */,
 			);
 			path = workouttrackerWidgets;

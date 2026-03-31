@@ -66,7 +66,7 @@ final class WorkoutRemoteControlRouter {
     /// Call when workout ends or user leaves the workout screen.
     func clearNowPlaying(sessionID: UUID) {
         if pinnedSessionID == sessionID { pinnedSessionID = nil }
-        WatchConnectivityService.shared.clearNowPlaying()
+        pushNowPlayingIfNeeded()
     }
     
     // MARK: - Command handling
@@ -74,49 +74,69 @@ final class WorkoutRemoteControlRouter {
     private func handle(_ cmd: WatchCommand) {
         guard let container else { return }
         let context = ModelContext(container)
-        
+
+        switch cmd.kind {
+        case .requestState:
+            pushNowPlayingIfNeeded()
+            return
+
+        case .startRoutine:
+            handleStartRoutine(cmd, context: context)
+            return
+
+        case .openCurrentSession, .resumeCurrentSession:
+            handleQuickEntry(cmd, context: context)
+            return
+
+        case .toggleRestTimer, .markSetComplete, .nextSet, .previousSet:
+            break
+        }
+
         // Prefer pinned session. If command includes a sessionID, use it.
-        guard let session = resolveSession(for: cmd, context: context) else { return }
-        
+        guard let session = resolveSession(for: cmd, context: context) else {
+            pushNowPlayingIfNeeded()
+            return
+        }
+
         // Accept commands if either:
         // - The session is actually in progress, OR
         // - It’s pinned by the UI (user is in workout screen).
         if !(session.status == .inProgress || pinnedSessionID == session.id) {
-            WatchConnectivityService.shared.clearNowPlaying()
+            pushNowPlayingIfNeeded()
             return
         }
-        
+
         ensureCursorExists(for: session)
-        
+
         let beforeSetID = cursorBySessionID[session.id]?.setID
-        
+
         switch cmd.kind {
         case .toggleRestTimer:
             restTimer.toggle(defaultSeconds: defaultRestSeconds(for: session))
-            
+
         case .markSetComplete:
             if let sid = cmd.setID, let setUUID = UUID(uuidString: sid) {
                 setCursor(to: setUUID, in: session)
             }
             markCurrentSetComplete(in: session, context: context)
-            
+
         case .nextSet:
             moveCursor(in: session, delta: +1)
-            
+
         case .previousSet:
             moveCursor(in: session, delta: -1)
-            
-        case .requestState:
+
+        case .requestState, .openCurrentSession, .resumeCurrentSession, .startRoutine:
             break
         }
-        
+
         syncLiveActivity(context: context)
 
         let afterSetID = cursorBySessionID[session.id]?.setID
         if beforeSetID != afterSetID {
             postSelectedSetEvent(sessionID: session.id)
         }
-        
+
         pushNowPlaying(for: session)
     }
     
@@ -250,7 +270,7 @@ final class WorkoutRemoteControlRouter {
     private func pushNowPlayingIfNeeded() {
         guard let container else { return }
         let context = ModelContext(container)
-        
+
         // Prefer pinned session; else fallback to in-progress.
         let session: WorkoutSession? = {
             if let pinned = pinnedSessionID {
@@ -259,27 +279,41 @@ final class WorkoutRemoteControlRouter {
             let sessions = fetchSessionsSorted(context: context)
             return sessions.first(where: { $0.status == .inProgress })
         }()
-        
+
         guard let s = session else {
-            WatchConnectivityService.shared.clearNowPlaying()
+            WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
             return
         }
-        
+
         // If not truly in progress, still show it if pinned (user is in screen).
         if !(s.status == .inProgress || pinnedSessionID == s.id) {
-            WatchConnectivityService.shared.clearNowPlaying()
+            WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
             return
         }
-        
+
         ensureCursorExists(for: s)
-        pushNowPlaying(for: s)
+        pushNowPlaying(for: s, context: context)
     }
     
-    private func pushNowPlaying(for session: WorkoutSession) {
-        WatchConnectivityService.shared.pushNowPlayingState(makeWatchState(for: session))
+    private func pushNowPlaying(for session: WorkoutSession, context: ModelContext? = nil) {
+        WatchConnectivityService.shared.pushNowPlayingState(makeWatchState(for: session, context: context))
+    }
+
+    private func makeInactiveState(context: ModelContext) -> WatchNowPlayingState {
+        var inactive = WatchNowPlayingState.inactive
+        inactive.quickStartRoutines = quickStartRoutines(context: context)
+        return inactive
+    }
+
+    private func quickStartRoutines(context: ModelContext) -> [WatchRoutineSummary] {
+        let routines = (try? context.fetch(FetchDescriptor<WorkoutRoutine>())) ?? []
+        return routines
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            .prefix(5)
+            .map { WatchRoutineSummary(id: $0.id.uuidString, name: $0.name) }
     }
     
-    private func makeWatchState(for session: WorkoutSession) -> WatchNowPlayingState {
+    private func makeWatchState(for session: WorkoutSession, context: ModelContext? = nil) -> WatchNowPlayingState {
         ensureCursorExists(for: session)
         
         let ordered = orderedSets(in: session)
@@ -295,7 +329,8 @@ final class WorkoutRemoteControlRouter {
                 canGoPrevious: false,
                 canGoNext: false,
                 sessionID: session.id.uuidString,
-                setID: nil
+                setID: nil,
+                quickStartRoutines: context.map(quickStartRoutines(context:)) ?? []
             )
         }
         
@@ -320,7 +355,8 @@ final class WorkoutRemoteControlRouter {
             canGoPrevious: idx > 0,
             canGoNext: idx < ordered.count - 1,
             sessionID: session.id.uuidString,
-            setID: pair.set.id.uuidString
+            setID: pair.set.id.uuidString,
+            quickStartRoutines: context.map(quickStartRoutines(context:)) ?? []
         )
     }
     
@@ -371,5 +407,48 @@ final class WorkoutRemoteControlRouter {
                 isCompleted: isCompleted
             )
         )
+    }
+}
+
+
+extension WorkoutRemoteControlRouter {
+    private func handleQuickEntry(_ cmd: WatchCommand, context: ModelContext) {
+        guard let session = resolveSession(for: cmd, context: context),
+              session.status == .inProgress || pinnedSessionID == session.id else {
+            WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
+            return
+        }
+
+        pinnedSessionID = session.id
+        ensureCursorExists(for: session)
+
+        if cmd.kind == .resumeCurrentSession {
+            try? WorkoutSessionStarter.resumeForActiveLogging(session, context: context)
+        }
+
+        syncLiveActivity(context: context)
+        pushNowPlaying(for: session, context: context)
+    }
+
+    private func handleStartRoutine(_ cmd: WatchCommand, context: ModelContext) {
+        guard let routineIDString = cmd.routineID,
+              let routineID = UUID(uuidString: routineIDString) else {
+            WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
+            return
+        }
+
+        let outcome = try? IntentActionCoordinator().startRoutine(routineID: routineID, context: context)
+
+        guard case .opened(let route)? = outcome,
+              case .session(let sessionID) = route,
+              let session = fetchSession(id: sessionID, context: context) else {
+            WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
+            return
+        }
+
+        pinnedSessionID = session.id
+        ensureCursorExists(for: session)
+        syncLiveActivity(context: context)
+        pushNowPlaying(for: session, context: context)
     }
 }

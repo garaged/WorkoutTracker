@@ -8,6 +8,9 @@ enum WatchCommandKind: String, Codable {
     case markSetComplete
     case nextSet
     case previousSet
+    case openCurrentSession
+    case resumeCurrentSession
+    case startRoutine
 }
 
 /// Keep this deliberately tiny. IDs are strings so we don't couple to SwiftData models.
@@ -15,12 +18,19 @@ struct WatchCommand: Codable, Equatable {
     var kind: WatchCommandKind
     var sessionID: String?
     var setID: String?
+    var routineID: String?
 
-    init(kind: WatchCommandKind, sessionID: String? = nil, setID: String? = nil) {
+    init(kind: WatchCommandKind, sessionID: String? = nil, setID: String? = nil, routineID: String? = nil) {
         self.kind = kind
         self.sessionID = sessionID
         self.setID = setID
+        self.routineID = routineID
     }
+}
+
+struct WatchRoutineSummary: Codable, Equatable, Identifiable {
+    var id: String
+    var name: String
 }
 
 // MARK: - State phone -> watch
@@ -42,6 +52,7 @@ struct WatchNowPlayingState: Codable, Equatable {
 
     var sessionID: String?
     var setID: String?
+    var quickStartRoutines: [WatchRoutineSummary]
 
     static let inactive = WatchNowPlayingState(
         isActiveSession: false,
@@ -54,7 +65,8 @@ struct WatchNowPlayingState: Codable, Equatable {
         canGoPrevious: false,
         canGoNext: false,
         sessionID: nil,
-        setID: nil
+        setID: nil,
+        quickStartRoutines: []
     )
 }
 

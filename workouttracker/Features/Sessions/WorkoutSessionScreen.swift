@@ -226,6 +226,14 @@ struct WorkoutSessionScreen: View {
                     await centerActionableSetOnOpen(proxy: proxy)
                     refreshFinishSummaryIfNeeded()
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .workoutWatchSelectedSet)) { note in
+                    guard let event = note.object as? WorkoutWatchSelectedSetEvent else { return }
+                    applyWatchSelectedSetEvent(event, proxy: proxy)
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .workoutWatchSetCompletionChanged)) { note in
+                    guard let event = note.object as? WorkoutWatchSetCompletionChangedEvent else { return }
+                    applyWatchCompletionChangedEvent(event, proxy: proxy)
+                }
                 .safeAreaInset(edge: .top) {
                     if let prToast {
                         PRToastView(
@@ -260,6 +268,19 @@ struct WorkoutSessionScreen: View {
             syncRestTimerVisibility()
             refreshFinishSummaryIfNeeded()
             syncSystemIntegrations()
+            syncWatchRemoteCursor()
+        }
+        .onDisappear {
+            WorkoutRemoteControlRouter.shared.clearNowPlaying(sessionID: session.id)
+        }
+        .onChange(of: activeExerciseID, initial: false) { _, _ in
+            syncWatchRemoteCursor()
+        }
+        .onChange(of: activeSetID, initial: false) { _, _ in
+            syncWatchRemoteCursor()
+        }
+        .onChange(of: session.status, initial: false) { _, _ in
+            syncWatchRemoteCursor()
         }
         .onChange(of: restTimer.hasConfiguredTimer, initial: false) { _, hasConfiguredTimer in
             withAdaptiveAnimation { showRestTimer = hasConfiguredTimer ? showRestTimer || hasConfiguredTimer : false }
@@ -691,6 +712,7 @@ struct WorkoutSessionScreen: View {
         } else {
             activeExerciseID = nil
             activeSetID = nil
+            syncWatchRemoteCursor()
             if kind == .coolDown {
                 finish()
             }
@@ -781,6 +803,7 @@ struct WorkoutSessionScreen: View {
 
         activeExerciseID = target.exerciseID
         activeSetID = target.setID
+        syncWatchRemoteCursor()
 
         try? await Task.sleep(nanoseconds: 150_000_000)
         scrollToExercise(target.setID, proxy: proxy)
@@ -1584,10 +1607,61 @@ struct WorkoutSessionScreen: View {
         catch { assertionFailure("Failed to save (\(label)): \(error)") }
     }
 
-    
+    private func syncWatchRemoteCursor() {
+        guard isInProgress else {
+            WorkoutRemoteControlRouter.shared.clearNowPlaying(sessionID: session.id)
+            return
+        }
+
+        WorkoutRemoteControlRouter.shared.updateCursor(
+            sessionID: session.id,
+            exerciseID: activeExerciseID,
+            setID: activeSetID
+        )
+    }
+
+    private func applyWatchSelectedSetEvent(
+        _ event: WorkoutWatchSelectedSetEvent,
+        proxy: ScrollViewProxy
+    ) {
+        guard event.sessionID == session.id else { return }
+
+        activeExerciseID = event.exerciseID
+        activeSetID = event.setID
+
+        guard let setID = event.setID else { return }
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            scrollToExercise(setID, proxy: proxy)
+        }
+    }
+
+    private func applyWatchCompletionChangedEvent(
+        _ event: WorkoutWatchSetCompletionChangedEvent,
+        proxy: ScrollViewProxy
+    ) {
+        guard event.sessionID == session.id else { return }
+
+        if event.isCompleted,
+           activeSetID == event.setID,
+           let target = nextActionableTarget() {
+            activeExerciseID = target.exerciseID
+            activeSetID = target.setID
+
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 120_000_000)
+                scrollToExercise(target.setID, proxy: proxy)
+            }
+        }
+
+        refreshFinishSummaryIfNeeded()
+    }
+
     private func markActive(exerciseID: UUID, setID: UUID?) {
         activeExerciseID = exerciseID
         activeSetID = setID
+        syncWatchRemoteCursor()
     }
     
     private struct ActionableSetTarget {
