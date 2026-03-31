@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 struct WidgetSnapshotStore {
     static let appGroupIdentifier = "group.garaged.org.workouttracker"
@@ -7,39 +8,76 @@ struct WidgetSnapshotStore {
     private let fileManager: FileManager
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
+    private let baseDirectory: URL?
+    private let logger: Logger
 
-    init(fileManager: FileManager = .default) {
+    init(
+        fileManager: FileManager = .default,
+        baseDirectory: URL? = nil,
+        logger: Logger = Logger(
+            subsystem: "org.garaged.workouttracker",
+            category: "WidgetSnapshotStore"
+        )
+    ) {
         self.fileManager = fileManager
-        self.encoder = JSONEncoder()
-        self.decoder = JSONDecoder()
-        self.encoder.dateEncodingStrategy = .iso8601
-        self.decoder.dateDecodingStrategy = .iso8601
+        self.baseDirectory = baseDirectory
+        self.logger = logger
+
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        self.encoder = encoder
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        self.decoder = decoder
     }
 
     func save(_ snapshot: WidgetExternalSnapshot) throws {
         guard let url = snapshotURL() else {
-            assertionFailure("App Group container is unavailable for widget snapshot writes")
+            logger.error("App Group container is unavailable for widget snapshot writes. Snapshot write skipped.")
             return
         }
 
         let data = try encoder.encode(snapshot)
         let directory = url.deletingLastPathComponent()
-        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
-        try data.write(to: url, options: .atomic)
+        try fileManager.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true,
+            attributes: nil
+        )
+        try data.write(to: url, options: [.atomic])
     }
 
     func load() -> WidgetExternalSnapshot? {
-        guard let url = snapshotURL(),
-              let data = try? Data(contentsOf: url) else {
+        guard let url = snapshotURL() else {
+            logger.debug("App Group container is unavailable for widget snapshot reads. Returning nil.")
             return nil
         }
 
-        return try? decoder.decode(WidgetExternalSnapshot.self, from: data)
+        guard let data = try? Data(contentsOf: url) else {
+            return nil
+        }
+
+        do {
+            return try decoder.decode(WidgetExternalSnapshot.self, from: data)
+        } catch {
+            logger.error("Failed to decode widget snapshot: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
     }
 
     func snapshotURL() -> URL? {
-        fileManager
-            .containerURL(forSecurityApplicationGroupIdentifier: Self.appGroupIdentifier)?
+        let rootDirectory: URL?
+
+        if let baseDirectory {
+            rootDirectory = baseDirectory
+        } else {
+            rootDirectory = fileManager.containerURL(
+                forSecurityApplicationGroupIdentifier: Self.appGroupIdentifier
+            )
+        }
+
+        return rootDirectory?
             .appendingPathComponent("Widgets", isDirectory: true)
             .appendingPathComponent(Self.snapshotFileName)
     }
