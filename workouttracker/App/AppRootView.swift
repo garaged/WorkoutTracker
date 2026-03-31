@@ -64,6 +64,7 @@ struct AppRootView: View {
     private let cal = Calendar.current
     private let sessionResumePlanner = SessionResumePlanner()
     private let routeResolver = RouteResolver()
+    private let systemIntegrationRouteResolver = SystemIntegrationRouteResolver()
     private let snapshotBuilder = CurrentSessionSnapshotBuilder()
 
     var body: some View {
@@ -161,6 +162,10 @@ struct AppRootView: View {
 
     private var openTimelinePublisher: NotificationCenter.Publisher {
         NotificationCenter.default.publisher(for: Notification.Name("workouttracker.openTimelineForDate"))
+    }
+
+    private var activitiesByID: [UUID: Activity] {
+        Dictionary(uniqueKeysWithValues: activities.map { ($0.id, $0) })
     }
 
     private var openURLForTestingPublisher: NotificationCenter.Publisher {
@@ -329,54 +334,21 @@ struct AppRootView: View {
 
     private func attemptPendingIntentRouteResolution() {
         guard let url = pendingIntentURL else { return }
-        guard let payload = routeResolver.payload(for: url) else {
-            IntentLaunchBridge.clearPendingURL()
-            pendingIntentURL = nil
-            return
-        }
 
-        switch payload {
-        case .home, .calendarDay:
-            guard let route = routeResolver.route(for: payload, sessions: sessions, routines: routines) else {
-                IntentLaunchBridge.clearPendingURL()
-                pendingIntentURL = nil
-                return
-            }
+        let resolution = systemIntegrationRouteResolver.resolve(
+            url: url,
+            sessions: sessions,
+            routines: routines,
+            activitiesByID: activitiesByID
+        )
 
-            open(route)
-            IntentLaunchBridge.clearPendingURL()
-            pendingIntentURL = nil
-
-        case .routine(let payload):
-            guard routines.contains(where: { $0.id == payload.routineID }) else {
-                return
-            }
-
-            guard let route = routeResolver.route(for: .routine(payload), sessions: sessions, routines: routines) else {
-                IntentLaunchBridge.clearPendingURL()
-                pendingIntentURL = nil
-                return
-            }
-
-            open(route)
-            IntentLaunchBridge.clearPendingURL()
-            pendingIntentURL = nil
-
-        case .session(let payload):
-            guard sessions.contains(where: { $0.id == payload.sessionID }) else {
-                return
-            }
-
-            guard let route = routeResolver.route(for: .session(payload), sessions: sessions, routines: routines) else {
-                IntentLaunchBridge.clearPendingURL()
-                pendingIntentURL = nil
-                return
-            }
-
-            open(route)
+        defer {
             IntentLaunchBridge.clearPendingURL()
             pendingIntentURL = nil
         }
+
+        guard let route = resolution.route else { return }
+        open(route)
     }
 
     private func open(_ route: AppRoute) {
@@ -496,10 +468,18 @@ struct AppRootView: View {
 
     private func handleOpenURLForTestingNotification(_ note: Notification) {
         guard ProcessInfo.processInfo.environment["UITESTS"] == "1",
-              let url = note.object as? URL,
-              let route = routeResolver.route(for: url, sessions: sessions, routines: routines) else {
+              let url = note.object as? URL else {
             return
         }
+
+        let resolution = systemIntegrationRouteResolver.resolve(
+            url: url,
+            sessions: sessions,
+            routines: routines,
+            activitiesByID: activitiesByID
+        )
+
+        guard let route = resolution.route else { return }
         open(route)
     }
 
@@ -568,9 +548,14 @@ struct AppRootView: View {
     }
 
     private func handleOpenURL(_ url: URL) {
-        guard let route = routeResolver.route(for: url, sessions: sessions, routines: routines) else {
-            return
-        }
+        let resolution = systemIntegrationRouteResolver.resolve(
+            url: url,
+            sessions: sessions,
+            routines: routines,
+            activitiesByID: activitiesByID
+        )
+
+        guard let route = resolution.route else { return }
         open(route)
     }
     
