@@ -75,21 +75,20 @@ struct StreakWidgetViewModel: Equatable {
 enum WidgetSnapshotAdapters {
     static func activeSessionModel(from snapshot: WorkoutWidgetSnapshot?) -> ActiveSessionWidgetViewModel {
         guard let session = snapshot?.activeSession else {
-            return ActiveSessionWidgetViewModel(
-                title: "No Active Session",
-                subtitle: "Start a routine to see live progress here.",
-                accessoryText: nil,
-                footnote: "Open WorkoutTracker",
-                url: WidgetDeepLinks.homeURL,
-                hasSession: false
-            )
+            return emptySessionModel()
+        }
+
+        guard let preferredURL = WidgetDeepLinks.preferredLaunchURL(for: session) else {
+            return unavailableSessionModel()
         }
 
         let subtitle: String
         if let exercise = session.currentExerciseName, !exercise.isEmpty {
             subtitle = exercise
-        } else {
+        } else if session.isResumable {
             subtitle = "Resume your workout"
+        } else {
+            subtitle = "Open current workout"
         }
 
         let accessoryText: String?
@@ -114,7 +113,7 @@ enum WidgetSnapshotAdapters {
             subtitle: subtitle,
             accessoryText: accessoryText,
             footnote: footnote,
-            url: WidgetDeepLinks.preferredURL(for: session),
+            url: preferredURL,
             hasSession: true
         )
     }
@@ -127,6 +126,28 @@ enum WidgetSnapshotAdapters {
             longestStreakText: "Best: \(streak.longestStreakDays) day\(streak.longestStreakDays == 1 ? "" : "s")",
             workoutsThisWeekText: "This week: \(streak.workoutsThisWeek) workout\(streak.workoutsThisWeek == 1 ? "" : "s")",
             url: WidgetDeepLinks.streakURL()
+        )
+    }
+
+    private static func emptySessionModel() -> ActiveSessionWidgetViewModel {
+        ActiveSessionWidgetViewModel(
+            title: "No Active Session",
+            subtitle: "Start a routine to see live progress here.",
+            accessoryText: nil,
+            footnote: "Open WorkoutTracker",
+            url: WidgetDeepLinks.homeURL,
+            hasSession: false
+        )
+    }
+
+    private static func unavailableSessionModel() -> ActiveSessionWidgetViewModel {
+        ActiveSessionWidgetViewModel(
+            title: "Session Unavailable",
+            subtitle: "Open WorkoutTracker to refresh your current session.",
+            accessoryText: nil,
+            footnote: "Open WorkoutTracker",
+            url: WidgetDeepLinks.homeURL,
+            hasSession: false
         )
     }
 

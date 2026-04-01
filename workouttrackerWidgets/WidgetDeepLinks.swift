@@ -4,25 +4,40 @@ enum WidgetDeepLinks {
     static let homeURL = URL(string: "workouttracker://home")!
 
     static func preferredURL(for session: WorkoutWidgetSnapshot.ActiveSession?) -> URL {
-        if let raw = session?.resumeRouteURL,
-           let url = URL(string: raw) {
+        preferredLaunchURL(for: session) ?? homeURL
+    }
+
+    static func preferredLaunchURL(for session: WorkoutWidgetSnapshot.ActiveSession?) -> URL? {
+        guard let session else { return nil }
+
+        if session.restState != .inactive,
+           let url = validatedURL(from: session.restRouteURL) {
             return url
         }
 
-        if let raw = session?.restRouteURL,
-           let url = URL(string: raw) {
+        if session.isResumable,
+           let url = validatedURL(from: session.resumeRouteURL) {
             return url
         }
 
-        if let raw = session?.openRouteURL,
-           let url = URL(string: raw) {
+        if let url = validatedURL(from: session.openRouteURL) {
             return url
         }
 
-        return homeURL
+        return nil
     }
 
     static func streakURL() -> URL {
         homeURL
+    }
+
+    private static func validatedURL(from rawValue: String?) -> URL? {
+        guard let rawValue,
+              let url = URL(string: rawValue),
+              url.scheme == homeURL.scheme else {
+            return nil
+        }
+
+        return url
     }
 }

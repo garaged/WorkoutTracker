@@ -4,13 +4,16 @@ import SwiftData
 struct CurrentSessionSnapshotBuilder {
     private let calendar: Calendar
     private let sessionResumePlanner: SessionResumePlanner
+    private let systemIntegrationRouteResolver: SystemIntegrationRouteResolver
 
     init(
         calendar: Calendar = .current,
-        sessionResumePlanner: SessionResumePlanner = SessionResumePlanner()
+        sessionResumePlanner: SessionResumePlanner = SessionResumePlanner(),
+        systemIntegrationRouteResolver: SystemIntegrationRouteResolver = SystemIntegrationRouteResolver()
     ) {
         self.calendar = calendar
         self.sessionResumePlanner = sessionResumePlanner
+        self.systemIntegrationRouteResolver = systemIntegrationRouteResolver
     }
 
     @MainActor
@@ -24,13 +27,37 @@ struct CurrentSessionSnapshotBuilder {
     func buildWidgetSnapshot(context: ModelContext) -> WidgetExternalSnapshot {
         let sessions = (try? context.fetch(FetchDescriptor<WorkoutSession>())) ?? []
         let activities = (try? context.fetch(FetchDescriptor<Activity>())) ?? []
+        let routines = (try? context.fetch(FetchDescriptor<WorkoutRoutine>())) ?? []
+        let activitiesByID = Dictionary(uniqueKeysWithValues: activities.map { ($0.id, $0) })
         let currentSession = build(sessions: sessions, activities: activities)
 
         let progressSummary = (try? ProgressSummaryService(calendar: calendar).summarize(weeksBack: 12, context: context))
         let workoutsThisWeek = progressSummary?.weeks.last?.workoutsCompleted ?? 0
 
         let activeSession: WidgetExternalSnapshot.ActiveSession?
-        if let sessionID = currentSession.sessionID {
+        if let sessionID = currentSession.sessionID,
+           let openRouteURL = validatedURLString(
+                for: currentSession.openRoute,
+                expectedSessionID: sessionID,
+                sessions: sessions,
+                routines: routines,
+                activitiesByID: activitiesByID
+           ) {
+            let resumeRouteURL = validatedURLString(
+                for: currentSession.resumeRoute,
+                expectedSessionID: sessionID,
+                sessions: sessions,
+                routines: routines,
+                activitiesByID: activitiesByID
+            )
+            let restRouteURL = validatedURLString(
+                for: currentSession.restRoute,
+                expectedSessionID: sessionID,
+                sessions: sessions,
+                routines: routines,
+                activitiesByID: activitiesByID
+            )
+
             activeSession = WidgetExternalSnapshot.ActiveSession(
                 sessionID: sessionID,
                 title: currentSession.sessionTitle,
@@ -40,11 +67,11 @@ struct CurrentSessionSnapshotBuilder {
                 elapsedSeconds: Int(max(0, currentSession.elapsedSeconds ?? 0).rounded()),
                 restState: widgetRestState(for: currentSession.restState),
                 restSeconds: currentSession.restSeconds,
-                isResumable: currentSession.isResumable,
+                isResumable: resumeRouteURL != nil,
                 isFinishable: currentSession.isFinishable,
-                openRouteURL: urlString(for: currentSession.openRoute),
-                resumeRouteURL: urlString(for: currentSession.resumeRoute),
-                restRouteURL: urlString(for: currentSession.restRoute)
+                openRouteURL: openRouteURL,
+                resumeRouteURL: resumeRouteURL,
+                restRouteURL: restRouteURL
             )
         } else {
             activeSession = nil
@@ -131,6 +158,48 @@ struct CurrentSessionSnapshotBuilder {
         case .inactive: .inactive
         case .running: .running
         case .overdue: .overdue
+        }
+    }
+
+    private func validatedURLString(
+        for route: AppRoute?,
+        expectedSessionID: UUID,
+        sessions: [WorkoutSession],
+        routines: [WorkoutRoutine],
+        activitiesByID: [UUID: Activity]
+    ) -> String? {
+        guard let route,
+              let rawValue = urlString(for: route),
+              let url = URL(string: rawValue) else {
+            return nil
+        }
+
+        let resolution = systemIntegrationRouteResolver.resolve(
+            url: url,
+            sessions: sessions,
+            routines: routines,
+            activitiesByID: activitiesByID
+        )
+
+        guard case .open(let resolvedRoute) = resolution,
+              resolvedRoute == route,
+              routeBelongsToSession(resolvedRoute, sessionID: expectedSessionID) else {
+            return nil
+        }
+
+        return rawValue
+    }
+
+    private func routeBelongsToSession(_ route: AppRoute, sessionID: UUID) -> Bool {
+        switch route {
+        case .session(let resolvedSessionID):
+            return resolvedSessionID == sessionID
+        case .sessionExercise(let resolvedSessionID, _):
+            return resolvedSessionID == sessionID
+        case .sessionRest(let resolvedSessionID):
+            return resolvedSessionID == sessionID
+        default:
+            return false
         }
     }
 
