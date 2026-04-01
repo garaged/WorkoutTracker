@@ -1,3 +1,9 @@
+# Version 2.1.1 - System integrations
+
+## Hotfix for scroll to next set edge case
+
+After much looking it was found that the scrolling to next set (when needed) was not working for sets that were not in the viewable space (like when a routine is long), this was fixed with a proper new UI test to prevent regression on this. It's been a long hard ride to keep this scrolling feature stable! 
+
 # Version 2.1.0 - System integrations
 
 What’s New:

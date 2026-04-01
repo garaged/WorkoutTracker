@@ -507,16 +507,41 @@ private func seedHomeActiveSessionsScrollUITestDataIfNeeded(context: ModelContex
         ex.setLogs.sorted { $0.order < $1.order }
     }
 
-    // We intentionally complete a couple of early sets so Resume/Continue has a meaningful
-    // actionable target that is not the first row in the session.
-    guard orderedSets.count >= 4 else {
-        fatalError("UITESTS assertion failed: Scrollable active-session seed produced only \(orderedSets.count) set rows. Expected at least 4 for a meaningful centering test.")
+    // This seed exists specifically to protect cross-exercise scrolling regressions.
+    // We deliberately complete every set that appears before a later exercise card so the
+    // planner target is not in the first card and has several rows ahead of it.
+    guard orderedExercises.count >= 2 else {
+        fatalError("UITESTS assertion failed: Scrollable active-session seed produced only \(orderedExercises.count) exercise card(s). Expected at least 2 so Resume must jump to a later exercise.")
+    }
+
+    guard orderedSets.count >= 6 else {
+        fatalError("UITESTS assertion failed: Scrollable active-session seed produced only \(orderedSets.count) set rows. Expected at least 6 for a meaningful off-screen resume target.")
+    }
+
+    let exerciseSetRows = orderedExercises.map { ex in
+        ex.setLogs.sorted { $0.order < $1.order }
+    }
+
+    var cumulativeBeforeExercise = 0
+    var targetExerciseIndex: Int?
+    for (index, sets) in exerciseSetRows.enumerated() {
+        guard !sets.isEmpty else { continue }
+        if index > 0 && cumulativeBeforeExercise >= 4 {
+            targetExerciseIndex = index
+        }
+        cumulativeBeforeExercise += sets.count
+    }
+
+    guard let resolvedTargetExerciseIndex = targetExerciseIndex else {
+        fatalError("UITESTS assertion failed: Scrollable active-session seed could not place the planner target in a later exercise with at least 4 preceding set rows.")
     }
 
     let completedAt = calendar.date(byAdding: .minute, value: -15, to: Date()) ?? Date()
-    for set in orderedSets.prefix(2) {
-        set.completed = true
-        set.completedAt = completedAt
+    for sets in exerciseSetRows.prefix(resolvedTargetExerciseIndex) {
+        for set in sets {
+            set.completed = true
+            set.completedAt = completedAt
+        }
     }
 
     context.insert(activity)
@@ -621,16 +646,16 @@ private func assertHomeActiveSessionsScrollSeed(context: ModelContext) throws {
     }
 
     let orderedExercises = session.exercises.sorted { $0.order < $1.order }
-    guard !orderedExercises.isEmpty else {
-        fatalError("UITESTS assertion failed: Scrollable active session has 0 exercises.")
+    guard orderedExercises.count >= 2 else {
+        fatalError("UITESTS assertion failed: Scrollable active session has only \(orderedExercises.count) exercise card(s). Expected at least 2.")
     }
 
     let orderedSets = orderedExercises.flatMap { ex in
         ex.setLogs.sorted { $0.order < $1.order }
     }
 
-    guard orderedSets.count >= 4 else {
-        fatalError("UITESTS assertion failed: Scrollable active session has only \(orderedSets.count) set rows. Expected at least 4.")
+    guard orderedSets.count >= 6 else {
+        fatalError("UITESTS assertion failed: Scrollable active session has only \(orderedSets.count) set rows. Expected at least 6.")
     }
 
     let incompleteCount = orderedSets.filter { !$0.completed }.count
@@ -644,12 +669,27 @@ private func assertHomeActiveSessionsScrollSeed(context: ModelContext) throws {
         fatalError("UITESTS assertion failed: Scrollable active session did not produce a planner target set.")
     }
 
-    let targetExists = orderedExercises.contains { ex in
-        ex.setLogs.contains(where: { $0.id == targetID })
+    var targetExerciseIndex: Int?
+    var precedingSetCount = 0
+    for (index, exercise) in orderedExercises.enumerated() {
+        let sets = exercise.setLogs.sorted { $0.order < $1.order }
+        if sets.contains(where: { $0.id == targetID }) {
+            targetExerciseIndex = index
+            break
+        }
+        precedingSetCount += sets.count
     }
 
-    guard targetExists else {
+    guard let resolvedTargetExerciseIndex = targetExerciseIndex else {
         fatalError("UITESTS assertion failed: Planner target set does not belong to the seeded session.")
+    }
+
+    guard resolvedTargetExerciseIndex > 0 else {
+        fatalError("UITESTS assertion failed: Scrollable active-session seed should target a later exercise card, not the first one.")
+    }
+
+    guard precedingSetCount >= 4 else {
+        fatalError("UITESTS assertion failed: Scrollable active-session seed should leave at least 4 set rows before the planner target so Resume must scroll meaningfully.")
     }
 
     guard session.linkedActivityId != nil else {

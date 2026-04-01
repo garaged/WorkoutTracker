@@ -805,8 +805,30 @@ struct WorkoutSessionScreen: View {
         activeSetID = target.setID
         syncWatchRemoteCursor()
 
-        try? await Task.sleep(nanoseconds: 150_000_000)
-        scrollToExercise(target.setID, proxy: proxy)
+        let isRouteDrivenOpen: Bool
+        switch initialRoute {
+        case .sessionExercise, .sessionRest, .session:
+            isRouteDrivenOpen = true
+        default:
+            isRouteDrivenOpen = false
+        }
+
+        try? await Task.sleep(nanoseconds: isRouteDrivenOpen ? 250_000_000 : 150_000_000)
+        await performScrollToExercise(target.setID, proxy: proxy)
+
+        guard isRouteDrivenOpen else { return }
+
+        try? await Task.sleep(nanoseconds: 400_000_000)
+        await performScrollToExercise(target.exerciseID, proxy: proxy)
+
+        try? await Task.sleep(nanoseconds: 120_000_000)
+        await performScrollToExercise(target.setID, proxy: proxy)
+
+        try? await Task.sleep(nanoseconds: 450_000_000)
+        await performScrollToExercise(target.exerciseID, proxy: proxy)
+
+        try? await Task.sleep(nanoseconds: 120_000_000)
+        await performScrollToExercise(target.setID, proxy: proxy)
     }
 
     private func handleSetCompleted(
@@ -1633,7 +1655,7 @@ struct WorkoutSessionScreen: View {
 
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 120_000_000)
-            scrollToExercise(setID, proxy: proxy)
+            await performScrollToExercise(activeSetID!, proxy: proxy)
         }
     }
 
@@ -2010,30 +2032,96 @@ struct WorkoutSessionScreen: View {
     }
     
     private func scrollToExercise(_ id: UUID, proxy: ScrollViewProxy) {
+        Task { @MainActor in
+            await performScrollToExercise(id, proxy: proxy)
+        }
+    }
+
+    @MainActor
+    private func performScrollToExercise(_ id: UUID, proxy: ScrollViewProxy) async {
         dismissKeyboard()
 
-        let preferredAnchor = UnitPoint(x: 0.5, y: 0.30)
+        let rowAnchor = UnitPoint(x: 0.5, y: 0.30)
+        let exerciseAnchor = UnitPoint(x: 0.5, y: 0.12)
+        let destination = scrollDestination(for: id)
 
-        Task { @MainActor in
+        switch destination {
+        case .set(let exerciseID, let setID):
             withAdaptiveAnimation {
-                proxy.scrollTo(id, anchor: preferredAnchor)
+                proxy.scrollTo(exerciseID, anchor: exerciseAnchor)
+            }
+
+            try? await Task.sleep(nanoseconds: 50_000_000)
+            withAdaptiveAnimation {
+                proxy.scrollTo(setID, anchor: rowAnchor)
+            }
+
+            try? await Task.sleep(nanoseconds: 140_000_000)
+            withAdaptiveAnimation {
+                proxy.scrollTo(setID, anchor: rowAnchor)
+            }
+
+            try? await Task.sleep(nanoseconds: 260_000_000)
+            withAdaptiveAnimation {
+                proxy.scrollTo(exerciseID, anchor: exerciseAnchor)
+                proxy.scrollTo(setID, anchor: rowAnchor)
+            }
+
+        case .exercise(let exerciseID):
+            withAdaptiveAnimation {
+                proxy.scrollTo(exerciseID, anchor: exerciseAnchor)
             }
 
             try? await Task.sleep(nanoseconds: 120_000_000)
             withAdaptiveAnimation {
-                proxy.scrollTo(id, anchor: preferredAnchor)
+                proxy.scrollTo(exerciseID, anchor: exerciseAnchor)
             }
 
             try? await Task.sleep(nanoseconds: 250_000_000)
             withAdaptiveAnimation {
-                proxy.scrollTo(id, anchor: preferredAnchor)
+                proxy.scrollTo(exerciseID, anchor: exerciseAnchor)
+            }
+
+        case .unresolved(let rawID):
+            withAdaptiveAnimation {
+                proxy.scrollTo(rawID, anchor: rowAnchor)
+            }
+
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            withAdaptiveAnimation {
+                proxy.scrollTo(rawID, anchor: rowAnchor)
+            }
+
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            withAdaptiveAnimation {
+                proxy.scrollTo(rawID, anchor: rowAnchor)
             }
 
             try? await Task.sleep(nanoseconds: 350_000_000)
             withAdaptiveAnimation {
-                proxy.scrollTo(id, anchor: preferredAnchor)
+                proxy.scrollTo(rawID, anchor: rowAnchor)
             }
         }
+    }
+
+    private enum ScrollDestination {
+        case set(exerciseID: UUID, setID: UUID)
+        case exercise(exerciseID: UUID)
+        case unresolved(rawID: UUID)
+    }
+
+    private func scrollDestination(for id: UUID) -> ScrollDestination {
+        if sortedExercises.contains(where: { $0.id == id }) {
+            return .exercise(exerciseID: id)
+        }
+
+        for exercise in sortedExercises {
+            if sortedSets(for: exercise).contains(where: { $0.id == id }) {
+                return .set(exerciseID: exercise.id, setID: id)
+            }
+        }
+
+        return .unresolved(rawID: id)
     }
     
     private struct PinnedTarget: Hashable {

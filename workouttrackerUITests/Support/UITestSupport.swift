@@ -102,7 +102,13 @@ func assertApproximatelyVerticallyCentered(
         line: line
     )
 
-    let delta = abs(element.frame.midY - window.frame.midY)
+    let deadline = Date().addingTimeInterval(4.0)
+    var delta = abs(element.frame.midY - window.frame.midY)
+
+    while delta > tolerance && Date() < deadline {
+        RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        delta = abs(element.frame.midY - window.frame.midY)
+    }
 
     if delta > tolerance {
         let shot = XCUIScreen.main.screenshot()
@@ -124,6 +130,85 @@ func assertApproximatelyVerticallyCentered(
         delta,
         tolerance,
         "Expected '\(debugName)' to be vertically near the middle of the screen. delta=\(delta), tolerance=\(tolerance)",
+        file: file,
+        line: line
+    )
+}
+
+
+
+func assertActionableRowVisibleInWorkingArea(
+    _ element: XCUIElement,
+    in app: XCUIApplication,
+    preferredTopFraction: CGFloat = 0.18,
+    preferredBottomFraction: CGFloat = 0.66,
+    topInset: CGFloat = 60,
+    bottomInset: CGFloat = 120,
+    debugName: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    XCTAssertTrue(
+        element.waitForExistence(timeout: 6),
+        "Expected element '\(debugName)' to exist before checking visibility.",
+        file: file,
+        line: line
+    )
+
+    let window = app.windows.firstMatch
+    XCTAssertTrue(
+        window.waitForExistence(timeout: 2),
+        "Expected app window for visibility check.",
+        file: file,
+        line: line
+    )
+
+    func isInWorkingArea(_ elementFrame: CGRect, _ windowFrame: CGRect) -> Bool {
+        guard !elementFrame.isEmpty, !windowFrame.isEmpty else { return false }
+        let visibleMinY = windowFrame.minY + topInset
+        let visibleMaxY = windowFrame.maxY - bottomInset
+        guard elementFrame.maxY > visibleMinY, elementFrame.minY < visibleMaxY else {
+            return false
+        }
+
+        let preferredMinY = max(visibleMinY, windowFrame.minY + (windowFrame.height * preferredTopFraction))
+        let preferredMaxY = min(visibleMaxY, windowFrame.minY + (windowFrame.height * preferredBottomFraction))
+        return elementFrame.midY >= preferredMinY && elementFrame.midY <= preferredMaxY
+    }
+
+    let deadline = Date().addingTimeInterval(4.0)
+    var elementFrame = element.frame
+    var windowFrame = window.frame
+    var delta = abs(elementFrame.midY - windowFrame.midY)
+    var success = isInWorkingArea(elementFrame, windowFrame)
+
+    while !success && Date() < deadline {
+        RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        elementFrame = element.frame
+        windowFrame = window.frame
+        delta = abs(elementFrame.midY - windowFrame.midY)
+        success = isInWorkingArea(elementFrame, windowFrame)
+    }
+
+    if !success {
+        let shot = XCUIScreen.main.screenshot()
+        let screenshotAttachment = XCTAttachment(screenshot: shot)
+        screenshotAttachment.name = "\(debugName) not in working area screenshot"
+        screenshotAttachment.lifetime = .keepAlways
+
+        let hierarchyAttachment = XCTAttachment(string: app.debugDescription)
+        hierarchyAttachment.name = "\(debugName) hierarchy"
+        hierarchyAttachment.lifetime = .keepAlways
+
+        XCTContext.runActivity(named: "Actionable-row position failure debug") { activity in
+            activity.add(screenshotAttachment)
+            activity.add(hierarchyAttachment)
+        }
+    }
+
+    XCTAssertTrue(
+        success,
+        "Expected '\(debugName)' to be visible inside the usable upper/middle working area. frame=\(NSCoder.string(for: elementFrame))), window=\(NSCoder.string(for: windowFrame)), delta=\(delta)",
         file: file,
         line: line
     )

@@ -6616,6 +6616,9 @@
         }
       }
     },
+    "Open deep-link smoke route" : {
+
+    },
     "Open GitHub Issue" : {
       "extractionState" : "stale",
       "localizations" : {

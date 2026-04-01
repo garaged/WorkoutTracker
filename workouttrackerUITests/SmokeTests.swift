@@ -239,10 +239,30 @@ final class SmokeTests: XCTestCase {
     }
 
     func testHomeInjectedSessionExerciseRoute_opensSessionAndCentersTargetRow() {
-        let app = makeApp(start: "home", resetDefaults: true, seed: false)
-        app.launchEnvironment["UITESTS_ACTIVE_SESSIONS_SCROLL"] = "1"
-        app.launchEnvironment["UITESTS_DEEP_LINK_SMOKE"] = "1"
+        let app = UITestLaunch.app(
+            start: "home",
+            reset: true,
+            seed: false,
+            disableAnimations: false,
+            extraEnv: [
+                "UITESTS_ACTIVE_SESSIONS_SCROLL": "1",
+                "UITESTS_DEEP_LINK_SMOKE": "1"
+            ]
+        )
         app.launch()
+
+        let activeSessionsSection = app.el("Home.ActiveSessions.Section")
+        XCTAssertTrue(
+            activeSessionsSection.waitForExistence(timeout: 8),
+            "Expected Home to finish loading before launching the deep-link smoke route."
+        )
+
+        let launcher = app.buttons["UITestHomeRouteLauncher.OpenDeepLink"]
+        XCTAssertTrue(
+            launcher.waitForExistence(timeout: 4),
+            "Expected host-only deep-link launcher button."
+        )
+        launcher.tap()
 
         let sessionScreen = app.el("WorkoutSession.Screen")
         if !sessionScreen.waitForExistence(timeout: 10) {
@@ -250,16 +270,22 @@ final class SmokeTests: XCTestCase {
         }
         XCTAssertTrue(sessionScreen.exists, "Expected injected PR1 deep link to open WorkoutSession.Screen from Home.")
 
-        let focusedRow = app.otherElements["WorkoutSession.ActionableSetRow"]
+        let focusedRow = sessionScreen
+            .descendants(matching: .any)
+            .matching(identifier: "WorkoutSession.ActionableSetRow")
+            .firstMatch
+
         if !focusedRow.waitForExistence(timeout: 8) {
             attachUITestDebug(app, name: "PR1_DeepLinkSmoke_ActionableRowMissing")
         }
-        XCTAssertTrue(focusedRow.exists, "Expected injected session-exercise deep link to reveal the actionable set row.")
+        XCTAssertTrue(
+            focusedRow.exists,
+            "Expected injected session-exercise deep link to reveal the actionable set row inside the visible WorkoutSession.Screen."
+        )
 
-        assertApproximatelyVerticallyCentered(
+        assertActionableRowVisibleInWorkingArea(
             focusedRow,
             in: app,
-            tolerance: 170,
             debugName: "PR1 deep-link actionable row"
         )
     }

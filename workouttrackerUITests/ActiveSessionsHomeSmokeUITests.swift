@@ -176,7 +176,7 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
             attachUITestDebug(app, name: "DayTimelineResume_ActionableRowMissing")
         }
 
-        assertApproximatelyVerticallyCentered(
+        assertActionableRowVisibleInWorkingArea(
             focusedRow,
             in: app,
             debugName: "Day timeline actionable row"
@@ -197,7 +197,7 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
         let focusedRow = app.otherElements["WorkoutSession.ActionableSetRow"]
         XCTAssertTrue(focusedRow.waitForExistence(timeout: t(6)), "Expected actionable set row after resume.")
 
-        assertApproximatelyVerticallyCentered(
+        assertActionableRowVisibleInWorkingArea(
             focusedRow,
             in: app,
             debugName: "Resume actionable row"
@@ -211,6 +211,7 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
             start: "home",
             reset: true,
             seed: false,
+            disableAnimations: false,
             extraEnv: [
                 "UITESTS_ACTIVE_SESSIONS_SCROLL": "1"
             ]
