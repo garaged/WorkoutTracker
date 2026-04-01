@@ -65,9 +65,16 @@ struct WorkoutSessionScreen: View {
     @State private var dismissAfterReflectionSheet = false
     @State private var didApplyInitialResumeTarget = false
     @State private var finishSummaryViewData: WorkoutSessionSummaryViewData? = nil
+    @State private var uiTestLastSkippedSegment: String = ""
+    @State private var uiTestSkipInvocationCount: Int = 0
+    @State private var autoRecenteringSuppressionDepth: Int = 0
     
     private var bottomInsetLayoutKey: String {
-        "\(shouldShowCoachPrompt)-\(shouldShowRestTimerCard)-\(session.isPaused)-\(canMutateProgress)"
+        "\(shouldShowCoachPrompt)-\(shouldShowRestTimerCard)-\(canMutateProgress)"
+    }
+    
+    private var isSuppressingAutomaticRecentering: Bool {
+        autoRecenteringSuppressionDepth > 0
     }
     
     private struct PRDetailsContext: Identifiable, Hashable {
@@ -93,6 +100,7 @@ struct WorkoutSessionScreen: View {
     private let coachService = CoachSuggestionService()
     private let prService = PersonalRecordsService()
     private let finishSummaryBuilder = WorkoutSessionSummaryBuilder()
+    private let finishSummaryScrollAnchor = "WorkoutSession.FinishSummary.Anchor"
 
     private let sessionResumePlanner = SessionResumePlanner()
     private let lifecyclePolicy = SessionLifecyclePolicy()
@@ -167,6 +175,13 @@ struct WorkoutSessionScreen: View {
     }
 
     var body: some View {
+        if ProcessInfo.processInfo.environment["UITESTS"] == "1" {
+            Text("\(uiTestLastSkippedSegment)#\(uiTestSkipInvocationCount)")
+                .font(.caption2)
+                .foregroundStyle(.clear)
+                .accessibilityHidden(false)
+                .accessibilityIdentifier("WorkoutSession.UITest.LastSkippedSegment")
+        }
         ZStack {
             ScrollViewReader { proxy in
                 ScrollView {
@@ -194,10 +209,32 @@ struct WorkoutSessionScreen: View {
                 }
                 .toolbar { toolbarContent }
                 .onChange(of: bottomInsetLayoutKey, initial: false) { _, _ in
-                    guard let activeSetID else { return }
+                    guard let activeSetID, !isSuppressingAutomaticRecentering else { return }
                     Task { @MainActor in
                         try? await Task.sleep(nanoseconds: 120_000_000)
-                        scrollToExercise(activeSetID, proxy: proxy)
+                        guard !isSuppressingAutomaticRecentering else { return }
+                        await runManagedScrollSequence {
+                            await performScrollToExercise(
+                                activeSetID,
+                                proxy: proxy,
+                                animateLanding: false,
+                                correctionPass: false
+                            )
+                        }
+                    }
+                }
+                .onChange(of: finishSummaryViewData != nil, initial: false) { _, hasSummary in
+                    guard hasSummary else { return }
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 120_000_000)
+                        await scrollToFinishSummary(proxy)
+                    }
+                }
+                .onChange(of: showReflectionSheet, initial: false) { _, isPresented in
+                    guard !isPresented, finishSummaryViewData != nil else { return }
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 160_000_000)
+                        await scrollToFinishSummary(proxy)
                     }
                 }
                 .confirmationDialog(
@@ -479,6 +516,7 @@ struct WorkoutSessionScreen: View {
                     .background(readOnlyCardBackground)
                     .accessibilityElement(children: .contain)
                     .accessibilityIdentifier("WorkoutSession.FinishSummary")
+                    .id(finishSummaryScrollAnchor)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
@@ -698,6 +736,11 @@ struct WorkoutSessionScreen: View {
 
     private func skipCurrentSegment() {
         guard let kind = currentSegmentKind, canSkipSegment(kind) else { return }
+        
+        if ProcessInfo.processInfo.environment["UITESTS"] == "1" {
+            uiTestLastSkippedSegment = String(describing: kind)
+            uiTestSkipInvocationCount += 1
+        }
 
         finishActiveRestTimerIfNeeded()
 
@@ -805,30 +848,48 @@ struct WorkoutSessionScreen: View {
         activeSetID = target.setID
         syncWatchRemoteCursor()
 
-        let isRouteDrivenOpen: Bool
+        let needsRouteCorrectionPass: Bool
+        let shouldAnimateOpenLanding: Bool
+        let initialScrollDelay: UInt64
+
         switch initialRoute {
-        case .sessionExercise, .sessionRest, .session:
-            isRouteDrivenOpen = true
+        case .sessionExercise, .sessionRest:
+            needsRouteCorrectionPass = true
+            shouldAnimateOpenLanding = true
+            initialScrollDelay = 220_000_000
+
+        case .session:
+            // Home reminder Resume is a plain session open. Prioritize a stable landing
+            // over visible animation so the screen does not feel shaky during push/resume.
+            needsRouteCorrectionPass = false
+            shouldAnimateOpenLanding = false
+            initialScrollDelay = 260_000_000
+
         default:
-            isRouteDrivenOpen = false
+            needsRouteCorrectionPass = false
+            shouldAnimateOpenLanding = true
+            initialScrollDelay = 140_000_000
         }
 
-        try? await Task.sleep(nanoseconds: isRouteDrivenOpen ? 250_000_000 : 150_000_000)
-        await performScrollToExercise(target.setID, proxy: proxy)
+        await runManagedScrollSequence {
+            try? await Task.sleep(nanoseconds: initialScrollDelay)
+            await performScrollToExercise(
+                target.setID,
+                proxy: proxy,
+                animateLanding: shouldAnimateOpenLanding,
+                correctionPass: needsRouteCorrectionPass
+            )
 
-        guard isRouteDrivenOpen else { return }
+            guard needsRouteCorrectionPass else { return }
 
-        try? await Task.sleep(nanoseconds: 400_000_000)
-        await performScrollToExercise(target.exerciseID, proxy: proxy)
-
-        try? await Task.sleep(nanoseconds: 120_000_000)
-        await performScrollToExercise(target.setID, proxy: proxy)
-
-        try? await Task.sleep(nanoseconds: 450_000_000)
-        await performScrollToExercise(target.exerciseID, proxy: proxy)
-
-        try? await Task.sleep(nanoseconds: 120_000_000)
-        await performScrollToExercise(target.setID, proxy: proxy)
+            try? await Task.sleep(nanoseconds: 320_000_000)
+            await performScrollToExercise(
+                target.setID,
+                proxy: proxy,
+                animateLanding: false,
+                correctionPass: false
+            )
+        }
     }
 
     private func handleSetCompleted(
@@ -1655,7 +1716,14 @@ struct WorkoutSessionScreen: View {
 
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 120_000_000)
-            await performScrollToExercise(activeSetID!, proxy: proxy)
+            await runManagedScrollSequence {
+                await performScrollToExercise(
+                    setID,
+                    proxy: proxy,
+                    animateLanding: true,
+                    correctionPass: true
+                )
+            }
         }
     }
 
@@ -2033,73 +2101,89 @@ struct WorkoutSessionScreen: View {
     
     private func scrollToExercise(_ id: UUID, proxy: ScrollViewProxy) {
         Task { @MainActor in
-            await performScrollToExercise(id, proxy: proxy)
+            await runManagedScrollSequence {
+                await performScrollToExercise(
+                    id,
+                    proxy: proxy,
+                    animateLanding: true,
+                    correctionPass: false
+                )
+            }
         }
     }
 
     @MainActor
-    private func performScrollToExercise(_ id: UUID, proxy: ScrollViewProxy) async {
-        dismissKeyboard()
+    private func performScrollToExercise(
+        _ id: UUID,
+        proxy: ScrollViewProxy,
+        animateLanding: Bool,
+        correctionPass: Bool
+    ) async {
 
         let rowAnchor = UnitPoint(x: 0.5, y: 0.30)
         let exerciseAnchor = UnitPoint(x: 0.5, y: 0.12)
         let destination = scrollDestination(for: id)
 
+        func applyScroll(_ targetID: UUID, anchor: UnitPoint, animated: Bool) {
+            if animated {
+                withAdaptiveAnimation {
+                    proxy.scrollTo(targetID, anchor: anchor)
+                }
+            } else {
+                var transaction = Transaction()
+                transaction.animation = nil
+                withTransaction(transaction) {
+                    proxy.scrollTo(targetID, anchor: anchor)
+                }
+            }
+        }
+
         switch destination {
         case .set(let exerciseID, let setID):
-            withAdaptiveAnimation {
-                proxy.scrollTo(exerciseID, anchor: exerciseAnchor)
-            }
+            // Realize the lazy parent card silently first.
+            applyScroll(exerciseID, anchor: exerciseAnchor, animated: false)
 
-            try? await Task.sleep(nanoseconds: 50_000_000)
-            withAdaptiveAnimation {
-                proxy.scrollTo(setID, anchor: rowAnchor)
-            }
+            try? await Task.sleep(nanoseconds: 35_000_000)
 
-            try? await Task.sleep(nanoseconds: 140_000_000)
-            withAdaptiveAnimation {
-                proxy.scrollTo(setID, anchor: rowAnchor)
-            }
+            // One visible landing to the actual row.
+            applyScroll(setID, anchor: rowAnchor, animated: animateLanding)
 
-            try? await Task.sleep(nanoseconds: 260_000_000)
-            withAdaptiveAnimation {
-                proxy.scrollTo(exerciseID, anchor: exerciseAnchor)
-                proxy.scrollTo(setID, anchor: rowAnchor)
-            }
+            guard correctionPass else { return }
+
+            // One silent correction only.
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            applyScroll(setID, anchor: rowAnchor, animated: false)
 
         case .exercise(let exerciseID):
-            withAdaptiveAnimation {
-                proxy.scrollTo(exerciseID, anchor: exerciseAnchor)
-            }
+            applyScroll(exerciseID, anchor: exerciseAnchor, animated: animateLanding)
+
+            guard correctionPass else { return }
 
             try? await Task.sleep(nanoseconds: 120_000_000)
-            withAdaptiveAnimation {
-                proxy.scrollTo(exerciseID, anchor: exerciseAnchor)
-            }
-
-            try? await Task.sleep(nanoseconds: 250_000_000)
-            withAdaptiveAnimation {
-                proxy.scrollTo(exerciseID, anchor: exerciseAnchor)
-            }
+            applyScroll(exerciseID, anchor: exerciseAnchor, animated: false)
 
         case .unresolved(let rawID):
-            withAdaptiveAnimation {
-                proxy.scrollTo(rawID, anchor: rowAnchor)
-            }
+            applyScroll(rawID, anchor: rowAnchor, animated: animateLanding)
+
+            guard correctionPass else { return }
 
             try? await Task.sleep(nanoseconds: 120_000_000)
-            withAdaptiveAnimation {
-                proxy.scrollTo(rawID, anchor: rowAnchor)
+            applyScroll(rawID, anchor: rowAnchor, animated: false)
+        }
+    }
+
+    @MainActor
+    private func scrollToFinishSummary(_ proxy: ScrollViewProxy) async {
+        dismissKeyboard()
+
+        let attempts: [UInt64] = [0, 120_000_000, 280_000_000]
+        for delay in attempts {
+            if delay > 0 {
+                try? await Task.sleep(nanoseconds: delay)
             }
 
-            try? await Task.sleep(nanoseconds: 250_000_000)
             withAdaptiveAnimation {
-                proxy.scrollTo(rawID, anchor: rowAnchor)
-            }
-
-            try? await Task.sleep(nanoseconds: 350_000_000)
-            withAdaptiveAnimation {
-                proxy.scrollTo(rawID, anchor: rowAnchor)
+                proxy.scrollTo(finishSummaryScrollAnchor, anchor: .top)
             }
         }
     }
@@ -2122,6 +2206,15 @@ struct WorkoutSessionScreen: View {
         }
 
         return .unresolved(rawID: id)
+    }
+    
+    @MainActor
+    private func runManagedScrollSequence(_ operation: () async -> Void) async {
+        autoRecenteringSuppressionDepth += 1
+        defer {
+            autoRecenteringSuppressionDepth = max(0, autoRecenteringSuppressionDepth - 1)
+        }
+        await operation()
     }
     
     private struct PinnedTarget: Hashable {

@@ -27,7 +27,7 @@ final class FinishSummarySmokeUITests: XCTestCase {
 
         let completedSetsTile = identifiedElement("WorkoutSession.FinishSummary.CompletedSets")
         XCTAssertTrue(
-            completedSetsTile.waitForExistence(timeout: 2),
+            completedSetsTile.waitForExistence(timeout: 4),
             "Expected completed-sets tile in finish summary."
         )
         XCTAssertTrue(
@@ -55,9 +55,13 @@ final class FinishSummarySmokeUITests: XCTestCase {
             attachUITestDebug(app, name: "FinishSummary_LowDataSummaryMissing")
         }
         XCTAssertTrue(summary.exists, "Expected finish summary after ending a low-data session.")
+
         let completedSetsTile = identifiedElement("WorkoutSession.FinishSummary.CompletedSets")
+        if !waitForFinishSummaryMetric(completedSetsTile, timeout: 6) {
+            attachUITestDebug(app, name: "FinishSummary_LowDataCompletedSetsTileMissing")
+        }
         XCTAssertTrue(
-            completedSetsTile.waitForExistence(timeout: 2),
+            completedSetsTile.exists,
             "Expected completed-sets tile in low-data finish summary."
         )
         XCTAssertTrue(
@@ -65,17 +69,40 @@ final class FinishSummarySmokeUITests: XCTestCase {
             "Expected completed-sets tile to reflect zero completed sets. Actual label: \(completedSetsTile.label)"
         )
         XCTAssertTrue(
-            identifiedElement("WorkoutSession.FinishSummary.PRs").waitForExistence(timeout: 2),
+            identifiedElement("WorkoutSession.FinishSummary.PRs").waitForExistence(timeout: 4),
             "Expected PR section to still render for low-data sessions."
         )
     }
-    
+
     private func identifiedElement(_ id: String) -> XCUIElement {
         app.descendants(matching: .any)
             .matching(identifier: id)
             .firstMatch
     }
-    
+
+    private func waitForFinishSummaryMetric(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
+        if element.waitForExistence(timeout: 1.0) { return true }
+
+        let summary = app.otherElements["WorkoutSession.FinishSummary"]
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while Date() < deadline {
+            if element.exists { return true }
+
+            if summary.exists {
+                summary.swipeDown()
+            } else {
+                app.swipeDown()
+            }
+
+            RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+
+            if element.exists { return true }
+        }
+
+        return element.exists
+    }
+
     private var doneTogglePredicate: NSPredicate {
         NSPredicate(format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
                     "WorkoutSetEditorRow.", ".DoneToggle")

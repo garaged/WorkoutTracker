@@ -12,6 +12,27 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+
+    func test_homeWithoutActiveSessions_hidesActiveSessionsSection() {
+        let app = makeNoActiveSessionsApp()
+        app.launch()
+
+        let section = app.el("Home.ActiveSessions.Section")
+        XCTAssertTrue(
+            waitForNonExistence(section, timeout: t(2)),
+            "Expected Home to hide the Active Sessions section when no in-progress workouts exist."
+        )
+
+        XCTAssertFalse(
+            app.buttons["Home.ActiveSessions.Resume.Today"].exists,
+            "Expected no today Resume button when there are no active sessions."
+        )
+        XCTAssertFalse(
+            app.buttons["Home.ActiveSessions.Resume.PreviousDay"].exists,
+            "Expected no previous-day Resume button when there are no active sessions."
+        )
+    }
+
     func test_homeShowsActiveSessionsSection_withTodayAndPastDaySessions() {
         let app = makeApp()
         app.launch()
@@ -215,6 +236,16 @@ final class ActiveSessionsHomeSmokeUITests: XCTestCase {
             extraEnv: [
                 "UITESTS_ACTIVE_SESSIONS_SCROLL": "1"
             ]
+        )
+    }
+
+
+    private func makeNoActiveSessionsApp() -> XCUIApplication {
+        UITestLaunch.app(
+            start: "home",
+            reset: true,
+            seed: false,
+            extraEnv: ["UITESTS_NO_ACTIVE_SESSIONS": "1"]
         )
     }
 

@@ -144,6 +144,16 @@
         }
       }
     },
+    "%@#%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@#%2$lld"
+          }
+        }
+      }
+    },
     "%@%@ vol" : {
       "localizations" : {
         "es-MX" : {
@@ -6631,6 +6641,9 @@
       }
     },
     "Open the rest timer when your current workout session is ready for one." : {
+
+    },
+    "Open workout actions" : {
 
     },
     "Open your current workout session." : {

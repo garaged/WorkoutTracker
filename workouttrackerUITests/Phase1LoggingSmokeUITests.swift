@@ -112,18 +112,17 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         }
         XCTAssertTrue(undo.exists, "Expected Undo toast after adding a set.")
 
-        guard let newToggleID = waitForNewSetToggleID(after: before, timeout: 10),
-              let newUUID = uuidFromDoneToggleIdentifier(newToggleID)
-        else {
+        guard let newUUID = waitForNewSetUUID(after: before, excluding: uuid, timeout: 10) else {
             attachUITestDebug(app, name: "Add did not create a visible new set")
             XCTFail("Expected Add to create a new set row (new DoneToggle identifier not detected).")
             return
         }
 
-        let newReps = app.textFields["WorkoutSetEditorRow.\(newUUID).Reps.Field"]
-        let newWeight = app.textFields["WorkoutSetEditorRow.\(newUUID).Weight.Field"]
-        XCTAssertTrue(newReps.waitForExistence(timeout: 10), "Expected reps field for the added set.")
-        XCTAssertTrue(newWeight.waitForExistence(timeout: 10), "Expected weight field for the added set.")
+        guard let (newReps, newWeight) = waitForEditableSetFields(uuid: newUUID, timeout: 10) else {
+            attachUITestDebug(app, name: "Add set fields did not become visible")
+            XCTFail("Expected reps and weight fields for the added set.")
+            return
+        }
 
         let repsValue = normalizedTextFieldValue(newReps)
         let weightValue = normalizedTextFieldValue(newWeight)
@@ -167,18 +166,17 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         XCTAssertTrue(firstUndoButton(in: app).waitForExistence(timeout: 10),
                       "Expected Undo toast after copying a set.")
 
-        guard let newToggleID = waitForNewSetToggleID(after: before, timeout: 10),
-              let newUUID = uuidFromDoneToggleIdentifier(newToggleID)
-        else {
+        guard let newUUID = waitForNewSetUUID(after: before, excluding: uuid, timeout: 10) else {
             attachUITestDebug(app, name: "Copy did not create a visible new set")
             XCTFail("Expected Copy to create a new set row (new DoneToggle identifier not detected).")
             return
         }
 
-        let newReps = app.textFields["WorkoutSetEditorRow.\(newUUID).Reps.Field"]
-        let newWeight = app.textFields["WorkoutSetEditorRow.\(newUUID).Weight.Field"]
-        XCTAssertTrue(newReps.waitForExistence(timeout: 10), "Expected reps field for the copied set.")
-        XCTAssertTrue(newWeight.waitForExistence(timeout: 10), "Expected weight field for the copied set.")
+        guard let (newReps, newWeight) = waitForEditableSetFields(uuid: newUUID, timeout: 10) else {
+            attachUITestDebug(app, name: "Copy set fields did not become visible")
+            XCTFail("Expected reps and weight fields for the copied set.")
+            return
+        }
 
         let repsValue = normalizedTextFieldValue(newReps)
         let weightValue = normalizedTextFieldValue(newWeight)
@@ -380,6 +378,35 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         return diff.first
     }
 
+    private func waitForNewSetUUID(after before: Set<String>, excluding sourceUUID: String, timeout: TimeInterval) -> String? {
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while Date() < deadline {
+            if let actionableUUID = actionableSetUUID(), actionableUUID != sourceUUID {
+                return actionableUUID
+            }
+
+            if let newToggleID = waitForNewSetToggleID(after: before, timeout: 0.6),
+               let newUUID = uuidFromDoneToggleIdentifier(newToggleID),
+               newUUID != sourceUUID {
+                return newUUID
+            }
+
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        }
+
+        return actionableSetUUID()
+    }
+
+    private func actionableSetUUID() -> String? {
+        let actionableRow = app.otherElements["WorkoutSession.ActionableSetRow"]
+        guard actionableRow.waitForExistence(timeout: 1.5) else { return nil }
+
+        let toggle = actionableRow.buttons.matching(doneTogglePredicate).firstMatch
+        guard toggle.exists else { return nil }
+        return uuidFromDoneToggleIdentifier(toggle.identifier)
+    }
+
     // MARK: - Finders
 
     private func firstDoneToggle(in app: XCUIApplication) -> XCUIElement {
@@ -489,6 +516,48 @@ final class Phase1LoggingSmokeUITests: XCTestCase {
         }
 
         return nil
+    }
+
+    private func waitForEditableSetFields(uuid: String, timeout: TimeInterval) -> (XCUIElement, XCUIElement)? {
+        let reps = app.textFields["WorkoutSetEditorRow.\(uuid).Reps.Field"]
+        let weight = app.textFields["WorkoutSetEditorRow.\(uuid).Weight.Field"]
+
+        if reps.waitForExistence(timeout: 1), weight.waitForExistence(timeout: 1) {
+            return (reps, weight)
+        }
+
+        let rowToggle = app.descendants(matching: .any)
+            .matching(identifier: "WorkoutSetEditorRow.\(uuid).DoneToggle")
+            .firstMatch
+        let row = app.otherElements["WorkoutSetEditorRow.\(uuid).Row"]
+
+        let start = Date()
+        while Date().timeIntervalSince(start) < timeout {
+            if reps.exists && weight.exists {
+                return (reps, weight)
+            }
+
+            if row.exists && row.isHittable {
+                row.swipeUp()
+            } else if rowToggle.exists && !rowToggle.isHittable {
+                app.swipeUp()
+            } else {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+            }
+
+            if reps.exists && weight.exists {
+                return (reps, weight)
+            }
+        }
+
+        for _ in 0..<3 {
+            app.swipeDown()
+            if reps.exists && weight.exists {
+                return (reps, weight)
+            }
+        }
+
+        return (reps.exists && weight.exists) ? (reps, weight) : nil
     }
 
     @discardableResult

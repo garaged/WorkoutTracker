@@ -84,8 +84,8 @@ final class StartedActivityDeletionRegressionUITests: XCTestCase {
 
         navigateBackToHome(from: app)
 
-        XCTAssertFalse(
-            app.staticTexts["UITest — Active Scroll"].waitForExistence(timeout: t(2)),
+        XCTAssertTrue(
+            waitForNonExistence(app.staticTexts["UITest — Active Scroll"], timeout: t(2)),
             "Expected deleted started workout to disappear from the Home active-session reminder."
         )
         XCTAssertFalse(
@@ -107,33 +107,77 @@ final class StartedActivityDeletionRegressionUITests: XCTestCase {
         }
         XCTAssertTrue(titleLabel.exists, "Expected workout title '\(title)' on Calendar.")
 
+        if let explicitActionsButton = nearbyExplicitActionsButton(for: titleLabel, in: app) {
+            tapSafely(explicitActionsButton)
+            if waitForDeleteAction(in: app) {
+                return
+            }
+        }
+
+        if let menuButton = nearbyMenuButton(for: titleLabel, in: app) {
+            tapSafely(menuButton)
+            if waitForDeleteAction(in: app) {
+                return
+            }
+        }
+
         let titleCenter = titleLabel.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
 
-        // The row menu hotspot is visually on the lower-right side of the card.
-        // Since the row action identifier is not exposed here, tap geometry instead.
-        let primaryTap = titleCenter.withOffset(CGVector(dx: 290, dy: 42))
-        primaryTap.tap()
+        let fallbackTaps: [CGVector] = [
+            CGVector(dx: 290, dy: 42),
+            CGVector(dx: 250, dy: 28),
+            CGVector(dx: 310, dy: 18)
+        ]
 
-        if waitForDeleteAction(in: app) {
-            return
-        }
-
-        let secondaryTap = titleCenter.withOffset(CGVector(dx: 250, dy: 28))
-        secondaryTap.tap()
-
-        if waitForDeleteAction(in: app) {
-            return
-        }
-
-        let tertiaryTap = titleCenter.withOffset(CGVector(dx: 310, dy: 18))
-        tertiaryTap.tap()
-
-        if waitForDeleteAction(in: app) {
-            return
+        for offset in fallbackTaps {
+            titleCenter.withOffset(offset).tap()
+            if waitForDeleteAction(in: app) {
+                return
+            }
         }
 
         attachUITestDebug(app, name: "StartedDeleteRegression_WorkoutActionsDidNotOpen")
         XCTFail("Expected workout actions to open from the calendar row menu handle.")
+    }
+
+    private func nearbyExplicitActionsButton(for titleLabel: XCUIElement, in app: XCUIApplication) -> XCUIElement? {
+        let titleFrame = titleLabel.frame
+        guard !titleFrame.isEmpty else { return nil }
+
+        let candidates = app.buttons.matching(identifier: "DayTimeline.WorkoutCard.ActionsButton").allElementsBoundByIndex.filter { button in
+            button.exists && !button.frame.isEmpty && abs(button.frame.midY - titleFrame.midY) < 80
+        }
+
+        return candidates.min(by: { lhs, rhs in
+            distance(from: lhs, to: titleLabel) < distance(from: rhs, to: titleLabel)
+        })
+    }
+
+    private func nearbyMenuButton(for titleLabel: XCUIElement, in app: XCUIApplication) -> XCUIElement? {
+        let titleFrame = titleLabel.frame
+        guard !titleFrame.isEmpty else { return nil }
+
+        let likelyMenuTerms = ["line.3.horizontal", "ellipsis", "more", "menu", "actions"]
+
+        let candidates = app.buttons.allElementsBoundByIndex.filter { button in
+            guard button.exists, !button.frame.isEmpty else { return false }
+            guard abs(button.frame.midY - titleFrame.midY) < 60 else { return false }
+            return button.frame.minX > titleFrame.midX
+        }
+
+        let preferred = candidates.filter { button in
+            let haystack = (button.identifier + " " + button.label).lowercased()
+            return likelyMenuTerms.contains(where: { haystack.contains($0) })
+        }
+
+        let pool = preferred.isEmpty ? candidates : preferred
+        return pool.min(by: { lhs, rhs in
+            distance(from: lhs, to: titleLabel) < distance(from: rhs, to: titleLabel)
+        })
+    }
+
+    private func distance(from element: XCUIElement, to anchor: XCUIElement) -> CGFloat {
+        hypot(element.frame.midX - anchor.frame.midX, element.frame.midY - anchor.frame.midY)
     }
 
     private func deleteAction(in app: XCUIApplication) -> XCUIElement {

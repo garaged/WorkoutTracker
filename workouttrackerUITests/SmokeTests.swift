@@ -290,6 +290,59 @@ final class SmokeTests: XCTestCase {
         )
     }
 
+
+    func testHomeInjectedSessionExerciseRoute_doesNotPersistAcrossRelaunch() {
+        var app = UITestLaunch.app(
+            start: "home",
+            reset: true,
+            seed: false,
+            disableAnimations: false,
+            extraEnv: [
+                "UITESTS_ACTIVE_SESSIONS_SCROLL": "1",
+                "UITESTS_DEEP_LINK_SMOKE": "1"
+            ]
+        )
+        app.launch()
+
+        let activeSessionsSection = app.el("Home.ActiveSessions.Section")
+        XCTAssertTrue(
+            activeSessionsSection.waitForExistence(timeout: 8),
+            "Expected Home to finish loading before launching the deep-link smoke route."
+        )
+
+        let launcher = app.buttons["UITestHomeRouteLauncher.OpenDeepLink"]
+        XCTAssertTrue(launcher.waitForExistence(timeout: 4), "Expected host-only deep-link launcher button.")
+        launcher.tap()
+
+        let sessionScreen = app.el("WorkoutSession.Screen")
+        XCTAssertTrue(sessionScreen.waitForExistence(timeout: 10), "Expected injected PR1 deep link to open WorkoutSession.Screen before relaunching.")
+
+        app.terminate()
+
+        app = UITestLaunch.app(
+            start: "home",
+            reset: false,
+            seed: false,
+            disableAnimations: false,
+            extraEnv: [
+                "UITESTS_ACTIVE_SESSIONS_SCROLL": "1",
+                "UITESTS_DEEP_LINK_SMOKE": "1"
+            ]
+        )
+        app.launch()
+
+        let relaunchedHomeSection = app.el("Home.ActiveSessions.Section")
+        XCTAssertTrue(
+            relaunchedHomeSection.waitForExistence(timeout: 8),
+            "Expected Home to load normally after relaunching the deep-link smoke scenario."
+        )
+
+        XCTAssertTrue(
+            waitForNonExistence(app.el("WorkoutSession.Screen"), timeout: 2),
+            "Expected the injected deep link to be consumed once and not reopen automatically on the next launch."
+        )
+    }
+
     func testVerboseLoggingTogglePersistsAcrossRelaunch() {
         var app = makeApp(start: "settings", resetDefaults: true, seed: false)
         app.launch()

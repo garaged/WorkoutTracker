@@ -134,7 +134,9 @@ struct AppRootView: View {
         case .home:
             HomeScreen(
                 tiles: tiles,
-                onResumeRoute: open
+                onResumeRoute: { route in
+                    open(route)
+                }
             )
         case .routines:
             RoutinesScreen(onOpenSession: { session in
@@ -298,7 +300,9 @@ struct AppRootView: View {
         NavigationStack {
             HomeScreen(
                 tiles: tiles,
-                onResumeRoute: open
+                onResumeRoute: { route in
+                    open(route)
+                }
             )
             .navigationDestination(item: $presentedSessionRoute) { route in
                 WorkoutSessionScreen(
@@ -353,10 +357,10 @@ struct AppRootView: View {
         }
 
         guard let route = resolution.route else { return }
-        open(route)
+        open(route, preserveLaunchRoute: true)
     }
 
-    private func open(_ route: AppRoute) {
+    private func open(_ route: AppRoute, preserveLaunchRoute: Bool = false) {
         switch route {
         case .home:
             selection = .home
@@ -371,7 +375,10 @@ struct AppRootView: View {
             selection = .routines
 
         case .session, .sessionExercise, .sessionRest:
-            guard let presentation = sessionPresentationRoute(for: route) else {
+            guard let presentation = sessionPresentationRoute(
+                for: route,
+                preserveLaunchRoute: preserveLaunchRoute
+            ) else {
                 selection = .home
                 presentedSessionRoute = nil
                 return
@@ -391,7 +398,10 @@ struct AppRootView: View {
         }
     }
 
-    private func sessionPresentationRoute(for route: AppRoute) -> SessionPresentationRoute? {
+    private func sessionPresentationRoute(
+        for route: AppRoute,
+        preserveLaunchRoute: Bool
+    ) -> SessionPresentationRoute? {
         guard let sessionID = route.sessionID,
               let session = sessions.first(where: { $0.id == sessionID }) else {
             return nil
@@ -412,7 +422,7 @@ struct AppRootView: View {
         return SessionPresentationRoute(
             session: session,
             initialResumeTarget: initialResumeTarget,
-            launchRoute: route
+            launchRoute: preserveLaunchRoute ? route : nil
         )
     }
 
@@ -485,7 +495,7 @@ struct AppRootView: View {
         )
 
         guard let route = resolution.route else { return }
-        open(route)
+        open(route, preserveLaunchRoute: true)
     }
 
     private func handleWatchOpenRequestNotification(_ note: Notification) {
@@ -574,7 +584,7 @@ struct AppRootView: View {
         )
 
         guard let route = resolution.route else { return }
-        open(route)
+        open(route, preserveLaunchRoute: true)
     }
     
     private func syncSystemIntegrations() {

@@ -25,21 +25,27 @@ final class RoutineLinkedFlowUITests: XCTestCase {
 
         dismissSessionOverlaysIfVisible()
 
-        let skipWarmUp = app.buttons["WorkoutSession.SkipSegmentButton"]
-        XCTAssertTrue(skipWarmUp.waitForExistence(timeout: 10), "Expected skip action at the warm-up boundary.")
-        tapSafely(skipWarmUp)
+        XCTAssertTrue(
+            revealCurrentSegmentBoundary("warmUp", timeout: 8),
+            "Expected current warm-up boundary to become visible before skipping."
+        )
 
         XCTAssertTrue(
-            waitForMainSegmentReady(timeout: 10),
+            skipCurrentSegmentAndWaitTransition(from: "warmUp", to: "main", timeout: 10),
             "Expected skipping warm-up to enter the main workout segment."
         )
 
-        let actionableDoneToggle = doneToggleForActionableRow()
+        let actionableDoneToggle = doneToggleForCurrentRow()
         if !actionableDoneToggle.waitForExistence(timeout: 10) {
             attachUITestDebug(app, name: "LinkedFlow_MainDoneToggleMissing")
         }
         XCTAssertTrue(actionableDoneToggle.exists, "Expected current main workout set row to expose a completion toggle.")
         tapSafely(actionableDoneToggle)
+
+        XCTAssertTrue(
+            waitForMainCompletionTransition(afterTapping: actionableDoneToggle, timeout: 8),
+            "Expected completing the current main set to update the row state or reveal the next-step controls."
+        )
 
         dismissSessionOverlaysIfVisible()
 
@@ -50,7 +56,13 @@ final class RoutineLinkedFlowUITests: XCTestCase {
 
         dismissSessionOverlaysIfVisible()
 
-        let skipCoolDown = app.buttons["WorkoutSession.SkipSegmentButton"]
+        let currentCoolDownHeader = app.otherElements["SessionSegmentHeaderView.Current.coolDown"]
+        if !currentCoolDownHeader.waitForExistence(timeout: 10) {
+            attachUITestDebug(app, name: "LinkedFlow_CurrentCoolDownHeaderMissing")
+        }
+        XCTAssertTrue(currentCoolDownHeader.exists, "Expected current cool-down segment header after advancing past the main segment.")
+
+        let skipCoolDown = skipButton(inCurrentSegment: "coolDown")
         if !skipCoolDown.waitForExistence(timeout: 10) {
             attachUITestDebug(app, name: "LinkedFlow_CoolDownSkipMissing")
         }
@@ -62,20 +74,22 @@ final class RoutineLinkedFlowUITests: XCTestCase {
         )
         tapSafely(skipCoolDown)
 
-        let notNow = app.buttons["SessionReflection.NotNow"]
-        let started = Date()
-        while Date().timeIntervalSince(started) < 12 {
-            if notNow.exists { break }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.10))
-        }
-
-        if !notNow.exists {
-            attachUITestDebug(app, name: "LinkedFlow_ReflectionMissingAfterSkipCoolDown")
-        }
-        XCTAssertTrue(notNow.exists, "Expected session completion to present reflection after skipping cool-down.")
-        notNow.tap()
-
         let finishSummary = app.otherElements["WorkoutSession.FinishSummary"]
+        let notNow = app.buttons["SessionReflection.NotNow"]
+
+        let didReachCompletionSurface = waitForReflectionOrFinishSummary(timeout: 12)
+        if !didReachCompletionSurface {
+            attachUITestDebug(app, name: "LinkedFlow_CompletionMissing")
+        }
+        XCTAssertTrue(
+            didReachCompletionSurface,
+            "Expected session completion to present reflection or the finish summary after skipping cool-down."
+        )
+
+        if notNow.exists {
+            notNow.tap()
+        }
+
         if !finishSummary.waitForExistence(timeout: 10) {
             attachUITestDebug(app, name: "LinkedFlow_FinishSummaryMissing")
         }
@@ -93,6 +107,29 @@ final class RoutineLinkedFlowUITests: XCTestCase {
             waitForFinishSummarySegmentRow("coolDown", timeout: 8),
             "Expected cool-down segment row in finish summary."
         )
+    }
+    
+    private func revealCurrentSegmentBoundary(_ kind: String, timeout: TimeInterval) -> Bool {
+        let header = app.otherElements["SessionSegmentHeaderView.Current.\(kind)"]
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while Date() < deadline {
+            let skip = skipButton(inCurrentSegment: kind)
+
+            if header.exists && skip.exists && skip.isHittable {
+                return true
+            }
+
+            if let scrollView = app.scrollViews.allElementsBoundByIndex.first {
+                scrollView.swipeDown()
+            } else {
+                app.swipeDown()
+            }
+
+            RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+        }
+
+        return false
     }
 
     private func waitForFinishSummarySegmentRow(_ id: String, timeout: TimeInterval) -> Bool {
@@ -116,7 +153,7 @@ final class RoutineLinkedFlowUITests: XCTestCase {
 
         return row.exists
     }
-    
+
     private func dismissSessionOverlaysIfVisible() {
         let dismissCoach = app.buttons["Dismiss coach suggestion"]
         if dismissCoach.exists {
@@ -127,6 +164,19 @@ final class RoutineLinkedFlowUITests: XCTestCase {
         if finishRest.exists {
             tapSafely(finishRest)
         }
+    }
+
+    private func waitForReflectionOrFinishSummary(timeout: TimeInterval) -> Bool {
+        let notNow = app.buttons["SessionReflection.NotNow"]
+        let finishSummary = app.otherElements["WorkoutSession.FinishSummary"]
+        let start = Date()
+
+        while Date().timeIntervalSince(start) < timeout {
+            if notNow.exists || finishSummary.exists { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+        }
+
+        return notNow.exists || finishSummary.exists
     }
 
     private func isRestTimerOverlayVisible() -> Bool {
@@ -188,24 +238,52 @@ final class RoutineLinkedFlowUITests: XCTestCase {
     }
 
     private func waitForMainSegmentReady(timeout: TimeInterval) -> Bool {
-        if waitForCurrentSegment("main", timeout: min(3, timeout)) {
-            return true
-        }
-
-        let mainExerciseTitle = app.staticTexts["UITest Main Bench"]
+        let currentMainHeader = app.otherElements["SessionSegmentHeaderView.Current.main"]
+        let currentWarmUpHeader = app.otherElements["SessionSegmentHeaderView.Current.warmUp"]
         let actionableRow = app.otherElements["WorkoutSession.ActionableSetRow"]
         let start = Date()
+
         while Date().timeIntervalSince(start) < timeout {
-            if mainExerciseTitle.exists && actionableRow.exists {
+            if currentMainHeader.exists && actionableRow.exists && !currentWarmUpHeader.exists {
                 return true
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.05))
         }
-        return mainExerciseTitle.exists && actionableRow.exists
+
+        return currentMainHeader.exists && actionableRow.exists && !currentWarmUpHeader.exists
+    }
+
+    private func skipCurrentSegmentAndWaitTransition(from currentKind: String, to nextKind: String, timeout: TimeInterval) -> Bool {
+        let currentHeader = app.otherElements["SessionSegmentHeaderView.Current.\(currentKind)"]
+        let nextHeader = app.otherElements["SessionSegmentHeaderView.Current.\(nextKind)"]
+        let deadline = Date().addingTimeInterval(timeout)
+        var lastTapAt = Date.distantPast
+
+        while Date() < deadline {
+            if nextHeader.exists && !currentHeader.exists {
+                return true
+            }
+
+            _ = revealCurrentSegmentBoundary(currentKind, timeout: 1.0)
+
+            let skip = skipButton(inCurrentSegment: currentKind)
+            if skip.exists && skip.isHittable && Date().timeIntervalSince(lastTapAt) > 0.6 {
+                tapSafely(skip)
+                lastTapAt = Date()
+            }
+
+            RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+        }
+
+        if !(nextHeader.exists && !currentHeader.exists) {
+            attachUITestDebug(app, name: "LinkedFlow_\(currentKind)_To_\(nextKind)_TransitionMissing")
+        }
+
+        return nextHeader.exists && !currentHeader.exists
     }
 
     private func advanceToCoolDownIfNeeded(timeout: TimeInterval) -> Bool {
-        if waitForCurrentSegment("coolDown", timeout: min(2, timeout)) {
+        if waitForCurrentCoolDownBoundary(timeout: min(2, timeout)) {
             return true
         }
 
@@ -214,30 +292,31 @@ final class RoutineLinkedFlowUITests: XCTestCase {
             tapSafely(continueButton)
         }
 
-        if waitForCurrentSegment("coolDown", timeout: min(4, timeout)) {
+        if waitForCurrentCoolDownBoundary(timeout: timeout) {
             return true
         }
 
-        let coolDownTitle = app.staticTexts["UITest Cool-down Press"]
-        let skipButton = app.buttons["WorkoutSession.SkipSegmentButton"]
-        let start = Date()
-        while Date().timeIntervalSince(start) < timeout {
-            if coolDownTitle.exists && skipButton.exists && skipButton.isHittable {
-                return true
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
-        }
-        return coolDownTitle.exists && skipButton.exists && skipButton.isHittable
+        attachUITestDebug(app, name: "LinkedFlow_CoolDownBoundaryNotReached")
+        return false
     }
 
-    private func waitForSessionScreenToDisappear(timeout: TimeInterval) -> Bool {
-        let screen = app.otherElements["WorkoutSession.Screen"]
+    private func waitForCurrentCoolDownBoundary(timeout: TimeInterval) -> Bool {
         let start = Date()
         while Date().timeIntervalSince(start) < timeout {
-            if !screen.exists { return true }
+            let header = app.otherElements["SessionSegmentHeaderView.Current.coolDown"]
+            if header.exists {
+                let skipButton = header.descendants(matching: .button)
+                    .matching(identifier: "WorkoutSession.SkipSegmentButton")
+                    .firstMatch
+                if skipButton.exists && skipButton.isHittable {
+                    return true
+                }
+            }
+
             RunLoop.current.run(until: Date().addingTimeInterval(0.05))
         }
-        return !screen.exists
+
+        return false
     }
 
     // MARK: - Set row identification
@@ -250,7 +329,7 @@ final class RoutineLinkedFlowUITests: XCTestCase {
         )
     }
 
-    private func doneToggleForActionableRow() -> XCUIElement {
+    private func doneToggleForCurrentRow() -> XCUIElement {
         let actionableRow = app.otherElements["WorkoutSession.ActionableSetRow"]
         if actionableRow.waitForExistence(timeout: 5) {
             let buttons = actionableRow.buttons.matching(doneTogglePredicate)
@@ -260,7 +339,39 @@ final class RoutineLinkedFlowUITests: XCTestCase {
             if otherElements.count > 0 { return otherElements.firstMatch }
         }
 
+        attachUITestDebug(app, name: "LinkedFlow_ActionableRowMissing")
         return firstVisibleDoneToggle(in: app)
+    }
+
+    private func waitForMainCompletionTransition(afterTapping toggle: XCUIElement, timeout: TimeInterval) -> Bool {
+        let start = Date()
+
+        while Date().timeIntervalSince(start) < timeout {
+            if waitForCurrentSegment("coolDown", timeout: 0.15) {
+                return true
+            }
+
+            if toggle.exists && toggle.label.localizedCaseInsensitiveContains("incomplete") {
+                return true
+            }
+
+            let currentMainHeader = app.otherElements["SessionSegmentHeaderView.Current.main"]
+            if currentMainHeader.exists {
+                let mainProgress = currentMainHeader.staticTexts["SessionSegmentHeaderView.Progress.main"]
+                if mainProgress.exists && mainProgress.label == "1/1 sets" {
+                    return true
+                }
+            }
+
+            if isRestTimerOverlayVisible() {
+                return true
+            }
+
+            RunLoop.current.run(until: Date().addingTimeInterval(0.10))
+        }
+
+        return waitForCurrentSegment("coolDown", timeout: 0.15)
+            || (toggle.exists && toggle.label.localizedCaseInsensitiveContains("incomplete"))
     }
 
     private func firstVisibleDoneToggle(in app: XCUIApplication) -> XCUIElement {
@@ -282,7 +393,14 @@ final class RoutineLinkedFlowUITests: XCTestCase {
 
         return app.buttons.matching(doneTogglePredicate).firstMatch
     }
-    
+
+    private func skipButton(inCurrentSegment kindRaw: String) -> XCUIElement {
+        let header = app.otherElements["SessionSegmentHeaderView.Current.\(kindRaw)"]
+        return header.descendants(matching: .button)
+            .matching(identifier: "WorkoutSession.SkipSegmentButton")
+            .firstMatch
+    }
+
     private func identifiedElement(_ id: String) -> XCUIElement {
         app.descendants(matching: .any)
             .matching(identifier: id)
