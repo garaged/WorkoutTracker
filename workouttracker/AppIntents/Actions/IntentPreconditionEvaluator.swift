@@ -22,6 +22,7 @@ enum IntentPreconditionFailure: String, Error, Equatable {
     case noResumableSession
     case noFinishableSession
     case noRestCapableContext
+    case launchTargetUnavailable
 }
 
 struct IntentPreconditionEvaluator {
@@ -42,7 +43,11 @@ struct IntentPreconditionEvaluator {
         from sessions: [WorkoutSession],
         activitiesByID: [UUID: Activity]
     ) -> IntentPreconditionResult<WorkoutSession> {
-        guard let session = sessionResumePlanner.currentActiveSession(from: sessions, activitiesByID: activitiesByID) else {
+        guard let session = preferredLaunchableSession(
+            preferredSessionID: nil,
+            from: sessions,
+            activitiesByID: activitiesByID
+        ) else {
             return .block(.noResumableSession)
         }
         return .allow(session)
@@ -53,17 +58,11 @@ struct IntentPreconditionEvaluator {
         from sessions: [WorkoutSession],
         activitiesByID: [UUID: Activity]
     ) -> IntentPreconditionResult<WorkoutSession> {
-        if let preferredSessionID,
-           let preferred = sessions.first(where: { $0.id == preferredSessionID }) {
-            guard preferred.status == .inProgress, preferred.endedAt == nil else {
-                return .block(.noFinishableSession)
-            }
-            return .allow(preferred)
-        }
-
-        guard let session = sessionResumePlanner.currentActiveSession(from: sessions, activitiesByID: activitiesByID),
-              session.status == .inProgress,
-              session.endedAt == nil else {
+        guard let session = preferredLaunchableSession(
+            preferredSessionID: preferredSessionID,
+            from: sessions,
+            activitiesByID: activitiesByID
+        ) else {
             return .block(.noFinishableSession)
         }
 
@@ -75,9 +74,11 @@ struct IntentPreconditionEvaluator {
         activitiesByID: [UUID: Activity],
         hasConfiguredRestTimer: Bool
     ) -> IntentPreconditionResult<WorkoutSession> {
-        guard let session = sessionResumePlanner.currentActiveSession(from: sessions, activitiesByID: activitiesByID),
-              session.status == .inProgress,
-              session.endedAt == nil else {
+        guard let session = preferredLaunchableSession(
+            preferredSessionID: nil,
+            from: sessions,
+            activitiesByID: activitiesByID
+        ) else {
             return .block(.noRestCapableContext)
         }
 
@@ -92,5 +93,30 @@ struct IntentPreconditionEvaluator {
         }
 
         return .allow(session)
+    }
+
+    private func preferredLaunchableSession(
+        preferredSessionID: UUID?,
+        from sessions: [WorkoutSession],
+        activitiesByID: [UUID: Activity]
+    ) -> WorkoutSession? {
+        if let preferredSessionID,
+           let preferred = sessions.first(where: { $0.id == preferredSessionID }),
+           isLaunchable(preferred) {
+            return preferred
+        }
+
+        guard let session = sessionResumePlanner.currentActiveSession(
+            from: sessions,
+            activitiesByID: activitiesByID
+        ), isLaunchable(session) else {
+            return nil
+        }
+
+        return session
+    }
+
+    private func isLaunchable(_ session: WorkoutSession) -> Bool {
+        session.status == .inProgress && session.endedAt == nil
     }
 }

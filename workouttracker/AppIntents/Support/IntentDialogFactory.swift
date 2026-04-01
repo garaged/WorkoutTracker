@@ -12,6 +12,8 @@ enum IntentDialogFactory {
             return "There isn't an active workout session you can finish right now."
         case .noRestCapableContext:
             return "There isn't an active workout session ready for a rest timer right now."
+        case .launchTargetUnavailable:
+            return "Workout Tracker couldn't open that action because its target is no longer available."
         }
     }
 }

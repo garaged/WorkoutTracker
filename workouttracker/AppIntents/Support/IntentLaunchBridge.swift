@@ -35,13 +35,31 @@ enum IntentLaunchBridge {
     }
 
     static func stage(route: AppRoute, defaults: UserDefaults = .standard) {
-        guard let url = url(for: route) else { return }
+        guard let url = url(for: route) else {
+            clearPendingURL(defaults: defaults)
+            return
+        }
         defaults.set(url.absoluteString, forKey: pendingURLKey)
+    }
+
+    @discardableResult
+    static func stage(resolution: SystemIntegrationRouteResolution, defaults: UserDefaults = .standard) -> Bool {
+        guard let route = resolution.route else {
+            clearPendingURL(defaults: defaults)
+            return false
+        }
+
+        stage(route: route, defaults: defaults)
+        return true
     }
 
     static func peekPendingURL(defaults: UserDefaults = .standard) -> URL? {
         guard let raw = defaults.string(forKey: pendingURLKey) else { return nil }
-        return URL(string: raw)
+        guard let url = URL(string: raw) else {
+            clearPendingURL(defaults: defaults)
+            return nil
+        }
+        return url
     }
 
     static func clearPendingURL(defaults: UserDefaults = .standard) {

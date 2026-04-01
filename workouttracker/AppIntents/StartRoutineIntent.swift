@@ -3,7 +3,7 @@ import Foundation
 
 struct StartRoutineIntent: AppIntent {
     static let title: LocalizedStringResource = "Start Routine"
-    static let description = IntentDescription("Start a workout routine in WorkoutTracker.")
+    static let description = IntentDescription("Start a workout routine in Workout Tracker.")
     static let openAppWhenRun = true
 
     @Parameter(title: "Routine")
@@ -21,7 +21,7 @@ struct StartRoutineIntent: AppIntent {
         switch outcome {
         case .opened(let route):
             IntentLaunchBridge.stage(route: route)
-            return .result(dialog: IntentDialog(stringLiteral: "Opening \(routine.name)."))
+            return .result(dialog: IntentDialog(stringLiteral: "Opening \(routine.name) in Workout Tracker."))
 
         case .blocked(let failure):
             return .result(dialog: IntentDialogFactory.dialog(for: failure))

@@ -8,7 +8,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>garaged.org.workouttracker.deeplink</string>
+			<string>garaged.org.workouttracker.url</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>workouttracker</string>

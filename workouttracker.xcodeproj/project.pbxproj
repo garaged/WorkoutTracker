@@ -826,7 +826,7 @@
 				DEVELOPMENT_TEAM = T3CCJTUTJ5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "";
+				INFOPLIST_FILE = workouttracker/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Workout Tracker";
 				"INFOPLIST_KEY_CFBundleDisplayName[sdk=*]" = "Workout Tracker";
 				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleTypeRole = Editor;\n    CFBundleURLName = \"garaged.org.workouttracker.deeplink\";\n    CFBundleURLSchemes =     (\n        workouttracker\n    );\n}";
@@ -870,7 +870,7 @@
 				DEVELOPMENT_TEAM = T3CCJTUTJ5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "";
+				INFOPLIST_FILE = workouttracker/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Workout Tracker";
 				"INFOPLIST_KEY_CFBundleDisplayName[sdk=*]" = "Workout Tracker";
 				INFOPLIST_KEY_CFBundleURLTypes = "{\n    CFBundleTypeRole = Editor;\n    CFBundleURLName = \"garaged.org.workouttracker.deeplink\";\n    CFBundleURLSchemes =     (\n        workouttracker\n    );\n}";

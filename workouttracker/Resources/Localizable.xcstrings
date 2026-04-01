@@ -11923,7 +11923,7 @@
         }
       }
     },
-    "Start a workout routine in WorkoutTracker." : {
+    "Start a workout routine in Workout Tracker." : {
 
     },
     "Start date" : {
@@ -13210,6 +13210,9 @@
           }
         }
       }
+    },
+    "Workout Tracker couldn't open that action because its target is no longer available." : {
+
     },
     "Workouts" : {
       "localizations" : {
