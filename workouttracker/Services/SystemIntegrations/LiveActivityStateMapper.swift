@@ -11,6 +11,7 @@ struct LiveActivityStateMapper {
         let attributes: ActiveWorkoutActivityAttributes
         let contentState: ActiveWorkoutActivityAttributes.ContentState
         let sessionID: UUID
+        let staleDate: Date
     }
 
     func map(snapshot: WidgetExternalSnapshot) -> MappedState? {
@@ -21,7 +22,11 @@ struct LiveActivityStateMapper {
     func map(
         activeSession: WidgetExternalSnapshot.ActiveSession,
         generatedAt: Date
-    ) -> MappedState {
+    ) -> MappedState? {
+        guard let openURLString = preferredOpenURLString(for: activeSession) else {
+            return nil
+        }
+
         let attributes = ActiveWorkoutActivityAttributes(
             sessionID: activeSession.sessionID,
             sessionTitle: activeSession.title ?? "Active Session"
@@ -43,13 +48,17 @@ struct LiveActivityStateMapper {
             sessionStartDate: sessionStartDate,
             restMode: restMode,
             restReferenceDate: restReferenceDate,
-            openURLString: preferredOpenURLString(for: activeSession)
+            openURLString: openURLString
         )
 
         return MappedState(
             attributes: attributes,
             contentState: contentState,
-            sessionID: activeSession.sessionID
+            sessionID: activeSession.sessionID,
+            staleDate: deriveStaleDate(
+                restState: activeSession.restState,
+                generatedAt: generatedAt
+            )
         )
     }
 
@@ -96,6 +105,21 @@ struct LiveActivityStateMapper {
         case .overdue:
             return generatedAt.addingTimeInterval(TimeInterval(-abs(restSeconds)))
         }
+    }
+
+    private func deriveStaleDate(
+        restState: WidgetExternalSnapshot.ActiveSession.RestState,
+        generatedAt: Date
+    ) -> Date {
+        let freshnessWindow: TimeInterval
+        switch restState {
+        case .inactive:
+            freshnessWindow = 2 * 60
+        case .running, .overdue:
+            freshnessWindow = 30
+        }
+
+        return generatedAt.addingTimeInterval(freshnessWindow)
     }
 }
 #endif

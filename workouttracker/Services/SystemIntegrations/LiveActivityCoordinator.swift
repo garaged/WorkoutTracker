@@ -14,40 +14,43 @@ final class LiveActivityCoordinator {
     }
 
     func sync(using snapshot: WidgetExternalSnapshot) async {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        let mapped = mapper.map(snapshot: snapshot)
+        let targetSessionID = mapped?.sessionID
 
-        guard let mapped = mapper.map(snapshot: snapshot) else {
+        await endActivities(except: targetSessionID)
+
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            if targetSessionID == nil {
+                await endAll()
+            }
+            return
+        }
+
+        guard let mapped else {
             await endAll()
             return
         }
 
         let content = WorkoutContent(
             state: mapped.contentState,
-            staleDate: nil
+            staleDate: mapped.staleDate
         )
 
         if let existing = WorkoutActivity.activities.first(where: { $0.attributes.sessionID == mapped.sessionID }) {
-            await existing.update(content)
+            if existing.attributes.sessionTitle != mapped.attributes.sessionTitle {
+                await existing.end(
+                    nil as WorkoutContent?,
+                    dismissalPolicy: ActivityKit.ActivityUIDismissalPolicy.immediate
+                )
+                await requestActivity(attributes: mapped.attributes, content: content)
+                return
+            }
 
-            // Clean up any stale activities for other sessions.
-            await endAll(except: mapped.sessionID)
+            await existing.update(content)
             return
         }
 
-        // Prevent multiple simultaneous workout activities for different sessions.
-        await endAll(except: mapped.sessionID)
-
-        do {
-            _ = try WorkoutActivity.request(
-                attributes: mapped.attributes,
-                content: content,
-                pushType: nil
-            )
-        } catch {
-            #if DEBUG
-            print("Live Activity request failed: \(error)")
-            #endif
-        }
+        await requestActivity(attributes: mapped.attributes, content: content)
     }
 
     func endAll() async {
@@ -68,8 +71,26 @@ final class LiveActivityCoordinator {
         }
     }
 
-    private func endAll(except sessionID: UUID) async {
-        for activity in WorkoutActivity.activities where activity.attributes.sessionID != sessionID {
+    private func requestActivity(
+        attributes: ActiveWorkoutActivityAttributes,
+        content: WorkoutContent
+    ) async {
+        do {
+            _ = try WorkoutActivity.request(
+                attributes: attributes,
+                content: content,
+                pushType: nil
+            )
+        } catch {
+            #if DEBUG
+            print("Live Activity request failed: \(error)")
+            #endif
+        }
+    }
+
+    private func endActivities(except sessionID: UUID?) async {
+        for activity in WorkoutActivity.activities {
+            guard activity.attributes.sessionID != sessionID else { continue }
             await activity.end(
                 nil as WorkoutContent?,
                 dismissalPolicy: ActivityKit.ActivityUIDismissalPolicy.immediate

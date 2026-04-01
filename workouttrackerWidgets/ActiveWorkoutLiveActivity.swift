@@ -41,7 +41,7 @@ struct ActiveWorkoutLiveActivity: Widget {
                 }
 
                 DynamicIslandExpandedRegion(.center) {
-                    Text(context.state.currentExerciseName ?? "Resume workout")
+                    Text(context.state.currentExerciseName ?? context.attributes.sessionTitle)
                         .font(.headline)
                         .lineLimit(1)
                 }
@@ -79,8 +79,12 @@ struct ActiveWorkoutLiveActivity: Widget {
     }
 
     private func openURL(for context: ActivityViewContext<ActiveWorkoutActivityAttributes>) -> URL? {
-        guard let raw = context.state.openURLString else { return nil }
-        return URL(string: raw)
+        if let raw = context.state.openURLString,
+           let url = URL(string: raw) {
+            return url
+        }
+
+        return URL(string: "workouttracker://home")
     }
 
     private func setLabel(for state: ActiveWorkoutActivityAttributes.ContentState) -> String? {
@@ -165,7 +169,7 @@ private struct ActiveWorkoutLiveActivityLockScreenView: View {
                         .font(.headline)
                         .lineLimit(1)
 
-                    Text(context.state.currentExerciseName ?? "Resume workout")
+                    Text(context.state.currentExerciseName ?? context.attributes.sessionTitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)

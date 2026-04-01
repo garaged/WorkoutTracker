@@ -520,10 +520,16 @@ struct AppRootView: View {
     }
 
     private func handleScenePhaseChange(_ oldPhase: ScenePhase, _ newPhase: ScenePhase) {
-        guard newPhase == .active else { return }
-        refreshPendingIntentURLIfNeeded()
-        attemptPendingIntentRouteResolution()
-        syncSystemIntegrations()
+        if newPhase == .active {
+            refreshPendingIntentURLIfNeeded()
+            attemptPendingIntentRouteResolution()
+            syncSystemIntegrations()
+            return
+        }
+
+        if oldPhase == .active {
+            syncLiveActivity()
+        }
     }
 
     private func handleSessionsChanged() {
@@ -566,7 +572,7 @@ struct AppRootView: View {
 
     private func syncLiveActivity() {
         guard #available(iOS 16.1, *) else { return }
-        let snapshot = CurrentSessionSnapshotBuilder().buildWidgetSnapshot(context: modelContext)
+        let snapshot = snapshotBuilder.buildWidgetSnapshot(context: modelContext)
 
         Task { @MainActor in
             await LiveActivityCoordinator().sync(using: snapshot)
