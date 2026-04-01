@@ -12,6 +12,7 @@ final class WorkoutRemoteControlRouter {
     private var container: ModelContainer? = nil
     private let logging = WorkoutLoggingService()
     private let restTimer = RestTimerController.shared
+    private let sessionResumePlanner = SessionResumePlanner()
     
     private struct Cursor {
         var exerciseID: UUID?
@@ -143,19 +144,33 @@ final class WorkoutRemoteControlRouter {
     // MARK: - Session resolution
     
     private func resolveSession(for cmd: WatchCommand, context: ModelContext) -> WorkoutSession? {
-        // If watch provides a specific session, honor it.
-        if let sid = cmd.sessionID, let uuid = UUID(uuidString: sid) {
-            return fetchSession(id: uuid, context: context)
+        if let sid = cmd.sessionID,
+           let uuid = UUID(uuidString: sid),
+           let session = fetchSession(id: uuid, context: context) {
+            return session
         }
-        
-        // If UI pinned a session, prefer it.
-        if let pinned = pinnedSessionID {
-            return fetchSession(id: pinned, context: context)
+
+        if let pinned = resolvedPinnedSession(context: context) {
+            return pinned
         }
-        
-        // Otherwise, fall back to latest in-progress session.
-        let sessions = fetchSessionsSorted(context: context)
-        return sessions.first(where: { $0.status == .inProgress })
+
+        return preferredActiveSession(context: context)
+    }
+
+    private func resolveQuickEntrySession(for cmd: WatchCommand, context: ModelContext) -> WorkoutSession? {
+        if let sid = cmd.sessionID,
+           let uuid = UUID(uuidString: sid),
+           let session = fetchSession(id: uuid, context: context),
+           isLaunchable(session) {
+            return session
+        }
+
+        if let pinned = resolvedPinnedSession(context: context),
+           isLaunchable(pinned) {
+            return pinned
+        }
+
+        return preferredActiveSession(context: context)
     }
     
     private func fetchSessionsSorted(context: ModelContext) -> [WorkoutSession] {
@@ -169,6 +184,33 @@ final class WorkoutRemoteControlRouter {
         // Avoid SwiftData predicate macro edge cases: just fetch sorted and filter.
         let sessions = fetchSessionsSorted(context: context)
         return sessions.first(where: { $0.id == id })
+    }
+
+
+    private func fetchActivitiesByID(context: ModelContext) -> [UUID: Activity] {
+        let activities = (try? context.fetch(FetchDescriptor<Activity>())) ?? []
+        return Dictionary(uniqueKeysWithValues: activities.map { ($0.id, $0) })
+    }
+
+    private func resolvedPinnedSession(context: ModelContext) -> WorkoutSession? {
+        guard let pinnedSessionID else { return nil }
+        guard let session = fetchSession(id: pinnedSessionID, context: context) else {
+            cursorBySessionID.removeValue(forKey: pinnedSessionID)
+            self.pinnedSessionID = nil
+            return nil
+        }
+        return session
+    }
+
+    private func preferredActiveSession(context: ModelContext) -> WorkoutSession? {
+        sessionResumePlanner.currentActiveSession(
+            from: fetchSessionsSorted(context: context),
+            activitiesByID: fetchActivitiesByID(context: context)
+        )
+    }
+
+    private func isLaunchable(_ session: WorkoutSession) -> Bool {
+        session.status == .inProgress && session.endedAt == nil
     }
     
     // MARK: - Cursor + navigation
@@ -271,14 +313,7 @@ final class WorkoutRemoteControlRouter {
         guard let container else { return }
         let context = ModelContext(container)
 
-        // Prefer pinned session; else fallback to in-progress.
-        let session: WorkoutSession? = {
-            if let pinned = pinnedSessionID {
-                return fetchSession(id: pinned, context: context)
-            }
-            let sessions = fetchSessionsSorted(context: context)
-            return sessions.first(where: { $0.status == .inProgress })
-        }()
+        let session = resolvedPinnedSession(context: context) ?? preferredActiveSession(context: context)
 
         guard let s = session else {
             WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
@@ -286,7 +321,7 @@ final class WorkoutRemoteControlRouter {
         }
 
         // If not truly in progress, still show it if pinned (user is in screen).
-        if !(s.status == .inProgress || pinnedSessionID == s.id) {
+        if !(isLaunchable(s) || pinnedSessionID == s.id) {
             WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
             return
         }
@@ -384,6 +419,28 @@ final class WorkoutRemoteControlRouter {
         return String(format: "%.1f", w)
     }
     
+    private func stagePhoneOpen(route: AppRoute) {
+        IntentLaunchBridge.stage(route: route)
+        NotificationCenter.default.post(
+            name: .workoutWatchOpenRequested,
+            object: WorkoutWatchOpenRequestedEvent(route: route)
+        )
+    }
+
+    private func quickEntryRoute(for session: WorkoutSession, command: WatchCommandKind) -> AppRoute {
+        switch command {
+        case .resumeCurrentSession:
+            return sessionResumePlanner.resumeRoute(
+                for: session,
+                hasConfiguredRestTimer: restTimer.isRunning
+            ) ?? sessionResumePlanner.openRoute(for: session)
+        case .openCurrentSession:
+            return sessionResumePlanner.openRoute(for: session)
+        default:
+            return sessionResumePlanner.openRoute(for: session)
+        }
+    }
+
     // MARK: - Phone UI sync (events)
 
     private func postSelectedSetEvent(sessionID: UUID) {
@@ -413,8 +470,7 @@ final class WorkoutRemoteControlRouter {
 
 extension WorkoutRemoteControlRouter {
     private func handleQuickEntry(_ cmd: WatchCommand, context: ModelContext) {
-        guard let session = resolveSession(for: cmd, context: context),
-              session.status == .inProgress || pinnedSessionID == session.id else {
+        guard let session = resolveQuickEntrySession(for: cmd, context: context) else {
             WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
             return
         }
@@ -425,6 +481,9 @@ extension WorkoutRemoteControlRouter {
         if cmd.kind == .resumeCurrentSession {
             try? WorkoutSessionStarter.resumeForActiveLogging(session, context: context)
         }
+
+        let route = quickEntryRoute(for: session, command: cmd.kind)
+        stagePhoneOpen(route: route)
 
         syncLiveActivity(context: context)
         pushNowPlaying(for: session, context: context)
@@ -440,7 +499,7 @@ extension WorkoutRemoteControlRouter {
         let outcome = try? IntentActionCoordinator().startRoutine(routineID: routineID, context: context)
 
         guard case .opened(let route)? = outcome,
-              case .session(let sessionID) = route,
+              let sessionID = route.sessionID,
               let session = fetchSession(id: sessionID, context: context) else {
             WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
             return
@@ -448,6 +507,7 @@ extension WorkoutRemoteControlRouter {
 
         pinnedSessionID = session.id
         ensureCursorExists(for: session)
+        stagePhoneOpen(route: route)
         syncLiveActivity(context: context)
         pushNowPlaying(for: session, context: context)
     }

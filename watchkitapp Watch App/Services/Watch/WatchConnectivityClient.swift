@@ -15,6 +15,7 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
 
     @Published private(set) var isSupported: Bool = WCSession.isSupported()
     @Published private(set) var isReachable: Bool = false
+    @Published private(set) var canSendCommands: Bool = false
     @Published private(set) var nowPlaying: WatchNowPlayingState = .inactive
 
     private var sourceNowPlaying: WatchNowPlayingState = .inactive
@@ -34,7 +35,7 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
         session.delegate = self
         session.activate()
 
-        isReachable = session.isReachable
+        refreshTransportState(from: session)
 
         // If we already have a cached context (e.g., watch opens after phone pushed state), apply it.
         let ctx = session.receivedApplicationContext
@@ -47,17 +48,15 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
     }
 
     func requestState() {
-        send(WatchCommand(kind: .requestState))
+        sendInteractive(.init(kind: .requestState))
     }
 
     func send(_ command: WatchCommand) {
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
+        refreshTransportState(from: session)
 
-        guard session.isReachable else {
-            // v1: don't queue remote actions. Late actions feel worse than missed actions.
-            return
-        }
+        guard canSendCommands else { return }
 
         session.sendMessage(
             WatchMessageCodec.encodeCommand(command),
@@ -67,8 +66,58 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
                     Task { @MainActor in self.applyReceivedState(state) }
                 }
             },
-            errorHandler: { _ in }
+            errorHandler: { [weak self] _ in
+                Task { @MainActor in
+                    guard let self else { return }
+                    self.refreshTransportState(from: session)
+                    self.enqueueBackgroundDeliveryIfNeeded(command, via: session)
+                }
+            }
         )
+    }
+
+    private func sendInteractive(_ command: WatchCommand) {
+        guard WCSession.isSupported() else { return }
+        let session = WCSession.default
+        refreshTransportState(from: session)
+
+        guard canSendCommands else { return }
+
+        session.sendMessage(
+            WatchMessageCodec.encodeCommand(command),
+            replyHandler: { [weak self] reply in
+                guard let self else { return }
+                if let state = WatchMessageCodec.decodeState(from: reply) {
+                    Task { @MainActor in self.applyReceivedState(state) }
+                }
+            },
+            errorHandler: { [weak self] _ in
+                Task { @MainActor in
+                    guard let self else { return }
+                    self.refreshTransportState(from: session)
+                }
+            }
+        )
+    }
+
+    private func enqueueBackgroundDeliveryIfNeeded(_ command: WatchCommand, via session: WCSession) {
+        guard shouldBackgroundDeliver(command) else { return }
+        session.transferUserInfo(WatchMessageCodec.encodeCommand(command))
+    }
+
+    private func shouldBackgroundDeliver(_ command: WatchCommand) -> Bool {
+        switch command.kind {
+        case .requestState:
+            return false
+        case .toggleRestTimer, .markSetComplete, .nextSet, .previousSet,
+             .openCurrentSession, .resumeCurrentSession, .startRoutine:
+            return true
+        }
+    }
+
+    private func refreshTransportState(from session: WCSession) {
+        isReachable = session.isReachable
+        canSendCommands = session.activationState == .activated
     }
 
     private func applyReceivedState(_ state: WatchNowPlayingState) {
@@ -142,7 +191,7 @@ extension WatchConnectivityClient: WCSessionDelegate {
                              activationDidCompleteWith activationState: WCSessionActivationState,
                              error: Error?) {
         Task { @MainActor in
-            self.isReachable = session.isReachable
+            self.refreshTransportState(from: session)
         }
     }
 
@@ -155,14 +204,14 @@ extension WatchConnectivityClient: WCSessionDelegate {
     nonisolated func sessionDidDeactivate(_ session: WCSession) {
         session.activate()
         Task { @MainActor in
-            self.isReachable = session.isReachable
+            self.refreshTransportState(from: session)
         }
     }
     #endif
 
     nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
         Task { @MainActor in
-            self.isReachable = session.isReachable
+            self.refreshTransportState(from: session)
         }
     }
 

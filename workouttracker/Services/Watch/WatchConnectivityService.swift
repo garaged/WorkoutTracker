@@ -32,7 +32,7 @@ final class WatchConnectivityService: NSObject, ObservableObject {
         // Small delayed flush to cover "activation finishes right after start()".
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 300_000_000)
-            flushLatestStateIfNeeded()
+            self.flushLatestStateIfNeeded()
         }
     }
 
@@ -104,7 +104,7 @@ final class WatchConnectivityService: NSObject, ObservableObject {
             return
         }
         onCommand?(command)
-        reply?(["ok": true])
+        reply?( ["ok": true] )
     }
 }
 
@@ -152,6 +152,15 @@ extension WatchConnectivityService: WCSessionDelegate {
                 self.handleIncomingCommand(command, reply: replyHandler)
             } else {
                 replyHandler(["ok": false])
+            }
+        }
+    }
+
+    nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
+        let command = WatchMessageCodec.decodeCommand(from: userInfo)
+        Task { @MainActor in
+            if let command {
+                self.handleIncomingCommand(command, reply: nil)
             }
         }
     }

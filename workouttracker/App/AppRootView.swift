@@ -71,6 +71,7 @@ struct AppRootView: View {
         rootContent
             .onReceive(openTimelinePublisher, perform: handleOpenTimelineNotification)
             .onReceive(openURLForTestingPublisher, perform: handleOpenURLForTestingNotification)
+            .onReceive(watchOpenRequestPublisher, perform: handleWatchOpenRequestNotification)
             .fullScreenCover(item: $timelineJump, content: timelineJumpCover)
             .task { await handleInitialTask() }
             .onAppear(perform: handleAppear)
@@ -170,6 +171,10 @@ struct AppRootView: View {
 
     private var openURLForTestingPublisher: NotificationCenter.Publisher {
         NotificationCenter.default.publisher(for: Notification.Name("workouttracker.openURLForTesting"))
+    }
+
+    private var watchOpenRequestPublisher: NotificationCenter.Publisher {
+        NotificationCenter.default.publisher(for: .workoutWatchOpenRequested)
     }
 
     private var liveActivityRefreshTimer: Publishers.Autoconnect<Timer.TimerPublisher> {
@@ -323,8 +328,8 @@ struct AppRootView: View {
     }
 
 
-    private func refreshPendingIntentURLIfNeeded() {
-        guard pendingIntentURL == nil,
+    private func refreshPendingIntentURLIfNeeded(forceReload: Bool = false) {
+        guard (forceReload || pendingIntentURL == nil),
               let url = IntentLaunchBridge.peekPendingURL() else {
             return
         }
@@ -481,6 +486,13 @@ struct AppRootView: View {
 
         guard let route = resolution.route else { return }
         open(route)
+    }
+
+    private func handleWatchOpenRequestNotification(_ note: Notification) {
+        refreshPendingIntentURLIfNeeded(forceReload: true)
+
+        guard scenePhase == .active else { return }
+        attemptPendingIntentRouteResolution()
     }
 
     @ViewBuilder

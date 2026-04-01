@@ -15,7 +15,7 @@ struct WatchWorkoutShortcutsView: View {
                     } label: {
                         Label("Resume Workout", systemImage: "arrow.clockwise.circle.fill")
                     }
-                    .disabled(!client.isReachable)
+                    .disabled(!client.canSendCommands)
 
                     Button {
                         launcher.openNowPlaying()
@@ -37,14 +37,20 @@ struct WatchWorkoutShortcutsView: View {
                         } label: {
                             Label(routine.name, systemImage: "play.circle.fill")
                         }
-                        .disabled(!client.isReachable)
+                        .disabled(!client.canSendCommands)
                     }
                 }
             }
 
-            if !client.isReachable {
+            if !client.canSendCommands {
                 Section {
-                    Text("Phone not reachable")
+                    Text("Phone unavailable")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            } else if !client.isReachable {
+                Section {
+                    Text("Phone app closed — commands may take a moment")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }

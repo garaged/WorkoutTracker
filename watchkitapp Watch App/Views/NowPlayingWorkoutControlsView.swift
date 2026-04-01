@@ -55,8 +55,12 @@ struct NowPlayingWorkoutControlsView: View {
                     .foregroundStyle(.secondary)
             }
 
-            if !client.isReachable {
-                Text("Phone not reachable")
+            if !client.canSendCommands {
+                Text("Phone unavailable")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            } else if !client.isReachable {
+                Text("Phone app closed — commands may take a moment")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -70,21 +74,21 @@ struct NowPlayingWorkoutControlsView: View {
             } label: {
                 Image(systemName: "backward.fill")
             }
-            .disabled(!client.isReachable || !client.nowPlaying.canGoPrevious)
+            .disabled(!client.canSendCommands || !client.nowPlaying.canGoPrevious)
 
             Button {
                 client.send(.init(kind: .markSetComplete, sessionID: client.nowPlaying.sessionID, setID: client.nowPlaying.setID))
             } label: {
                 Image(systemName: "checkmark.circle.fill")
             }
-            .disabled(!client.isReachable || !client.nowPlaying.isActiveSession)
+            .disabled(!client.canSendCommands || !client.nowPlaying.isActiveSession)
 
             Button {
                 client.send(.init(kind: .nextSet))
             } label: {
                 Image(systemName: "forward.fill")
             }
-            .disabled(!client.isReachable || !client.nowPlaying.canGoNext)
+            .disabled(!client.canSendCommands || !client.nowPlaying.canGoNext)
         }
         .buttonStyle(.borderedProminent)
     }
@@ -103,7 +107,7 @@ struct NowPlayingWorkoutControlsView: View {
                 }
             }
         }
-        .disabled(!client.isReachable || !client.nowPlaying.isActiveSession)
+        .disabled(!client.canSendCommands || !client.nowPlaying.isActiveSession)
         .buttonStyle(.bordered)
     }
 
