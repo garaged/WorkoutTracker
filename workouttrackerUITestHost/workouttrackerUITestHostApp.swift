@@ -95,6 +95,10 @@ struct workouttrackerUITestHostApp: App {
                     try seedHomeActiveSessionsScrollUITestDataIfNeeded(context: context)
                     try assertHomeActiveSessionsScrollSeed(context: context)
                 }
+
+                if env["UITESTS_NO_ACTIVE_SESSIONS"] == "1" {
+                    try assertNoActiveSessionsUITestState(context: context)
+                }
             }
 
             self.container = c
@@ -698,6 +702,16 @@ private func assertHomeActiveSessionsScrollSeed(context: ModelContext) throws {
 }
 
 @MainActor
+private func assertNoActiveSessionsUITestState(context: ModelContext) throws {
+    let sessions = try context.fetch(FetchDescriptor<WorkoutSession>())
+    let activeSessions = sessions.filter { $0.status == .inProgress && $0.endedAt == nil }
+
+    guard activeSessions.isEmpty else {
+        fatalError("UITESTS assertion failed: No-active-session mode expected 0 in-progress WorkoutSession records, found \(activeSessions.count).")
+    }
+}
+
+@MainActor
 private func assertLinkedRoutineUITestSeed(context: ModelContext) throws {
     let routines = try context.fetch(
         FetchDescriptor<WorkoutRoutine>(
@@ -735,9 +749,13 @@ private func assertUITestLaunchConfiguration(_ env: [String: String]) {
         fatalError("UITESTS assertion failed: Choose only one Progress seed mode. UITESTS_PROGRESS and UITESTS_PROGRESS_LOW_DATA are mutually exclusive.")
     }
 
-    let activeSessionModes = [env["UITESTS_ACTIVE_SESSIONS"] == "1", env["UITESTS_ACTIVE_SESSIONS_SCROLL"] == "1"].filter { $0 }.count
+    let activeSessionModes = [
+        env["UITESTS_ACTIVE_SESSIONS"] == "1",
+        env["UITESTS_ACTIVE_SESSIONS_SCROLL"] == "1",
+        env["UITESTS_NO_ACTIVE_SESSIONS"] == "1"
+    ].filter { $0 }.count
     if activeSessionModes > 1 {
-        fatalError("UITESTS assertion failed: Choose only one Home active-session seed mode. UITESTS_ACTIVE_SESSIONS and UITESTS_ACTIVE_SESSIONS_SCROLL are mutually exclusive.")
+        fatalError("UITESTS assertion failed: Choose only one Home active-session mode. UITESTS_ACTIVE_SESSIONS, UITESTS_ACTIVE_SESSIONS_SCROLL, and UITESTS_NO_ACTIVE_SESSIONS are mutually exclusive.")
     }
 
     if (env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1") && start != "progress" {
@@ -753,6 +771,14 @@ private func assertUITestLaunchConfiguration(_ env: [String: String]) {
         )
     }
 
+    if env["UITESTS_ACTIVE_SESSIONS"] == "1" && start != "home" {
+        fatalError("UITESTS assertion failed: UITESTS_ACTIVE_SESSIONS expects UITESTS_START=home.")
+    }
+
+    if env["UITESTS_NO_ACTIVE_SESSIONS"] == "1" && start != "home" {
+        fatalError("UITESTS assertion failed: UITESTS_NO_ACTIVE_SESSIONS expects UITESTS_START=home.")
+    }
+
     if env["UITESTS_DEEP_LINK_SMOKE"] == "1" {
         guard start == "home" else {
             fatalError("UITESTS assertion failed: Deep-link smoke test must launch with UITESTS_START=home.")
@@ -760,6 +786,9 @@ private func assertUITestLaunchConfiguration(_ env: [String: String]) {
 
         guard env["UITESTS_ACTIVE_SESSIONS_SCROLL"] == "1" else {
             fatalError("UITESTS assertion failed: Deep-link smoke test requires UITESTS_ACTIVE_SESSIONS_SCROLL=1 so the host can build a deterministic session-exercise route.")
+        }
+        guard env["UITESTS_NO_ACTIVE_SESSIONS"] != "1" else {
+            fatalError("UITESTS assertion failed: Deep-link smoke test cannot run in no-active-session mode.")
         }
     }
 

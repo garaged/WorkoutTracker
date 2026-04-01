@@ -31,6 +31,46 @@ Non-goals:
 
 ## Changelog
 
+### v2.1.1 — Stabilization of system integrations
+
+`v2.1.1` focuses on making the system surfaces introduced in `v2.1.0` feel dependable in real use.
+
+This release improves how WorkoutTracker behaves when widgets, Shortcuts, Live Activities, watch actions, and deep links try to open workout state that may have changed since those surfaces were created.
+
+#### User-facing changes
+
+* safer deep-link behavior when a target session or routine no longer exists
+* more reliable resume/open behavior from Shortcuts and App Intents
+* cleaner widget empty states and better stale-link recovery
+* improved Live Activity cleanup after finishing or deleting a session
+* more dependable watch-to-phone coordination for workout entry actions
+* better handling of no-active-session and multiple-active-session edge cases
+
+#### Technical changes
+
+* centralized external-route resolution and fallback handling
+* improved pending launch consumption so stale routes do not linger
+* hardened widget snapshot/deep-link validation
+* improved Live Activity reconciliation across relaunch and background scenarios
+* aligned watch routing with the same session-selection policy used elsewhere
+* expanded regression coverage for seeded external-entry flows and launch-time recovery
+
+#### Regression and quality work
+
+This release also includes a targeted stabilization pass for UI and integration regressions uncovered while hardening system integrations, including:
+
+* finish-summary visibility reliability
+* add/copy-set row visibility under session editing flows
+* linked warm-up / main / cool-down flow coverage
+* scheduled workout start resilience during immediate rotation
+* started-workout deletion reminder cleanup
+* stricter UITestHost launch validation and seed assertions
+
+#### Notes
+
+`v2.1.1` is a stabilization release.
+It is focused on reliability, fallback behavior, and regression hardening rather than expanding feature scope.
+
 ### v2.1.0 — System Integrations
 
 WorkoutTracker now connects much more cleanly with system surfaces across iPhone, widgets, Live Activities, Shortcuts, and Apple Watch. This release adds a shared routing and snapshot foundation so external entry points open the correct place, stay safer around workout state, and behave more consistently.

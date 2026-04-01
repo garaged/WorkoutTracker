@@ -213,3 +213,16 @@ func assertActionableRowVisibleInWorkingArea(
         line: line
     )
 }
+
+
+@discardableResult
+func waitForNonExistence(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+        if !element.exists {
+            return true
+        }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+    }
+    return !element.exists
+}

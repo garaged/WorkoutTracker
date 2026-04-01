@@ -62,32 +62,34 @@ final class RoutineStartRotationRegressionUITests: XCTestCase {
         XCTAssertTrue(openCalendar.isHittable, "Expected Open Calendar to be tappable.")
         openCalendar.tap()
 
-        let openWorkout = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "identifier == %@", "DayTimeline.WorkoutCard.DefaultAction"))
-            .firstMatch
-        if !openWorkout.waitForExistence(timeout: t(8)) {
-            attachUITestDebug(app, name: "RoutineStartRotation_CalendarWorkoutCardMissing")
+        let startWorkout = workoutRowButton(
+            identifiedBy: "DayTimeline.WorkoutOverlay.Start",
+            nearWorkoutTitle: "UITest — Linked Main",
+            in: app
+        )
+        if !startWorkout.waitForExistence(timeout: t(8)) {
+            attachUITestDebug(app, name: "RoutineStartRotation_CalendarStartMissing")
         }
         XCTAssertTrue(
-            openWorkout.exists,
-            "Expected the scheduled workout activity to be visible in Calendar."
+            startWorkout.exists,
+            "Expected the scheduled workout activity to expose a dedicated Start action in Calendar."
         )
 
-        if !waitForHittable(openWorkout, timeout: t(4)) {
-            attachUITestDebug(app, name: "RoutineStartRotation_CalendarWorkoutCardNotHittable")
+        if !waitForHittable(startWorkout, timeout: t(4)) {
+            attachUITestDebug(app, name: "RoutineStartRotation_CalendarStartNotHittable")
         }
         XCTAssertTrue(
-            openWorkout.exists,
-            "Expected the scheduled workout activity action to exist before tapping."
+            startWorkout.exists,
+            "Expected the scheduled workout start action to exist before tapping."
         )
 
-        // Real repro path:
-        // scheduled activity in calendar -> tap to start/open -> rotate immediately.
-        if openWorkout.isHittable {
-            openWorkout.tap()
+        if startWorkout.isHittable {
+            startWorkout.tap()
         } else {
-            openWorkout.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            startWorkout.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         }
+
+        _ = waitForSessionScreenToBeginOpening(app, timeout: t(1.0))
         XCUIDevice.shared.orientation = .landscapeLeft
 
         let sessionScreen = app.el("WorkoutSession.Screen")
@@ -127,6 +129,32 @@ final class RoutineStartRotationRegressionUITests: XCTestCase {
         return app.buttons.matching(identifier: identifier).firstMatch
     }
 
+    private func workoutRowButton(
+        identifiedBy identifier: String,
+        nearWorkoutTitle title: String,
+        in app: XCUIApplication
+    ) -> XCUIElement {
+        let anchor = app.staticTexts[title]
+        guard anchor.waitForExistence(timeout: t(2)) else {
+            return app.buttons.matching(identifier: identifier).firstMatch
+        }
+
+        let candidates = app.buttons.matching(identifier: identifier).allElementsBoundByIndex.filter { button in
+            button.exists &&
+            !button.frame.isEmpty &&
+            abs(button.frame.midY - anchor.frame.midY) < 80 &&
+            abs(button.frame.midX - anchor.frame.midX) < 220
+        }
+
+        if let nearest = candidates.min(by: { lhs, rhs in
+            distance(from: lhs, to: anchor) < distance(from: rhs, to: anchor)
+        }) {
+            return nearest
+        }
+
+        return app.buttons.matching(identifier: identifier).firstMatch
+    }
+
     private func distance(from element: XCUIElement, to anchor: XCUIElement) -> CGFloat {
         hypot(element.frame.midX - anchor.frame.midX, element.frame.midY - anchor.frame.midY)
     }
@@ -138,5 +166,15 @@ final class RoutineStartRotationRegressionUITests: XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.05))
         }
         return element.exists && element.isHittable
+    }
+
+    private func waitForSessionScreenToBeginOpening(_ app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let sessionScreen = app.el("WorkoutSession.Screen")
+        let start = Date()
+        while Date().timeIntervalSince(start) < timeout {
+            if sessionScreen.exists { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        }
+        return sessionScreen.exists
     }
 }

@@ -4,6 +4,24 @@
 
 After much looking it was found that the scrolling to next set (when needed) was not working for sets that were not in the viewable space (like when a routine is long), this was fixed with a proper new UI test to prevent regression on this. It's been a long hard ride to keep this scrolling feature stable! 
 
+## v2.1.1 — Stabilization of system integrations
+
+This release focuses on making the system-integration surfaces introduced in v2.1.0 feel dependable.
+
+### Highlights
+
+* safer deep-link resolution and fallback behavior
+* more robust Shortcuts / App Intents handling
+* improved widget empty states and stale-link recovery
+* better Live Activity reconciliation and cleanup
+* cleaner watch-to-phone coordination
+* stronger regression coverage for external-entry flows
+
+### Notes
+
+v2.1.1 is a stabilization release. It is focused on reliability, fallback behavior, and edge-case handling rather than new feature scope.
+
+
 # Version 2.1.0 - System integrations
 
 What’s New:

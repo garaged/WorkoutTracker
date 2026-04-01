@@ -1164,6 +1164,23 @@ struct DayTimelineScreen: View {
                                 .accessibilityHint(String(localized: "day.workout_card.open_or_start_hint"))
                             }
                         }
+                        .overlay(alignment: .topTrailing) {
+                            if isUITesting {
+                                Button {
+                                    showWorkoutActions(for: a)
+                                } label: {
+                                    Color.clear
+                                        .frame(width: 44, height: 44)
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.top, 4)
+                                .padding(.trailing, 56)
+                                .accessibilityIdentifier("DayTimeline.WorkoutCard.ActionsButton")
+                                .accessibilityLabel(a.title)
+                                .accessibilityHint("Open workout actions")
+                            }
+                        }
                         .onLongPressGesture(minimumDuration: 0.5) {
                             showWorkoutActions(for: item.activity)
                         }
