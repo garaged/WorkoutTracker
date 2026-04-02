@@ -71,7 +71,9 @@ final class BackupService {
     /// String(describing: Data).
     /// v4 adds routine/session exercise segment persistence so analytics can
     /// distinguish warm-up, main, and cool-down work after restore.
-    private let schemaVersion = 4
+    /// v5 adds first-class tracked activity sessions so the broader activity
+    /// domain can round-trip alongside strength workouts.
+    private let schemaVersion = 5
 
     struct BackupFile: Codable {
         let schemaVersion: Int
@@ -264,6 +266,7 @@ final class BackupService {
         let sessions = try parseWorkoutSessions(byType["WorkoutSession"] ?? [])
         let sessionExercises = try parseWorkoutSessionExercises(byType["WorkoutSessionExercise"] ?? [])
         let setLogs = try parseWorkoutSetLogs(byType["WorkoutSetLog"] ?? [])
+        let trackedActivitySessions = try parseTrackedActivitySessions(byType["TrackedActivitySession"] ?? [])
         let activities = try parseActivities(byType["Activity"] ?? [])
         let bodyMeasurements = try parseBodyMeasurements(byType["BodyMeasurement"] ?? [])
         let templateActivities = try parseTemplateActivities(byType["TemplateActivity"] ?? [])
@@ -326,6 +329,29 @@ final class BackupService {
             model.reflectionCreatedAt = raw.reflectionCreatedAt
             context.insert(model)
             sessionByID[raw.id] = model
+        }
+
+        for raw in trackedActivitySessions {
+            let model = TrackedActivitySession(
+                id: raw.id,
+                createdAt: raw.createdAt,
+                updatedAt: raw.updatedAt,
+                startedAt: raw.startedAt,
+                endedAt: raw.endedAt,
+                activityKind: TrackedActivityKind(rawValue: raw.activityKindRaw) ?? .walking,
+                environment: ActivityEnvironment(rawValue: raw.environmentRaw) ?? .unspecified,
+                lifecycleState: TrackedActivityLifecycleState(rawValue: raw.lifecycleStateRaw) ?? .planned,
+                totals: TrackedActivityTotals(
+                    elapsedDuration: raw.elapsedDuration,
+                    distanceMeters: raw.distanceMeters,
+                    activeEnergyKilocalories: raw.activeEnergyKilocalories,
+                    stepCount: raw.stepCount
+                ),
+                healthKitExportState: HealthKitExportState(rawValue: raw.healthKitExportStateRaw) ?? .notRequested,
+                linkedActivityId: raw.linkedActivityId,
+                notes: raw.notes
+            )
+            context.insert(model)
         }
 
         // 4) Recreate dependent workout graph.
@@ -742,6 +768,26 @@ final class BackupService {
             ]
         }
 
+        if let model = model as? TrackedActivitySession {
+            return [
+                "id": .string(model.id.uuidString),
+                "createdAt": .string(Self.iso8601.string(from: model.createdAt)),
+                "updatedAt": .string(Self.iso8601.string(from: model.updatedAt)),
+                "startedAt": model.startedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
+                "endedAt": model.endedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
+                "activityKindRaw": .string(model.activityKindRaw),
+                "environmentRaw": .string(model.environmentRaw),
+                "lifecycleStateRaw": .string(model.lifecycleStateRaw),
+                "healthKitExportStateRaw": .string(model.healthKitExportStateRaw),
+                "elapsedDuration": .number(model.elapsedDuration),
+                "distanceMeters": model.distanceMeters.map(JSONValue.number) ?? .null,
+                "activeEnergyKilocalories": model.activeEnergyKilocalories.map(JSONValue.number) ?? .null,
+                "stepCount": model.stepCount.map { .number(Double($0)) } ?? .null,
+                "linkedActivityId": model.linkedActivityId.map { .string($0.uuidString) } ?? .null,
+                "notes": model.notes.map(JSONValue.string) ?? .null
+            ]
+        }
+
         if let model = model as? Activity {
             return [
                 "id": .string(model.id.uuidString),
@@ -872,6 +918,7 @@ final class BackupService {
         try deleteAll(WorkoutSetLog.self, from: context)
         try deleteAll(WorkoutSessionExercise.self, from: context)
         try deleteAll(WorkoutSession.self, from: context)
+        try deleteAll(TrackedActivitySession.self, from: context)
         try deleteAll(WorkoutSetPlan.self, from: context)
         try deleteAll(WorkoutRoutineItem.self, from: context)
         try deleteAll(WorkoutRoutine.self, from: context)
@@ -991,6 +1038,24 @@ final class BackupService {
         let targetDistance: Double?
         let actualDistance: Double?
         let sessionExerciseID: UUID?
+    }
+
+    private struct TrackedActivitySessionRecord {
+        let id: UUID
+        let createdAt: Date
+        let updatedAt: Date
+        let startedAt: Date?
+        let endedAt: Date?
+        let activityKindRaw: String
+        let environmentRaw: String
+        let lifecycleStateRaw: String
+        let healthKitExportStateRaw: String
+        let elapsedDuration: Double
+        let distanceMeters: Double?
+        let activeEnergyKilocalories: Double?
+        let stepCount: Int?
+        let linkedActivityId: UUID?
+        let notes: String?
     }
 
     private struct ActivityRecord {
@@ -1172,6 +1237,28 @@ final class BackupService {
                 targetDistance: double("targetDistance", in: e),
                 actualDistance: double("actualDistance", in: e),
                 sessionExerciseID: refUUID("sessionExercise", in: e)
+            )
+        }
+    }
+
+    private func parseTrackedActivitySessions(_ entities: [Entity]) throws -> [TrackedActivitySessionRecord] {
+        try entities.map { e in
+            TrackedActivitySessionRecord(
+                id: try uuidID(for: e),
+                createdAt: date("createdAt", in: e) ?? Date(),
+                updatedAt: date("updatedAt", in: e) ?? Date(),
+                startedAt: date("startedAt", in: e),
+                endedAt: date("endedAt", in: e),
+                activityKindRaw: string("activityKindRaw", in: e) ?? TrackedActivityKind.walking.rawValue,
+                environmentRaw: string("environmentRaw", in: e) ?? ActivityEnvironment.unspecified.rawValue,
+                lifecycleStateRaw: string("lifecycleStateRaw", in: e) ?? TrackedActivityLifecycleState.planned.rawValue,
+                healthKitExportStateRaw: string("healthKitExportStateRaw", in: e) ?? HealthKitExportState.notRequested.rawValue,
+                elapsedDuration: double("elapsedDuration", in: e) ?? 0,
+                distanceMeters: double("distanceMeters", in: e),
+                activeEnergyKilocalories: double("activeEnergyKilocalories", in: e),
+                stepCount: int("stepCount", in: e),
+                linkedActivityId: uuid("linkedActivityId", in: e),
+                notes: string("notes", in: e)
             )
         }
     }

@@ -22,6 +22,9 @@ enum BackupManifest {
             .init(WorkoutSessionExercise.self),
             .init(WorkoutSetLog.self),
 
+            // Tracked activity graph
+            .init(TrackedActivitySession.self),
+
             // Scheduling / day timeline
             .init(Activity.self),
 

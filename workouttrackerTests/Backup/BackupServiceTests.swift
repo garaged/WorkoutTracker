@@ -64,7 +64,8 @@ final class BackupServiceTests: XCTestCase {
             .init(WorkoutSetPlan.self),
             .init(WorkoutSession.self),
             .init(WorkoutSessionExercise.self),
-            .init(WorkoutSetLog.self)
+            .init(WorkoutSetLog.self),
+            .init(TrackedActivitySession.self)
         ]
     }
 
@@ -72,6 +73,7 @@ final class BackupServiceTests: XCTestCase {
         try deleteAll(WorkoutSetLog.self, from: context)
         try deleteAll(WorkoutSessionExercise.self, from: context)
         try deleteAll(WorkoutSession.self, from: context)
+        try deleteAll(TrackedActivitySession.self, from: context)
         try deleteAll(WorkoutSetPlan.self, from: context)
         try deleteAll(WorkoutRoutineItem.self, from: context)
         try deleteAll(WorkoutRoutine.self, from: context)
@@ -149,7 +151,7 @@ final class BackupServiceTests: XCTestCase {
 
         let decoded = try exportDecodedFile(context: context)
 
-        XCTAssertGreaterThanOrEqual(decoded.schemaVersion, 4)
+        XCTAssertGreaterThanOrEqual(decoded.schemaVersion, 5)
         XCTAssertFalse(decoded.createdAtISO8601.isEmpty)
         XCTAssertGreaterThan(decoded.entities.count, 0)
 
@@ -236,6 +238,68 @@ final class BackupServiceTests: XCTestCase {
         let sigB = b.entities.map(entitySignature)
 
         XCTAssertEqual(sigA, sigB, "Entities differ between exports; ordering/content should be deterministic for the same store state.")
+    }
+
+
+    func testExportAndRestore_roundTripsTrackedActivitySession() throws {
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
+        let service = BackupService()
+
+        let startedAt = TestSupport.date(2026, 4, 1, 6, 30)
+        let endedAt = startedAt.addingTimeInterval(42 * 60)
+        let tracked = TrackedActivitySession(
+            createdAt: startedAt,
+            updatedAt: endedAt,
+            startedAt: startedAt,
+            endedAt: endedAt,
+            activityKind: .running,
+            environment: .outdoor,
+            lifecycleState: .completed,
+            totals: TrackedActivityTotals(
+                elapsedDuration: 42 * 60,
+                distanceMeters: 8_500,
+                activeEnergyKilocalories: 540,
+                stepCount: 10_200
+            ),
+            healthKitExportState: .pending,
+            linkedActivityId: UUID(),
+            notes: "Morning run"
+        )
+        context.insert(tracked)
+        try context.save()
+
+        let exported = try service.exportJSON(
+            context: context,
+            types: [.init(TrackedActivitySession.self)],
+            preferences: nil,
+            prettyPrinted: false
+        )
+
+        try deleteAll(TrackedActivitySession.self, from: context)
+        try context.save()
+        XCTAssertEqual(try fetchAll(TrackedActivitySession.self, from: context).count, 0)
+
+        try service.restoreWorkoutData(exported, context: context)
+
+        let restored = try XCTUnwrap(try fetchAll(TrackedActivitySession.self, from: context).first)
+        XCTAssertEqual(restored.activityKind, .running)
+        XCTAssertEqual(restored.environment, .outdoor)
+        XCTAssertEqual(restored.lifecycleState, .completed)
+        XCTAssertEqual(restored.healthKitExportState, .pending)
+        XCTAssertEqual(restored.elapsedDuration, 42 * 60, accuracy: 0.001)
+        
+        let restoredDistanceMeters = try XCTUnwrap(restored.distanceMeters)
+        XCTAssertEqual(restoredDistanceMeters, 8_500, accuracy: 0.001)
+
+        let restoredActiveEnergyKilocalories = try XCTUnwrap(restored.activeEnergyKilocalories)
+        XCTAssertEqual(restoredActiveEnergyKilocalories, 540, accuracy: 0.001)
+        
+        XCTAssertEqual(restored.stepCount, 10_200)
+        XCTAssertEqual(restored.notes, "Morning run")
+        XCTAssertEqual(restored.startedAt, startedAt)
+        XCTAssertEqual(restored.endedAt, endedAt)
+        XCTAssertNotNil(restored.linkedActivityId)
     }
 
     func testRestoreWorkoutData_roundTripsFullWorkoutGraph() throws {

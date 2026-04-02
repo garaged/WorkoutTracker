@@ -20,6 +20,9 @@ enum ModelContainerFactory {
         WorkoutSessionExercise.self,
         WorkoutSetLog.self,
 
+        // Tracked activities
+        TrackedActivitySession.self,
+
         // Body
         BodyMeasurement.self
     ])
