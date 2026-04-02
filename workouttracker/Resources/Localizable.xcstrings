@@ -1796,6 +1796,12 @@
         }
       }
     },
+    "Active" : {
+
+    },
+    "Active energy (kcal)" : {
+
+    },
     "Active Sessions" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1814,7 +1820,6 @@
       }
     },
     "Activities" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -2989,7 +2994,6 @@
       }
     },
     "Close" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -3466,6 +3470,15 @@
         }
       }
     },
+    "Could not save summary" : {
+
+    },
+    "Could not start activity" : {
+
+    },
+    "Could not update activity" : {
+
+    },
     "Couldn’t load progress" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3615,6 +3628,9 @@
           }
         }
       }
+    },
+    "Current metrics" : {
+
     },
     "Current Session" : {
 
@@ -3932,6 +3948,12 @@
         }
       }
     },
+    "Discard activity" : {
+
+    },
+    "Discard this tracked activity?" : {
+
+    },
     "Dismiss coach suggestion" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3997,6 +4019,12 @@
           }
         }
       }
+    },
+    "Distance (km)" : {
+
+    },
+    "Distance, steps, and energy can be refined when you finish this activity." : {
+
     },
     "Done" : {
       "localizations" : {
@@ -4242,6 +4270,9 @@
           }
         }
       }
+    },
+    "Environment" : {
+
     },
     "Equipment" : {
       "extractionState" : "stale",
@@ -4755,7 +4786,6 @@
       }
     },
     "Finish" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -5657,6 +5687,9 @@
         }
       }
     },
+    "Live duration" : {
+
+    },
     "Loading…" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6440,6 +6473,9 @@
         }
       }
     },
+    "No tracked activities yet" : {
+
+    },
     "No warm-up suggestions matched your search. Switch to All to see the full library or create a new exercise." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6523,7 +6559,6 @@
       }
     },
     "Notes" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -6640,6 +6675,9 @@
         }
       }
     },
+    "Open summary" : {
+
+    },
     "Open the rest timer when your current workout session is ready for one." : {
 
     },
@@ -6665,6 +6703,9 @@
           }
         }
       }
+    },
+    "Optional notes" : {
+
     },
     "Optional. A quick mood + note makes it fun to look back later." : {
       "extractionState" : "stale",
@@ -9249,7 +9290,6 @@
       }
     },
     "Recent" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -9269,6 +9309,9 @@
           }
         }
       }
+    },
+    "Refine metrics" : {
+
     },
     "Reflected" : {
       "localizations" : {
@@ -10083,6 +10126,12 @@
           }
         }
       }
+    },
+    "Save summary changes" : {
+
+    },
+    "Saved" : {
+
     },
     "Schedulable" : {
       "localizations" : {
@@ -11919,6 +11968,12 @@
         }
       }
     },
+    "Start a walk, run, hike, or yoga session here. Tracked activities stay separate from your strength workouts." : {
+
+    },
+    "Start a walk, run, hike, or yoga session. Duration is tracked live, and activity-specific metrics can be added when you finish." : {
+
+    },
     "Start a Workout" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -11937,6 +11992,9 @@
       }
     },
     "Start a workout routine in Workout Tracker." : {
+
+    },
+    "Start activity" : {
 
     },
     "Start date" : {
@@ -12099,6 +12157,9 @@
         }
       }
     },
+    "Steps" : {
+
+    },
     "Stop" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -12186,6 +12247,9 @@
           }
         }
       }
+    },
+    "Summary unavailable" : {
+
     },
     "Sun" : {
       "extractionState" : "stale",
@@ -12327,6 +12391,9 @@
         }
       }
     },
+    "The selected tracked activity no longer exists." : {
+
+    },
     "There isn't an active workout session ready for a rest timer right now." : {
 
     },
@@ -12407,6 +12474,9 @@
         }
       }
     },
+    "This removes the live activity session before it is completed." : {
+
+    },
     "This routine will be attached to every generated workout activity from this schedule template." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -12417,6 +12487,9 @@
           }
         }
       }
+    },
+    "This tracked activity could not be loaded." : {
+
     },
     "This unfinished workout belongs to %@. Resume it now, finish it, discard it, or keep it for later without being prompted again today." : {
       "extractionState" : "stale",
@@ -12670,6 +12743,15 @@
         }
       }
     },
+    "Track walking, running, hiking, and yoga" : {
+
+    },
+    "Tracked activities" : {
+
+    },
+    "Tracked activity not found" : {
+
+    },
     "Tracking" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -12721,7 +12803,6 @@
       }
     },
     "Type" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {

@@ -1,0 +1,164 @@
+import SwiftUI
+import SwiftData
+
+struct ActivitiesHomeView: View {
+    @Query(sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)])
+    private var trackedSessions: [TrackedActivitySession]
+
+    private var activeSessions: [TrackedActivitySession] {
+        trackedSessions.filter { $0.lifecycleState == .inProgress || $0.lifecycleState == .paused }
+    }
+
+    private var recentSessions: [TrackedActivitySession] {
+        trackedSessions
+            .filter { $0.lifecycleState == .completed || $0.lifecycleState == .discarded }
+            .prefix(12)
+            .map { $0 }
+    }
+
+    var body: some View {
+        List {
+            Section {
+                NavigationLink {
+                    TrackedActivityStartView()
+                } label: {
+                    activityStartCard
+                }
+                .buttonStyle(.plain)
+            }
+            .listRowBackground(Color.clear)
+
+            if !activeSessions.isEmpty {
+                Section("Active") {
+                    ForEach(activeSessions) { session in
+                        NavigationLink {
+                            TrackedActivitySessionScreen(sessionID: session.id)
+                        } label: {
+                            TrackedActivitySessionRow(session: session)
+                        }
+                    }
+                }
+            }
+
+            if !recentSessions.isEmpty {
+                Section("Recent") {
+                    ForEach(recentSessions) { session in
+                        NavigationLink {
+                            TrackedActivityFinishSummaryView(sessionID: session.id)
+                        } label: {
+                            TrackedActivitySessionRow(session: session)
+                        }
+                    }
+                }
+            }
+
+            if trackedSessions.isEmpty {
+                Section {
+                    ContentUnavailableView(
+                        "No tracked activities yet",
+                        systemImage: "figure.walk.motion",
+                        description: Text("Start a walk, run, hike, or yoga session here. Tracked activities stay separate from your strength workouts.")
+                    )
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
+                }
+                .listRowBackground(Color.clear)
+            }
+        }
+        .navigationTitle("Activities")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    TrackedActivityStartView()
+                } label: {
+                    Label("Start", systemImage: "plus")
+                }
+            }
+        }
+    }
+
+    private var activityStartCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Tracked activities", systemImage: "figure.walk.motion")
+                .font(.headline)
+
+            Text("Start a walk, run, hike, or yoga session. Duration is tracked live, and activity-specific metrics can be added when you finish.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 8) {
+                ForEach([TrackedActivityKind.walking, .running, .hiking, .yoga], id: \.self) { kind in
+                    Label(kind.displayName, systemImage: kind.systemImage)
+                        .font(.caption.weight(.medium))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.thinMaterial, in: Capsule())
+                }
+            }
+            .lineLimit(1)
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+private struct TrackedActivitySessionRow: View {
+    let session: TrackedActivitySession
+
+    private let summaryBuilder = TrackedActivitySummaryBuilder()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 10) {
+                Label(session.activityKind.displayName, systemImage: session.activityKind.systemImage)
+                    .font(.headline)
+
+                Spacer(minLength: 8)
+
+                Text(session.lifecycleState.badgeText)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(badgeColor)
+            }
+
+            if let startedAt = session.startedAt {
+                Text(startedAt.formatted(date: .abbreviated, time: .shortened))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            let metrics = summaryBuilder.metrics(for: session)
+                .filter { $0.kind != .state }
+                .prefix(3)
+
+            if !metrics.isEmpty {
+                HStack(spacing: 10) {
+                    ForEach(Array(metrics)) { metric in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(metric.title)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(metric.value)
+                                .font(.subheadline.weight(.semibold))
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var badgeColor: Color {
+        switch session.lifecycleState {
+        case .inProgress:
+            return .green
+        case .paused:
+            return .orange
+        case .completed:
+            return .blue
+        case .discarded:
+            return .secondary
+        case .planned:
+            return .secondary
+        }
+    }
+}

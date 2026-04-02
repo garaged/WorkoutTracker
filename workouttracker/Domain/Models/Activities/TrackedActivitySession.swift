@@ -140,12 +140,13 @@ final class TrackedActivitySession {
         if environment == .unspecified {
             environmentRaw = activityKind.defaultEnvironment.rawValue
         }
-        touch(at: date)
+        updatedAt = date
     }
 
     func pause(at date: Date = Date()) {
+        accumulateElapsedIfNeeded(until: date)
         lifecycleStateRaw = TrackedActivityLifecycleState.paused.rawValue
-        touch(at: date)
+        updatedAt = date
     }
 
     func resume(at date: Date = Date()) {
@@ -153,22 +154,39 @@ final class TrackedActivitySession {
             startedAt = date
         }
         lifecycleStateRaw = TrackedActivityLifecycleState.inProgress.rawValue
-        touch(at: date)
+        updatedAt = date
     }
 
     func complete(at date: Date = Date()) {
         if startedAt == nil {
             startedAt = date
         }
+        accumulateElapsedIfNeeded(until: date)
         endedAt = endedAt ?? date
         lifecycleStateRaw = TrackedActivityLifecycleState.completed.rawValue
-        touch(at: date)
+        updatedAt = date
     }
 
     func discard(at date: Date = Date()) {
+        accumulateElapsedIfNeeded(until: date)
         lifecycleStateRaw = TrackedActivityLifecycleState.discarded.rawValue
         endedAt = endedAt ?? date
-        touch(at: date)
+        updatedAt = date
+    }
+
+    func liveElapsedDuration(at date: Date = Date()) -> TimeInterval {
+        switch lifecycleState {
+        case .inProgress:
+            return max(0, elapsedDuration + max(0, date.timeIntervalSince(updatedAt)))
+        case .planned, .paused, .completed, .discarded:
+            return max(0, elapsedDuration)
+        }
+    }
+
+    func liveTotals(at date: Date = Date()) -> TrackedActivityTotals {
+        var totals = self.totals
+        totals.elapsedDuration = liveElapsedDuration(at: date)
+        return totals
     }
 
     private func touch(at date: Date = Date()) {
@@ -185,5 +203,10 @@ final class TrackedActivitySession {
         if lifecycleState == .discarded && endedAt == nil {
             endedAt = updatedAt
         }
+    }
+
+    private func accumulateElapsedIfNeeded(until date: Date) {
+        guard lifecycleState == .inProgress else { return }
+        elapsedDuration = max(0, elapsedDuration + max(0, date.timeIntervalSince(updatedAt)))
     }
 }

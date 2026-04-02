@@ -51,7 +51,7 @@ struct HomeScreen: View {
                     }
                     .padding(.top, 4)
 
-                    Text(AppFormatting.localized("Tip: Long-press tiles later for quick actions (e.g., “Start workout”, “Add exercise”)."))
+                    Text(AppFormatting.localized("Tip: Use Activities for walk/run/hike/yoga tracking, and Workouts for set-based strength sessions."))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .padding(.top, 6)

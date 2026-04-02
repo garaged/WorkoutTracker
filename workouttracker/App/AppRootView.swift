@@ -6,6 +6,7 @@ import AppIntents
 
 enum RootDestination: String, CaseIterable, Identifiable {
     case home
+    case activities
     case routines
     case history
     case progress
@@ -16,6 +17,7 @@ enum RootDestination: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .home: String(localized: "Home")
+        case .activities: String(localized: "Activities")
         case .routines: String(localized: "Routines")
         case .history: String(localized: "History")
         case .progress: String(localized: "Progress")
@@ -26,6 +28,7 @@ enum RootDestination: String, CaseIterable, Identifiable {
     var systemImage: String {
         switch self {
         case .home: "house"
+        case .activities: "figure.walk.motion"
         case .routines: "list.bullet.rectangle"
         case .history: "clock.arrow.circlepath"
         case .progress: "chart.line.uptrend.xyaxis"
@@ -138,6 +141,8 @@ struct AppRootView: View {
                     open(route)
                 }
             )
+        case .activities:
+            ActivitiesHomeView()
         case .routines:
             RoutinesScreen(onOpenSession: { session in
                 open(sessionResumePlanner.resumeRoute(for: session) ?? sessionResumePlanner.openRoute(for: session))
@@ -198,6 +203,8 @@ struct AppRootView: View {
             NavigationStack { DayTimelineEntryScreen() }
         case "settings":
             NavigationStack { SettingsScreen() }
+        case "activities":
+            NavigationStack { ActivitiesHomeView() }
         case "session":
             NavigationStack { DayTimelineEntryScreen() }
         case "routines":
@@ -227,6 +234,13 @@ struct AppRootView: View {
                 systemImage: "calendar",
                 tint: .accentColor,
                 destination: { AnyView(DayTimelineEntryScreen()) }
+            ),
+            HomeTile(
+                title: String(localized: "Activities"),
+                subtitle: String(localized: "Track walking, running, hiking, and yoga"),
+                systemImage: "figure.walk.motion",
+                tint: .teal,
+                destination: { AnyView(ActivitiesHomeView()) }
             ),
             HomeTile(
                 title: String(localized: "Workouts"),
