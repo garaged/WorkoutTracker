@@ -5,6 +5,8 @@ struct ActivitiesHomeView: View {
     @Query(sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)])
     private var trackedSessions: [TrackedActivitySession]
 
+    @StateObject private var healthKitAuthorizationService = HealthKitAuthorizationService()
+
     private var activeSessions: [TrackedActivitySession] {
         trackedSessions.filter { $0.lifecycleState == .inProgress || $0.lifecycleState == .paused }
     }
@@ -25,6 +27,18 @@ struct ActivitiesHomeView: View {
                     activityStartCard
                 }
                 .buttonStyle(.plain)
+            }
+            .listRowBackground(Color.clear)
+
+            Section {
+                NavigationLink {
+                    HealthPermissionsView()
+                } label: {
+                    healthStatusCard
+                }
+                .buttonStyle(.plain)
+            } header: {
+                Text("Apple Health")
             }
             .listRowBackground(Color.clear)
 
@@ -75,6 +89,9 @@ struct ActivitiesHomeView: View {
                 }
             }
         }
+        .task {
+            healthKitAuthorizationService.refresh()
+        }
     }
 
     private var activityStartCard: some View {
@@ -99,6 +116,36 @@ struct ActivitiesHomeView: View {
             .lineLimit(1)
         }
         .padding(.vertical, 8)
+    }
+
+    private var healthStatusCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 10) {
+                Label("Apple Health", systemImage: "heart.text.square")
+                    .font(.headline)
+                Spacer(minLength: 8)
+                Text(healthKitAuthorizationService.state.title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(healthStatusColor)
+            }
+
+            Text(healthKitAuthorizationService.state.message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 8)
+    }
+
+    private var healthStatusColor: Color {
+        switch healthKitAuthorizationService.state {
+        case .authorized:
+            return .green
+        case .denied:
+            return .orange
+        case .notRequested, .unavailable:
+            return .secondary
+        }
     }
 }
 

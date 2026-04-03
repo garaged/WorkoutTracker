@@ -19,6 +19,19 @@ struct SettingsScreen: View {
                 }
             }
 
+            Section("Health") {
+                NavigationLink {
+                    HealthPermissionsView()
+                } label: {
+                    Label("Apple Health", systemImage: "heart.text.square")
+                }
+                .accessibilityIdentifier("settings.healthPermissionsLink")
+
+                Text("Tracked activities can be saved to Apple Health after you finish them. Strength sessions still stay inside WorkoutTracker only in this release.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
             StarterPackSettingsSection()
 
             Section(String(localized: "settings.section.programs")) {

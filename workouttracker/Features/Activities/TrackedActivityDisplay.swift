@@ -83,3 +83,35 @@ extension TrackedActivityLifecycleState {
         }
     }
 }
+
+extension HealthKitExportState {
+    var displayName: String {
+        switch self {
+        case .notRequested:
+            return "Not saved"
+        case .notAvailable:
+            return "Unavailable"
+        case .pending:
+            return "Saving"
+        case .exported:
+            return "Saved"
+        case .failed:
+            return "Save failed"
+        }
+    }
+
+    var helperText: String {
+        switch self {
+        case .notRequested:
+            return "This tracked activity has not been saved to Apple Health yet."
+        case .notAvailable:
+            return "Apple Health is not available on this device."
+        case .pending:
+            return "WorkoutTracker is currently saving this tracked activity to Apple Health."
+        case .exported:
+            return "This tracked activity was saved to Apple Health. Later edits in WorkoutTracker do not update the already-saved Health workout in this release."
+        case .failed:
+            return "The last Apple Health save attempt did not complete. You can retry after checking permissions."
+        }
+    }
+}

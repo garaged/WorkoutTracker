@@ -11,6 +11,8 @@ struct TrackedActivityStartView: View {
     @State private var startedSessionID: UUID?
     @State private var environmentWasEdited = false
 
+    @StateObject private var healthKitAuthorizationService = HealthKitAuthorizationService()
+
     private let recorder = TrackedActivityRecorder()
 
     var body: some View {
@@ -37,6 +39,20 @@ struct TrackedActivityStartView: View {
                 .onChange(of: selectedEnvironment) { _, _ in
                     environmentWasEdited = true
                 }
+            }
+
+            Section("Apple Health") {
+                HStack {
+                    Text("Status")
+                    Spacer()
+                    Text(healthKitAuthorizationService.state.title)
+                        .foregroundStyle(healthStatusColor)
+                }
+
+                Text("You can start tracked activities even without Apple Health access. Completed sessions can be saved to Apple Health later from the finish summary.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Section("Notes") {
@@ -75,6 +91,20 @@ struct TrackedActivityStartView: View {
             if let startedSessionID {
                 TrackedActivitySessionScreen(sessionID: startedSessionID)
             }
+        }
+        .task {
+            healthKitAuthorizationService.refresh()
+        }
+    }
+
+    private var healthStatusColor: Color {
+        switch healthKitAuthorizationService.state {
+        case .authorized:
+            return .green
+        case .denied:
+            return .orange
+        case .notRequested, .unavailable:
+            return .secondary
         }
     }
 

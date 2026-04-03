@@ -22,8 +22,8 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(
-            app.el("settings.distanceUnitPicker").waitForExistence(timeout: t(6)),
-            "Expected Settings screen."
+            waitForDistanceUnitPicker(in: app, timeout: t(6)),
+            "Expected Settings screen to expose the distance unit picker."
         )
 
         XCTAssertTrue(selectDistanceUnit(.mi, in: app), "Expected to change Distance unit to miles.")
@@ -39,8 +39,8 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(
-            app.el("settings.distanceUnitPicker").waitForExistence(timeout: t(6)),
-            "Expected Settings screen."
+            waitForDistanceUnitPicker(in: app, timeout: t(6)),
+            "Expected Settings screen to expose the distance unit picker."
         )
         XCTAssertTrue(selectDistanceUnit(.mi, in: app), "Expected to change Distance unit to miles.")
 
@@ -52,7 +52,10 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
 
         startSessionFromTimelineBlock(named: "UITest — Seeded Starter Cardio", in: app)
 
-        XCTAssertTrue(waitForAnySetRow(in: app, timeout: t(12)), "Expected to start a seeded cardio workout session")
+        XCTAssertTrue(
+            waitForStartedCardioSession(in: app, timeout: t(12)),
+            "Expected to start a seeded cardio workout or tracked activity session"
+        )
 
         let miLabel = firstDistanceLabel(in: app, unitSymbol: "mi")
         if !miLabel.waitForExistence(timeout: t(8)) {
@@ -62,6 +65,24 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
     }
 
     // MARK: - Settings helpers
+    
+    private func waitForDistanceUnitPicker(in app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let picker = app.el("settings.distanceUnitPicker")
+        if picker.waitForExistence(timeout: min(timeout, 1.5)) {
+            return true
+        }
+
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            swipeScrollableUp(app)
+            if picker.waitForExistence(timeout: 0.4) {
+                return true
+            }
+        }
+
+        attachUITestDebug(app, name: "DistanceUnits_PickerMissing")
+        return false
+    }
 
     private enum DistanceChoice {
         case km
@@ -229,5 +250,25 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
         return app.descendants(matching: .staticText)
             .matching(NSPredicate(format: "label == %@ OR label == %@", "Dist (\(unitSymbol))", "Distance (\(unitSymbol))"))
             .firstMatch
+    }
+    
+    private func waitForStartedCardioSession(in app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let trackedActivityScreen = app.otherElements["TrackedActivitySession.Screen"]
+        let miDistanceLabel = firstDistanceLabel(in: app, unitSymbol: "mi")
+        let kmDistanceLabel = firstDistanceLabel(in: app, unitSymbol: "km")
+
+        let start = Date()
+        while Date().timeIntervalSince(start) < timeout {
+            if setToggleQuery(in: app).count > 0 { return true }
+            if trackedActivityScreen.exists { return true }
+            if miDistanceLabel.exists || kmDistanceLabel.exists { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+
+        if trackedActivityScreen.waitForExistence(timeout: 0.5) { return true }
+        if miDistanceLabel.waitForExistence(timeout: 0.5) { return true }
+        if kmDistanceLabel.waitForExistence(timeout: 0.5) { return true }
+
+        return setToggleQuery(in: app).count > 0
     }
 }

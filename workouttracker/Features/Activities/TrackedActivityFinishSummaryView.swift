@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import SwiftData
 
 struct TrackedActivityFinishSummaryView: View {
@@ -16,9 +17,14 @@ struct TrackedActivityFinishSummaryView: View {
     @State private var didLoadFields = false
     @State private var errorMessage: String?
     @State private var saveConfirmationVisible = false
+    @State private var isExporting = false
+    @State private var healthExportMessage: String?
+
+    @StateObject private var healthKitAuthorizationService = HealthKitAuthorizationService()
 
     private let recorder = TrackedActivityRecorder()
     private let summaryBuilder = TrackedActivitySummaryBuilder()
+    private let exportService = HealthKitWorkoutExportService()
 
     private var session: TrackedActivitySession? {
         trackedSessions.first(where: { $0.id == sessionID })
@@ -68,11 +74,14 @@ struct TrackedActivityFinishSummaryView: View {
                                 .foregroundStyle(.green)
                         }
                     }
+
+                    appleHealthSection(for: session)
                 }
                 .navigationTitle("Summary")
                 .navigationBarTitleDisplayMode(.inline)
                 .onAppear {
                     loadFieldsIfNeeded(from: session)
+                    healthKitAuthorizationService.refresh()
                 }
                 .alert("Could not save summary", isPresented: Binding(
                     get: { errorMessage != nil },
@@ -88,6 +97,68 @@ struct TrackedActivityFinishSummaryView: View {
                     systemImage: "exclamationmark.triangle",
                     description: Text("This tracked activity could not be loaded.")
                 )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func appleHealthSection(for session: TrackedActivitySession) -> some View {
+        Section("Apple Health") {
+            LabeledContent("Permission", value: healthKitAuthorizationService.state.title)
+            LabeledContent("Workout save state", value: session.healthKitExportState.displayName)
+
+            Text(session.healthKitExportState.helperText)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(healthKitAuthorizationService.state.message)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let healthExportMessage {
+                Text(healthExportMessage)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            switch healthKitAuthorizationService.state {
+            case .unavailable:
+                EmptyView()
+
+            case .notRequested:
+                Button("Enable Apple Health") {
+                    Task { await requestAuthorization() }
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("trackedActivity.enableHealthKitButton")
+
+            case .denied:
+                Button("Open Settings") {
+                    openSystemSettings()
+                }
+                .buttonStyle(.bordered)
+                .accessibilityIdentifier("trackedActivity.openHealthSettingsButton")
+
+            case .authorized:
+                if session.healthKitExportState == .exported {
+                    EmptyView()
+                } else {
+                    Button {
+                        Task { await exportToHealth(session) }
+                    } label: {
+                        if isExporting {
+                            Label("Saving to Apple Health…", systemImage: "heart.text.square")
+                        } else {
+                            Label("Save to Apple Health", systemImage: "heart.text.square")
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(isExporting || session.lifecycleState != .completed)
+                    .accessibilityIdentifier("trackedActivity.exportToHealthKitButton")
+                }
             }
         }
     }
@@ -123,9 +194,60 @@ struct TrackedActivityFinishSummaryView: View {
                 context: modelContext
             )
             saveConfirmationVisible = true
+            if session.healthKitExportState == .failed {
+                healthExportMessage = "Summary saved. You can retry saving to Apple Health with the updated values."
+            } else if session.healthKitExportState == .exported {
+                healthExportMessage = "Summary saved locally. Because this workout was already saved to Apple Health, later edits here do not update the exported Health workout in this release."
+            } else {
+                healthExportMessage = nil
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func requestAuthorization() async {
+        do {
+            _ = try await healthKitAuthorizationService.requestAuthorization()
+        } catch {
+            healthKitAuthorizationService.refresh()
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func exportToHealth(_ session: TrackedActivitySession) async {
+        guard !isExporting else { return }
+        isExporting = true
+        healthExportMessage = nil
+
+        do {
+            try recorder.updateHealthKitExportState(for: session, state: .pending, context: modelContext)
+            try await exportService.export(session)
+            try recorder.updateHealthKitExportState(for: session, state: .exported, context: modelContext)
+            healthExportMessage = "Saved to Apple Health."
+        } catch let exportError as HealthKitWorkoutExportError {
+            let failedState: HealthKitExportState = {
+                switch exportError {
+                case .healthDataUnavailable:
+                    return .notAvailable
+                case .permissionDenied, .sessionMustBeCompleted, .sessionDatesUnavailable, .unsupportedActivity:
+                    return .failed
+                }
+            }()
+            try? recorder.updateHealthKitExportState(for: session, state: failedState, context: modelContext)
+            errorMessage = exportError.localizedDescription
+        } catch {
+            try? recorder.updateHealthKitExportState(for: session, state: .failed, context: modelContext)
+            errorMessage = error.localizedDescription
+        }
+
+        healthKitAuthorizationService.refresh()
+        isExporting = false
+    }
+
+    private func openSystemSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 
     private func parseDouble(_ value: String) -> Double? {

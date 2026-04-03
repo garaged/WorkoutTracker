@@ -2163,6 +2163,9 @@
         }
       }
     },
+    "Apple Health" : {
+
+    },
     "Apply for next workout" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3349,6 +3352,9 @@
         }
       }
     },
+    "Completed walk, run, hike, and yoga workouts" : {
+
+    },
     "Completed workout. View summary, start again (clone) or reopen." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4023,6 +4029,9 @@
     "Distance (km)" : {
 
     },
+    "Distance and active energy when you add them" : {
+
+    },
     "Distance, steps, and energy can be refined when you finish this activity." : {
 
     },
@@ -4206,6 +4215,9 @@
           }
         }
       }
+    },
+    "Enable Apple Health" : {
+
     },
     "Enabled" : {
       "extractionState" : "stale",
@@ -5057,6 +5069,9 @@
           }
         }
       }
+    },
+    "Health" : {
+
     },
     "Help & links" : {
       "extractionState" : "stale",
@@ -6675,6 +6690,9 @@
         }
       }
     },
+    "Open Settings" : {
+
+    },
     "Open summary" : {
 
     },
@@ -6826,6 +6844,9 @@
           }
         }
       }
+    },
+    "Permission" : {
+
     },
     "Personal Records" : {
       "extractionState" : "stale",
@@ -9356,6 +9377,9 @@
         }
       }
     },
+    "Refresh status" : {
+
+    },
     "Reinstall Catalog Assets" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -10130,7 +10154,13 @@
     "Save summary changes" : {
 
     },
+    "Save to Apple Health" : {
+
+    },
     "Saved" : {
+
+    },
+    "Saving to Apple Health…" : {
 
     },
     "Schedulable" : {
@@ -12147,7 +12177,6 @@
       }
     },
     "Status" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -12474,6 +12503,9 @@
         }
       }
     },
+    "This release only writes completed tracked activities to Apple Health. It does not import existing Health workouts yet." : {
+
+    },
     "This removes the live activity session before it is completed." : {
 
     },
@@ -12747,6 +12779,9 @@
 
     },
     "Tracked activities" : {
+
+    },
+    "Tracked activities can be saved to Apple Health after you finish them. Strength sessions still stay inside WorkoutTracker only in this release." : {
 
     },
     "Tracked activity not found" : {
@@ -13184,6 +13219,9 @@
         }
       }
     },
+    "What WorkoutTracker saves" : {
+
+    },
     "When" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -13294,6 +13332,12 @@
         }
       }
     },
+    "Workout save state" : {
+
+    },
+    "Workout start and end time" : {
+
+    },
     "Workout Tracker" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -13379,6 +13423,9 @@
           }
         }
       }
+    },
+    "You can start tracked activities even without Apple Health access. Completed sessions can be saved to Apple Health later from the finish summary." : {
+
     },
     "Your support helps keep the project healthy." : {
       "extractionState" : "stale",

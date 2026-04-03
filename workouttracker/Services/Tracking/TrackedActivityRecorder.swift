@@ -86,6 +86,17 @@ struct TrackedActivityRecorder {
         try context.save()
     }
 
+    func updateHealthKitExportState(
+        for session: TrackedActivitySession,
+        state: HealthKitExportState,
+        context: ModelContext,
+        at date: Date = Date()
+    ) throws {
+        session.healthKitExportState = state
+        session.updatedAt = date
+        try context.save()
+    }
+
     func liveTotals(for session: TrackedActivitySession, now: Date = Date()) -> TrackedActivityTotals {
         session.liveTotals(at: now)
     }
