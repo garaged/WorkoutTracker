@@ -12,10 +12,8 @@ struct NowPlayingWorkoutControlsView: View {
     var body: some View {
         VStack(spacing: 10) {
             header
-
             controlsRow
-
-            restRow
+            footerRow
         }
         .padding(.vertical, 8)
         .toolbar {
@@ -34,6 +32,13 @@ struct NowPlayingWorkoutControlsView: View {
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
 
+                if client.nowPlaying.isTrackedActivitySession,
+                   let elapsedSeconds = client.nowPlaying.elapsedSeconds {
+                    Text(format(seconds: elapsedSeconds))
+                        .font(.system(size: 22, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                }
+
                 if let title = client.nowPlaying.setTitle {
                     Text(title)
                         .font(.subheadline)
@@ -50,7 +55,7 @@ struct NowPlayingWorkoutControlsView: View {
             } else {
                 Text("No active workout")
                     .font(.headline)
-                Text("Start on iPhone")
+                Text("Start on iPhone or watch")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -67,48 +72,84 @@ struct NowPlayingWorkoutControlsView: View {
         }
     }
 
+    @ViewBuilder
     private var controlsRow: some View {
-        HStack(spacing: 12) {
-            Button {
-                client.send(.init(kind: .previousSet))
-            } label: {
-                Image(systemName: "backward.fill")
-            }
-            .disabled(!client.canSendCommands || !client.nowPlaying.canGoPrevious)
+        if client.nowPlaying.isTrackedActivitySession {
+            HStack(spacing: 12) {
+                Button {
+                    client.send(
+                        .init(
+                            kind: client.nowPlaying.isPaused ? .resumeTrackedActivity : .pauseTrackedActivity,
+                            sessionID: client.nowPlaying.sessionID
+                        )
+                    )
+                } label: {
+                    Image(systemName: client.nowPlaying.isPaused ? "play.fill" : "pause.fill")
+                }
+                .disabled(!client.canSendCommands || !client.nowPlaying.canPauseOrResume)
 
-            Button {
-                client.send(.init(kind: .markSetComplete, sessionID: client.nowPlaying.sessionID, setID: client.nowPlaying.setID))
-            } label: {
-                Image(systemName: "checkmark.circle.fill")
+                Button {
+                    client.send(.init(kind: .finishTrackedActivity, sessionID: client.nowPlaying.sessionID))
+                } label: {
+                    Image(systemName: "stop.fill")
+                }
+                .disabled(!client.canSendCommands || !client.nowPlaying.canFinish)
             }
-            .disabled(!client.canSendCommands || !client.nowPlaying.isActiveSession)
+            .buttonStyle(.borderedProminent)
+        } else {
+            HStack(spacing: 12) {
+                Button {
+                    client.send(.init(kind: .previousSet))
+                } label: {
+                    Image(systemName: "backward.fill")
+                }
+                .disabled(!client.canSendCommands || !client.nowPlaying.canGoPrevious)
 
-            Button {
-                client.send(.init(kind: .nextSet))
-            } label: {
-                Image(systemName: "forward.fill")
+                Button {
+                    client.send(.init(kind: .markSetComplete, sessionID: client.nowPlaying.sessionID, setID: client.nowPlaying.setID))
+                } label: {
+                    Image(systemName: "checkmark.circle.fill")
+                }
+                .disabled(!client.canSendCommands || !client.nowPlaying.isActiveSession)
+
+                Button {
+                    client.send(.init(kind: .nextSet))
+                } label: {
+                    Image(systemName: "forward.fill")
+                }
+                .disabled(!client.canSendCommands || !client.nowPlaying.canGoNext)
             }
-            .disabled(!client.canSendCommands || !client.nowPlaying.canGoNext)
+            .buttonStyle(.borderedProminent)
         }
-        .buttonStyle(.borderedProminent)
     }
 
-    private var restRow: some View {
-        Button {
-            client.send(.init(kind: .toggleRestTimer))
-        } label: {
-            HStack {
-                Image(systemName: client.nowPlaying.isRestRunning ? "pause.fill" : "play.fill")
-                if let secs = client.nowPlaying.restRemainingSeconds, client.nowPlaying.isActiveSession {
-                    Text(format(seconds: secs))
-                        .monospacedDigit()
-                } else {
-                    Text("Rest")
+    @ViewBuilder
+    private var footerRow: some View {
+        if client.nowPlaying.isTrackedActivitySession {
+            HStack(spacing: 8) {
+                Image(systemName: client.nowPlaying.isPaused ? "pause.circle.fill" : "figure.walk.motion")
+                Text(client.nowPlaying.isPaused ? "Paused" : "Tracking live on iPhone")
+                    .font(.footnote)
+                    .multilineTextAlignment(.center)
+            }
+            .foregroundStyle(.secondary)
+        } else {
+            Button {
+                client.send(.init(kind: .toggleRestTimer))
+            } label: {
+                HStack {
+                    Image(systemName: client.nowPlaying.isRestRunning ? "pause.fill" : "play.fill")
+                    if let secs = client.nowPlaying.restRemainingSeconds, client.nowPlaying.isActiveSession {
+                        Text(format(seconds: secs))
+                            .monospacedDigit()
+                    } else {
+                        Text("Rest")
+                    }
                 }
             }
+            .disabled(!client.canSendCommands || !client.nowPlaying.isActiveSession)
+            .buttonStyle(.bordered)
         }
-        .disabled(!client.canSendCommands || !client.nowPlaying.isActiveSession)
-        .buttonStyle(.bordered)
     }
 
     private func format(seconds: Int) -> String {

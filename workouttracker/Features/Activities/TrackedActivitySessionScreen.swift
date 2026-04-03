@@ -59,6 +59,14 @@ struct TrackedActivitySessionScreen: View {
                 .navigationDestination(isPresented: $showFinishSummary) {
                     TrackedActivityFinishSummaryView(sessionID: sessionID)
                 }
+                .onAppear {
+                    WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
+                    WorkoutRemoteControlRouter.shared.refreshNowPlaying()
+                }
+                .onDisappear {
+                    WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
+                }
+                .accessibilityIdentifier("TrackedActivitySession.Screen")
             } else {
                 ContentUnavailableView(
                     "Tracked activity not found",
@@ -209,6 +217,8 @@ struct TrackedActivitySessionScreen: View {
     private func pause(_ session: TrackedActivitySession) {
         do {
             try recorder.pause(session, context: modelContext)
+            WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
+            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -217,6 +227,8 @@ struct TrackedActivitySessionScreen: View {
     private func resume(_ session: TrackedActivitySession) {
         do {
             try recorder.resume(session, context: modelContext)
+            WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
+            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -225,6 +237,8 @@ struct TrackedActivitySessionScreen: View {
     private func finish(_ session: TrackedActivitySession) {
         do {
             try recorder.complete(session, context: modelContext)
+            WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
+            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
             showFinishSummary = true
         } catch {
             errorMessage = error.localizedDescription
@@ -234,6 +248,8 @@ struct TrackedActivitySessionScreen: View {
     private func discard(_ session: TrackedActivitySession) {
         do {
             try recorder.discard(session, context: modelContext)
+            WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
+            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

@@ -13,7 +13,19 @@ struct ActivitiesHomeView: View {
 
     private var recentSessions: [TrackedActivitySession] {
         trackedSessions
-            .filter { $0.lifecycleState == .completed || $0.lifecycleState == .discarded }
+            .filter { session in
+                switch session.lifecycleState {
+                case .inProgress, .paused:
+                    return false
+                case .completed, .discarded:
+                    return true
+                case .planned:
+                    return session.endedAt != nil
+                }
+            }
+            .sorted { lhs, rhs in
+                recentSortDate(for: lhs) > recentSortDate(for: rhs)
+            }
             .prefix(12)
             .map { $0 }
     }
@@ -146,6 +158,10 @@ struct ActivitiesHomeView: View {
         case .notRequested, .unavailable:
             return .secondary
         }
+    }
+    
+    private func recentSortDate(for session: TrackedActivitySession) -> Date {
+        session.endedAt ?? session.updatedAt ?? session.startedAt ?? session.createdAt
     }
 }
 

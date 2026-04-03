@@ -33,16 +33,14 @@ struct LiveHealthKitStoreProxy: HealthKitStoreProxy {
     }
 
     func save(_ workout: HKWorkout) async throws {
-        func save(_ workout: HKWorkout) async throws {
-            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                healthStore.save(workout) { success, error in
-                    if let error {
-                        continuation.resume(throwing: error)
-                    } else if success {
-                        continuation.resume(returning: ())
-                    } else {
-                        continuation.resume(throwing: HealthKitAuthorizationError.unknownSaveFailure)
-                    }
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            healthStore.save(workout) { success, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else if success {
+                    continuation.resume(returning: ())
+                } else {
+                    continuation.resume(throwing: HealthKitAuthorizationError.unknownSaveFailure)
                 }
             }
         }

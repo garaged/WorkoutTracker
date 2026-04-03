@@ -70,7 +70,15 @@ struct TrackedActivityStartView: View {
                 Button {
                     start()
                 } label: {
-                    Label(selectedKind.startVerb, systemImage: selectedKind.systemImage)
+                    HStack(spacing: 8) {
+                        Image(systemName: selectedKind.systemImage)
+                            .imageScale(.medium)
+
+                        Text(selectedKind.startVerb)
+                            .fontWeight(.semibold)
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
             }
@@ -116,6 +124,8 @@ struct TrackedActivityStartView: View {
                 notes: notes,
                 context: modelContext
             )
+            WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
+            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
             startedSessionID = session.id
         } catch {
             errorMessage = error.localizedDescription

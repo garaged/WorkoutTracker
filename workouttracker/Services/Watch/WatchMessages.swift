@@ -11,6 +11,11 @@ enum WatchCommandKind: String, Codable {
     case openCurrentSession
     case resumeCurrentSession
     case startRoutine
+    case startTrackedActivity
+    case resumeCurrentTrackedActivity
+    case pauseTrackedActivity
+    case resumeTrackedActivity
+    case finishTrackedActivity
 }
 
 /// Keep this deliberately tiny. IDs are strings so we don't couple to SwiftData models.
@@ -19,12 +24,23 @@ struct WatchCommand: Codable, Equatable {
     var sessionID: String?
     var setID: String?
     var routineID: String?
+    var trackedActivityKindRaw: String?
+    var activityEnvironmentRaw: String?
 
-    init(kind: WatchCommandKind, sessionID: String? = nil, setID: String? = nil, routineID: String? = nil) {
+    init(
+        kind: WatchCommandKind,
+        sessionID: String? = nil,
+        setID: String? = nil,
+        routineID: String? = nil,
+        trackedActivityKindRaw: String? = nil,
+        activityEnvironmentRaw: String? = nil
+    ) {
         self.kind = kind
         self.sessionID = sessionID
         self.setID = setID
         self.routineID = routineID
+        self.trackedActivityKindRaw = trackedActivityKindRaw
+        self.activityEnvironmentRaw = activityEnvironmentRaw
     }
 }
 
@@ -33,14 +49,21 @@ struct WatchRoutineSummary: Codable, Equatable, Identifiable {
     var name: String
 }
 
+enum WatchNowPlayingPresentationKind: String, Codable, Equatable {
+    case inactive
+    case strengthSession
+    case trackedActivity
+}
+
 // MARK: - State phone -> watch
 
 struct WatchNowPlayingState: Codable, Equatable {
+    var presentationKind: WatchNowPlayingPresentationKind
     var isActiveSession: Bool
 
     var exerciseName: String?
-    var setTitle: String?      // e.g. "Set 2 of 4"
-    var setDetail: String?     // e.g. "10 reps @ 110 lb"
+    var setTitle: String?      // e.g. "Set 2 of 4" or "Outdoor"
+    var setDetail: String?     // e.g. "10 reps @ 110 lb" or user notes
 
     var isRestRunning: Bool
     var restRemainingSeconds: Int?
@@ -49,12 +72,22 @@ struct WatchNowPlayingState: Codable, Equatable {
 
     var canGoPrevious: Bool
     var canGoNext: Bool
+    var isPaused: Bool
+    var canPauseOrResume: Bool
+    var canFinish: Bool
+    var elapsedSeconds: Int?
+    /// Timestamp paired with elapsedSeconds so watch can derive a local timer.
+    var elapsedUpdatedAtEpochSeconds: TimeInterval?
 
     var sessionID: String?
     var setID: String?
     var quickStartRoutines: [WatchRoutineSummary]
 
+    var isStrengthSession: Bool { presentationKind == .strengthSession }
+    var isTrackedActivitySession: Bool { presentationKind == .trackedActivity }
+
     static let inactive = WatchNowPlayingState(
+        presentationKind: .inactive,
         isActiveSession: false,
         exerciseName: nil,
         setTitle: nil,
@@ -64,6 +97,11 @@ struct WatchNowPlayingState: Codable, Equatable {
         restEndsAtEpochSeconds: nil,
         canGoPrevious: false,
         canGoNext: false,
+        isPaused: false,
+        canPauseOrResume: false,
+        canFinish: false,
+        elapsedSeconds: nil,
+        elapsedUpdatedAtEpochSeconds: nil,
         sessionID: nil,
         setID: nil,
         quickStartRoutines: []
