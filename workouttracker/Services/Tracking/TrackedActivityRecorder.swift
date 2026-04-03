@@ -86,6 +86,23 @@ struct TrackedActivityRecorder {
         try context.save()
     }
 
+    func updateCapturedRoute(
+        for session: TrackedActivitySession,
+        routePoints: [TrackedActivityRoutePoint],
+        derivedDistanceMeters: Double?,
+        context: ModelContext,
+        at date: Date = Date()
+    ) throws {
+        guard session.activityKind.supportsDistance, session.environment == .outdoor else { return }
+
+        session.routePoints = routePoints
+        if let derivedDistanceMeters, derivedDistanceMeters > 0 {
+            session.distanceMeters = max(session.distanceMeters ?? 0, derivedDistanceMeters)
+        }
+        session.updatedAt = date
+        try context.save()
+    }
+
     func updateHealthKitExportState(
         for session: TrackedActivitySession,
         state: HealthKitExportState,

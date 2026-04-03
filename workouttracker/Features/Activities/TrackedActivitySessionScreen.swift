@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct TrackedActivitySessionScreen: View {
     let sessionID: UUID
@@ -13,6 +14,9 @@ struct TrackedActivitySessionScreen: View {
     @State private var errorMessage: String?
     @State private var showDiscardConfirmation = false
     @State private var showFinishSummary = false
+    @State private var lastPersistedRoutePointCount = 0
+
+    @StateObject private var routeRecorder = OutdoorRouteRecorder()
 
     private let recorder = TrackedActivityRecorder()
     private let summaryBuilder = TrackedActivitySummaryBuilder()
@@ -28,6 +32,7 @@ struct TrackedActivitySessionScreen: View {
                     VStack(alignment: .leading, spacing: 20) {
                         header(for: session)
                         liveTimerCard(for: session)
+                        routeSection(for: session)
                         metricsSection(for: session)
                         notesSection(for: session)
                         actionSection(for: session)
@@ -62,9 +67,25 @@ struct TrackedActivitySessionScreen: View {
                 .onAppear {
                     WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
                     WorkoutRemoteControlRouter.shared.refreshNowPlaying()
+                    lastPersistedRoutePointCount = session.routePointCount
+                    routeRecorder.sync(with: session)
                 }
                 .onDisappear {
+                    persistRouteIfNeeded(for: session, force: true)
+                    routeRecorder.stopRecording(resetSession: false)
                     WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
+                }
+                .onChange(of: session.lifecycleStateRaw) { _, _ in
+                    routeRecorder.sync(with: session)
+                    if session.lifecycleState.isTerminal {
+                        persistRouteIfNeeded(for: session, force: true)
+                    }
+                }
+                .onChange(of: routeRecorder.capturedPoints.count) { _, newCount in
+                    guard newCount > 0 else { return }
+                    if newCount - lastPersistedRoutePointCount >= 5 {
+                        persistRouteIfNeeded(for: session, force: false)
+                    }
                 }
                 .accessibilityIdentifier("TrackedActivitySession.Screen")
             } else {
@@ -119,6 +140,38 @@ struct TrackedActivitySessionScreen: View {
     }
 
     @ViewBuilder
+    private func routeSection(for session: TrackedActivitySession) -> some View {
+        if session.activityKind.supportsDistance && session.environment == .outdoor {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Outdoor route")
+                    .font(.headline)
+
+                LabeledContent("Route capture", value: routeRecorder.captureState.title)
+                LabeledContent("Captured points", value: "\(max(session.routePointCount, routeRecorder.capturedPoints.count))")
+
+                if let liveRouteDistance = routeRecorder.derivedDistanceMeters ?? session.routeDistanceMeters {
+                    LabeledContent("Approximate route distance", value: formattedRouteDistance(liveRouteDistance))
+                }
+
+                Text(routeRecorder.captureState.message)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if routeRecorder.canOpenSystemSettings {
+                    Button("Open Location Settings") {
+                        openSystemSettings()
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        }
+    }
+
+    @ViewBuilder
     private func metricsSection(for session: TrackedActivitySession) -> some View {
         let metrics = summaryBuilder.metrics(for: session)
 
@@ -142,7 +195,7 @@ struct TrackedActivitySessionScreen: View {
             }
 
             if session.activityKind.supportsDistance {
-                Text("Distance, steps, and energy can be refined when you finish this activity.")
+                Text("Distance, steps, and energy can be refined when you finish this activity. Outdoor route distance is prefilled when location data is available.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -166,49 +219,51 @@ struct TrackedActivitySessionScreen: View {
     @ViewBuilder
     private func actionSection(for session: TrackedActivitySession) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            if session.lifecycleState == .inProgress {
-                Button("Pause") {
-                    pause(session)
+            HStack (spacing: 8) {
+                if session.lifecycleState == .inProgress {
+                    Button("Pause") {
+                        pause(session)
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Button("Finish") {
+                        finish(session)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    
+                    Button("Discard", role: .destructive) {
+                        showDiscardConfirmation = true
+                    }
+                    .buttonStyle(.bordered)
+                } else if session.lifecycleState == .paused {
+                    Button("Resume") {
+                        resume(session)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    
+                    Button("Finish") {
+                        finish(session)
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Button("Discard", role: .destructive) {
+                        showDiscardConfirmation = true
+                    }
+                    .buttonStyle(.bordered)
+                } else if session.lifecycleState == .completed {
+                    NavigationLink {
+                        TrackedActivityFinishSummaryView(sessionID: session.id)
+                    } label: {
+                        Text("Open summary")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                } else if session.lifecycleState == .discarded {
+                    Button("Close") {
+                        dismiss()
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.bordered)
-
-                Button("Finish") {
-                    finish(session)
-                }
-                .buttonStyle(.borderedProminent)
-
-                Button("Discard", role: .destructive) {
-                    showDiscardConfirmation = true
-                }
-                .buttonStyle(.bordered)
-            } else if session.lifecycleState == .paused {
-                Button("Resume") {
-                    resume(session)
-                }
-                .buttonStyle(.borderedProminent)
-
-                Button("Finish") {
-                    finish(session)
-                }
-                .buttonStyle(.bordered)
-
-                Button("Discard", role: .destructive) {
-                    showDiscardConfirmation = true
-                }
-                .buttonStyle(.bordered)
-            } else if session.lifecycleState == .completed {
-                NavigationLink {
-                    TrackedActivityFinishSummaryView(sessionID: session.id)
-                } label: {
-                    Text("Open summary")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-            } else if session.lifecycleState == .discarded {
-                Button("Close") {
-                    dismiss()
-                }
-                .buttonStyle(.bordered)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -216,7 +271,9 @@ struct TrackedActivitySessionScreen: View {
 
     private func pause(_ session: TrackedActivitySession) {
         do {
+            persistRouteIfNeeded(for: session, force: true)
             try recorder.pause(session, context: modelContext)
+            routeRecorder.sync(with: session)
             WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
             WorkoutRemoteControlRouter.shared.refreshNowPlaying()
         } catch {
@@ -227,6 +284,7 @@ struct TrackedActivitySessionScreen: View {
     private func resume(_ session: TrackedActivitySession) {
         do {
             try recorder.resume(session, context: modelContext)
+            routeRecorder.sync(with: session)
             WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
             WorkoutRemoteControlRouter.shared.refreshNowPlaying()
         } catch {
@@ -236,7 +294,9 @@ struct TrackedActivitySessionScreen: View {
 
     private func finish(_ session: TrackedActivitySession) {
         do {
+            persistRouteIfNeeded(for: session, force: true)
             try recorder.complete(session, context: modelContext)
+            routeRecorder.sync(with: session)
             WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
             WorkoutRemoteControlRouter.shared.refreshNowPlaying()
             showFinishSummary = true
@@ -247,13 +307,39 @@ struct TrackedActivitySessionScreen: View {
 
     private func discard(_ session: TrackedActivitySession) {
         do {
+            persistRouteIfNeeded(for: session, force: true)
             try recorder.discard(session, context: modelContext)
+            routeRecorder.stopRecording(resetSession: false)
             WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
             WorkoutRemoteControlRouter.shared.refreshNowPlaying()
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func persistRouteIfNeeded(for session: TrackedActivitySession, force: Bool) {
+        let currentPointCount = routeRecorder.capturedPoints.count
+        guard force || currentPointCount - lastPersistedRoutePointCount >= 5 else { return }
+        guard currentPointCount > 0 else { return }
+
+        do {
+            try recorder.updateCapturedRoute(
+                for: session,
+                routePoints: routeRecorder.capturedPoints,
+                derivedDistanceMeters: routeRecorder.derivedDistanceMeters,
+                context: modelContext
+            )
+            lastPersistedRoutePointCount = currentPointCount
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+
+    private func formattedRouteDistance(_ meters: Double) -> String {
+        let kilometers = meters / 1_000
+        return "\(kilometers.formatted(.number.precision(.fractionLength(0...2)))) km"
     }
 
     private func timerFooter(for session: TrackedActivitySession) -> String {
@@ -293,5 +379,10 @@ struct TrackedActivitySessionScreen: View {
         case .discarded:
             return .secondary
         }
+    }
+
+    private func openSystemSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 }

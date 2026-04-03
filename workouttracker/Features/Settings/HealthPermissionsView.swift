@@ -6,9 +6,9 @@ struct HealthPermissionsView: View {
 
     var body: some View {
         List {
-            Section("Status") {
+            Section(String(localized: "health.permissions.section.status", defaultValue: "Status")) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("Apple Health")
+                    Text(String(localized: "health.permissions.row.apple_health", defaultValue: "Apple Health"))
                     Spacer()
                     Text(authorizationService.state.title)
                         .foregroundStyle(statusColor)
@@ -21,35 +21,71 @@ struct HealthPermissionsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("What WorkoutTracker saves") {
-                Label("Completed walk, run, hike, and yoga workouts", systemImage: "checkmark.circle")
-                Label("Workout start and end time", systemImage: "clock")
-                Label("Distance and active energy when you add them", systemImage: "figure.walk.motion")
+            Section(String(localized: "health.permissions.section.saves", defaultValue: "What WorkoutTracker saves")) {
+                Label(
+                    String(localized: "health.permissions.saves.completed_workouts", defaultValue: "Completed walk, run, hike, and yoga workouts"),
+                    systemImage: "checkmark.circle"
+                )
+                Label(
+                    String(localized: "health.permissions.saves.start_end_time", defaultValue: "Workout start and end time"),
+                    systemImage: "clock"
+                )
+                Label(
+                    String(localized: "health.permissions.saves.distance_energy", defaultValue: "Distance and active energy when you add them"),
+                    systemImage: "figure.walk.motion"
+                )
+                Label(
+                    String(localized: "health.permissions.saves.route_data", defaultValue: "Eligible outdoor route data when location access is available"),
+                    systemImage: "map"
+                )
 
-                Text("This release only writes completed tracked activities to Apple Health. It does not import existing Health workouts yet.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text(
+                    String(
+                        localized: "health.permissions.saves.footer",
+                        defaultValue: "This release writes completed tracked activities to Apple Health. Outdoor walks, runs, and hikes can also include route data when you allow location while using the app."
+                    )
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section(String(localized: "health.permissions.section.location", defaultValue: "Location for outdoor routes")) {
+                Text(
+                    String(
+                        localized: "health.permissions.location.body",
+                        defaultValue: "Outdoor route capture uses your location while the tracked activity screen is open. If location access is denied, the workout can still be saved to Apple Health without a route."
+                    )
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+                Button(String(localized: "health.permissions.action.open_settings", defaultValue: "Open Settings")) {
+                    openSystemSettings()
+                }
+                .buttonStyle(.bordered)
+                .accessibilityIdentifier("healthPermissions.openSettingsButton")
             }
 
             Section {
                 switch authorizationService.state {
                 case .notRequested:
-                    Button("Enable Apple Health") {
+                    Button(String(localized: "health.permissions.action.enable", defaultValue: "Enable Apple Health")) {
                         Task { await requestAuthorization() }
                     }
                     .buttonStyle(.borderedProminent)
                     .accessibilityIdentifier("healthPermissions.enableButton")
 
                 case .denied:
-                    Button("Open Settings") {
+                    Button(String(localized: "health.permissions.action.open_settings", defaultValue: "Open Settings")) {
                         openSystemSettings()
                     }
                     .buttonStyle(.bordered)
-                    .accessibilityIdentifier("healthPermissions.openSettingsButton")
+                    .accessibilityIdentifier("healthPermissions.openHealthSettingsButton")
 
                 case .authorized:
-                    Button("Refresh status") {
+                    Button(String(localized: "health.permissions.action.refresh", defaultValue: "Refresh status")) {
                         authorizationService.refresh()
                     }
                     .buttonStyle(.bordered)
@@ -60,7 +96,7 @@ struct HealthPermissionsView: View {
                 }
             }
         }
-        .navigationTitle("Apple Health")
+        .navigationTitle(String(localized: "health.permissions.title", defaultValue: "Apple Health"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
             authorizationService.refresh()

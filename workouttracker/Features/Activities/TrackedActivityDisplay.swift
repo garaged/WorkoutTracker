@@ -4,13 +4,13 @@ extension TrackedActivityKind {
     var displayName: String {
         switch self {
         case .walking:
-            return "Walking"
+            return String(localized: "activities.kind.walking", defaultValue: "Walking")
         case .running:
-            return "Running"
+            return String(localized: "activities.kind.running", defaultValue: "Running")
         case .hiking:
-            return "Hiking"
+            return String(localized: "activities.kind.hiking", defaultValue: "Hiking")
         case .yoga:
-            return "Yoga"
+            return String(localized: "activities.kind.yoga", defaultValue: "Yoga")
         }
     }
 
@@ -30,26 +30,38 @@ extension TrackedActivityKind {
     var startVerb: String {
         switch self {
         case .walking:
-            return "Start walk"
+            return String(localized: "activities.action.start_walk", defaultValue: "Start walk")
         case .running:
-            return "Start run"
+            return String(localized: "activities.action.start_run", defaultValue: "Start run")
         case .hiking:
-            return "Start hike"
+            return String(localized: "activities.action.start_hike", defaultValue: "Start hike")
         case .yoga:
-            return "Start yoga"
+            return String(localized: "activities.action.start_yoga", defaultValue: "Start yoga")
         }
     }
 
     var helperText: String {
         switch self {
         case .walking:
-            return "Duration is always tracked. Distance, steps, and energy can be added after you finish."
+            return String(
+                localized: "activities.helper.walking",
+                defaultValue: "Duration is always tracked. Distance, steps, and energy can be added after you finish."
+            )
         case .running:
-            return "Duration is always tracked. Distance, energy, and steps can be added after you finish."
+            return String(
+                localized: "activities.helper.running",
+                defaultValue: "Duration is always tracked. Distance, energy, and steps can be added after you finish."
+            )
         case .hiking:
-            return "Duration is always tracked. Distance, energy, and steps can be added after you finish."
+            return String(
+                localized: "activities.helper.hiking",
+                defaultValue: "Duration is always tracked. Distance, energy, and steps can be added after you finish."
+            )
         case .yoga:
-            return "Duration is always tracked. Energy and notes can be added after you finish."
+            return String(
+                localized: "activities.helper.yoga",
+                defaultValue: "Duration is always tracked. Energy and notes can be added after you finish."
+            )
         }
     }
 }
@@ -58,11 +70,11 @@ extension ActivityEnvironment {
     var displayName: String {
         switch self {
         case .indoor:
-            return "Indoor"
+            return String(localized: "activities.environment.indoor", defaultValue: "Indoor")
         case .outdoor:
-            return "Outdoor"
+            return String(localized: "activities.environment.outdoor", defaultValue: "Outdoor")
         case .unspecified:
-            return "Automatic"
+            return String(localized: "activities.environment.automatic", defaultValue: "Automatic")
         }
     }
 }
@@ -71,15 +83,15 @@ extension TrackedActivityLifecycleState {
     var badgeText: String {
         switch self {
         case .planned:
-            return "Planned"
+            return String(localized: "activities.lifecycle.planned", defaultValue: "Planned")
         case .inProgress:
-            return "Live"
+            return String(localized: "activities.lifecycle.live", defaultValue: "Live")
         case .paused:
-            return "Paused"
+            return String(localized: "activities.lifecycle.paused", defaultValue: "Paused")
         case .completed:
-            return "Completed"
+            return String(localized: "activities.lifecycle.completed", defaultValue: "Completed")
         case .discarded:
-            return "Discarded"
+            return String(localized: "activities.lifecycle.discarded", defaultValue: "Discarded")
         }
     }
 }
@@ -88,30 +100,45 @@ extension HealthKitExportState {
     var displayName: String {
         switch self {
         case .notRequested:
-            return "Not saved"
+            return String(localized: "health.export_state.not_saved", defaultValue: "Not saved")
         case .notAvailable:
-            return "Unavailable"
+            return String(localized: "health.export_state.unavailable", defaultValue: "Unavailable")
         case .pending:
-            return "Saving"
+            return String(localized: "health.export_state.saving", defaultValue: "Saving")
         case .exported:
-            return "Saved"
+            return String(localized: "health.export_state.saved", defaultValue: "Saved")
         case .failed:
-            return "Save failed"
+            return String(localized: "health.export_state.failed", defaultValue: "Save failed")
         }
     }
 
     var helperText: String {
         switch self {
         case .notRequested:
-            return "This tracked activity has not been saved to Apple Health yet."
+            return String(
+                localized: "health.export_state_helper.not_saved",
+                defaultValue: "This tracked activity has not been saved to Apple Health yet."
+            )
         case .notAvailable:
-            return "Apple Health is not available on this device."
+            return String(
+                localized: "health.export_state_helper.unavailable",
+                defaultValue: "Apple Health is not available on this device."
+            )
         case .pending:
-            return "WorkoutTracker is currently saving this tracked activity to Apple Health."
+            return String(
+                localized: "health.export_state_helper.saving",
+                defaultValue: "WorkoutTracker is currently saving this tracked activity to Apple Health."
+            )
         case .exported:
-            return "This tracked activity was saved to Apple Health. Later edits in WorkoutTracker do not update the already-saved Health workout in this release."
+            return String(
+                localized: "health.export_state_helper.saved",
+                defaultValue: "This tracked activity was saved to Apple Health. Later edits in WorkoutTracker do not update the already-saved Health workout in this release."
+            )
         case .failed:
-            return "The last Apple Health save attempt did not complete. You can retry after checking permissions."
+            return String(
+                localized: "health.export_state_helper.failed",
+                defaultValue: "The last Apple Health save attempt did not complete. You can retry after checking permissions."
+            )
         }
     }
 }

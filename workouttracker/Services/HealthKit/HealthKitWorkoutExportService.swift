@@ -24,14 +24,23 @@ enum HealthKitWorkoutExportError: LocalizedError, Equatable {
     }
 }
 
+struct HealthKitWorkoutExportOutcome: Equatable {
+    let didSaveRoute: Bool
+}
+
 struct HealthKitWorkoutExportService {
     private let store: HealthKitStoreProxy
+    private let routeExportService: HealthKitWorkoutRouteExportService
 
-    init(store: HealthKitStoreProxy = LiveHealthKitStoreProxy()) {
+    init(
+        store: HealthKitStoreProxy = LiveHealthKitStoreProxy(),
+        routeExportService: HealthKitWorkoutRouteExportService = HealthKitWorkoutRouteExportService()
+    ) {
         self.store = store
+        self.routeExportService = routeExportService
     }
 
-    func export(_ session: TrackedActivitySession) async throws {
+    func export(_ session: TrackedActivitySession) async throws -> HealthKitWorkoutExportOutcome {
         guard store.isHealthDataAvailable() else {
             throw HealthKitWorkoutExportError.healthDataUnavailable
         }
@@ -42,6 +51,9 @@ struct HealthKitWorkoutExportService {
 
         let workout = try makeWorkout(from: session)
         try await store.save(workout)
+
+        let didSaveRoute = (try? await routeExportService.exportRouteIfAvailable(from: session, associatingWith: workout)) ?? false
+        return HealthKitWorkoutExportOutcome(didSaveRoute: didSaveRoute)
     }
 
     func makeWorkout(from session: TrackedActivitySession) throws -> HKWorkout {
@@ -95,6 +107,10 @@ struct HealthKitWorkoutExportService {
             values[HKMetadataKeyIndoorWorkout] = false
         case .unspecified:
             break
+        }
+
+        if session.hasRecordedRoute {
+            values["org.garaged.workouttracker.has_route"] = true
         }
 
         return values.isEmpty ? nil : values

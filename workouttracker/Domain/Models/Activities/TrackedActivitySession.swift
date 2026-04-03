@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import CoreLocation
 
 @Model
 final class TrackedActivitySession {
@@ -19,6 +20,9 @@ final class TrackedActivitySession {
     var activeEnergyKilocalories: Double?
     var stepCount: Int?
 
+    var routePointsBlob: Data?
+    var routePointCount: Int
+
     var linkedActivityId: UUID?
     var notes: String?
 
@@ -33,6 +37,7 @@ final class TrackedActivitySession {
         lifecycleState: TrackedActivityLifecycleState = .planned,
         totals: TrackedActivityTotals = TrackedActivityTotals(elapsedDuration: 0),
         healthKitExportState: HealthKitExportState = .notRequested,
+        routePoints: [TrackedActivityRoutePoint] = [],
         linkedActivityId: UUID? = nil,
         notes: String? = nil
     ) {
@@ -49,6 +54,8 @@ final class TrackedActivitySession {
         self.distanceMeters = totals.distanceMeters
         self.activeEnergyKilocalories = totals.activeEnergyKilocalories
         self.stepCount = totals.stepCount
+        self.routePointsBlob = Self.encodeRoutePoints(routePoints)
+        self.routePointCount = routePoints.count
         self.linkedActivityId = linkedActivityId
         self.notes = notes
 
@@ -104,6 +111,31 @@ final class TrackedActivitySession {
             stepCount = newValue.stepCount
             touch()
         }
+    }
+
+    var routePoints: [TrackedActivityRoutePoint] {
+        get { Self.decodeRoutePoints(routePointsBlob) }
+        set {
+            routePointsBlob = Self.encodeRoutePoints(newValue)
+            routePointCount = newValue.count
+            touch()
+        }
+    }
+
+    var hasRecordedRoute: Bool {
+        routePointCount > 1
+    }
+
+    var routeDistanceMeters: Double? {
+        let points = routePoints
+        guard points.count > 1 else { return nil }
+
+        let locations = points.map(\.location)
+        var distance: CLLocationDistance = 0
+        for index in 1..<locations.count {
+            distance += max(0, locations[index].distance(from: locations[index - 1]))
+        }
+        return distance > 0 ? distance : nil
     }
 
     var summary: TrackedActivitySummary {
@@ -208,5 +240,15 @@ final class TrackedActivitySession {
     private func accumulateElapsedIfNeeded(until date: Date) {
         guard lifecycleState == .inProgress else { return }
         elapsedDuration = max(0, elapsedDuration + max(0, date.timeIntervalSince(updatedAt)))
+    }
+
+    private static func encodeRoutePoints(_ points: [TrackedActivityRoutePoint]) -> Data? {
+        guard !points.isEmpty else { return nil }
+        return try? JSONEncoder().encode(points)
+    }
+
+    private static func decodeRoutePoints(_ data: Data?) -> [TrackedActivityRoutePoint] {
+        guard let data else { return [] }
+        return (try? JSONDecoder().decode([TrackedActivityRoutePoint].self, from: data)) ?? []
     }
 }

@@ -18,7 +18,7 @@ struct NowPlayingWorkoutControlsView: View {
         .padding(.vertical, 8)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Back", action: onClose)
+                Button(String(localized: "watch.now_playing.action.back", defaultValue: "Back"), action: onClose)
             }
         }
         .onAppear { client.start() }
@@ -27,7 +27,7 @@ struct NowPlayingWorkoutControlsView: View {
     private var header: some View {
         VStack(spacing: 4) {
             if client.nowPlaying.isActiveSession {
-                Text(client.nowPlaying.exerciseName ?? "Workout")
+                Text(client.nowPlaying.exerciseName ?? String(localized: "watch.now_playing.fallback.workout", defaultValue: "Workout"))
                     .font(.headline)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
@@ -53,21 +53,26 @@ struct NowPlayingWorkoutControlsView: View {
                         .lineLimit(2)
                 }
             } else {
-                Text("No active workout")
+                Text(String(localized: "watch.now_playing.empty.title", defaultValue: "No active workout"))
                     .font(.headline)
-                Text("Start on iPhone or watch")
+                Text(String(localized: "watch.now_playing.empty.subtitle", defaultValue: "Start on iPhone or watch"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
             if !client.canSendCommands {
-                Text("Phone unavailable")
+                Text(String(localized: "watch.now_playing.status.phone_unavailable", defaultValue: "Phone unavailable"))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             } else if !client.isReachable {
-                Text("Phone app closed — commands may take a moment")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                Text(
+                    String(
+                        localized: "watch.now_playing.status.phone_closed",
+                        defaultValue: "Phone app closed — commands may take a moment"
+                    )
+                )
+                .font(.caption2)
+                .foregroundStyle(.secondary)
             }
         }
     }
@@ -128,9 +133,13 @@ struct NowPlayingWorkoutControlsView: View {
         if client.nowPlaying.isTrackedActivitySession {
             HStack(spacing: 8) {
                 Image(systemName: client.nowPlaying.isPaused ? "pause.circle.fill" : "figure.walk.motion")
-                Text(client.nowPlaying.isPaused ? "Paused" : "Tracking live on iPhone")
-                    .font(.footnote)
-                    .multilineTextAlignment(.center)
+                Text(
+                    client.nowPlaying.isPaused
+                        ? String(localized: "watch.now_playing.state.paused", defaultValue: "Paused")
+                        : String(localized: "watch.now_playing.state.tracking_live_on_phone", defaultValue: "Tracking live on iPhone")
+                )
+                .font(.footnote)
+                .multilineTextAlignment(.center)
             }
             .foregroundStyle(.secondary)
         } else {
@@ -143,7 +152,7 @@ struct NowPlayingWorkoutControlsView: View {
                         Text(format(seconds: secs))
                             .monospacedDigit()
                     } else {
-                        Text("Rest")
+                        Text(String(localized: "watch.now_playing.rest", defaultValue: "Rest"))
                     }
                 }
             }

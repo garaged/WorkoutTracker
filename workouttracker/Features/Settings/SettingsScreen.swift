@@ -27,7 +27,7 @@ struct SettingsScreen: View {
                 }
                 .accessibilityIdentifier("settings.healthPermissionsLink")
 
-                Text("Tracked activities can be saved to Apple Health after you finish them. Strength sessions still stay inside WorkoutTracker only in this release.")
+                Text("Tracked activities can be saved to Apple Health after you finish them. Eligible outdoor walks, runs, and hikes can also attach route data when location access is available.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

@@ -107,6 +107,10 @@ struct TrackedActivityFinishSummaryView: View {
             LabeledContent("Permission", value: healthKitAuthorizationService.state.title)
             LabeledContent("Workout save state", value: session.healthKitExportState.displayName)
 
+            if session.environment == .outdoor && session.activityKind.supportsDistance {
+                LabeledContent("Captured route", value: session.hasRecordedRoute ? "\(session.routePointCount) points" : "Not available")
+            }
+
             Text(session.healthKitExportState.helperText)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
@@ -116,6 +120,13 @@ struct TrackedActivityFinishSummaryView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+
+            if session.environment == .outdoor && session.activityKind.supportsDistance {
+                Text("Outdoor routes require Apple Health access for workout routes and location while using the app during the activity.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             if let healthExportMessage {
                 Text(healthExportMessage)
@@ -156,6 +167,7 @@ struct TrackedActivityFinishSummaryView: View {
                         }
                     }
                     .buttonStyle(.borderedProminent)
+                    .foregroundStyle(.white)
                     .disabled(isExporting || session.lifecycleState != .completed)
                     .accessibilityIdentifier("trackedActivity.exportToHealthKitButton")
                 }
@@ -222,9 +234,15 @@ struct TrackedActivityFinishSummaryView: View {
 
         do {
             try recorder.updateHealthKitExportState(for: session, state: .pending, context: modelContext)
-            try await exportService.export(session)
+            let outcome = try await exportService.export(session)
             try recorder.updateHealthKitExportState(for: session, state: .exported, context: modelContext)
-            healthExportMessage = "Saved to Apple Health."
+            if outcome.didSaveRoute {
+                healthExportMessage = "Saved to Apple Health with your outdoor route."
+            } else if session.environment == .outdoor && session.activityKind.supportsDistance {
+                healthExportMessage = "Saved to Apple Health. The workout was exported even though route data was unavailable or could not be attached."
+            } else {
+                healthExportMessage = "Saved to Apple Health."
+            }
         } catch let exportError as HealthKitWorkoutExportError {
             let failedState: HealthKitExportState = {
                 switch exportError {

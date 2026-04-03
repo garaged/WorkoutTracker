@@ -21,5 +21,8 @@
 
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>WorkoutTracker saves completed tracked activities to Apple Health when you choose to export them.</string>
+
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>WorkoutTracker uses your location while an outdoor tracked activity is open so it can capture your route and attach it to Apple Health when available.</string>
 </dict>
 </plist>

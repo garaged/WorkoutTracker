@@ -127,6 +127,10 @@
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
+      <LocationScenarioReference
+         identifier = "../../workouttracker/Support/SimulatorRoutes/workouttracker-pr5-test-route.gpx"
+         referenceType = "0">
+      </LocationScenarioReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

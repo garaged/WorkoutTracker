@@ -54,9 +54,15 @@ enum HealthKitAuthorizationError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .requestDidNotComplete:
-            return "Apple Health permission could not be granted."
+            return String(
+                localized: "health.error.permission_request_incomplete",
+                defaultValue: "Apple Health permission could not be granted."
+            )
         case .unknownSaveFailure:
-            return "The workout could not be saved to Apple Health."
+            return String(
+                localized: "health.error.unknown_save_failure",
+                defaultValue: "The workout could not be saved to Apple Health."
+            )
         }
     }
 }
@@ -72,35 +78,47 @@ final class HealthKitAuthorizationService: ObservableObject {
         var title: String {
             switch self {
             case .unavailable:
-                return "Apple Health unavailable"
+                return String(localized: "health.authorization.title.unavailable", defaultValue: "Apple Health unavailable")
             case .notRequested:
-                return "Not connected"
+                return String(localized: "health.authorization.title.not_connected", defaultValue: "Not connected")
             case .denied:
-                return "Permission needed"
+                return String(localized: "health.authorization.title.permission_needed", defaultValue: "Permission needed")
             case .authorized:
-                return "Connected"
+                return String(localized: "health.authorization.title.connected", defaultValue: "Connected")
             }
         }
 
         var message: String {
             switch self {
             case .unavailable:
-                return "Apple Health is not available on this device. Tracked activities still stay in WorkoutTracker locally."
+                return String(
+                    localized: "health.authorization.message.unavailable",
+                    defaultValue: "Apple Health is not available on this device. Tracked activities still stay in WorkoutTracker locally."
+                )
             case .notRequested:
-                return "WorkoutTracker can save completed tracked activities to Apple Health. This release only writes your finished tracked activities; it does not import external Health workouts yet."
+                return String(
+                    localized: "health.authorization.message.not_requested",
+                    defaultValue: "WorkoutTracker can save completed tracked activities to Apple Health. Outdoor walks, runs, and hikes can also include route data when Apple Health and Location access are available."
+                )
             case .denied:
-                return "WorkoutTracker does not currently have permission to save tracked activities to Apple Health. You can still track locally and enable Apple Health later."
+                return String(
+                    localized: "health.authorization.message.denied",
+                    defaultValue: "WorkoutTracker does not currently have permission to save tracked activities to Apple Health. You can still track locally and enable Apple Health later."
+                )
             case .authorized:
-                return "Completed tracked activities can be saved to Apple Health."
+                return String(
+                    localized: "health.authorization.message.authorized",
+                    defaultValue: "Completed tracked activities can be saved to Apple Health. Eligible outdoor routes can be attached when location access is also available."
+                )
             }
         }
 
         var ctaTitle: String? {
             switch self {
             case .notRequested:
-                return "Enable Apple Health"
+                return String(localized: "health.authorization.cta.enable", defaultValue: "Enable Apple Health")
             case .denied:
-                return "Open Settings"
+                return String(localized: "health.authorization.cta.open_settings", defaultValue: "Open Settings")
             case .unavailable, .authorized:
                 return nil
             }
@@ -149,7 +167,7 @@ final class HealthKitAuthorizationService: ObservableObject {
     }
 
     static var workoutShareTypes: Set<HKSampleType> {
-        [HKObjectType.workoutType()]
+        [HKObjectType.workoutType(), HKSeriesType.workoutRoute()]
     }
 
     static func authorizationState(using store: HealthKitStoreProxy) -> AuthorizationState {
