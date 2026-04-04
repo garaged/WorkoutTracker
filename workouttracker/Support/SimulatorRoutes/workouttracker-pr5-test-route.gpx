@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="ChatGPT" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>WorkoutTracker PR5 Test Route</name>
+    <trkseg>
+      <trkpt lat="19.432608" lon="-99.133209">
+        <time>2026-04-03T18:00:00Z</time>
+      </trkpt>
+      <trkpt lat="19.4327" lon="-99.13305">
+        <time>2026-04-03T18:00:25Z</time>
+      </trkpt>
+      <trkpt lat="19.43282" lon="-99.1329">
+        <time>2026-04-03T18:00:50Z</time>
+      </trkpt>
+      <trkpt lat="19.43295" lon="-99.13282">
+        <time>2026-04-03T18:01:15Z</time>
+      </trkpt>
+      <trkpt lat="19.43308" lon="-99.13286">
+        <time>2026-04-03T18:01:40Z</time>
+      </trkpt>
+      <trkpt lat="19.43318" lon="-99.13302">
+        <time>2026-04-03T18:02:05Z</time>
+      </trkpt>
+      <trkpt lat="19.43322" lon="-99.13323">
+        <time>2026-04-03T18:02:30Z</time>
+      </trkpt>
+      <trkpt lat="19.43316" lon="-99.13345">
+        <time>2026-04-03T18:02:55Z</time>
+      </trkpt>
+      <trkpt lat="19.43302" lon="-99.13359">
+        <time>2026-04-03T18:03:20Z</time>
+      </trkpt>
+      <trkpt lat="19.43285" lon="-99.13364">
+        <time>2026-04-03T18:03:45Z</time>
+      </trkpt>
+      <trkpt lat="19.4327" lon="-99.13356">
+        <time>2026-04-03T18:04:10Z</time>
+      </trkpt>
+      <trkpt lat="19.432608" lon="-99.133209">
+        <time>2026-04-03T18:04:35Z</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

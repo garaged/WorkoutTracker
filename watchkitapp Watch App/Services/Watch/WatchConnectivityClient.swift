@@ -8,6 +8,8 @@ import WatchKit
 /// - Receives "Now Playing" state via app context and live messages.
 /// - Derives the rest countdown locally from an absolute end timestamp so the
 ///   timer remains accurate even when app-context/live updates are sparse.
+/// - Derives tracked-activity elapsed time locally from a baseline timestamp so
+///   watch controls feel live even before the next mirrored state arrives.
 @MainActor
 final class WatchConnectivityClient: NSObject, ObservableObject {
 
@@ -37,13 +39,11 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
 
         refreshTransportState(from: session)
 
-        // If we already have a cached context (e.g., watch opens after phone pushed state), apply it.
         let ctx = session.receivedApplicationContext
         if let state = WatchMessageCodec.decodeState(from: ctx) {
             applyReceivedState(state)
         }
 
-        // Ask for a fresh snapshot (fast path when the app is opened).
         requestState()
     }
 
@@ -110,7 +110,9 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
         case .requestState:
             return false
         case .toggleRestTimer, .markSetComplete, .nextSet, .previousSet,
-             .openCurrentSession, .resumeCurrentSession, .startRoutine:
+             .openCurrentSession, .resumeCurrentSession, .startRoutine,
+             .startTrackedActivity, .resumeCurrentTrackedActivity,
+             .pauseTrackedActivity, .resumeTrackedActivity, .finishTrackedActivity:
             return true
         }
     }
@@ -127,16 +129,27 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
     }
 
     private func syncTickerForCurrentState() {
-        if shouldRunLocalCountdown(for: sourceNowPlaying) {
+        if shouldRunLocalTicker(for: sourceNowPlaying) {
             startCountdownIfNeeded()
         } else {
             stopCountdown()
         }
     }
 
-    private func shouldRunLocalCountdown(for state: WatchNowPlayingState) -> Bool {
-        guard state.isRestRunning, let end = state.restEndsAtEpochSeconds else { return false }
-        return end > Date().timeIntervalSince1970
+    private func shouldRunLocalTicker(for state: WatchNowPlayingState) -> Bool {
+        if state.isRestRunning, let end = state.restEndsAtEpochSeconds {
+            return end > Date().timeIntervalSince1970
+        }
+
+        if state.isTrackedActivitySession,
+           state.isActiveSession,
+           !state.isPaused,
+           state.elapsedSeconds != nil,
+           state.elapsedUpdatedAtEpochSeconds != nil {
+            return true
+        }
+
+        return false
     }
 
     private func startCountdownIfNeeded() {
@@ -172,6 +185,15 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
             }
         }
 
+        if next.isTrackedActivitySession,
+           next.isActiveSession,
+           !next.isPaused,
+           let baselineSeconds = next.elapsedSeconds,
+           let baselineEpoch = next.elapsedUpdatedAtEpochSeconds {
+            let delta = max(0, Int(Date().timeIntervalSince1970 - baselineEpoch))
+            next.elapsedSeconds = max(0, baselineSeconds + delta)
+        }
+
         nowPlaying = next
 
         if playFinishHapticIfNeeded,
@@ -195,10 +217,8 @@ extension WatchConnectivityClient: WCSessionDelegate {
         }
     }
 
-    // These are iOS-only. On watchOS they are unavailable.
     #if os(iOS)
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {
-        // No-op
     }
 
     nonisolated func sessionDidDeactivate(_ session: WCSession) {

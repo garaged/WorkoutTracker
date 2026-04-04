@@ -19,6 +19,19 @@ struct SettingsScreen: View {
                 }
             }
 
+            Section("Health") {
+                NavigationLink {
+                    HealthPermissionsView()
+                } label: {
+                    Label("Apple Health", systemImage: "heart.text.square")
+                }
+                .accessibilityIdentifier("settings.healthPermissionsLink")
+
+                Text("Tracked activities can be saved to Apple Health after you finish them. Eligible outdoor walks, runs, and hikes can also attach route data when location access is available.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
             StarterPackSettingsSection()
 
             Section(String(localized: "settings.section.programs")) {

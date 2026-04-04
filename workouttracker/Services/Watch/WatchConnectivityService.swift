@@ -104,7 +104,7 @@ final class WatchConnectivityService: NSObject, ObservableObject {
             return
         }
         onCommand?(command)
-        reply?( ["ok": true] )
+        reply?(WatchMessageCodec.encodeState(latestState))
     }
 }
 

@@ -13,15 +13,18 @@ final class WorkoutRemoteControlRouter {
     private let logging = WorkoutLoggingService()
     private let restTimer = RestTimerController.shared
     private let sessionResumePlanner = SessionResumePlanner()
+    private let trackedActivityRecorder = TrackedActivityRecorder()
     
     private struct Cursor {
         var exerciseID: UUID?
         var setID: UUID?
     }
     
-    // “Pinned” session: set by the UI when the user is in the workout screen.
-    // This is the most reliable signal for v1 watch remote control.
+    // “Pinned” strength session: set by the UI when the user is in the workout screen.
+    // This remains the most reliable signal for strength remote control.
     private var pinnedSessionID: UUID? = nil
+    // Pinned tracked-activity session: set by watch-started activities or the phone activity screen.
+    private var pinnedTrackedActivitySessionID: UUID? = nil
     
     private var cursorBySessionID: [UUID: Cursor] = [:]
     private var cancellables: Set<AnyCancellable> = []
@@ -59,6 +62,7 @@ final class WorkoutRemoteControlRouter {
     
     /// Called by the phone UI (WorkoutSessionScreen) whenever the user is inside a workout.
     func updateCursor(sessionID: UUID, exerciseID: UUID?, setID: UUID?) {
+        pinnedTrackedActivitySessionID = nil
         pinnedSessionID = sessionID
         cursorBySessionID[sessionID] = Cursor(exerciseID: exerciseID, setID: setID)
         pushNowPlayingIfNeeded()
@@ -67,6 +71,23 @@ final class WorkoutRemoteControlRouter {
     /// Call when workout ends or user leaves the workout screen.
     func clearNowPlaying(sessionID: UUID) {
         if pinnedSessionID == sessionID { pinnedSessionID = nil }
+        pushNowPlayingIfNeeded()
+    }
+
+    func focusTrackedActivity(sessionID: UUID) {
+        pinnedSessionID = nil
+        pinnedTrackedActivitySessionID = sessionID
+        pushNowPlayingIfNeeded()
+    }
+
+    func clearTrackedActivityFocus(sessionID: UUID) {
+        if pinnedTrackedActivitySessionID == sessionID {
+            pinnedTrackedActivitySessionID = nil
+        }
+        pushNowPlayingIfNeeded()
+    }
+
+    func refreshNowPlaying() {
         pushNowPlayingIfNeeded()
     }
     
@@ -83,6 +104,18 @@ final class WorkoutRemoteControlRouter {
 
         case .startRoutine:
             handleStartRoutine(cmd, context: context)
+            return
+
+        case .startTrackedActivity:
+            handleStartTrackedActivity(cmd, context: context)
+            return
+
+        case .resumeCurrentTrackedActivity:
+            handleTrackedActivityQuickEntry(cmd, context: context)
+            return
+
+        case .pauseTrackedActivity, .resumeTrackedActivity, .finishTrackedActivity:
+            handleTrackedActivityLifecycle(cmd, context: context)
             return
 
         case .openCurrentSession, .resumeCurrentSession:
@@ -127,7 +160,9 @@ final class WorkoutRemoteControlRouter {
         case .previousSet:
             moveCursor(in: session, delta: -1)
 
-        case .requestState, .openCurrentSession, .resumeCurrentSession, .startRoutine:
+        case .requestState, .openCurrentSession, .resumeCurrentSession, .startRoutine,
+             .startTrackedActivity, .resumeCurrentTrackedActivity,
+             .pauseTrackedActivity, .resumeTrackedActivity, .finishTrackedActivity:
             break
         }
 
@@ -186,6 +221,18 @@ final class WorkoutRemoteControlRouter {
         return sessions.first(where: { $0.id == id })
     }
 
+    private func fetchTrackedActivitySessionsSorted(context: ModelContext) -> [TrackedActivitySession] {
+        let fd = FetchDescriptor<TrackedActivitySession>(
+            sortBy: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)]
+        )
+        return (try? context.fetch(fd)) ?? []
+    }
+
+    private func fetchTrackedActivitySession(id: UUID, context: ModelContext) -> TrackedActivitySession? {
+        let sessions = fetchTrackedActivitySessionsSorted(context: context)
+        return sessions.first(where: { $0.id == id })
+    }
+
 
     private func fetchActivitiesByID(context: ModelContext) -> [UUID: Activity] {
         let activities = (try? context.fetch(FetchDescriptor<Activity>())) ?? []
@@ -200,6 +247,20 @@ final class WorkoutRemoteControlRouter {
             return nil
         }
         return session
+    }
+
+    private func resolvedPinnedTrackedActivitySession(context: ModelContext) -> TrackedActivitySession? {
+        guard let pinnedTrackedActivitySessionID else { return nil }
+        guard let session = fetchTrackedActivitySession(id: pinnedTrackedActivitySessionID, context: context) else {
+            self.pinnedTrackedActivitySessionID = nil
+            return nil
+        }
+        return session
+    }
+
+    private func preferredActiveTrackedActivitySession(context: ModelContext) -> TrackedActivitySession? {
+        fetchTrackedActivitySessionsSorted(context: context)
+            .first(where: { $0.lifecycleState == .inProgress || $0.lifecycleState == .paused })
     }
 
     private func preferredActiveSession(context: ModelContext) -> WorkoutSession? {
@@ -313,24 +374,39 @@ final class WorkoutRemoteControlRouter {
         guard let container else { return }
         let context = ModelContext(container)
 
-        let session = resolvedPinnedSession(context: context) ?? preferredActiveSession(context: context)
-
-        guard let s = session else {
-            WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
+        if let trackedSession = resolvedPinnedTrackedActivitySession(context: context),
+           trackedSession.lifecycleState == .inProgress || trackedSession.lifecycleState == .paused {
+            pushNowPlaying(for: trackedSession, context: context)
             return
         }
 
-        // If not truly in progress, still show it if pinned (user is in screen).
-        if !(isLaunchable(s) || pinnedSessionID == s.id) {
-            WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
+        if let session = resolvedPinnedSession(context: context) {
+            if isLaunchable(session) || pinnedSessionID == session.id {
+                ensureCursorExists(for: session)
+                pushNowPlaying(for: session, context: context)
+                return
+            }
+        }
+
+        if let strengthSession = preferredActiveSession(context: context) {
+            ensureCursorExists(for: strengthSession)
+            pushNowPlaying(for: strengthSession, context: context)
             return
         }
 
-        ensureCursorExists(for: s)
-        pushNowPlaying(for: s, context: context)
+        if let trackedSession = preferredActiveTrackedActivitySession(context: context) {
+            pushNowPlaying(for: trackedSession, context: context)
+            return
+        }
+
+        WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
     }
     
     private func pushNowPlaying(for session: WorkoutSession, context: ModelContext? = nil) {
+        WatchConnectivityService.shared.pushNowPlayingState(makeWatchState(for: session, context: context))
+    }
+
+    private func pushNowPlaying(for session: TrackedActivitySession, context: ModelContext? = nil) {
         WatchConnectivityService.shared.pushNowPlayingState(makeWatchState(for: session, context: context))
     }
 
@@ -354,6 +430,7 @@ final class WorkoutRemoteControlRouter {
         let ordered = orderedSets(in: session)
         guard !ordered.isEmpty else {
             return WatchNowPlayingState(
+                presentationKind: .strengthSession,
                 isActiveSession: true,
                 exerciseName: session.sourceRoutineNameSnapshot ?? "Workout",
                 setTitle: nil,
@@ -363,6 +440,11 @@ final class WorkoutRemoteControlRouter {
                 restEndsAtEpochSeconds: restTimer.activeEndDate?.timeIntervalSince1970,
                 canGoPrevious: false,
                 canGoNext: false,
+                isPaused: false,
+                canPauseOrResume: false,
+                canFinish: false,
+                elapsedSeconds: nil,
+                elapsedUpdatedAtEpochSeconds: nil,
                 sessionID: session.id.uuidString,
                 setID: nil,
                 quickStartRoutines: context.map(quickStartRoutines(context:)) ?? []
@@ -380,6 +462,7 @@ final class WorkoutRemoteControlRouter {
         let detail = formatSetDetail(pair.set)
         
         return WatchNowPlayingState(
+            presentationKind: .strengthSession,
             isActiveSession: true,
             exerciseName: pair.exercise.exerciseNameSnapshot,
             setTitle: "Set \(setNum) of \(total)",
@@ -389,12 +472,45 @@ final class WorkoutRemoteControlRouter {
             restEndsAtEpochSeconds: restTimer.activeEndDate?.timeIntervalSince1970,
             canGoPrevious: idx > 0,
             canGoNext: idx < ordered.count - 1,
+            isPaused: false,
+            canPauseOrResume: false,
+            canFinish: false,
+            elapsedSeconds: nil,
+            elapsedUpdatedAtEpochSeconds: nil,
             sessionID: session.id.uuidString,
             setID: pair.set.id.uuidString,
             quickStartRoutines: context.map(quickStartRoutines(context:)) ?? []
         )
     }
     
+    private func makeWatchState(for session: TrackedActivitySession, context: ModelContext? = nil) -> WatchNowPlayingState {
+        let liveTotals = trackedActivityRecorder.liveTotals(for: session)
+        let elapsedSeconds = Int(liveTotals.elapsedDuration.rounded(.down))
+        let environmentTitle = session.environment == .unspecified ? nil : session.environment.displayName
+        let detail = session.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return WatchNowPlayingState(
+            presentationKind: .trackedActivity,
+            isActiveSession: session.lifecycleState == .inProgress || session.lifecycleState == .paused,
+            exerciseName: session.activityKind.displayName,
+            setTitle: environmentTitle,
+            setDetail: detail?.isEmpty == false ? detail : nil,
+            isRestRunning: false,
+            restRemainingSeconds: nil,
+            restEndsAtEpochSeconds: nil,
+            canGoPrevious: false,
+            canGoNext: false,
+            isPaused: session.lifecycleState == .paused,
+            canPauseOrResume: session.lifecycleState == .inProgress || session.lifecycleState == .paused,
+            canFinish: session.lifecycleState == .inProgress || session.lifecycleState == .paused,
+            elapsedSeconds: elapsedSeconds,
+            elapsedUpdatedAtEpochSeconds: Date().timeIntervalSince1970,
+            sessionID: session.id.uuidString,
+            setID: nil,
+            quickStartRoutines: context.map(quickStartRoutines(context:)) ?? []
+        )
+    }
+
     private func formatSetDetail(_ set: WorkoutSetLog) -> String {
         if set.actualDurationSeconds != nil || set.targetDurationSeconds != nil || set.actualDistance != nil || set.targetDistance != nil {
             var parts: [String] = []
@@ -505,10 +621,92 @@ extension WorkoutRemoteControlRouter {
             return
         }
 
+        pinnedTrackedActivitySessionID = nil
         pinnedSessionID = session.id
         ensureCursorExists(for: session)
         stagePhoneOpen(route: route)
         syncLiveActivity(context: context)
         pushNowPlaying(for: session, context: context)
+    }
+
+    private func handleStartTrackedActivity(_ cmd: WatchCommand, context: ModelContext) {
+        let kind = TrackedActivityKind(rawValue: cmd.trackedActivityKindRaw ?? "") ?? .walking
+        let environment = ActivityEnvironment(rawValue: cmd.activityEnvironmentRaw ?? "") ?? kind.defaultEnvironment
+
+        guard let session = try? trackedActivityRecorder.createSession(
+            activityKind: kind,
+            environment: environment,
+            notes: nil,
+            context: context
+        ) else {
+            WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
+            return
+        }
+
+        pinnedSessionID = nil
+        pinnedTrackedActivitySessionID = session.id
+        pushNowPlaying(for: session, context: context)
+    }
+
+    private func handleTrackedActivityQuickEntry(_ cmd: WatchCommand, context: ModelContext) {
+        guard let session = resolveTrackedActivitySession(for: cmd, context: context) else {
+            pushNowPlayingIfNeeded()
+            return
+        }
+
+        if session.lifecycleState == .paused || session.lifecycleState == .planned {
+            try? trackedActivityRecorder.resume(session, context: context)
+        }
+
+        pinnedSessionID = nil
+        pinnedTrackedActivitySessionID = session.id
+        pushNowPlaying(for: session, context: context)
+    }
+
+    private func handleTrackedActivityLifecycle(_ cmd: WatchCommand, context: ModelContext) {
+        guard let session = resolveTrackedActivitySession(for: cmd, context: context) else {
+            pushNowPlayingIfNeeded()
+            return
+        }
+
+        switch cmd.kind {
+        case .pauseTrackedActivity:
+            try? trackedActivityRecorder.pause(session, context: context)
+            pinnedTrackedActivitySessionID = session.id
+            pushNowPlaying(for: session, context: context)
+
+        case .resumeTrackedActivity:
+            try? trackedActivityRecorder.resume(session, context: context)
+            pinnedTrackedActivitySessionID = session.id
+            pushNowPlaying(for: session, context: context)
+
+        case .finishTrackedActivity:
+            try? trackedActivityRecorder.complete(session, context: context)
+            if pinnedTrackedActivitySessionID == session.id {
+                pinnedTrackedActivitySessionID = nil
+            }
+            pushNowPlayingIfNeeded()
+
+        case .requestState, .toggleRestTimer, .markSetComplete, .nextSet, .previousSet,
+             .openCurrentSession, .resumeCurrentSession, .startRoutine,
+             .startTrackedActivity, .resumeCurrentTrackedActivity:
+            break
+        }
+    }
+
+    private func resolveTrackedActivitySession(for cmd: WatchCommand, context: ModelContext) -> TrackedActivitySession? {
+        if let sid = cmd.sessionID,
+           let uuid = UUID(uuidString: sid),
+           let session = fetchTrackedActivitySession(id: uuid, context: context),
+           session.lifecycleState == .inProgress || session.lifecycleState == .paused {
+            return session
+        }
+
+        if let pinned = resolvedPinnedTrackedActivitySession(context: context),
+           pinned.lifecycleState == .inProgress || pinned.lifecycleState == .paused {
+            return pinned
+        }
+
+        return preferredActiveTrackedActivitySession(context: context)
     }
 }

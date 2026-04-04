@@ -18,4 +18,16 @@ final class WorkoutRemoteControlRouter {
     func clearNowPlaying(sessionID: UUID) {
         // No-op in UI test host
     }
+
+    func focusTrackedActivity(sessionID: UUID) {
+        // No-op in UI test host
+    }
+
+    func clearTrackedActivityFocus(sessionID: UUID) {
+        // No-op in UI test host
+    }
+
+    func refreshNowPlaying() {
+        // No-op in UI test host
+    }
 }

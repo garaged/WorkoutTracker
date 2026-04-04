@@ -1,3 +1,35 @@
+# Version 2.2.0 - Tracked activities + HealthKit foundation
+
+WorkoutTracker now supports tracked activities alongside strength workouts, with a new foundation for Apple Health, Apple Watch control, and outdoor route capture.
+
+## New
+
+Added tracked activities:
+  - Walking
+  - Running
+  - Hiking
+  - Yoga
+- Added a dedicated Activities area to start and manage tracked activities
+- Added activity-specific live screens and finish summaries
+- Added Apple Health integration for saving completed tracked activities
+- Added Apple Watch support for starting, pausing, resuming, and finishing tracked activities
+- Added outdoor route capture foundation for eligible activities
+- Added tracked activities to history and progress surfaces
+- Added localization coverage for new tracked-activity and Health-related UI
+
+Improved:
+- Tracked activities now feel like a first-class part of the app instead of an add-on
+- Finish summaries are more honest about low-data sessions and export state
+- Health permission and export states are clearer in Settings and activity flows
+- Recovery behavior for interrupted tracked activities is improved
+- History and progress now present activity-appropriate metrics
+- Watch mirroring for tracked activities is faster and more reliable
+
+Notes:
+- Apple Health saving is currently a user-controlled action from the finish summary
+- Outdoor route capture is currently designed for foreground use
+- Strength sessions and tracked activities remain separate by design, which keeps both flows cleaner and more trustworthy
+
 # Version 2.1.1 - System integrations
 
 ## Hotfix for scroll to next set edge case

@@ -14,6 +14,8 @@ struct UITestStartRouter: View {
             NavigationStack { DayTimelineEntryScreen() }
         case "settings":
             NavigationStack { SettingsScreen() }
+        case "activities":
+            NavigationStack { ActivitiesHomeView() }
         case "home", "":
             AppRootView()
         default:

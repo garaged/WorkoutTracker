@@ -1796,6 +1796,9 @@
         }
       }
     },
+    "Active energy (kcal)" : {
+
+    },
     "Active Sessions" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1814,7 +1817,6 @@
       }
     },
     "Activities" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -1837,6 +1839,601 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Actividades: %lld"
+          }
+        }
+      }
+    },
+    "activities.action.start" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Start"
+          }
+        }
+      }
+    },
+    "activities.action.start_hike" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start hike"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar senderismo"
+          }
+        }
+      }
+    },
+    "activities.action.start_run" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start run"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar carrera"
+          }
+        }
+      }
+    },
+    "activities.action.start_walk" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start walk"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar caminata"
+          }
+        }
+      }
+    },
+    "activities.action.start_yoga" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start yoga"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar yoga"
+          }
+        }
+      }
+    },
+    "activities.environment.automatic" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático"
+          }
+        }
+      }
+    },
+    "activities.environment.indoor" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indoor"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interior"
+          }
+        }
+      }
+    },
+    "activities.environment.outdoor" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outdoor"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exterior"
+          }
+        }
+      }
+    },
+    "activities.helper.hiking" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duration is always tracked. Distance, energy, and steps can be added after you finish."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La duración siempre se registra. La distancia, la energía y los pasos se pueden agregar al terminar."
+          }
+        }
+      }
+    },
+    "activities.helper.running" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duration is always tracked. Distance, energy, and steps can be added after you finish."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La duración siempre se registra. La distancia, la energía y los pasos se pueden agregar al terminar."
+          }
+        }
+      }
+    },
+    "activities.helper.walking" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duration is always tracked. Distance, steps, and energy can be added after you finish."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La duración siempre se registra. La distancia, los pasos y la energía se pueden agregar al terminar."
+          }
+        }
+      }
+    },
+    "activities.helper.yoga" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duration is always tracked. Energy and notes can be added after you finish."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La duración siempre se registra. La energía y las notas se pueden agregar al terminar."
+          }
+        }
+      }
+    },
+    "activities.history.export_failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Apple Health save failed"
+          }
+        }
+      }
+    },
+    "activities.history.export_pending" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Apple Health save pending"
+          }
+        }
+      }
+    },
+    "activities.history.low_data" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No additional metrics were recorded for this activity."
+          }
+        }
+      }
+    },
+    "activities.kind.hiking" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiking"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senderismo"
+          }
+        }
+      }
+    },
+    "activities.kind.running" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Running"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carrera"
+          }
+        }
+      }
+    },
+    "activities.kind.walking" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Walking"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caminata"
+          }
+        }
+      }
+    },
+    "activities.kind.yoga" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yoga"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yoga"
+          }
+        }
+      }
+    },
+    "activities.lifecycle.completed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completada"
+          }
+        }
+      }
+    },
+    "activities.lifecycle.discarded" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discarded"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartada"
+          }
+        }
+      }
+    },
+    "activities.lifecycle.in_progress" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "In progress"
+          }
+        }
+      }
+    },
+    "activities.lifecycle.live" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En curso"
+          }
+        }
+      }
+    },
+    "activities.lifecycle.paused" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pausa"
+          }
+        }
+      }
+    },
+    "activities.lifecycle.planned" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planned"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planificada"
+          }
+        }
+      }
+    },
+    "activities.metric.active_energy" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Active energy"
+          }
+        }
+      }
+    },
+    "activities.metric.average_pace" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Average pace"
+          }
+        }
+      }
+    },
+    "activities.metric.distance" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Distance"
+          }
+        }
+      }
+    },
+    "activities.metric.distance_value" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ km"
+          }
+        }
+      }
+    },
+    "activities.metric.duration" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Duration"
+          }
+        }
+      }
+    },
+    "activities.metric.energy_value" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%lld kcal"
+          }
+        }
+      }
+    },
+    "activities.metric.pace_value" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$d:%2$02d /km"
+          }
+        }
+      }
+    },
+    "activities.metric.status" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Status"
+          }
+        }
+      }
+    },
+    "activities.metric.steps" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Steps"
+          }
+        }
+      }
+    },
+    "activities.metric.steps_value" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ steps"
+          }
+        }
+      }
+    },
+    "activities.recovery.live_title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Return to your active activity"
+          }
+        }
+      }
+    },
+    "activities.recovery.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "WorkoutTracker kept this tracked activity open so you can resume it honestly after an interruption or relaunch."
+          }
+        }
+      }
+    },
+    "activities.recovery.paused_title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Resume your paused activity"
+          }
+        }
+      }
+    },
+    "activities.section.active" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Active"
+          }
+        }
+      }
+    },
+    "activities.section.recent" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Recent"
+          }
+        }
+      }
+    },
+    "activities.section.recovery" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Recovery"
+          }
+        }
+      }
+    },
+    "activities.summary.low_data" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This activity has low data so the summary only shows the metrics that were actually recorded."
+          }
+        }
+      }
+    },
+    "activities.summary.section" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Summary"
+          }
+        }
+      }
+    },
+    "activities.summary.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Summary"
+          }
+        }
+      }
+    },
+    "activities.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Activities"
           }
         }
       }
@@ -2158,6 +2755,9 @@
         }
       }
     },
+    "Apple Health" : {
+
+    },
     "Apply for next workout" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2190,6 +2790,9 @@
           }
         }
       }
+    },
+    "Approximate route distance" : {
+
     },
     "Archive" : {
       "localizations" : {
@@ -2871,6 +3474,12 @@
         }
       }
     },
+    "Captured points" : {
+
+    },
+    "Captured route" : {
+
+    },
     "Catalog" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2989,7 +3598,6 @@
       }
     },
     "Close" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -3466,6 +4074,15 @@
         }
       }
     },
+    "Could not save summary" : {
+
+    },
+    "Could not start activity" : {
+
+    },
+    "Could not update activity" : {
+
+    },
     "Couldn’t load progress" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3615,6 +4232,9 @@
           }
         }
       }
+    },
+    "Current metrics" : {
+
     },
     "Current Session" : {
 
@@ -3932,6 +4552,12 @@
         }
       }
     },
+    "Discard activity" : {
+
+    },
+    "Discard this tracked activity?" : {
+
+    },
     "Dismiss coach suggestion" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3997,6 +4623,12 @@
           }
         }
       }
+    },
+    "Distance (km)" : {
+
+    },
+    "Distance, steps, and energy can be refined when you finish this activity. Outdoor route distance is prefilled when location data is available." : {
+
     },
     "Done" : {
       "localizations" : {
@@ -4179,6 +4811,9 @@
         }
       }
     },
+    "Enable Apple Health" : {
+
+    },
     "Enabled" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4242,6 +4877,9 @@
           }
         }
       }
+    },
+    "Environment" : {
+
     },
     "Equipment" : {
       "extractionState" : "stale",
@@ -4755,7 +5393,6 @@
       }
     },
     "Finish" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -5028,6 +5665,585 @@
         }
       }
     },
+    "Health" : {
+
+    },
+    "health.authorization.cta.enable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable Apple Health"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar Apple Health"
+          }
+        }
+      }
+    },
+    "health.authorization.cta.open_settings" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Settings"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Ajustes"
+          }
+        }
+      }
+    },
+    "health.authorization.message.authorized" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed tracked activities can be saved to Apple Health. Eligible outdoor routes can be attached when location access is also available."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las actividades registradas completadas se pueden guardar en Apple Health. Las rutas exteriores elegibles se pueden adjuntar cuando también hay acceso a la ubicación."
+          }
+        }
+      }
+    },
+    "health.authorization.message.denied" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker does not currently have permission to save tracked activities to Apple Health. You can still track locally and enable Apple Health later."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker no tiene permiso actualmente para guardar actividades registradas en Apple Health. Aun así, puedes registrarlas localmente y habilitar Apple Health después."
+          }
+        }
+      }
+    },
+    "health.authorization.message.not_requested" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker can save completed tracked activities to Apple Health. Outdoor walks, runs, and hikes can also include route data when Apple Health and Location access are available."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker puede guardar actividades registradas completadas en Apple Health. Las caminatas, carreras y senderismos al aire libre también pueden incluir datos de ruta cuando Apple Health y el acceso a Ubicación están disponibles."
+          }
+        }
+      }
+    },
+    "health.authorization.message.unavailable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health is not available on this device. Tracked activities still stay in WorkoutTracker locally."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health no está disponible en este dispositivo. Las actividades registradas seguirán guardándose localmente en WorkoutTracker."
+          }
+        }
+      }
+    },
+    "health.authorization.title.connected" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connected"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conectado"
+          }
+        }
+      }
+    },
+    "health.authorization.title.not_connected" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not connected"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No conectado"
+          }
+        }
+      }
+    },
+    "health.authorization.title.permission_needed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permission needed"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permiso necesario"
+          }
+        }
+      }
+    },
+    "health.authorization.title.unavailable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health unavailable"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health no disponible"
+          }
+        }
+      }
+    },
+    "health.error.permission_request_incomplete" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health permission could not be granted."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo otorgar el permiso para Apple Health."
+          }
+        }
+      }
+    },
+    "health.error.unknown_save_failure" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The workout could not be saved to Apple Health."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar el entrenamiento en Apple Health."
+          }
+        }
+      }
+    },
+    "health.export_state_helper.failed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The last Apple Health save attempt did not complete. You can retry after checking permissions."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El último intento de guardado en Apple Health no se completó. Puedes reintentarlo después de revisar los permisos."
+          }
+        }
+      }
+    },
+    "health.export_state_helper.not_saved" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This tracked activity has not been saved to Apple Health yet."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad registrada aún no se ha guardado en Apple Health."
+          }
+        }
+      }
+    },
+    "health.export_state_helper.saved" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This tracked activity was saved to Apple Health. Later edits in WorkoutTracker do not update the already-saved Health workout in this release."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad registrada se guardó en Apple Health. En esta versión, las ediciones posteriores en WorkoutTracker no actualizan el entrenamiento ya guardado en Health."
+          }
+        }
+      }
+    },
+    "health.export_state_helper.saving" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker is currently saving this tracked activity to Apple Health."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker está guardando esta actividad registrada en Apple Health."
+          }
+        }
+      }
+    },
+    "health.export_state_helper.unavailable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health is not available on this device."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health no está disponible en este dispositivo."
+          }
+        }
+      }
+    },
+    "health.export_state.failed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save failed"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error al guardar"
+          }
+        }
+      }
+    },
+    "health.export_state.not_saved" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not saved"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No guardado"
+          }
+        }
+      }
+    },
+    "health.export_state.saved" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado"
+          }
+        }
+      }
+    },
+    "health.export_state.saving" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saving"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardando"
+          }
+        }
+      }
+    },
+    "health.export_state.unavailable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unavailable"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible"
+          }
+        }
+      }
+    },
+    "health.permissions.action.enable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable Apple Health"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar Apple Health"
+          }
+        }
+      }
+    },
+    "health.permissions.action.open_settings" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Settings"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Ajustes"
+          }
+        }
+      }
+    },
+    "health.permissions.action.refresh" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh status"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizar estado"
+          }
+        }
+      }
+    },
+    "health.permissions.location.body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outdoor route capture uses your location while the tracked activity screen is open. If location access is denied, the workout can still be saved to Apple Health without a route."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La captura de rutas exteriores usa tu ubicación mientras la pantalla de actividad registrada está abierta. Si se niega el acceso a la ubicación, el entrenamiento aún se puede guardar en Apple Health sin una ruta."
+          }
+        }
+      }
+    },
+    "health.permissions.row.apple_health" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health"
+          }
+        }
+      }
+    },
+    "health.permissions.saves.completed_workouts" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed walk, run, hike, and yoga workouts"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamientos completados de caminata, carrera, senderismo y yoga"
+          }
+        }
+      }
+    },
+    "health.permissions.saves.distance_energy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distance and active energy when you add them"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distancia y energía activa cuando las agregas"
+          }
+        }
+      }
+    },
+    "health.permissions.saves.footer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This release writes completed tracked activities to Apple Health. Outdoor walks, runs, and hikes can also include route data when you allow location while using the app."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta versión escribe las actividades registradas completadas en Apple Health. Las caminatas, carreras y senderismos al aire libre también pueden incluir datos de ruta cuando permites la ubicación mientras usas la app."
+          }
+        }
+      }
+    },
+    "health.permissions.saves.route_data" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eligible outdoor route data when location access is available"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datos de ruta exterior elegibles cuando el acceso a la ubicación está disponible"
+          }
+        }
+      }
+    },
+    "health.permissions.saves.start_end_time" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout start and end time"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hora de inicio y fin del entrenamiento"
+          }
+        }
+      }
+    },
+    "health.permissions.section.location" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location for outdoor routes"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubicación para rutas exteriores"
+          }
+        }
+      }
+    },
+    "health.permissions.section.saves" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What WorkoutTracker saves"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qué guarda WorkoutTracker"
+          }
+        }
+      }
+    },
+    "health.permissions.section.status" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado"
+          }
+        }
+      }
+    },
+    "health.permissions.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health"
+          }
+        }
+      }
+    },
     "Help & links" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5073,6 +6289,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Historial de este día"
+          }
+        }
+      }
+    },
+    "history.empty.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Complete a workout or tracked activity to see it here."
+          }
+        }
+      }
+    },
+    "history.empty.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No history yet"
+          }
+        }
+      }
+    },
+    "history.section.active_tracked" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Resume tracked activities"
+          }
+        }
+      }
+    },
+    "history.section.strength_sessions" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Strength sessions"
+          }
+        }
+      }
+    },
+    "history.section.tracked_activities" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tracked activities"
+          }
+        }
+      }
+    },
+    "history.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "History"
           }
         }
       }
@@ -5656,6 +6938,9 @@
           }
         }
       }
+    },
+    "Live duration" : {
+
     },
     "Loading…" : {
       "extractionState" : "stale",
@@ -6440,6 +7725,9 @@
         }
       }
     },
+    "No tracked activities yet" : {
+
+    },
     "No warm-up suggestions matched your search. Switch to All to see the full library or create a new exercise." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6523,7 +7811,6 @@
       }
     },
     "Notes" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -6640,6 +7927,15 @@
         }
       }
     },
+    "Open Location Settings" : {
+
+    },
+    "Open Settings" : {
+
+    },
+    "Open summary" : {
+
+    },
     "Open the rest timer when your current workout session is ready for one." : {
 
     },
@@ -6666,6 +7962,9 @@
         }
       }
     },
+    "Optional notes" : {
+
+    },
     "Optional. A quick mood + note makes it fun to look back later." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6687,6 +7986,12 @@
           }
         }
       }
+    },
+    "Outdoor route" : {
+
+    },
+    "Outdoor routes require Apple Health access for workout routes and location while using the app during the activity." : {
+
     },
     "Overview" : {
       "extractionState" : "stale",
@@ -6785,6 +8090,9 @@
           }
         }
       }
+    },
+    "Permission" : {
+
     },
     "Personal Records" : {
       "extractionState" : "stale",
@@ -7249,6 +8557,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "El volumen de %1$@ sube en las últimas %2$lld semanas."
+          }
+        }
+      }
+    },
+    "progress.activities.headline" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tracked activity recap"
+          }
+        }
+      }
+    },
+    "progress.activities.low_data" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Low-data activity"
+          }
+        }
+      }
+    },
+    "progress.activities.supporting" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld completed tracked activities • %2$@ total"
+          }
+        }
+      }
+    },
+    "progress.activities.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tracked activities"
           }
         }
       }
@@ -9270,6 +10622,9 @@
         }
       }
     },
+    "Refine metrics" : {
+
+    },
     "Reflected" : {
       "localizations" : {
         "es-MX" : {
@@ -9656,6 +11011,9 @@
           }
         }
       }
+    },
+    "Route capture" : {
+
     },
     "Routine" : {
       "localizations" : {
@@ -10083,6 +11441,18 @@
           }
         }
       }
+    },
+    "Save summary changes" : {
+
+    },
+    "Save to Apple Health" : {
+
+    },
+    "Saved" : {
+
+    },
+    "Saving to Apple Health…" : {
+
     },
     "Schedulable" : {
       "localizations" : {
@@ -11919,6 +13289,12 @@
         }
       }
     },
+    "Start a walk, run, hike, or yoga session here. Tracked activities stay separate from your strength workouts." : {
+
+    },
+    "Start a walk, run, hike, or yoga session. Duration is tracked live, and activity-specific metrics can be added when you finish." : {
+
+    },
     "Start a Workout" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -11937,6 +13313,9 @@
       }
     },
     "Start a workout routine in Workout Tracker." : {
+
+    },
+    "Start activity" : {
 
     },
     "Start date" : {
@@ -12089,7 +13468,6 @@
       }
     },
     "Status" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -12098,6 +13476,9 @@
           }
         }
       }
+    },
+    "Steps" : {
+
     },
     "Stop" : {
       "extractionState" : "stale",
@@ -12186,6 +13567,9 @@
           }
         }
       }
+    },
+    "Summary unavailable" : {
+
     },
     "Sun" : {
       "extractionState" : "stale",
@@ -12327,6 +13711,9 @@
         }
       }
     },
+    "The selected tracked activity no longer exists." : {
+
+    },
     "There isn't an active workout session ready for a rest timer right now." : {
 
     },
@@ -12407,6 +13794,9 @@
         }
       }
     },
+    "This removes the live activity session before it is completed." : {
+
+    },
     "This routine will be attached to every generated workout activity from this schedule template." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -12417,6 +13807,9 @@
           }
         }
       }
+    },
+    "This tracked activity could not be loaded." : {
+
     },
     "This unfinished workout belongs to %@. Resume it now, finish it, discard it, or keep it for later without being prompted again today." : {
       "extractionState" : "stale",
@@ -12670,6 +14063,18 @@
         }
       }
     },
+    "Track walking, running, hiking, and yoga" : {
+
+    },
+    "Tracked activities" : {
+
+    },
+    "Tracked activities can be saved to Apple Health after you finish them. Eligible outdoor walks, runs, and hikes can also attach route data when location access is available." : {
+
+    },
+    "Tracked activity not found" : {
+
+    },
     "Tracking" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -12721,7 +14126,6 @@
       }
     },
     "Type" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -13002,6 +14406,448 @@
         }
       }
     },
+    "watch.activities.action.open_active_session" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Active Session"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir sesión activa"
+          }
+        }
+      }
+    },
+    "watch.activities.action.open_activity" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir actividad"
+          }
+        }
+      }
+    },
+    "watch.activities.action.open_controls" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Controls"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir controles"
+          }
+        }
+      }
+    },
+    "watch.activities.action.resume_activity" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume Activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar actividad"
+          }
+        }
+      }
+    },
+    "watch.activities.action.resume_workout" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume Workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar entrenamiento"
+          }
+        }
+      }
+    },
+    "watch.activities.empty.no_routines" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No routines yet"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay rutinas"
+          }
+        }
+      }
+    },
+    "watch.activities.section.current_activity" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current Activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actividad actual"
+          }
+        }
+      }
+    },
+    "watch.activities.section.current_workout" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current Workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento actual"
+          }
+        }
+      }
+    },
+    "watch.activities.section.quick_start_workouts" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick Start Workouts"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamientos de inicio rápido"
+          }
+        }
+      }
+    },
+    "watch.activities.section.start_activity" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar actividad"
+          }
+        }
+      }
+    },
+    "watch.activities.shortcut.hike" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hike"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senderismo"
+          }
+        }
+      }
+    },
+    "watch.activities.shortcut.run" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Run"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correr"
+          }
+        }
+      }
+    },
+    "watch.activities.shortcut.walk" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Walk"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caminar"
+          }
+        }
+      }
+    },
+    "watch.activities.shortcut.yoga" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yoga"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yoga"
+          }
+        }
+      }
+    },
+    "watch.activities.status.phone_closed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phone app closed — commands may take a moment"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La app del teléfono está cerrada; los comandos pueden tardar un momento"
+          }
+        }
+      }
+    },
+    "watch.activities.status.phone_unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phone unavailable"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teléfono no disponible"
+          }
+        }
+      }
+    },
+    "watch.activities.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento"
+          }
+        }
+      }
+    },
+    "watch.now_playing.action.back" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atrás"
+          }
+        }
+      }
+    },
+    "watch.now_playing.empty.subtitle" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start on iPhone or watch"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia en iPhone o Apple Watch"
+          }
+        }
+      }
+    },
+    "watch.now_playing.empty.title" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No active workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay entrenamiento activo"
+          }
+        }
+      }
+    },
+    "watch.now_playing.fallback.workout" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento"
+          }
+        }
+      }
+    },
+    "watch.now_playing.rest" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rest"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descanso"
+          }
+        }
+      }
+    },
+    "watch.now_playing.state.paused" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pausa"
+          }
+        }
+      }
+    },
+    "watch.now_playing.state.tracking_live_on_phone" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tracking live on iPhone"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seguimiento en vivo en iPhone"
+          }
+        }
+      }
+    },
+    "watch.now_playing.status.phone_closed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phone app closed — commands may take a moment"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La app del teléfono está cerrada; los comandos pueden tardar un momento"
+          }
+        }
+      }
+    },
+    "watch.now_playing.status.phone_unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phone unavailable"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teléfono no disponible"
+          }
+        }
+      }
+    },
     "We’ll support loading remote video/GIF later." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -13213,6 +15059,9 @@
         }
       }
     },
+    "Workout save state" : {
+
+    },
     "Workout Tracker" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -13298,6 +15147,9 @@
           }
         }
       }
+    },
+    "You can start tracked activities even without Apple Health access. Completed sessions can be saved to Apple Health later from the finish summary." : {
+
     },
     "Your support helps keep the project healthy." : {
       "extractionState" : "stale",
