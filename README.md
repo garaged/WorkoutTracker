@@ -31,6 +31,17 @@ Non-goals:
 
 ## Changelog
 
+### v2.2.0 — Tracked activities + Apple Health foundation
+
+What’s new in 2.2.0:
+
+- Added tracked activities: Walking, Running, Hiking, and Yoga
+- New Activities area with activity-specific live tracking and summaries
+- Save tracked activities to Apple Health
+- Apple Watch controls for tracked activities
+- Outdoor route capture foundation for eligible activities
+- Better history, progress, recovery, and localization for tracked activities
+
 ### v2.1.1 — Stabilization of system integrations
 
 `v2.1.1` focuses on making the system surfaces introduced in `v2.1.0` feel dependable in real use.

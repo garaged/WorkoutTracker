@@ -4,5 +4,10 @@
 <dict>
     <key>com.apple.developer.healthkit</key>
     <true/>
+
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.garaged.org.workouttracker</string>
+    </array>
 </dict>
 </plist>

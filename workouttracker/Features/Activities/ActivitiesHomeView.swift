@@ -32,6 +32,20 @@ struct ActivitiesHomeView: View {
 
     var body: some View {
         List {
+            if let recoverySession = activeSessions.first {
+                Section {
+                    NavigationLink {
+                        TrackedActivitySessionScreen(sessionID: recoverySession.id)
+                    } label: {
+                        recoveryCard(for: recoverySession)
+                    }
+                    .buttonStyle(.plain)
+                } header: {
+                    Text(String(localized: "activities.section.recovery", defaultValue: "Recovery"))
+                }
+                .listRowBackground(Color.clear)
+            }
+
             Section {
                 NavigationLink {
                     TrackedActivityStartView()
@@ -55,7 +69,7 @@ struct ActivitiesHomeView: View {
             .listRowBackground(Color.clear)
 
             if !activeSessions.isEmpty {
-                Section("Active") {
+                Section(String(localized: "activities.section.active", defaultValue: "Active")) {
                     ForEach(activeSessions) { session in
                         NavigationLink {
                             TrackedActivitySessionScreen(sessionID: session.id)
@@ -67,7 +81,7 @@ struct ActivitiesHomeView: View {
             }
 
             if !recentSessions.isEmpty {
-                Section("Recent") {
+                Section(String(localized: "activities.section.recent", defaultValue: "Recent")) {
                     ForEach(recentSessions) { session in
                         NavigationLink {
                             TrackedActivityFinishSummaryView(sessionID: session.id)
@@ -91,13 +105,13 @@ struct ActivitiesHomeView: View {
                 .listRowBackground(Color.clear)
             }
         }
-        .navigationTitle("Activities")
+        .navigationTitle(String(localized: "activities.title", defaultValue: "Activities"))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
                     TrackedActivityStartView()
                 } label: {
-                    Label("Start", systemImage: "plus")
+                    Label(String(localized: "activities.action.start", defaultValue: "Start"), systemImage: "plus")
                 }
             }
         }
@@ -145,6 +159,33 @@ struct ActivitiesHomeView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 8)
+    }
+
+
+    private func recoveryCard(for session: TrackedActivitySession) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(
+                session.lifecycleState == .paused
+                    ? String(localized: "activities.recovery.paused_title", defaultValue: "Resume your paused activity")
+                    : String(localized: "activities.recovery.live_title", defaultValue: "Return to your active activity"),
+                systemImage: session.activityKind.systemImage
+            )
+            .font(.headline)
+
+            Text(String(localized: "activities.recovery.message", defaultValue: "WorkoutTracker kept this tracked activity open so you can resume it honestly after an interruption or relaunch."))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 10) {
+                Text(session.activityKind.displayName)
+                    .font(.caption.weight(.medium))
+                Text(session.lifecycleState.badgeText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(.vertical, 8)
     }

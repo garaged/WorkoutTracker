@@ -34,9 +34,16 @@ struct TrackedActivityFinishSummaryView: View {
         Group {
             if let session {
                 Form {
-                    Section("Summary") {
-                        ForEach(summaryBuilder.metrics(for: session.summary).filter { $0.kind != .state }) { metric in
-                            LabeledContent(metric.title, value: metric.value)
+                    Section(String(localized: "activities.summary.section", defaultValue: "Summary")) {
+                        let summaryMetrics = summaryBuilder.metrics(for: session.summary).filter { $0.kind != .state }
+                        if summaryMetrics.isEmpty {
+                            Text(String(localized: "activities.summary.low_data", defaultValue: "This activity has low data so the summary only shows the metrics that were actually recorded."))
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ForEach(summaryMetrics) { metric in
+                                LabeledContent(metric.title, value: metric.value)
+                            }
                         }
                     }
 
@@ -77,12 +84,13 @@ struct TrackedActivityFinishSummaryView: View {
 
                     appleHealthSection(for: session)
                 }
-                .navigationTitle("Summary")
+                .navigationTitle(String(localized: "activities.summary.title", defaultValue: "Summary"))
                 .navigationBarTitleDisplayMode(.inline)
                 .onAppear {
                     loadFieldsIfNeeded(from: session)
                     healthKitAuthorizationService.refresh()
                 }
+                .accessibilityIdentifier("TrackedActivity.FinishSummary.Screen")
                 .alert("Could not save summary", isPresented: Binding(
                     get: { errorMessage != nil },
                     set: { if !$0 { errorMessage = nil } }

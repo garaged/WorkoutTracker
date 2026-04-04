@@ -1796,9 +1796,6 @@
         }
       }
     },
-    "Active" : {
-
-    },
     "Active energy (kcal)" : {
 
     },
@@ -1842,6 +1839,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Actividades: %lld"
+          }
+        }
+      }
+    },
+    "activities.action.start" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Start"
           }
         }
       }
@@ -2022,6 +2030,39 @@
         }
       }
     },
+    "activities.history.export_failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Apple Health save failed"
+          }
+        }
+      }
+    },
+    "activities.history.export_pending" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Apple Health save pending"
+          }
+        }
+      }
+    },
+    "activities.history.low_data" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No additional metrics were recorded for this activity."
+          }
+        }
+      }
+    },
     "activities.kind.hiking" : {
       "localizations" : {
         "en" : {
@@ -2118,6 +2159,17 @@
         }
       }
     },
+    "activities.lifecycle.in_progress" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "In progress"
+          }
+        }
+      }
+    },
     "activities.lifecycle.live" : {
       "localizations" : {
         "en" : {
@@ -2162,6 +2214,226 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Planificada"
+          }
+        }
+      }
+    },
+    "activities.metric.active_energy" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Active energy"
+          }
+        }
+      }
+    },
+    "activities.metric.average_pace" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Average pace"
+          }
+        }
+      }
+    },
+    "activities.metric.distance" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Distance"
+          }
+        }
+      }
+    },
+    "activities.metric.distance_value" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ km"
+          }
+        }
+      }
+    },
+    "activities.metric.duration" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Duration"
+          }
+        }
+      }
+    },
+    "activities.metric.energy_value" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%lld kcal"
+          }
+        }
+      }
+    },
+    "activities.metric.pace_value" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$d:%2$02d /km"
+          }
+        }
+      }
+    },
+    "activities.metric.status" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Status"
+          }
+        }
+      }
+    },
+    "activities.metric.steps" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Steps"
+          }
+        }
+      }
+    },
+    "activities.metric.steps_value" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%@ steps"
+          }
+        }
+      }
+    },
+    "activities.recovery.live_title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Return to your active activity"
+          }
+        }
+      }
+    },
+    "activities.recovery.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "WorkoutTracker kept this tracked activity open so you can resume it honestly after an interruption or relaunch."
+          }
+        }
+      }
+    },
+    "activities.recovery.paused_title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Resume your paused activity"
+          }
+        }
+      }
+    },
+    "activities.section.active" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Active"
+          }
+        }
+      }
+    },
+    "activities.section.recent" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Recent"
+          }
+        }
+      }
+    },
+    "activities.section.recovery" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Recovery"
+          }
+        }
+      }
+    },
+    "activities.summary.low_data" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This activity has low data so the summary only shows the metrics that were actually recorded."
+          }
+        }
+      }
+    },
+    "activities.summary.section" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Summary"
+          }
+        }
+      }
+    },
+    "activities.summary.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Summary"
+          }
+        }
+      }
+    },
+    "activities.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Activities"
           }
         }
       }
@@ -6021,6 +6293,72 @@
         }
       }
     },
+    "history.empty.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Complete a workout or tracked activity to see it here."
+          }
+        }
+      }
+    },
+    "history.empty.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No history yet"
+          }
+        }
+      }
+    },
+    "history.section.active_tracked" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Resume tracked activities"
+          }
+        }
+      }
+    },
+    "history.section.strength_sessions" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Strength sessions"
+          }
+        }
+      }
+    },
+    "history.section.tracked_activities" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tracked activities"
+          }
+        }
+      }
+    },
+    "history.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "History"
+          }
+        }
+      }
+    },
     "Home" : {
       "localizations" : {
         "es-MX" : {
@@ -8223,6 +8561,50 @@
         }
       }
     },
+    "progress.activities.headline" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tracked activity recap"
+          }
+        }
+      }
+    },
+    "progress.activities.low_data" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Low-data activity"
+          }
+        }
+      }
+    },
+    "progress.activities.supporting" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld completed tracked activities • %2$@ total"
+          }
+        }
+      }
+    },
+    "progress.activities.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tracked activities"
+          }
+        }
+      }
+    },
     "progress.availability.low_data" : {
       "localizations" : {
         "en" : {
@@ -10219,6 +10601,7 @@
       }
     },
     "Recent" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {

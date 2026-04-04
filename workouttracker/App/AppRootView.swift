@@ -148,7 +148,7 @@ struct AppRootView: View {
                 open(sessionResumePlanner.resumeRoute(for: session) ?? sessionResumePlanner.openRoute(for: session))
             })
         case .history:
-            HistoryRootPlaceholder()
+            WorkoutSessionsHistoryScreen()
         case .progress:
             ProgressScreen()
         case .settings:

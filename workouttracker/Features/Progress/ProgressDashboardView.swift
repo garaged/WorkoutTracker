@@ -4,6 +4,8 @@ import SwiftData
 struct ProgressDashboardView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Query(sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)])
+    private var trackedActivitySessions: [TrackedActivitySession]
     @StateObject private var viewModel = ProgressDashboardViewModel()
 
     var body: some View {
@@ -115,12 +117,23 @@ struct ProgressDashboardView: View {
 
                     ConsistencyCard(model: content.consistency)
                     RecoveryInsightCard(model: content.recovery)
+                    if let trackedActivityCardModel {
+                        TrackedActivitySummaryCard(model: trackedActivityCardModel)
+                    }
                 }
             }
             .padding()
         }
         .background(Color(.systemGroupedBackground))
         .accessibilityIdentifier("Progress.Dashboard.Screen")
+    }
+
+
+    private var trackedActivityCardModel: TrackedActivitySummaryCardModel? {
+        let summaries = trackedActivitySessions
+            .map(\.summary)
+            .filter { $0.lifecycleState == .completed || $0.lifecycleState == .discarded }
+        return TrackedActivitySummaryCardModel.build(from: summaries)
     }
 
     private func header(content: ProgressDashboardViewModel.DashboardContent) -> some View {

@@ -199,18 +199,37 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
             return
         }
 
+        let directAction = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == %@", "DayTimeline.WorkoutCard.DefaultAction"))
+            .firstMatch
+
+        let startOverlay = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == %@", "DayTimeline.WorkoutOverlay.Start"))
+            .firstMatch
+
+        let fallbackStart = app.buttons["Start"]
+
+        if let startTarget = waitAny([startOverlay, directAction, fallbackStart], timeout: t(1.5)) {
+            tapSafely(startTarget)
+            return
+        }
+
         tapSafely(blockTitle)
 
-        let startOverlay = app.buttons.matching(identifier: "DayTimeline.WorkoutOverlay.Start").firstMatch
-        if startOverlay.waitForExistence(timeout: t(2)) {
-            tapSafely(startOverlay)
+        if let startTarget = waitAny([startOverlay, directAction, fallbackStart], timeout: t(2)) {
+            tapSafely(startTarget)
             return
         }
 
         swipeScrollableUp(app)
-        if startOverlay.waitForExistence(timeout: t(1.5)) {
-            tapSafely(startOverlay)
+
+        if let startTarget = waitAny([startOverlay, directAction, fallbackStart], timeout: t(1.5)) {
+            tapSafely(startTarget)
+            return
         }
+
+        attachUITestDebug(app, name: "DistanceUnits_StartActionMissing")
+        XCTFail("Expected timeline block to expose a start action")
     }
 
     private var doneTogglePredicate: NSPredicate {
@@ -254,6 +273,7 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
     
     private func waitForStartedCardioSession(in app: XCUIApplication, timeout: TimeInterval) -> Bool {
         let trackedActivityScreen = app.otherElements["TrackedActivitySession.Screen"]
+        let workoutSessionScreen = app.otherElements["WorkoutSession.Screen"]
         let miDistanceLabel = firstDistanceLabel(in: app, unitSymbol: "mi")
         let kmDistanceLabel = firstDistanceLabel(in: app, unitSymbol: "km")
 
@@ -261,11 +281,13 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
         while Date().timeIntervalSince(start) < timeout {
             if setToggleQuery(in: app).count > 0 { return true }
             if trackedActivityScreen.exists { return true }
+            if workoutSessionScreen.exists { return true }
             if miDistanceLabel.exists || kmDistanceLabel.exists { return true }
             RunLoop.current.run(until: Date().addingTimeInterval(0.1))
         }
 
         if trackedActivityScreen.waitForExistence(timeout: 0.5) { return true }
+        if workoutSessionScreen.waitForExistence(timeout: 0.5) { return true }
         if miDistanceLabel.waitForExistence(timeout: 0.5) { return true }
         if kmDistanceLabel.waitForExistence(timeout: 0.5) { return true }
 
