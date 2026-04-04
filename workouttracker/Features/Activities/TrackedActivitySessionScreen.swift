@@ -11,15 +11,20 @@ struct TrackedActivitySessionScreen: View {
     @Query(sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)])
     private var trackedSessions: [TrackedActivitySession]
 
+    @AppStorage(TrackedActivityHealthPreferences.autoSaveCompletedActivitiesKey)
+    private var autoSaveToAppleHealth = false
+
     @State private var errorMessage: String?
     @State private var showDiscardConfirmation = false
     @State private var showFinishSummary = false
     @State private var lastPersistedRoutePointCount = 0
+    @State private var healthExportBannerMessage: String?
 
     @StateObject private var routeRecorder = OutdoorRouteRecorder()
 
     private let recorder = TrackedActivityRecorder()
     private let summaryBuilder = TrackedActivitySummaryBuilder()
+    private let exportCoordinator = TrackedActivityHealthExportCoordinator()
 
     private var session: TrackedActivitySession? {
         trackedSessions.first(where: { $0.id == sessionID })
@@ -31,9 +36,16 @@ struct TrackedActivitySessionScreen: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         header(for: session)
-                        liveTimerCard(for: session)
+                        if let healthExportBannerMessage {
+                            Text(healthExportBannerMessage)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .padding(12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        }
+                        liveMetricsSection(for: session)
                         routeSection(for: session)
-                        metricsSection(for: session)
                         notesSection(for: session)
                         actionSection(for: session)
                     }
@@ -112,30 +124,63 @@ struct TrackedActivitySessionScreen: View {
             HStack(spacing: 8) {
                 badge(text: session.lifecycleState.badgeText, color: badgeColor(for: session.lifecycleState))
                 badge(text: session.environment.displayName, color: .secondary)
+                if autoSaveToAppleHealth {
+                    badge(text: "Auto-save to Health", color: .pink)
+                }
             }
         }
     }
 
     @ViewBuilder
-    private func liveTimerCard(for session: TrackedActivitySession) -> some View {
+    private func liveMetricsSection(for session: TrackedActivitySession) -> some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
-            let totals = recorder.liveTotals(for: session, now: context.date)
+            let liveTotals = liveTotals(for: session, now: context.date)
+            let metrics = summaryBuilder.metrics(for: session, liveTotals: liveTotals)
 
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Live duration")
-                    .font(.headline)
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Live duration")
+                        .font(.headline)
 
-                Text(TrackedActivitySummaryBuilder.formatDuration(totals.elapsedDuration))
-                    .font(.system(size: 40, weight: .bold, design: .rounded))
-                    .monospacedDigit()
+                    Text(TrackedActivitySummaryBuilder.formatDuration(liveTotals.elapsedDuration))
+                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                        .monospacedDigit()
 
-                Text(timerFooter(for: session))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    Text(timerFooter(for: session))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(18)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Current metrics")
+                        .font(.headline)
+
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
+                        ForEach(metrics.filter { $0.kind != .state }) { metric in
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(metric.title)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text(metric.value)
+                                    .font(.headline)
+                                    .monospacedDigit()
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(14)
+                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        }
+                    }
+
+                    if session.activityKind.supportsDistance {
+                        Text("Distance, steps, and energy can be refined when you finish this activity. Outdoor route distance is prefilled when location data is available.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(18)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         }
     }
 
@@ -171,35 +216,16 @@ struct TrackedActivitySessionScreen: View {
         }
     }
 
-    @ViewBuilder
-    private func metricsSection(for session: TrackedActivitySession) -> some View {
-        let metrics = summaryBuilder.metrics(for: session)
+    private func liveTotals(for session: TrackedActivitySession, now: Date) -> TrackedActivityTotals {
+        var totals = recorder.liveTotals(for: session, now: now)
 
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Current metrics")
-                .font(.headline)
-
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
-                ForEach(metrics.filter { $0.kind != .state }) { metric in
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(metric.title)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(metric.value)
-                            .font(.headline)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(14)
-                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                }
-            }
-
-            if session.activityKind.supportsDistance {
-                Text("Distance, steps, and energy can be refined when you finish this activity. Outdoor route distance is prefilled when location data is available.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
+        if session.activityKind.supportsDistance,
+           let liveRouteDistance = routeRecorder.derivedDistanceMeters,
+           liveRouteDistance > 0 {
+            totals.distanceMeters = max(totals.distanceMeters ?? 0, liveRouteDistance)
         }
+
+        return totals
     }
 
     @ViewBuilder
@@ -225,12 +251,12 @@ struct TrackedActivitySessionScreen: View {
                         pause(session)
                     }
                     .buttonStyle(.bordered)
-                    
+
                     Button("Finish") {
                         finish(session)
                     }
                     .buttonStyle(.borderedProminent)
-                    
+
                     Button("Discard", role: .destructive) {
                         showDiscardConfirmation = true
                     }
@@ -240,12 +266,12 @@ struct TrackedActivitySessionScreen: View {
                         resume(session)
                     }
                     .buttonStyle(.borderedProminent)
-                    
+
                     Button("Finish") {
                         finish(session)
                     }
                     .buttonStyle(.bordered)
-                    
+
                     Button("Discard", role: .destructive) {
                         showDiscardConfirmation = true
                     }
@@ -299,7 +325,14 @@ struct TrackedActivitySessionScreen: View {
             routeRecorder.sync(with: session)
             WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
             WorkoutRemoteControlRouter.shared.refreshNowPlaying()
+            healthExportBannerMessage = autoSaveToAppleHealth ? "Apple Health auto-save will run after finish when permission is available." : nil
             showFinishSummary = true
+
+            if autoSaveToAppleHealth {
+                Task {
+                    await runAutomaticHealthExport(for: session)
+                }
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -315,6 +348,21 @@ struct TrackedActivitySessionScreen: View {
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    private func runAutomaticHealthExport(for session: TrackedActivitySession) async {
+        do {
+            let message = try await exportCoordinator.autoExportIfEnabled(
+                for: session,
+                isEnabled: autoSaveToAppleHealth,
+                context: modelContext
+            )
+            if let message {
+                healthExportBannerMessage = message
+            }
+        } catch {
+            healthExportBannerMessage = error.localizedDescription
         }
     }
 
@@ -336,7 +384,6 @@ struct TrackedActivitySessionScreen: View {
         }
     }
 
-
     private func formattedRouteDistance(_ meters: Double) -> String {
         let kilometers = meters / 1_000
         return "\(kilometers.formatted(.number.precision(.fractionLength(0...2)))) km"
@@ -349,6 +396,9 @@ struct TrackedActivitySessionScreen: View {
         case .paused:
             return "This tracked activity is paused. Resume to continue timing or finish to save what you already recorded."
         case .completed:
+            if autoSaveToAppleHealth {
+                return "This tracked activity is complete. Review the summary while WorkoutTracker saves to Apple Health when possible."
+            }
             return "This tracked activity is complete. You can review and refine the final summary."
         case .discarded:
             return "This tracked activity was discarded."
@@ -368,15 +418,13 @@ struct TrackedActivitySessionScreen: View {
 
     private func badgeColor(for state: TrackedActivityLifecycleState) -> Color {
         switch state {
-        case .planned:
-            return .secondary
         case .inProgress:
             return .green
         case .paused:
             return .orange
         case .completed:
             return .blue
-        case .discarded:
+        case .discarded, .planned:
             return .secondary
         }
     }

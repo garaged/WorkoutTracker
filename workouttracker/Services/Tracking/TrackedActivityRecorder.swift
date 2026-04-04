@@ -16,6 +16,7 @@ struct TrackedActivityRecorder {
             updatedAt: date,
             startedAt: date,
             endedAt: nil,
+            activeIntervalStartedAt: date,
             activityKind: activityKind,
             environment: normalizedEnvironment,
             lifecycleState: .inProgress,
@@ -52,6 +53,12 @@ struct TrackedActivityRecorder {
         try context.save()
     }
 
+    func delete(_ session: TrackedActivitySession, context: ModelContext) throws {
+        guard session.allowsLocalDeletion else { return }
+        context.delete(session)
+        try context.save()
+    }
+
     func updateSummaryValues(
         for session: TrackedActivitySession,
         distanceMeters: Double?,
@@ -78,11 +85,23 @@ struct TrackedActivityRecorder {
             return activeEnergyKilocalories
         }()
 
+        let normalizedNotes = normalize(notes)
+        let didChange = session.distanceMeters != sanitizedDistance
+            || session.activeEnergyKilocalories != sanitizedEnergy
+            || session.stepCount != sanitizedStepCount
+            || session.notes != normalizedNotes
+
         session.distanceMeters = sanitizedDistance
         session.activeEnergyKilocalories = sanitizedEnergy
         session.stepCount = sanitizedStepCount
-        session.notes = normalize(notes)
-        session.updatedAt = date
+        session.notes = normalizedNotes
+
+        if didChange {
+            session.markLocalChangesSinceHealthKitExport(at: date)
+        } else {
+            session.updatedAt = date
+        }
+
         try context.save()
     }
 
@@ -95,11 +114,21 @@ struct TrackedActivityRecorder {
     ) throws {
         guard session.activityKind.supportsDistance, session.environment == .outdoor else { return }
 
+        let didRouteChange = session.routePointCount != routePoints.count
+        let previousDistance = session.distanceMeters
+
         session.routePoints = routePoints
         if let derivedDistanceMeters, derivedDistanceMeters > 0 {
             session.distanceMeters = max(session.distanceMeters ?? 0, derivedDistanceMeters)
         }
-        session.updatedAt = date
+
+        let didDistanceChange = previousDistance != session.distanceMeters
+        if didRouteChange || didDistanceChange {
+            session.markLocalChangesSinceHealthKitExport(at: date)
+        } else {
+            session.updatedAt = date
+        }
+
         try context.save()
     }
 
@@ -107,10 +136,17 @@ struct TrackedActivityRecorder {
         for session: TrackedActivitySession,
         state: HealthKitExportState,
         context: ModelContext,
-        at date: Date = Date()
+        at date: Date = Date(),
+        failureMessage: String? = nil
     ) throws {
-        session.healthKitExportState = state
-        session.updatedAt = date
+        switch state {
+        case .pending:
+            session.markHealthKitExportPending(at: date)
+        case .exported:
+            session.markHealthKitExportSucceeded(at: date)
+        case .failed, .notAvailable, .notRequested:
+            session.markHealthKitExportFailed(state: state, message: failureMessage, at: date)
+        }
         try context.save()
     }
 

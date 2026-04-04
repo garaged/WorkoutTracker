@@ -4,6 +4,9 @@ import SwiftData
 struct TrackedActivityStartView: View {
     @Environment(\.modelContext) private var modelContext
 
+    @AppStorage(TrackedActivityHealthPreferences.autoSaveCompletedActivitiesKey)
+    private var autoSaveToAppleHealth = false
+
     @State private var selectedKind: TrackedActivityKind = .walking
     @State private var selectedEnvironment: ActivityEnvironment = TrackedActivityKind.walking.defaultEnvironment
     @State private var notes = ""
@@ -49,7 +52,14 @@ struct TrackedActivityStartView: View {
                         .foregroundStyle(healthStatusColor)
                 }
 
-                Text("You can start tracked activities even without Apple Health access. Completed sessions can be saved to Apple Health later from the finish summary.")
+                HStack {
+                    Text("Auto-save")
+                    Spacer()
+                    Text(autoSaveToAppleHealth ? "On" : "Off")
+                        .foregroundStyle(.secondary)
+                }
+
+                Text(healthStatusExplanation)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -114,6 +124,13 @@ struct TrackedActivityStartView: View {
         case .notRequested, .unavailable:
             return .secondary
         }
+    }
+
+    private var healthStatusExplanation: String {
+        if autoSaveToAppleHealth {
+            return "Completed sessions try to save automatically to Apple Health when permission is available. If a save fails, you can still retry later from the summary."
+        }
+        return "You can start tracked activities even without Apple Health access. Completed sessions can be saved to Apple Health later from the finish summary."
     }
 
     private func start() {

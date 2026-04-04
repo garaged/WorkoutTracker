@@ -5,6 +5,7 @@ import SwiftData
 struct TrackedActivityFinishSummaryView: View {
     let sessionID: UUID
 
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
     @Query(sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)])
@@ -19,6 +20,7 @@ struct TrackedActivityFinishSummaryView: View {
     @State private var saveConfirmationVisible = false
     @State private var isExporting = false
     @State private var healthExportMessage: String?
+    @State private var isShowingDeleteConfirmation = false
 
     @StateObject private var healthKitAuthorizationService = HealthKitAuthorizationService()
 
@@ -86,11 +88,35 @@ struct TrackedActivityFinishSummaryView: View {
                 }
                 .navigationTitle(String(localized: "activities.summary.title", defaultValue: "Summary"))
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    if session.allowsLocalDeletion {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button(role: .destructive) {
+                                isShowingDeleteConfirmation = true
+                            } label: {
+                                Label(session.localDeleteActionTitle, systemImage: "trash")
+                            }
+                            .accessibilityIdentifier("trackedActivity.deleteButton")
+                        }
+                    }
+                }
                 .onAppear {
                     loadFieldsIfNeeded(from: session)
                     healthKitAuthorizationService.refresh()
                 }
                 .accessibilityIdentifier("TrackedActivity.FinishSummary.Screen")
+                .confirmationDialog(
+                    session.localDeleteTitle,
+                    isPresented: $isShowingDeleteConfirmation,
+                    titleVisibility: .visible
+                ) {
+                    Button(session.localDeleteActionTitle, role: .destructive) {
+                        delete(session)
+                    }
+                    Button(String(localized: "common.cancel", defaultValue: "Cancel"), role: .cancel) {}
+                } message: {
+                    Text(session.localDeleteMessage)
+                }
                 .alert("Could not save summary", isPresented: Binding(
                     get: { errorMessage != nil },
                     set: { if !$0 { errorMessage = nil } }
@@ -113,13 +139,13 @@ struct TrackedActivityFinishSummaryView: View {
     private func appleHealthSection(for session: TrackedActivitySession) -> some View {
         Section("Apple Health") {
             LabeledContent("Permission", value: healthKitAuthorizationService.state.title)
-            LabeledContent("Workout save state", value: session.healthKitExportState.displayName)
+            LabeledContent("Workout save state", value: session.healthKitExportDisplayName)
 
             if session.environment == .outdoor && session.activityKind.supportsDistance {
                 LabeledContent("Captured route", value: session.hasRecordedRoute ? "\(session.routePointCount) points" : "Not available")
             }
 
-            Text(session.healthKitExportState.helperText)
+            Text(session.healthKitExportHelperText)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -131,6 +157,13 @@ struct TrackedActivityFinishSummaryView: View {
 
             if session.environment == .outdoor && session.activityKind.supportsDistance {
                 Text("Outdoor routes require Apple Health access for workout routes and location while using the app during the activity.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let recoveryText = session.healthKitExportRecoveryText {
+                Text(recoveryText)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -162,7 +195,7 @@ struct TrackedActivityFinishSummaryView: View {
                 .accessibilityIdentifier("trackedActivity.openHealthSettingsButton")
 
             case .authorized:
-                if session.healthKitExportState == .exported {
+                if session.healthKitExportState == .exported && !session.hasLocalChangesSinceHealthKitExport {
                     EmptyView()
                 } else {
                     Button {
@@ -176,7 +209,7 @@ struct TrackedActivityFinishSummaryView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .foregroundStyle(.white)
-                    .disabled(isExporting || session.lifecycleState != .completed)
+                    .disabled(isExporting || session.lifecycleState != .completed || session.hasLocalChangesSinceHealthKitExport)
                     .accessibilityIdentifier("trackedActivity.exportToHealthKitButton")
                 }
             }
@@ -269,6 +302,15 @@ struct TrackedActivityFinishSummaryView: View {
 
         healthKitAuthorizationService.refresh()
         isExporting = false
+    }
+
+    private func delete(_ session: TrackedActivitySession) {
+        do {
+            try recorder.delete(session, context: modelContext)
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func openSystemSettings() {

@@ -142,3 +142,90 @@ extension HealthKitExportState {
         }
     }
 }
+
+extension TrackedActivitySession {
+    var healthKitExportDisplayName: String {
+        if healthKitExportState == .exported && hasLocalChangesSinceHealthKitExport {
+            return String(
+                localized: "health.export_state.saved_local_changes",
+                defaultValue: "Saved (local changes)"
+            )
+        }
+        return healthKitExportState.displayName
+    }
+
+    var healthKitExportHelperText: String {
+        if healthKitExportState == .failed, let healthKitExportFailureMessage, !healthKitExportFailureMessage.isEmpty {
+            return healthKitExportFailureMessage
+        }
+
+        if healthKitExportState == .exported && hasLocalChangesSinceHealthKitExport {
+            return String(
+                localized: "health.export_state_helper.saved_local_changes",
+                defaultValue: "This tracked activity was saved to Apple Health earlier. Later edits now only live in WorkoutTracker and do not update the exported Health workout in this release."
+            )
+        }
+
+        return healthKitExportState.helperText
+    }
+
+    var healthKitExportRecoveryText: String? {
+        guard healthKitExportState == .failed else { return nil }
+        return String(
+            localized: "health.export_state_helper.retry_hint",
+            defaultValue: "You can retry the Apple Health save from this summary after checking permissions."
+        )
+    }
+
+    var allowsLocalDeletion: Bool {
+        switch lifecycleState {
+        case .completed, .discarded:
+            return true
+        case .planned, .inProgress, .paused:
+            return false
+        }
+    }
+
+    var localDeleteTitle: String {
+        if healthKitExportState == .exported {
+            return String(
+                localized: "activities.delete.title.saved_to_health",
+                defaultValue: "Delete local activity?"
+            )
+        }
+
+        return String(
+            localized: "activities.delete.title.default",
+            defaultValue: "Delete activity?"
+        )
+    }
+
+    var localDeleteMessage: String {
+        if healthKitExportState == .exported {
+            return String(
+                localized: "activities.delete.message.saved_to_health",
+                defaultValue: "Remove this tracked activity from WorkoutTracker only. The workout already saved to Apple Health will stay there."
+            )
+        }
+
+        return String(
+            localized: "activities.delete.message.default",
+            defaultValue: "Remove this tracked activity from WorkoutTracker."
+        )
+    }
+
+    var localDeleteActionTitle: String {
+        String(localized: "activities.delete.action", defaultValue: "Delete activity")
+    }
+
+    var localDeleteFailureTitle: String {
+        String(localized: "activities.delete.failure.title", defaultValue: "Could not delete activity")
+    }
+
+    var localDeleteFailureMessage: String {
+        String(
+            localized: "activities.delete.failure.message",
+            defaultValue: "WorkoutTracker could not remove this activity right now. Please try again."
+        )
+    }
+}

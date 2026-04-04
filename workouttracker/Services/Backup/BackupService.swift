@@ -104,6 +104,7 @@ final class BackupService {
         let hapticsEnabled: Bool?
         let autoStartRest: Bool?
         let confirmDestructiveActions: Bool?
+        let autoSaveCompletedTrackedActivitiesToAppleHealth: Bool?
     }
 
     struct Entity: Codable {
@@ -349,7 +350,11 @@ final class BackupService {
                 ),
                 healthKitExportState: HealthKitExportState(rawValue: raw.healthKitExportStateRaw) ?? .notRequested,
                 linkedActivityId: raw.linkedActivityId,
-                notes: raw.notes
+                notes: raw.notes,
+                healthKitExportAttemptedAt: raw.healthKitExportAttemptedAt,
+                healthKitExportSucceededAt: raw.healthKitExportSucceededAt,
+                healthKitExportFailureMessage: raw.healthKitExportFailureMessage,
+                hasLocalChangesSinceHealthKitExport: raw.hasLocalChangesSinceHealthKitExport
             )
             context.insert(model)
         }
@@ -576,7 +581,8 @@ final class BackupService {
             defaultRestSeconds: prefs.defaultRestSeconds,
             hapticsEnabled: prefs.hapticsEnabled,
             autoStartRest: prefs.autoStartRest,
-            confirmDestructiveActions: prefs.confirmDestructiveActions
+            confirmDestructiveActions: prefs.confirmDestructiveActions,
+            autoSaveCompletedTrackedActivitiesToAppleHealth: prefs.autoSaveCompletedTrackedActivitiesToAppleHealth
         )
     }
 
@@ -591,6 +597,9 @@ final class BackupService {
         if let v = snap.hapticsEnabled { prefs.hapticsEnabled = v }
         if let v = snap.autoStartRest { prefs.autoStartRest = v }
         if let v = snap.confirmDestructiveActions { prefs.confirmDestructiveActions = v }
+        if let v = snap.autoSaveCompletedTrackedActivitiesToAppleHealth {
+            prefs.autoSaveCompletedTrackedActivitiesToAppleHealth = v
+        }
     }
 
     private func stableID(
@@ -779,6 +788,10 @@ final class BackupService {
                 "environmentRaw": .string(model.environmentRaw),
                 "lifecycleStateRaw": .string(model.lifecycleStateRaw),
                 "healthKitExportStateRaw": .string(model.healthKitExportStateRaw),
+                "healthKitExportAttemptedAt": model.healthKitExportAttemptedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
+                "healthKitExportSucceededAt": model.healthKitExportSucceededAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
+                "healthKitExportFailureMessage": model.healthKitExportFailureMessage.map(JSONValue.string) ?? .null,
+                "hasLocalChangesSinceHealthKitExport": .bool(model.hasLocalChangesSinceHealthKitExport),
                 "elapsedDuration": .number(model.elapsedDuration),
                 "distanceMeters": model.distanceMeters.map(JSONValue.number) ?? .null,
                 "activeEnergyKilocalories": model.activeEnergyKilocalories.map(JSONValue.number) ?? .null,
@@ -1050,6 +1063,10 @@ final class BackupService {
         let environmentRaw: String
         let lifecycleStateRaw: String
         let healthKitExportStateRaw: String
+        let healthKitExportAttemptedAt: Date?
+        let healthKitExportSucceededAt: Date?
+        let healthKitExportFailureMessage: String?
+        let hasLocalChangesSinceHealthKitExport: Bool
         let elapsedDuration: Double
         let distanceMeters: Double?
         let activeEnergyKilocalories: Double?
@@ -1253,6 +1270,10 @@ final class BackupService {
                 environmentRaw: string("environmentRaw", in: e) ?? ActivityEnvironment.unspecified.rawValue,
                 lifecycleStateRaw: string("lifecycleStateRaw", in: e) ?? TrackedActivityLifecycleState.planned.rawValue,
                 healthKitExportStateRaw: string("healthKitExportStateRaw", in: e) ?? HealthKitExportState.notRequested.rawValue,
+                healthKitExportAttemptedAt: date("healthKitExportAttemptedAt", in: e),
+                healthKitExportSucceededAt: date("healthKitExportSucceededAt", in: e),
+                healthKitExportFailureMessage: string("healthKitExportFailureMessage", in: e),
+                hasLocalChangesSinceHealthKitExport: bool("hasLocalChangesSinceHealthKitExport", in: e) ?? false,
                 elapsedDuration: double("elapsedDuration", in: e) ?? 0,
                 distanceMeters: double("distanceMeters", in: e),
                 activeEnergyKilocalories: double("activeEnergyKilocalories", in: e),

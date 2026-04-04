@@ -1,0 +1,118 @@
+import Foundation
+import SwiftData
+
+enum TrackedActivityHealthExportTrigger {
+    case automatic
+    case manual
+}
+
+@MainActor
+struct TrackedActivityHealthExportCoordinator {
+    private let recorder: TrackedActivityRecorder
+    private let exportService: HealthKitWorkoutExportService
+
+    init() {
+        self.init(
+            recorder: TrackedActivityRecorder(),
+            exportService: HealthKitWorkoutExportService()
+        )
+    }
+
+    init(
+        recorder: TrackedActivityRecorder,
+        exportService: HealthKitWorkoutExportService
+    ) {
+        self.recorder = recorder
+        self.exportService = exportService
+    }
+
+    func autoExportIfEnabled(
+        for session: TrackedActivitySession,
+        isEnabled: Bool,
+        context: ModelContext
+    ) async throws -> String? {
+        guard isEnabled else { return nil }
+        guard session.lifecycleState == .completed else { return nil }
+        guard session.healthKitExportState != .pending else { return nil }
+        guard session.healthKitExportState != .exported else { return nil }
+        return try await export(session, trigger: .automatic, context: context)
+    }
+
+    func export(
+        _ session: TrackedActivitySession,
+        trigger: TrackedActivityHealthExportTrigger,
+        context: ModelContext
+    ) async throws -> String {
+        try recorder.updateHealthKitExportState(for: session, state: .pending, context: context)
+
+        do {
+            let outcome = try await exportService.export(session)
+            try recorder.updateHealthKitExportState(for: session, state: .exported, context: context)
+            return successMessage(for: session, routeStatus: outcome.routeExportStatus, trigger: trigger)
+        } catch let exportError as HealthKitWorkoutExportError {
+            let failedState: HealthKitExportState = {
+                switch exportError {
+                case .healthDataUnavailable:
+                    return .notAvailable
+                case .permissionDenied,
+                     .sessionMustBeCompleted,
+                     .sessionDatesUnavailable,
+                     .unsupportedActivity:
+                    return .failed
+                }
+            }()
+
+            try? recorder.updateHealthKitExportState(
+                for: session,
+                state: failedState,
+                context: context,
+                failureMessage: exportError.localizedDescription
+            )
+            throw exportError
+        } catch {
+            try? recorder.updateHealthKitExportState(
+                for: session,
+                state: .failed,
+                context: context,
+                failureMessage: error.localizedDescription
+            )
+            throw error
+        }
+    }
+
+    private func successMessage(
+        for session: TrackedActivitySession,
+        routeStatus: HealthKitWorkoutRouteExportStatus,
+        trigger: TrackedActivityHealthExportTrigger
+    ) -> String {
+        let prefix = trigger == .automatic
+            ? "Saved automatically to Apple Health."
+            : "Saved to Apple Health."
+
+        switch routeStatus {
+        case .saved:
+            return trigger == .automatic
+                ? "Saved automatically to Apple Health with your outdoor route."
+                : "Saved to Apple Health with your outdoor route."
+
+        case .notApplicable:
+            return prefix
+
+        case .noRouteData:
+            if session.environment == .outdoor && session.activityKind.supportsDistance {
+                return "\(prefix) Route data was not available to attach."
+            }
+            return prefix
+
+        case .failed(let reason):
+            if session.environment == .outdoor && session.activityKind.supportsDistance {
+                let cleanReason = reason.trimmingCharacters(in: .whitespacesAndNewlines)
+                if cleanReason.isEmpty {
+                    return "\(prefix) The workout was exported, but the outdoor route could not be attached."
+                }
+                return "\(prefix) The workout was exported, but the outdoor route could not be attached. \(cleanReason)"
+            }
+            return prefix
+        }
+    }
+}

@@ -1918,6 +1918,83 @@
         }
       }
     },
+    "activities.delete.action" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete activity"
+          }
+        }
+      }
+    },
+    "activities.delete.failure.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "WorkoutTracker could not remove this activity right now. Please try again."
+          }
+        }
+      }
+    },
+    "activities.delete.failure.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not delete activity"
+          }
+        }
+      }
+    },
+    "activities.delete.message.default" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove this tracked activity from WorkoutTracker."
+          }
+        }
+      }
+    },
+    "activities.delete.message.saved_to_health" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove this tracked activity from WorkoutTracker only. The workout already saved to Apple Health will stay there."
+          }
+        }
+      }
+    },
+    "activities.delete.title.default" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete activity?"
+          }
+        }
+      }
+    },
+    "activities.delete.title.saved_to_health" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete local activity?"
+          }
+        }
+      }
+    },
     "activities.environment.automatic" : {
       "localizations" : {
         "en" : {
@@ -2037,6 +2114,17 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Apple Health save failed"
+          }
+        }
+      }
+    },
+    "activities.history.export_local_changes" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Local edits differ from Health"
           }
         }
       }
@@ -2865,6 +2953,12 @@
           }
         }
       }
+    },
+    "Auto-save" : {
+
+    },
+    "Auto-save completed tracked activities to Apple Health" : {
+
     },
     "B" : {
       "extractionState" : "stale",
@@ -5892,6 +5986,17 @@
         }
       }
     },
+    "health.export_state_helper.retry_hint" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You can retry the Apple Health save from this summary after checking permissions."
+          }
+        }
+      }
+    },
     "health.export_state_helper.saved" : {
       "localizations" : {
         "en" : {
@@ -5904,6 +6009,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esta actividad registrada se guardó en Apple Health. En esta versión, las ediciones posteriores en WorkoutTracker no actualizan el entrenamiento ya guardado en Health."
+          }
+        }
+      }
+    },
+    "health.export_state_helper.saved_local_changes" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This tracked activity was saved to Apple Health earlier. Later edits now only live in WorkoutTracker and do not update the exported Health workout in this release."
           }
         }
       }
@@ -5988,6 +6104,17 @@
         }
       }
     },
+    "health.export_state.saved_local_changes" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Saved (local changes)"
+          }
+        }
+      }
+    },
     "health.export_state.saving" : {
       "localizations" : {
         "en" : {
@@ -6064,6 +6191,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Actualizar estado"
+          }
+        }
+      }
+    },
+    "health.permissions.auto_save.disabled" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When this is off, you can still save completed tracked activities manually from the summary screen."
+          }
+        }
+      }
+    },
+    "health.permissions.auto_save.enabled" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When this is on, WorkoutTracker tries to save completed tracked activities to Apple Health automatically. If a save fails, you can retry from the summary."
+          }
+        }
+      }
+    },
+    "health.permissions.auto_save.toggle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Auto-save completed tracked activities"
           }
         }
       }
@@ -7842,6 +8002,9 @@
         }
       }
     },
+    "Off" : {
+
+    },
     "OK" : {
       "localizations" : {
         "en" : {
@@ -7874,6 +8037,9 @@
           }
         }
       }
+    },
+    "On" : {
+
     },
     "On conflict" : {
       "extractionState" : "stale",
@@ -14069,9 +14235,6 @@
     "Tracked activities" : {
 
     },
-    "Tracked activities can be saved to Apple Health after you finish them. Eligible outdoor walks, runs, and hikes can also attach route data when location access is available." : {
-
-    },
     "Tracked activity not found" : {
 
     },
@@ -14959,6 +15122,9 @@
           }
         }
       }
+    },
+    "When this is on, completed tracked activities try to save automatically to Apple Health. Manual retry stays available if a save attempt fails, and later edits remain local in WorkoutTracker." : {
+
     },
     "Window" : {
       "extractionState" : "stale",

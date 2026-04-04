@@ -9,6 +9,7 @@ final class TrackedActivitySession {
     var updatedAt: Date
     var startedAt: Date?
     var endedAt: Date?
+    var activeIntervalStartedAt: Date?
 
     var activityKindRaw: String
     var environmentRaw: String
@@ -26,12 +27,18 @@ final class TrackedActivitySession {
     var linkedActivityId: UUID?
     var notes: String?
 
+    var healthKitExportAttemptedAt: Date?
+    var healthKitExportSucceededAt: Date?
+    var healthKitExportFailureMessage: String?
+    var hasLocalChangesSinceHealthKitExport: Bool
+
     init(
         id: UUID = UUID(),
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         startedAt: Date? = nil,
         endedAt: Date? = nil,
+        activeIntervalStartedAt: Date? = nil,
         activityKind: TrackedActivityKind,
         environment: ActivityEnvironment = .unspecified,
         lifecycleState: TrackedActivityLifecycleState = .planned,
@@ -39,13 +46,18 @@ final class TrackedActivitySession {
         healthKitExportState: HealthKitExportState = .notRequested,
         routePoints: [TrackedActivityRoutePoint] = [],
         linkedActivityId: UUID? = nil,
-        notes: String? = nil
+        notes: String? = nil,
+        healthKitExportAttemptedAt: Date? = nil,
+        healthKitExportSucceededAt: Date? = nil,
+        healthKitExportFailureMessage: String? = nil,
+        hasLocalChangesSinceHealthKitExport: Bool = false
     ) {
         self.id = id
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.startedAt = startedAt
         self.endedAt = endedAt
+        self.activeIntervalStartedAt = activeIntervalStartedAt
         self.activityKindRaw = activityKind.rawValue
         self.environmentRaw = environment.rawValue
         self.lifecycleStateRaw = lifecycleState.rawValue
@@ -58,6 +70,10 @@ final class TrackedActivitySession {
         self.routePointCount = routePoints.count
         self.linkedActivityId = linkedActivityId
         self.notes = notes
+        self.healthKitExportAttemptedAt = healthKitExportAttemptedAt
+        self.healthKitExportSucceededAt = healthKitExportSucceededAt
+        self.healthKitExportFailureMessage = healthKitExportFailureMessage
+        self.hasLocalChangesSinceHealthKitExport = hasLocalChangesSinceHealthKitExport
 
         normalizeLifecycleConsistency()
     }
@@ -160,6 +176,10 @@ final class TrackedActivitySession {
         }
     }
 
+    var isCompletedButNotSavedToHealthKit: Bool {
+        lifecycleState == .completed && healthKitExportState != .exported
+    }
+
     func setTotals(_ totals: TrackedActivityTotals) {
         self.totals = totals
     }
@@ -168,6 +188,7 @@ final class TrackedActivitySession {
         if startedAt == nil {
             startedAt = date
         }
+        activeIntervalStartedAt = date
         lifecycleStateRaw = TrackedActivityLifecycleState.inProgress.rawValue
         if environment == .unspecified {
             environmentRaw = activityKind.defaultEnvironment.rawValue
@@ -177,6 +198,7 @@ final class TrackedActivitySession {
 
     func pause(at date: Date = Date()) {
         accumulateElapsedIfNeeded(until: date)
+        activeIntervalStartedAt = nil
         lifecycleStateRaw = TrackedActivityLifecycleState.paused.rawValue
         updatedAt = date
     }
@@ -185,6 +207,7 @@ final class TrackedActivitySession {
         if startedAt == nil {
             startedAt = date
         }
+        activeIntervalStartedAt = date
         lifecycleStateRaw = TrackedActivityLifecycleState.inProgress.rawValue
         updatedAt = date
     }
@@ -194,6 +217,7 @@ final class TrackedActivitySession {
             startedAt = date
         }
         accumulateElapsedIfNeeded(until: date)
+        activeIntervalStartedAt = nil
         endedAt = endedAt ?? date
         lifecycleStateRaw = TrackedActivityLifecycleState.completed.rawValue
         updatedAt = date
@@ -201,15 +225,53 @@ final class TrackedActivitySession {
 
     func discard(at date: Date = Date()) {
         accumulateElapsedIfNeeded(until: date)
+        activeIntervalStartedAt = nil
         lifecycleStateRaw = TrackedActivityLifecycleState.discarded.rawValue
         endedAt = endedAt ?? date
+        updatedAt = date
+    }
+
+    func markHealthKitExportPending(at date: Date = Date()) {
+        healthKitExportStateRaw = HealthKitExportState.pending.rawValue
+        healthKitExportAttemptedAt = date
+        healthKitExportFailureMessage = nil
+        updatedAt = date
+    }
+
+    func markHealthKitExportSucceeded(at date: Date = Date()) {
+        healthKitExportStateRaw = HealthKitExportState.exported.rawValue
+        healthKitExportAttemptedAt = date
+        healthKitExportSucceededAt = date
+        healthKitExportFailureMessage = nil
+        hasLocalChangesSinceHealthKitExport = false
+        updatedAt = date
+    }
+
+    func markHealthKitExportFailed(
+        state: HealthKitExportState = .failed,
+        message: String?,
+        at date: Date = Date()
+    ) {
+        healthKitExportStateRaw = state.rawValue
+        healthKitExportAttemptedAt = date
+        healthKitExportFailureMessage = message
+        updatedAt = date
+    }
+
+    func markLocalChangesSinceHealthKitExport(at date: Date = Date()) {
+        guard healthKitExportState == .exported else {
+            updatedAt = date
+            return
+        }
+        hasLocalChangesSinceHealthKitExport = true
         updatedAt = date
     }
 
     func liveElapsedDuration(at date: Date = Date()) -> TimeInterval {
         switch lifecycleState {
         case .inProgress:
-            return max(0, elapsedDuration + max(0, date.timeIntervalSince(updatedAt)))
+            let anchor = activeIntervalStartedAt ?? startedAt ?? updatedAt
+            return max(0, elapsedDuration + max(0, date.timeIntervalSince(anchor)))
         case .planned, .paused, .completed, .discarded:
             return max(0, elapsedDuration)
         }
@@ -228,6 +290,14 @@ final class TrackedActivitySession {
     private func normalizeLifecycleConsistency() {
         elapsedDuration = max(0, elapsedDuration)
 
+        if lifecycleState == .inProgress && activeIntervalStartedAt == nil {
+            activeIntervalStartedAt = startedAt ?? updatedAt
+        }
+
+        if lifecycleState != .inProgress {
+            activeIntervalStartedAt = nil
+        }
+
         if lifecycleState == .completed && endedAt == nil {
             endedAt = startedAt ?? updatedAt
         }
@@ -235,11 +305,16 @@ final class TrackedActivitySession {
         if lifecycleState == .discarded && endedAt == nil {
             endedAt = updatedAt
         }
+
+        if healthKitExportState == .exported {
+            healthKitExportFailureMessage = nil
+        }
     }
 
     private func accumulateElapsedIfNeeded(until date: Date) {
         guard lifecycleState == .inProgress else { return }
-        elapsedDuration = max(0, elapsedDuration + max(0, date.timeIntervalSince(updatedAt)))
+        let anchor = activeIntervalStartedAt ?? startedAt ?? updatedAt
+        elapsedDuration = max(0, elapsedDuration + max(0, date.timeIntervalSince(anchor)))
     }
 
     private static func encodeRoutePoints(_ points: [TrackedActivityRoutePoint]) -> Data? {

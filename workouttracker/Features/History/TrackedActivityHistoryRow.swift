@@ -1,9 +1,16 @@
 import SwiftUI
+import SwiftData
 
 struct TrackedActivityHistoryRow: View {
     let session: TrackedActivitySession
 
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var isShowingDeleteConfirmation = false
+    @State private var deleteFailureMessage: String?
+
     private let summaryBuilder = TrackedActivitySummaryBuilder()
+    private let recorder = TrackedActivityRecorder()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -36,6 +43,10 @@ struct TrackedActivityHistoryRow: View {
                     Label(String(localized: "activities.history.export_pending", defaultValue: "Apple Health save pending"), systemImage: "arrow.triangle.2.circlepath")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                } else if session.healthKitExportState == .exported && session.hasLocalChangesSinceHealthKitExport {
+                    Label(String(localized: "activities.history.export_local_changes", defaultValue: "Local edits differ from Health"), systemImage: "pencil.and.outline")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -63,6 +74,54 @@ struct TrackedActivityHistoryRow: View {
         }
         .padding(.vertical, 4)
         .accessibilityIdentifier("TrackedActivity.HistoryRow.\(session.id.uuidString)")
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            if session.allowsLocalDeletion {
+                Button(role: .destructive) {
+                    isShowingDeleteConfirmation = true
+                } label: {
+                    Label(session.localDeleteActionTitle, systemImage: "trash")
+                }
+                .accessibilityIdentifier("TrackedActivity.HistoryRow.Delete.\(session.id.uuidString)")
+            }
+        }
+        .contextMenu {
+            if session.allowsLocalDeletion {
+                Button(role: .destructive) {
+                    isShowingDeleteConfirmation = true
+                } label: {
+                    Label(session.localDeleteActionTitle, systemImage: "trash")
+                }
+            }
+        }
+        .confirmationDialog(
+            session.localDeleteTitle,
+            isPresented: $isShowingDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(session.localDeleteActionTitle, role: .destructive) {
+                deleteActivity()
+            }
+            Button(String(localized: "common.cancel", defaultValue: "Cancel"), role: .cancel) {}
+        } message: {
+            Text(session.localDeleteMessage)
+        }
+        .alert(
+            session.localDeleteFailureTitle,
+            isPresented: Binding(
+                get: { deleteFailureMessage != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        deleteFailureMessage = nil
+                    }
+                }
+            ),
+            actions: {
+                Button(String(localized: "common.ok", defaultValue: "OK"), role: .cancel) {}
+            },
+            message: {
+                Text(deleteFailureMessage ?? session.localDeleteFailureMessage)
+            }
+        )
     }
 
     private var badgeColor: Color {
@@ -75,6 +134,14 @@ struct TrackedActivityHistoryRow: View {
             return .blue
         case .discarded, .planned:
             return .secondary
+        }
+    }
+
+    private func deleteActivity() {
+        do {
+            try recorder.delete(session, context: modelContext)
+        } catch {
+            deleteFailureMessage = error.localizedDescription
         }
     }
 }

@@ -25,7 +25,11 @@ enum HealthKitWorkoutExportError: LocalizedError, Equatable {
 }
 
 struct HealthKitWorkoutExportOutcome: Equatable {
-    let didSaveRoute: Bool
+    let routeExportStatus: HealthKitWorkoutRouteExportStatus
+
+    var didSaveRoute: Bool {
+        routeExportStatus == .saved
+    }
 }
 
 struct HealthKitWorkoutExportService {
@@ -52,8 +56,11 @@ struct HealthKitWorkoutExportService {
         let workout = try makeWorkout(from: session)
         try await store.save(workout)
 
-        let didSaveRoute = (try? await routeExportService.exportRouteIfAvailable(from: session, associatingWith: workout)) ?? false
-        return HealthKitWorkoutExportOutcome(didSaveRoute: didSaveRoute)
+        let routeExportStatus = try await routeExportService.exportRouteIfAvailable(
+            from: session,
+            associatingWith: workout
+        )
+        return HealthKitWorkoutExportOutcome(routeExportStatus: routeExportStatus)
     }
 
     func makeWorkout(from session: TrackedActivitySession) throws -> HKWorkout {

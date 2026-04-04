@@ -23,6 +23,7 @@ final class UserPreferences: ObservableObject {
         static let lastBackupAt = "prefs.lastBackupAt"
         static let diagnosticsVerboseLoggingEnabled = "prefs.diagnosticsVerboseLoggingEnabled"
         static let exerciseIllustrationSet = "exerciseIllustrationSet"
+        static let autoSaveCompletedTrackedActivitiesToAppleHealth = TrackedActivityHealthPreferences.autoSaveCompletedActivitiesKey
     }
 
     private let defaults: UserDefaults
@@ -80,6 +81,10 @@ final class UserPreferences: ObservableObject {
         didSet { defaults.set(diagnosticsVerboseLoggingEnabled, forKey: Keys.diagnosticsVerboseLoggingEnabled) }
     }
 
+    @Published var autoSaveCompletedTrackedActivitiesToAppleHealth: Bool {
+        didSet { defaults.set(autoSaveCompletedTrackedActivitiesToAppleHealth, forKey: Keys.autoSaveCompletedTrackedActivitiesToAppleHealth) }
+    }
+
     /// Updated by backup export flows to reassure the user.
     @Published var lastBackupAt: Date? {
         didSet {
@@ -134,6 +139,8 @@ final class UserPreferences: ObservableObject {
         }
 
         self.diagnosticsVerboseLoggingEnabled = defaults.bool(forKey: Keys.diagnosticsVerboseLoggingEnabled)
+        self.autoSaveCompletedTrackedActivitiesToAppleHealth =
+            defaults.object(forKey: Keys.autoSaveCompletedTrackedActivitiesToAppleHealth) as? Bool ?? false
     }
 
     // MARK: - Derived labels
@@ -156,6 +163,7 @@ final class UserPreferences: ObservableObject {
         confirmDestructiveActions = true
         exerciseIllustrationSet = .dummyV1
         diagnosticsVerboseLoggingEnabled = false
+        autoSaveCompletedTrackedActivitiesToAppleHealth = false
         lastBackupAt = nil
     }
 }

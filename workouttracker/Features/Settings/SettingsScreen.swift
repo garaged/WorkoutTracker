@@ -6,6 +6,9 @@ struct SettingsScreen: View {
     @Environment(\.modelContext) private var context
     @StateObject private var prefs = UserPreferences.shared
 
+    @AppStorage(TrackedActivityHealthPreferences.autoSaveCompletedActivitiesKey)
+    private var autoSaveToAppleHealth = false
+
     private let backupExporter = AppBackupExporter()
 
     var body: some View {
@@ -20,6 +23,9 @@ struct SettingsScreen: View {
             }
 
             Section("Health") {
+                Toggle("Auto-save completed tracked activities to Apple Health", isOn: $autoSaveToAppleHealth)
+                    .accessibilityIdentifier("settings.healthAutoSaveToggle")
+
                 NavigationLink {
                     HealthPermissionsView()
                 } label: {
@@ -27,7 +33,7 @@ struct SettingsScreen: View {
                 }
                 .accessibilityIdentifier("settings.healthPermissionsLink")
 
-                Text("Tracked activities can be saved to Apple Health after you finish them. Eligible outdoor walks, runs, and hikes can also attach route data when location access is available.")
+                Text("When this is on, completed tracked activities try to save automatically to Apple Health. Manual retry stays available if a save attempt fails, and later edits remain local in WorkoutTracker.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

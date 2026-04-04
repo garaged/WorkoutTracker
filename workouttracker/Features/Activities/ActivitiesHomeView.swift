@@ -2,10 +2,16 @@ import SwiftUI
 import SwiftData
 
 struct ActivitiesHomeView: View {
+    @Environment(\.modelContext) private var modelContext
+
     @Query(sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)])
     private var trackedSessions: [TrackedActivitySession]
 
     @StateObject private var healthKitAuthorizationService = HealthKitAuthorizationService()
+    @State private var sessionPendingDeletion: TrackedActivitySession?
+    @State private var deleteFailureMessage: String?
+
+    private let recorder = TrackedActivityRecorder()
 
     private var activeSessions: [TrackedActivitySession] {
         trackedSessions.filter { $0.lifecycleState == .inProgress || $0.lifecycleState == .paused }
@@ -88,6 +94,25 @@ struct ActivitiesHomeView: View {
                         } label: {
                             TrackedActivitySessionRow(session: session)
                         }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            if session.allowsLocalDeletion {
+                                Button(role: .destructive) {
+                                    sessionPendingDeletion = session
+                                } label: {
+                                    Label(session.localDeleteActionTitle, systemImage: "trash")
+                                }
+                                .accessibilityIdentifier("TrackedActivity.RecentRow.Delete.\(session.id.uuidString)")
+                            }
+                        }
+                        .contextMenu {
+                            if session.allowsLocalDeletion {
+                                Button(role: .destructive) {
+                                    sessionPendingDeletion = session
+                                } label: {
+                                    Label(session.localDeleteActionTitle, systemImage: "trash")
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -117,6 +142,46 @@ struct ActivitiesHomeView: View {
         }
         .task {
             healthKitAuthorizationService.refresh()
+        }
+        .confirmationDialog(
+            sessionPendingDeletion?.localDeleteTitle ?? String(localized: "activities.delete.title.default", defaultValue: "Delete activity?"),
+            isPresented: Binding(
+                get: { sessionPendingDeletion != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        sessionPendingDeletion = nil
+                    }
+                }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let sessionPendingDeletion {
+                Button(sessionPendingDeletion.localDeleteActionTitle, role: .destructive) {
+                    delete(sessionPendingDeletion)
+                }
+            }
+            Button(String(localized: "common.cancel", defaultValue: "Cancel"), role: .cancel) {
+                sessionPendingDeletion = nil
+            }
+        } message: {
+            Text(sessionPendingDeletion?.localDeleteMessage ?? "")
+        }
+        .alert(
+            String(localized: "activities.delete.failure.title", defaultValue: "Could not delete activity"),
+            isPresented: Binding(
+                get: { deleteFailureMessage != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        deleteFailureMessage = nil
+                    }
+                }
+            )
+        ) {
+            Button(String(localized: "common.ok", defaultValue: "OK"), role: .cancel) {
+                deleteFailureMessage = nil
+            }
+        } message: {
+            Text(deleteFailureMessage ?? String(localized: "activities.delete.failure.message", defaultValue: "WorkoutTracker could not remove this activity right now. Please try again."))
         }
     }
 
@@ -203,6 +268,15 @@ struct ActivitiesHomeView: View {
     
     private func recentSortDate(for session: TrackedActivitySession) -> Date {
         session.endedAt ?? session.updatedAt ?? session.startedAt ?? session.createdAt
+    }
+
+    private func delete(_ session: TrackedActivitySession) {
+        do {
+            try recorder.delete(session, context: modelContext)
+            sessionPendingDeletion = nil
+        } catch {
+            deleteFailureMessage = error.localizedDescription
+        }
     }
 }
 

@@ -50,6 +50,13 @@ struct LiveHealthKitWorkoutRouteStoreProxy: HealthKitWorkoutRouteStoreProxy {
     }
 }
 
+enum HealthKitWorkoutRouteExportStatus: Equatable {
+    case notApplicable
+    case noRouteData
+    case saved
+    case failed(String)
+}
+
 struct HealthKitWorkoutRouteExportService {
     private let store: HealthKitWorkoutRouteStoreProxy
 
@@ -57,22 +64,26 @@ struct HealthKitWorkoutRouteExportService {
         self.store = store
     }
 
-    func exportRouteIfAvailable(from session: TrackedActivitySession, associatingWith workout: HKWorkout) async throws -> Bool {
+    func exportRouteIfAvailable(from session: TrackedActivitySession, associatingWith workout: HKWorkout) async throws -> HealthKitWorkoutRouteExportStatus {
         guard store.isHealthDataAvailable() else {
-            return false
+            return .failed("Apple Health route data is not available on this device.")
         }
 
         guard session.environment == .outdoor, session.activityKind.supportsDistance else {
-            return false
+            return .notApplicable
         }
 
         let locations = session.routePoints.map(\.location)
         guard locations.count > 1 else {
-            return false
+            return .noRouteData
         }
 
-        try await store.saveRoute(for: workout, locations: locations, metadata: metadata(for: session))
-        return true
+        do {
+            try await store.saveRoute(for: workout, locations: locations, metadata: metadata(for: session))
+            return .saved
+        } catch {
+            return .failed(error.localizedDescription)
+        }
     }
 
     func metadata(for session: TrackedActivitySession) -> [String: Any]? {

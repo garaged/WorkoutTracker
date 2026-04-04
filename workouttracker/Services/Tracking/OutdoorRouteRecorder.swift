@@ -4,13 +4,14 @@ import CoreLocation
 
 @MainActor
 final class OutdoorRouteRecorder: NSObject, ObservableObject {
-    
+
     enum CaptureState: Equatable {
         case notEligible
         case idle
         case requestingPermission
         case permissionDenied
         case paused
+        case searchingForLocation
         case recording
         case unavailable
         case failed(String)
@@ -27,6 +28,8 @@ final class OutdoorRouteRecorder: NSObject, ObservableObject {
                 return "Location denied"
             case .paused:
                 return "Paused"
+            case .searchingForLocation:
+                return "Acquiring location"
             case .recording:
                 return "Recording route"
             case .unavailable:
@@ -48,6 +51,8 @@ final class OutdoorRouteRecorder: NSObject, ObservableObject {
                 return "WorkoutTracker does not currently have permission to capture your route. You can still finish the activity and add distance manually."
             case .paused:
                 return "Route capture is paused while this activity is paused."
+            case .searchingForLocation:
+                return "WorkoutTracker is waiting for the first reliable location fix. This can take a moment outdoors, and iPhone Simulator also needs an active simulated location or GPX route."
             case .recording:
                 return "Location updates are being collected for this route while the activity screen stays open."
             case .unavailable:
@@ -77,6 +82,7 @@ final class OutdoorRouteRecorder: NSObject, ObservableObject {
         manager.desiredAccuracy = kCLLocationAccuracyBest
         manager.activityType = .fitness
         manager.distanceFilter = 10
+        manager.pausesLocationUpdatesAutomatically = false
         updateAvailabilityStateIfNeeded()
     }
 
@@ -153,10 +159,8 @@ final class OutdoorRouteRecorder: NSObject, ObservableObject {
 
         switch authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
-            if captureState != .recording {
-                locationManager.startUpdatingLocation()
-                captureState = .recording
-            }
+            locationManager.startUpdatingLocation()
+            captureState = capturedPoints.isEmpty ? .searchingForLocation : .recording
         case .notDetermined:
             captureState = .requestingPermission
             locationManager.requestWhenInUseAuthorization()
@@ -187,6 +191,7 @@ final class OutdoorRouteRecorder: NSObject, ObservableObject {
         capturedPoints.append(TrackedActivityRoutePoint(location: location))
         lastLocation = location
         derivedDistanceMeters = calculateDistance(from: capturedPoints)
+        captureState = .recording
     }
 
     private func calculateDistance(from points: [TrackedActivityRoutePoint]) -> Double? {
@@ -205,6 +210,11 @@ final class OutdoorRouteRecorder: NSObject, ObservableObject {
             captureState = .unavailable
         }
     }
+
+    private func handleTransientFailureWhileRecording() {
+        guard shouldRecord else { return }
+        captureState = capturedPoints.isEmpty ? .searchingForLocation : .recording
+    }
 }
 
 extension OutdoorRouteRecorder: CLLocationManagerDelegate {
@@ -215,7 +225,7 @@ extension OutdoorRouteRecorder: CLLocationManagerDelegate {
             if authorizationStatus == .authorizedAlways || authorizationStatus == .authorizedWhenInUse {
                 if shouldRecord {
                     locationManager.startUpdatingLocation()
-                    captureState = .recording
+                    captureState = capturedPoints.isEmpty ? .searchingForLocation : .recording
                 }
             } else if authorizationStatus == .denied || authorizationStatus == .restricted {
                 captureState = .permissionDenied
@@ -233,7 +243,22 @@ extension OutdoorRouteRecorder: CLLocationManagerDelegate {
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor in
-            captureState = .failed(error.localizedDescription)
+            guard let clError = error as? CLError else {
+                captureState = .failed("Route capture was interrupted. WorkoutTracker will keep trying while this activity remains active.")
+                return
+            }
+
+            switch clError.code {
+            case .locationUnknown:
+                handleTransientFailureWhileRecording()
+            case .denied:
+                stopUpdatingLocationOnly()
+                captureState = .permissionDenied
+            case .network, .deferredFailed, .deferredNotUpdatingLocation, .deferredAccuracyTooLow, .deferredDistanceFiltered, .deferredCanceled:
+                captureState = .failed("Route capture was interrupted. WorkoutTracker will keep trying while this activity remains active.")
+            default:
+                captureState = .failed(clError.localizedDescription)
+            }
         }
     }
 }

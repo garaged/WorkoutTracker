@@ -4,6 +4,9 @@ import UIKit
 struct HealthPermissionsView: View {
     @StateObject private var authorizationService = HealthKitAuthorizationService()
 
+    @AppStorage(TrackedActivityHealthPreferences.autoSaveCompletedActivitiesKey)
+    private var autoSaveToAppleHealth = false
+
     var body: some View {
         List {
             Section(String(localized: "health.permissions.section.status", defaultValue: "Status")) {
@@ -15,10 +18,34 @@ struct HealthPermissionsView: View {
                         .font(.subheadline.weight(.semibold))
                 }
 
+                Toggle(
+                    String(
+                        localized: "health.permissions.auto_save.toggle",
+                        defaultValue: "Auto-save completed tracked activities"
+                    ),
+                    isOn: $autoSaveToAppleHealth
+                )
+                .accessibilityIdentifier("healthPermissions.autoSaveToggle")
+
                 Text(authorizationService.state.message)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+
+                Text(
+                    autoSaveToAppleHealth
+                        ? String(
+                            localized: "health.permissions.auto_save.enabled",
+                            defaultValue: "When this is on, WorkoutTracker tries to save completed tracked activities to Apple Health automatically. If a save fails, you can retry from the summary."
+                        )
+                        : String(
+                            localized: "health.permissions.auto_save.disabled",
+                            defaultValue: "When this is off, you can still save completed tracked activities manually from the summary screen."
+                        )
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             }
 
             Section(String(localized: "health.permissions.section.saves", defaultValue: "What WorkoutTracker saves")) {
@@ -42,7 +69,7 @@ struct HealthPermissionsView: View {
                 Text(
                     String(
                         localized: "health.permissions.saves.footer",
-                        defaultValue: "This release writes completed tracked activities to Apple Health. Outdoor walks, runs, and hikes can also include route data when you allow location while using the app."
+                        defaultValue: "This release writes completed tracked activities to Apple Health. Outdoor walks, runs, and hikes can also include route data when you allow location while using the app. Later edits in WorkoutTracker stay local unless you retry a failed save before the workout has already been exported."
                     )
                 )
                 .font(.footnote)

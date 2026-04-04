@@ -27,6 +27,13 @@ struct TrackedActivitySummaryBuilder {
     }
 
     func metrics(
+        for session: TrackedActivitySession,
+        liveTotals: TrackedActivityTotals
+    ) -> [Metric] {
+        metrics(for: session.activityKind, totals: liveTotals, lifecycleState: session.lifecycleState)
+    }
+
+    func metrics(
         for activityKind: TrackedActivityKind,
         totals: TrackedActivityTotals,
         lifecycleState: TrackedActivityLifecycleState
