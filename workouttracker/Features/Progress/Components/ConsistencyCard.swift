@@ -80,7 +80,7 @@ struct ConsistencyCard: View {
 
     private var headerText: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Label("progress.dashboard.consistency.title", systemImage: "calendar.badge.clock")
+            Label(String(localized: "progress.dashboard.consistency.title"), systemImage: "calendar.badge.clock")
                 .font(.headline)
             Text(model.headline)
                 .font(.title3.weight(.semibold))

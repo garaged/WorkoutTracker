@@ -23,7 +23,7 @@ struct ProgressDashboardView: View {
                 dashboard(content: content, isLowData: false)
             }
         }
-        .navigationTitle("progress.title")
+        .navigationTitle(String(localized: "progress.title"))
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(
             isPresented: Binding(
@@ -55,7 +55,7 @@ struct ProgressDashboardView: View {
         VStack(spacing: 12) {
             ProgressView()
                 .controlSize(.large)
-            Text("progress.dashboard.loading")
+            Text(String(localized: "progress.dashboard.loading"))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -77,7 +77,7 @@ struct ProgressDashboardView: View {
 
     private func failureView(message: String) -> some View {
         ContentUnavailableView(
-            "progress.dashboard.failure_title",
+            String(localized: "progress.dashboard.failure_title"),
             systemImage: "exclamationmark.triangle",
             description: Text(verbatim: message)
         )
@@ -138,10 +138,10 @@ struct ProgressDashboardView: View {
 
     private func header(content: ProgressDashboardViewModel.DashboardContent) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("progress.dashboard.header_title")
+            Text(String(localized: "progress.dashboard.header_title"))
                 .font(.title2.weight(.semibold))
 
-            Text("progress.dashboard.header_subtitle")
+            Text(String(localized: "progress.dashboard.header_subtitle"))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

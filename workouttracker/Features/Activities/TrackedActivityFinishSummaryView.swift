@@ -50,35 +50,35 @@ struct TrackedActivityFinishSummaryView: View {
                     }
 
                     if session.activityKind.supportsDistance || session.activityKind.supportsSteps || session.activityKind == .yoga {
-                        Section("Refine metrics") {
+                        Section(String(localized: "activities.summary.refine_metrics.section", defaultValue: "Refine metrics")) {
                             if session.activityKind.supportsDistance {
-                                TextField("Distance (km)", text: $distanceKilometersText)
+                                TextField(String(localized: "activities.summary.refine_metrics.distance_km", defaultValue: "Distance (km)"), text: $distanceKilometersText)
                                     .keyboardType(.decimalPad)
                             }
 
-                            TextField("Active energy (kcal)", text: $activeEnergyText)
+                            TextField(String(localized: "activities.summary.refine_metrics.active_energy", defaultValue: "Active energy (kcal)"), text: $activeEnergyText)
                                 .keyboardType(.decimalPad)
 
                             if session.activityKind.supportsSteps {
-                                TextField("Steps", text: $stepCountText)
+                                TextField(String(localized: "activities.summary.refine_metrics.steps", defaultValue: "Steps"), text: $stepCountText)
                                     .keyboardType(.numberPad)
                             }
                         }
                     }
 
-                    Section("Notes") {
-                        TextField("Optional notes", text: $notes, axis: .vertical)
+                    Section(String(localized: "activities.summary.notes.section", defaultValue: "Notes")) {
+                        TextField(String(localized: "activities.summary.notes.placeholder", defaultValue: "Optional notes"), text: $notes, axis: .vertical)
                             .lineLimit(3...6)
                     }
 
                     Section {
-                        Button("Save summary changes") {
+                        Button(String(localized: "activities.summary.save_changes", defaultValue: "Save summary changes")) {
                             save(session)
                         }
                         .buttonStyle(.borderedProminent)
 
                         if saveConfirmationVisible {
-                            Text("Saved")
+                            Text(String(localized: "common.saved", defaultValue: "Saved"))
                                 .font(.footnote)
                                 .foregroundStyle(.green)
                         }
@@ -117,19 +117,19 @@ struct TrackedActivityFinishSummaryView: View {
                 } message: {
                     Text(session.localDeleteMessage)
                 }
-                .alert("Could not save summary", isPresented: Binding(
+                .alert(String(localized: "activities.summary.save_error.title", defaultValue: "Could not save summary"), isPresented: Binding(
                     get: { errorMessage != nil },
                     set: { if !$0 { errorMessage = nil } }
                 )) {
-                    Button("OK", role: .cancel) { errorMessage = nil }
+                    Button(String(localized: "common.ok", defaultValue: "OK"), role: .cancel) { errorMessage = nil }
                 } message: {
-                    Text(errorMessage ?? "Unknown error")
+                    Text(errorMessage ?? String(localized: "common.unknown_error", defaultValue: "Unknown error"))
                 }
             } else {
                 ContentUnavailableView(
-                    "Summary unavailable",
+                    String(localized: "activities.summary.unavailable.title", defaultValue: "Summary unavailable"),
                     systemImage: "exclamationmark.triangle",
-                    description: Text("This tracked activity could not be loaded.")
+                    description: Text(String(localized: "activities.summary.unavailable.message", defaultValue: "This tracked activity could not be loaded."))
                 )
             }
         }
@@ -137,12 +137,12 @@ struct TrackedActivityFinishSummaryView: View {
 
     @ViewBuilder
     private func appleHealthSection(for session: TrackedActivitySession) -> some View {
-        Section("Apple Health") {
-            LabeledContent("Permission", value: healthKitAuthorizationService.state.title)
-            LabeledContent("Workout save state", value: session.healthKitExportDisplayName)
+        Section(String(localized: "activities.health.title", defaultValue: "Apple Health")) {
+            LabeledContent(String(localized: "activities.health.permission", defaultValue: "Permission"), value: healthKitAuthorizationService.state.title)
+            LabeledContent(String(localized: "activities.health.workout_save_state", defaultValue: "Workout save state"), value: session.healthKitExportDisplayName)
 
             if session.environment == .outdoor && session.activityKind.supportsDistance {
-                LabeledContent("Captured route", value: session.hasRecordedRoute ? "\(session.routePointCount) points" : "Not available")
+                LabeledContent(String(localized: "activities.health.captured_route", defaultValue: "Captured route"), value: session.hasRecordedRoute ? String(format: String(localized: "activities.health.route_points", defaultValue: "%lld points"), Int64(session.routePointCount)) : String(localized: "activities.health.not_available", defaultValue: "Not available"))
             }
 
             Text(session.healthKitExportHelperText)
@@ -156,7 +156,7 @@ struct TrackedActivityFinishSummaryView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             if session.environment == .outdoor && session.activityKind.supportsDistance {
-                Text("Outdoor routes require Apple Health access for workout routes and location while using the app during the activity.")
+                Text(String(localized: "activities.health.route_requirement", defaultValue: "Outdoor routes require Apple Health access for workout routes and location while using the app during the activity."))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -181,14 +181,14 @@ struct TrackedActivityFinishSummaryView: View {
                 EmptyView()
 
             case .notRequested:
-                Button("Enable Apple Health") {
+                Button(String(localized: "activities.health.enable", defaultValue: "Enable Apple Health")) {
                     Task { await requestAuthorization() }
                 }
                 .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("trackedActivity.enableHealthKitButton")
 
             case .denied:
-                Button("Open Settings") {
+                Button(String(localized: "common.open_settings", defaultValue: "Open Settings")) {
                     openSystemSettings()
                 }
                 .buttonStyle(.bordered)
@@ -202,9 +202,9 @@ struct TrackedActivityFinishSummaryView: View {
                         Task { await exportToHealth(session) }
                     } label: {
                         if isExporting {
-                            Label("Saving to Apple Health…", systemImage: "heart.text.square")
+                            Label(String(localized: "activities.health.saving", defaultValue: "Saving to Apple Health…"), systemImage: "heart.text.square")
                         } else {
-                            Label("Save to Apple Health", systemImage: "heart.text.square")
+                            Label(String(localized: "activities.health.save", defaultValue: "Save to Apple Health"), systemImage: "heart.text.square")
                         }
                     }
                     .buttonStyle(.borderedProminent)
@@ -248,9 +248,9 @@ struct TrackedActivityFinishSummaryView: View {
             )
             saveConfirmationVisible = true
             if session.healthKitExportState == .failed {
-                healthExportMessage = "Summary saved. You can retry saving to Apple Health with the updated values."
+                healthExportMessage = String(localized: "activities.summary.health.saved_retry", defaultValue: "Summary saved. You can retry saving to Apple Health with the updated values.")
             } else if session.healthKitExportState == .exported {
-                healthExportMessage = "Summary saved locally. Because this workout was already saved to Apple Health, later edits here do not update the exported Health workout in this release."
+                healthExportMessage = String(localized: "activities.summary.health.saved_local_only", defaultValue: "Summary saved locally. Because this workout was already saved to Apple Health, later edits here do not update the exported Health workout in this release.")
             } else {
                 healthExportMessage = nil
             }
@@ -278,11 +278,11 @@ struct TrackedActivityFinishSummaryView: View {
             let outcome = try await exportService.export(session)
             try recorder.updateHealthKitExportState(for: session, state: .exported, context: modelContext)
             if outcome.didSaveRoute {
-                healthExportMessage = "Saved to Apple Health with your outdoor route."
+                healthExportMessage = String(localized: "activities.summary.health.saved_with_route", defaultValue: "Saved to Apple Health with your outdoor route.")
             } else if session.environment == .outdoor && session.activityKind.supportsDistance {
-                healthExportMessage = "Saved to Apple Health. The workout was exported even though route data was unavailable or could not be attached."
+                healthExportMessage = String(localized: "activities.summary.health.saved_without_route", defaultValue: "Saved to Apple Health. The workout was exported even though route data was unavailable or could not be attached.")
             } else {
-                healthExportMessage = "Saved to Apple Health."
+                healthExportMessage = String(localized: "activities.summary.health.saved", defaultValue: "Saved to Apple Health.")
             }
         } catch let exportError as HealthKitWorkoutExportError {
             let failedState: HealthKitExportState = {

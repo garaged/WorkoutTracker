@@ -268,7 +268,7 @@ private struct SetPlanRow: View {
             if style.showsReps || style.showsWeight {
                 HStack(spacing: 10) {
                     if style.showsReps {
-                        LabeledContent("Reps") {
+                        LabeledContent(String(localized: "common.reps", defaultValue: "Reps")) {
                             TextField(AppFormatting.localized("—"), text: repsBinding)
                                 .multilineTextAlignment(.trailing)
                                 .keyboardType(.numberPad)
@@ -277,7 +277,7 @@ private struct SetPlanRow: View {
                         }
                     }
                     if style.showsWeight {
-                        LabeledContent("Weight") {
+                        LabeledContent(String(localized: "common.weight", defaultValue: "Weight")) {
                             HStack(spacing: 6) {
                                 TextField(AppFormatting.localized("—"), text: weightBinding)
                                     .multilineTextAlignment(.trailing)
@@ -304,7 +304,7 @@ private struct SetPlanRow: View {
             if style.showsDuration || style.showsDistance {
                 HStack(spacing: 10) {
                     if style.showsDuration {
-                        LabeledContent("Duration (min)") {
+                        LabeledContent(String(localized: "routines.plan.duration_minutes", defaultValue: "Duration (min)")) {
                             TextField(AppFormatting.localized("—"), text: durationMinutesBinding)
                                 .multilineTextAlignment(.trailing)
                                 .keyboardType(.decimalPad)
@@ -313,7 +313,7 @@ private struct SetPlanRow: View {
                         }
                     }
                     if style.showsDistance {
-                        LabeledContent("Distance") {
+                        LabeledContent(String(localized: "common.distance", defaultValue: "Distance")) {
                             HStack(spacing: 6) {
                                 TextField(AppFormatting.localized("—"), text: distanceBinding)
                                     .multilineTextAlignment(.trailing)
@@ -333,7 +333,7 @@ private struct SetPlanRow: View {
             if style.showsRPE || style.showsRest {
                 HStack(spacing: 10) {
                     if style.showsRPE {
-                        LabeledContent("RPE") {
+                        LabeledContent(String(localized: "common.rpe", defaultValue: "RPE")) {
                             TextField(AppFormatting.localized("—"), text: rpeBinding)
                                 .multilineTextAlignment(.trailing)
                                 .keyboardType(.decimalPad)
@@ -342,12 +342,12 @@ private struct SetPlanRow: View {
                         }
                     }
                     if style.showsRest {
-                        LabeledContent("Rest") {
+                        LabeledContent(String(localized: "common.rest", defaultValue: "Rest")) {
                             Stepper(value: Binding(
                                 get: { plan.restSeconds ?? 90 },
                                 set: { plan.restSeconds = $0 }
                             ), in: 0...600, step: 15) {
-                                Text("\(plan.restSeconds ?? 90)s")
+                                Text(String(format: String(localized: "routines.plan.rest_seconds.compact", defaultValue: "%llds"), Int64(plan.restSeconds ?? 90)))
                                     .foregroundStyle(.secondary)
                             }
                         }

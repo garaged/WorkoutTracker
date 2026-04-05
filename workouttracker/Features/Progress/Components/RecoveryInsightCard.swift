@@ -84,7 +84,7 @@ struct RecoveryInsightCard: View {
 
     private var headerText: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Label("progress.dashboard.recovery.title", systemImage: "timer")
+            Label(String(localized: "progress.dashboard.recovery.title"), systemImage: "timer")
                 .font(.headline)
             Text(model.headline)
                 .font(.title3.weight(.semibold))

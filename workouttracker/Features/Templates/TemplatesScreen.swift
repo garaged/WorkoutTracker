@@ -86,7 +86,7 @@ private struct TemplateRow: View {
             HStack(spacing: 8) {
                 Text(startTimeLabel(minutes: template.defaultStartMinute))
                 Text(AppFormatting.localized("•")).foregroundStyle(.secondary)
-                Text("\(template.defaultDurationMinutes)m")
+                Text(String(format: String(localized: "templates.row.duration_minutes.compact", defaultValue: "%lldm"), Int64(template.defaultDurationMinutes)))
                 Text(AppFormatting.localized("•")).foregroundStyle(.secondary)
                 Text(recurrenceSummary(template.recurrence))
             }
@@ -104,24 +104,24 @@ private struct TemplateRow: View {
 
     private func recurrenceSummary(_ r: RecurrenceRule) -> String {
         switch r.kind {
-        case .none: return "one-time"
-        case .daily: return r.interval <= 1 ? "daily" : "every \(r.interval) days"
+        case .none: return String(localized: "templates.recurrence.one_time.lowercase", defaultValue: "one-time")
+        case .daily: return r.interval <= 1 ? String(localized: "templates.recurrence.daily", defaultValue: "daily") : String(format: String(localized: "templates.recurrence.every_n_days.lowercase", defaultValue: "every %lld days"), Int64(r.interval))
         case .weekly:
             let days = r.weekdays.sorted { $0.rawValue < $1.rawValue }.map(wdAbbrev).joined(separator: ",")
-            let base = r.interval <= 1 ? "weekly" : "every \(r.interval) weeks"
-            return days.isEmpty ? base : "\(base) (\(days))"
+            let base = r.interval <= 1 ? String(localized: "templates.recurrence.weekly", defaultValue: "weekly") : String(format: String(localized: "templates.recurrence.every_n_weeks.lowercase", defaultValue: "every %lld weeks"), Int64(r.interval))
+            return days.isEmpty ? base : String(format: String(localized: "templates.recurrence.weekly_with_days", defaultValue: "%1$@ (%2$@)"), base, days)
         }
     }
 
     private func wdAbbrev(_ w: Weekday) -> String {
         switch w {
-        case .sunday: return "Sun"
-        case .monday: return "Mon"
-        case .tuesday: return "Tue"
-        case .wednesday: return "Wed"
-        case .thursday: return "Thu"
-        case .friday: return "Fri"
-        case .saturday: return "Sat"
+        case .sunday: return String(localized: "weekday.sun.short", defaultValue: "Sun")
+        case .monday: return String(localized: "weekday.mon.short", defaultValue: "Mon")
+        case .tuesday: return String(localized: "weekday.tue.short", defaultValue: "Tue")
+        case .wednesday: return String(localized: "weekday.wed.short", defaultValue: "Wed")
+        case .thursday: return String(localized: "weekday.thu.short", defaultValue: "Thu")
+        case .friday: return String(localized: "weekday.fri.short", defaultValue: "Fri")
+        case .saturday: return String(localized: "weekday.sat.short", defaultValue: "Sat")
         }
     }
 }

@@ -69,7 +69,7 @@ struct StrengthProgressCard: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(Text(verbatim: exerciseAccessibilityLabel(for: exercise)))
-                        .accessibilityHint(Text("progress.dashboard.volume.open_exercise_detail"))
+                        .accessibilityHint(Text(String(localized: "progress.dashboard.volume.open_exercise_detail")))
                         .accessibilityIdentifier("Progress.Dashboard.StrengthExerciseButton.\(exercise.exerciseID.uuidString)")
                     }
                 }
@@ -111,7 +111,7 @@ struct StrengthProgressCard: View {
 
     private var headerText: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Label("progress.dashboard.strength.title", systemImage: "figure.strengthtraining.traditional")
+            Label(String(localized: "progress.dashboard.strength.title"), systemImage: "figure.strengthtraining.traditional")
                 .font(.headline)
             Text(model.headline)
                 .font(.title3.weight(.semibold))

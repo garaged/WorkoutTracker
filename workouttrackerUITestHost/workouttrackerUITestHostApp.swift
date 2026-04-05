@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 import Foundation
 import UIKit
+import CoreLocation
 
 @main
 @MainActor
@@ -99,6 +100,12 @@ struct workouttrackerUITestHostApp: App {
                 if env["UITESTS_NO_ACTIVE_SESSIONS"] == "1" {
                     try assertNoActiveSessionsUITestState(context: context)
                 }
+
+
+                if env["UITESTS_TRACKED_ACTIVITY_SEED"] == "1" {
+                    try seedTrackedActivityUITestDataIfNeeded(context: context)
+                    try assertTrackedActivityUITestSeed(context: context, env: env)
+                }
             }
 
             self.container = c
@@ -121,6 +128,12 @@ private enum ProgressUITestSeed {
     static let secondaryExerciseID = UUID(uuidString: "22222222-2222-2222-2222-222222222222")!
     static let primaryExerciseName = "UITest Bench Press"
     static let secondaryExerciseName = "UITest Squat"
+}
+
+
+enum TrackedActivityUITestSeed {
+    static let liveSessionID = UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!
+    static let summarySessionID = UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!
 }
 
 // MARK: - Calendar UITest seed
@@ -862,5 +875,113 @@ private func assertProgramCatalogUITestSeed() throws {
     }
     guard hasRoutineReference else {
         fatalError("UITESTS assertion failed: seeded program routine must reference goblet-squat by stable exercise slug.")
+    }
+}
+
+
+// MARK: - Tracked Activity UITest seed
+@MainActor
+private func seedTrackedActivityUITestDataIfNeeded(context: ModelContext, now: Date = Date()) throws {
+    let existing = try context.fetch(FetchDescriptor<TrackedActivitySession>())
+
+    if !existing.contains(where: { $0.id == TrackedActivityUITestSeed.summarySessionID }) {
+        let startedAt = now.addingTimeInterval(-(45 * 60))
+        let endedAt = now.addingTimeInterval(-(12 * 60))
+        let routePoints: [TrackedActivityRoutePoint] = [
+            TrackedActivityRoutePoint(location: CLLocation(latitude: 37.3317, longitude: -122.0301)),
+            TrackedActivityRoutePoint(location: CLLocation(latitude: 37.3328, longitude: -122.0290)),
+            TrackedActivityRoutePoint(location: CLLocation(latitude: 37.3340, longitude: -122.0278))
+        ]
+
+        let summarySession = TrackedActivitySession(
+            id: TrackedActivityUITestSeed.summarySessionID,
+            createdAt: startedAt,
+            updatedAt: endedAt,
+            startedAt: startedAt,
+            endedAt: endedAt,
+            activeIntervalStartedAt: nil,
+            activityKind: .running,
+            environment: .outdoor,
+            lifecycleState: .completed,
+            totals: TrackedActivityTotals(
+                elapsedDuration: endedAt.timeIntervalSince(startedAt),
+                distanceMeters: 4_250,
+                activeEnergyKilocalories: 315,
+                stepCount: 5_200
+            ),
+            healthKitExportState: .exported,
+            routePoints: routePoints,
+            notes: "UITest summary session",
+            healthKitExportAttemptedAt: endedAt,
+            healthKitExportSucceededAt: endedAt,
+            healthKitExportFailureMessage: nil,
+            hasLocalChangesSinceHealthKitExport: false
+        )
+        context.insert(summarySession)
+    }
+
+    if !existing.contains(where: { $0.id == TrackedActivityUITestSeed.liveSessionID }) {
+        let startedAt = now.addingTimeInterval(-95)
+        let liveRoutePoints: [TrackedActivityRoutePoint] = [
+            TrackedActivityRoutePoint(location: CLLocation(latitude: 37.7750, longitude: -122.4195)),
+            TrackedActivityRoutePoint(location: CLLocation(latitude: 37.7756, longitude: -122.4189))
+        ]
+
+        let liveSession = TrackedActivitySession(
+            id: TrackedActivityUITestSeed.liveSessionID,
+            createdAt: startedAt,
+            updatedAt: startedAt,
+            startedAt: startedAt,
+            endedAt: nil,
+            activeIntervalStartedAt: startedAt,
+            activityKind: .running,
+            environment: .outdoor,
+            lifecycleState: .inProgress,
+            totals: TrackedActivityTotals(
+                elapsedDuration: 0,
+                distanceMeters: 280,
+                activeEnergyKilocalories: 24,
+                stepCount: 380
+            ),
+            healthKitExportState: .notRequested,
+            routePoints: liveRoutePoints,
+            notes: "UITest live session"
+        )
+        context.insert(liveSession)
+    }
+
+    try context.save()
+}
+
+@MainActor
+private func assertTrackedActivityUITestSeed(context: ModelContext, env: [String: String]) throws {
+    let sessions = try context.fetch(FetchDescriptor<TrackedActivitySession>())
+
+    if env["UITESTS_TRACKED_ACTIVITY_SUMMARY"] == "1" {
+        guard let summarySession = sessions.first(where: { $0.id == TrackedActivityUITestSeed.summarySessionID }) else {
+            fatalError("UITESTS assertion failed: tracked-activity summary route expected a seeded completed TrackedActivitySession.")
+        }
+
+        guard summarySession.lifecycleState == .completed else {
+            fatalError("UITESTS assertion failed: tracked-activity summary seed expected the completed session to be terminal.")
+        }
+
+        guard summarySession.healthKitExportState == .exported else {
+            fatalError("UITESTS assertion failed: tracked-activity summary seed expected the completed session to be exported to Apple Health.")
+        }
+    }
+
+    if env["UITESTS_TRACKED_ACTIVITY_LIVE"] == "1" {
+        guard let liveSession = sessions.first(where: { $0.id == TrackedActivityUITestSeed.liveSessionID }) else {
+            fatalError("UITESTS assertion failed: tracked-activity live route expected a seeded in-progress TrackedActivitySession.")
+        }
+
+        guard liveSession.lifecycleState == .inProgress else {
+            fatalError("UITESTS assertion failed: tracked-activity live seed expected the session to be in progress.")
+        }
+
+        guard liveSession.activeIntervalStartedAt != nil else {
+            fatalError("UITESTS assertion failed: tracked-activity live seed expected an active interval anchor for elapsed timing.")
+        }
     }
 }

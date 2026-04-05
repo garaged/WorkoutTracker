@@ -30,7 +30,7 @@ struct ExerciseProgressDetailView: View {
                 detailContent(content, isLowData: false)
             }
         }
-        .navigationTitle("progress.detail.title")
+        .navigationTitle(String(localized: "progress.detail.title"))
         .navigationBarTitleDisplayMode(.inline)
         .task(id: exerciseID) {
             viewModel.configureIfNeeded(context: modelContext)
@@ -46,7 +46,7 @@ struct ExerciseProgressDetailView: View {
         VStack(spacing: 12) {
             ProgressView()
                 .controlSize(.large)
-            Text("progress.detail.loading")
+            Text(String(localized: "progress.detail.loading"))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -57,7 +57,7 @@ struct ExerciseProgressDetailView: View {
 
     private func failureView(message: String) -> some View {
         ContentUnavailableView(
-            "progress.detail.failure_title",
+            String(localized: "progress.detail.failure_title"),
             systemImage: "exclamationmark.triangle",
             description: Text(verbatim: message)
         )
@@ -125,7 +125,7 @@ struct ExerciseProgressDetailView: View {
                 }
             }
 
-            Text("progress.detail.header_subtitle")
+            Text(String(localized: "progress.detail.header_subtitle"))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

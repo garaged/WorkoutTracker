@@ -19,6 +19,12 @@ struct UITestHostRootView: View {
             switch (env["UITESTS_START"] ?? "calendar").lowercased() {
             case "settings":
                 SettingsScreen()
+            case "activities":
+                ActivitiesHomeView()
+            case "tracked-session":
+                TrackedActivitySessionScreen(sessionID: TrackedActivityUITestSeed.liveSessionID)
+            case "tracked-summary":
+                TrackedActivityFinishSummaryView(sessionID: TrackedActivityUITestSeed.summarySessionID)
             case "home":
                 UITestHomeRouteLauncherView()
             case "progress":

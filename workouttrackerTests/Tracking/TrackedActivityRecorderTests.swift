@@ -26,7 +26,8 @@ final class TrackedActivityRecorderTests: XCTestCase {
             totals: TrackedActivityTotals(elapsedDuration: 90)
         )
         session.startedAt = start
-        session.updatedAt = start
+        session.activeIntervalStartedAt = start
+        session.updatedAt = start.addingTimeInterval(999)
 
         let totals = recorder.liveTotals(for: session, now: start.addingTimeInterval(30))
         XCTAssertEqual(totals.elapsedDuration, 120, accuracy: 0.001)

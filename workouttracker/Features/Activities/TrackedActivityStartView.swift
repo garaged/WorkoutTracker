@@ -20,8 +20,8 @@ struct TrackedActivityStartView: View {
 
     var body: some View {
         Form {
-            Section("Activity") {
-                Picker("Type", selection: $selectedKind) {
+            Section(String(localized: "activities.start.section.activity", defaultValue: "Activity")) {
+                Picker(String(localized: "activities.start.type", defaultValue: "Type"), selection: $selectedKind) {
                     ForEach(TrackedActivityKind.allCases, id: \.self) { kind in
                         Label(kind.displayName, systemImage: kind.systemImage)
                             .tag(kind)
@@ -34,7 +34,7 @@ struct TrackedActivityStartView: View {
                     }
                 }
 
-                Picker("Environment", selection: $selectedEnvironment) {
+                Picker(String(localized: "activities.start.environment", defaultValue: "Environment"), selection: $selectedEnvironment) {
                     Text(ActivityEnvironment.indoor.displayName).tag(ActivityEnvironment.indoor)
                     Text(ActivityEnvironment.outdoor.displayName).tag(ActivityEnvironment.outdoor)
                     Text(ActivityEnvironment.unspecified.displayName).tag(ActivityEnvironment.unspecified)
@@ -44,18 +44,18 @@ struct TrackedActivityStartView: View {
                 }
             }
 
-            Section("Apple Health") {
+            Section(String(localized: "activities.health.title", defaultValue: "Apple Health")) {
                 HStack {
-                    Text("Status")
+                    Text(String(localized: "common.status", defaultValue: "Status"))
                     Spacer()
                     Text(healthKitAuthorizationService.state.title)
                         .foregroundStyle(healthStatusColor)
                 }
 
                 HStack {
-                    Text("Auto-save")
+                    Text(String(localized: "activities.start.auto_save", defaultValue: "Auto-save"))
                     Spacer()
-                    Text(autoSaveToAppleHealth ? "On" : "Off")
+                    Text(autoSaveToAppleHealth ? String(localized: "common.on", defaultValue: "On") : String(localized: "common.off", defaultValue: "Off"))
                         .foregroundStyle(.secondary)
                 }
 
@@ -65,8 +65,8 @@ struct TrackedActivityStartView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section("Notes") {
-                TextField("Optional notes", text: $notes, axis: .vertical)
+            Section(String(localized: "activities.summary.notes.section", defaultValue: "Notes")) {
+                TextField(String(localized: "activities.summary.notes.placeholder", defaultValue: "Optional notes"), text: $notes, axis: .vertical)
                     .lineLimit(3...6)
             }
 
@@ -93,14 +93,14 @@ struct TrackedActivityStartView: View {
                 .buttonStyle(.borderedProminent)
             }
         }
-        .navigationTitle("Start activity")
-        .alert("Could not start activity", isPresented: Binding(
+        .navigationTitle(String(localized: "activities.start.title", defaultValue: "Start activity"))
+        .alert(String(localized: "activities.start.error.title", defaultValue: "Could not start activity"), isPresented: Binding(
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }
         )) {
-            Button("OK", role: .cancel) { errorMessage = nil }
+            Button(String(localized: "common.ok", defaultValue: "OK"), role: .cancel) { errorMessage = nil }
         } message: {
-            Text(errorMessage ?? "Unknown error")
+            Text(errorMessage ?? String(localized: "common.unknown_error", defaultValue: "Unknown error"))
         }
         .navigationDestination(isPresented: Binding(
             get: { startedSessionID != nil },
@@ -128,9 +128,9 @@ struct TrackedActivityStartView: View {
 
     private var healthStatusExplanation: String {
         if autoSaveToAppleHealth {
-            return "Completed sessions try to save automatically to Apple Health when permission is available. If a save fails, you can still retry later from the summary."
+            return String(localized: "activities.start.health.auto_save_explanation", defaultValue: "Completed sessions try to save automatically to Apple Health when permission is available. If a save fails, you can still retry later from the summary.")
         }
-        return "You can start tracked activities even without Apple Health access. Completed sessions can be saved to Apple Health later from the finish summary."
+        return String(localized: "activities.start.health.manual_explanation", defaultValue: "You can start tracked activities even without Apple Health access. Completed sessions can be saved to Apple Health later from the finish summary.")
     }
 
     private func start() {

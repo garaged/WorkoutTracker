@@ -73,13 +73,13 @@ struct TemplateEditorView: View {
 
                 Toggle(AppFormatting.localized("Enabled"), isOn: $isEnabled)
 
-                DatePicker("Default start time", selection: $startTime, displayedComponents: .hourAndMinute)
+                DatePicker(String(localized: "templates.editor.default_start_time", defaultValue: "Default start time"), selection: $startTime, displayedComponents: .hourAndMinute)
 
                 Stepper(value: $durationMinutes, in: 5...360, step: 5) {
                     HStack {
                         Text(AppFormatting.localized("Duration"))
                         Spacer()
-                        Text("\(durationMinutes) min").foregroundStyle(.secondary)
+                        Text(String(format: String(localized: "templates.editor.duration_minutes", defaultValue: "%lld min"), Int64(durationMinutes))).foregroundStyle(.secondary)
                     }
                 }
             }
@@ -104,7 +104,7 @@ struct TemplateEditorView: View {
 
             Section(AppFormatting.localized("Recurrence")) {
                 Picker(AppFormatting.localized("Repeats"), selection: $recurrenceKind) {
-                    Text("One-time").tag(RecurrenceRule.Kind.none)
+                    Text(String(localized: "templates.recurrence.one_time", defaultValue: "One-time")).tag(RecurrenceRule.Kind.none)
                     Text(AppFormatting.localized("Daily")).tag(RecurrenceRule.Kind.daily)
                     Text(AppFormatting.localized("Weekly")).tag(RecurrenceRule.Kind.weekly)
                 }
@@ -123,7 +123,7 @@ struct TemplateEditorView: View {
                     WeekdayPicker(weekdays: $weekdays)
                 }
 
-                DatePicker("Start date", selection: $ruleStartDate, displayedComponents: .date)
+                DatePicker(String(localized: "templates.editor.start_date", defaultValue: "Start date"), selection: $ruleStartDate, displayedComponents: .date)
 
                 Toggle(AppFormatting.localized("End date"), isOn: $hasEndDate)
                 if hasEndDate {
@@ -151,7 +151,7 @@ struct TemplateEditorView: View {
                             .foregroundStyle(.secondary)
 
                         if !updatePreview.sampleStartDates.isEmpty {
-                            Text("Next: " + updatePreview.sampleStartDates
+                            Text(String(localized: "templates.preview.next", defaultValue: "Next:") + " " + updatePreview.sampleStartDates
                                 .map { $0.formatted(date: .abbreviated, time: .shortened) }
                                 .joined(separator: ", ")
                             )
@@ -197,17 +197,17 @@ struct TemplateEditorView: View {
 
     private var modeTitle: String {
         switch mode {
-        case .create: return "New Schedule Template"
-        case .edit: return "Edit Schedule Template"
+        case .create: return String(localized: "templates.editor.mode.create", defaultValue: "New Schedule Template")
+        case .edit: return String(localized: "templates.editor.mode.edit", defaultValue: "Edit Schedule Template")
         }
     }
 
     private var intervalLabel: String {
         switch recurrenceKind {
         case .daily:
-            return interval == 1 ? "Every day" : "Every \(interval) days"
+            return interval == 1 ? String(localized: "templates.recurrence.every_day", defaultValue: "Every day") : String(format: String(localized: "templates.recurrence.every_n_days", defaultValue: "Every %lld days"), Int64(interval))
         case .weekly:
-            return interval == 1 ? "Every week" : "Every \(interval) weeks"
+            return interval == 1 ? String(localized: "templates.recurrence.every_week", defaultValue: "Every week") : String(format: String(localized: "templates.recurrence.every_n_weeks", defaultValue: "Every %lld weeks"), Int64(interval))
         case .none:
             return ""
         }
@@ -215,10 +215,10 @@ struct TemplateEditorView: View {
 
     private var previewSummaryText: String {
         let c = updatePreview.affectedCount
-        let noun = (c == 1) ? "item" : "items"
+        let noun = (c == 1) ? String(localized: "templates.preview.item.singular", defaultValue: "item") : String(localized: "templates.preview.item.plural", defaultValue: "items")
         switch updateScope {
         case .thisInstance:
-            return "This will update \(c) \(noun) (apply day only)."
+            return String(format: String(localized: "templates.preview.this_instance", defaultValue: "This will update %1$lld %2$@ (apply day only)."), Int64(c), noun)
         case .thisAndFuture:
             return AppFormatting.localizedFormat("This will update %1$lld %2$@ (this & future; materialized rows only).", Int64(c), noun)
         case .allInstances:
@@ -356,7 +356,7 @@ struct TemplateEditorView: View {
             previewError = nil
             updatePreview = plan.preview
         } catch {
-            previewError = "Couldn’t compute preview: \(error.localizedDescription)"
+            previewError = String(format: String(localized: "templates.preview.error", defaultValue: "Couldn’t compute preview: %@"), error.localizedDescription)
             updatePreview = .init(affectedCount: 0, sampleStartDates: [])
         }
     }
@@ -538,7 +538,7 @@ private struct WeekdayPicker: View {
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(selected ? "\(label(for: wd)) selected" : label(for: wd))
+                    .accessibilityLabel(selected ? String(format: String(localized: "templates.weekday.selected", defaultValue: "%@ selected"), label(for: wd)) : label(for: wd))
                 }
             }
         }

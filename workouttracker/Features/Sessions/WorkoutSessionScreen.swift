@@ -2402,7 +2402,7 @@ struct WorkoutSessionScreen: View {
                                 Spacer()
 
                                 if let w = ctx.weight {
-                                    Text("\(AppFormatting.decimal(w, maxFractionDigits: 1)) \(ctx.unit)")
+                                    Text(String(format: String(localized: "session.pr.weight_value", defaultValue: "%1$@ %2$@"), AppFormatting.decimal(w, maxFractionDigits: 1), ctx.unit))
                                         .font(.subheadline.weight(.semibold))
                                 }
                                 if let r = ctx.reps {

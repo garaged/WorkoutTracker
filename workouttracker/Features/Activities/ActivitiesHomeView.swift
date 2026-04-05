@@ -70,7 +70,7 @@ struct ActivitiesHomeView: View {
                 }
                 .buttonStyle(.plain)
             } header: {
-                Text("Apple Health")
+                Text(String(localized: "activities.health.title", defaultValue: "Apple Health"))
             }
             .listRowBackground(Color.clear)
 
@@ -120,9 +120,9 @@ struct ActivitiesHomeView: View {
             if trackedSessions.isEmpty {
                 Section {
                     ContentUnavailableView(
-                        "No tracked activities yet",
+                        String(localized: "activities.empty.title", defaultValue: "No tracked activities yet"),
                         systemImage: "figure.walk.motion",
-                        description: Text("Start a walk, run, hike, or yoga session here. Tracked activities stay separate from your strength workouts.")
+                        description: Text(String(localized: "activities.empty.message", defaultValue: "Start a walk, run, hike, or yoga session here. Tracked activities stay separate from your strength workouts."))
                     )
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 24)
@@ -187,10 +187,10 @@ struct ActivitiesHomeView: View {
 
     private var activityStartCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("Tracked activities", systemImage: "figure.walk.motion")
+            Label(String(localized: "activities.start.card.title", defaultValue: "Tracked activities"), systemImage: "figure.walk.motion")
                 .font(.headline)
 
-            Text("Start a walk, run, hike, or yoga session. Duration is tracked live, and activity-specific metrics can be added when you finish.")
+            Text(String(localized: "activities.start.card.message", defaultValue: "Start a walk, run, hike, or yoga session. Duration is tracked live, and activity-specific metrics can be added when you finish."))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -212,7 +212,7 @@ struct ActivitiesHomeView: View {
     private var healthStatusCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 10) {
-                Label("Apple Health", systemImage: "heart.text.square")
+                Label(String(localized: "activities.health.title", defaultValue: "Apple Health"), systemImage: "heart.text.square")
                     .font(.headline)
                 Spacer(minLength: 8)
                 Text(healthKitAuthorizationService.state.title)

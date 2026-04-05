@@ -50,7 +50,7 @@ struct VolumeTrendCard: View {
                 } label: {
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("progress.dashboard.volume.open_exercise_detail")
+                            Text(String(localized: "progress.dashboard.volume.open_exercise_detail"))
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(.primary)
                             Text(drillDownExerciseName)
@@ -75,7 +75,7 @@ struct VolumeTrendCard: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text(verbatim: volumeDrillDownAccessibilityLabel(exerciseName: drillDownExerciseName)))
-                .accessibilityHint(Text("progress.dashboard.volume.open_exercise_detail"))
+                .accessibilityHint(Text(String(localized: "progress.dashboard.volume.open_exercise_detail")))
                 .accessibilityIdentifier("Progress.Dashboard.Volume.OpenExercise")
             }
         }
@@ -115,7 +115,7 @@ struct VolumeTrendCard: View {
 
     private var headerText: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Label("progress.dashboard.volume.title", systemImage: "chart.bar.fill")
+            Label(String(localized: "progress.dashboard.volume.title"), systemImage: "chart.bar.fill")
                 .font(.headline)
             Text(model.headline)
                 .font(.subheadline.weight(.medium))

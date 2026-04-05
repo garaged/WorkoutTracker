@@ -22,18 +22,18 @@ struct SettingsScreen: View {
                 }
             }
 
-            Section("Health") {
-                Toggle("Auto-save completed tracked activities to Apple Health", isOn: $autoSaveToAppleHealth)
+            Section(String(localized: "settings.health.section", defaultValue: "Health")) {
+                Toggle(String(localized: "settings.health.auto_save", defaultValue: "Auto-save completed tracked activities to Apple Health"), isOn: $autoSaveToAppleHealth)
                     .accessibilityIdentifier("settings.healthAutoSaveToggle")
 
                 NavigationLink {
                     HealthPermissionsView()
                 } label: {
-                    Label("Apple Health", systemImage: "heart.text.square")
+                    Label(String(localized: "activities.health.title", defaultValue: "Apple Health"), systemImage: "heart.text.square")
                 }
                 .accessibilityIdentifier("settings.healthPermissionsLink")
 
-                Text("When this is on, completed tracked activities try to save automatically to Apple Health. Manual retry stays available if a save attempt fails, and later edits remain local in WorkoutTracker.")
+                Text(String(localized: "settings.health.auto_save.help", defaultValue: "When this is on, completed tracked activities try to save automatically to Apple Health. Manual retry stays available if a save attempt fails, and later edits remain local in WorkoutTracker."))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
