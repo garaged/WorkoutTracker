@@ -9,12 +9,31 @@ struct ActivitiesHomeView: View {
 
     @StateObject private var healthKitAuthorizationService = HealthKitAuthorizationService()
     @State private var sessionPendingDeletion: TrackedActivitySession?
-    @State private var deleteFailureMessage: String?
+    @State private var recoveryPromptSession: TrackedActivitySession?
+    @State private var destination: ActivitiesDestination?
+    @State private var errorMessage: String?
 
     private let recorder = TrackedActivityRecorder()
+    private let recoveryPlanner = TrackedActivityRecoveryPlanner()
+
+    private enum ActivitiesDestination: Identifiable, Hashable {
+        case live(UUID)
+        case summary(UUID)
+
+        var id: String {
+            switch self {
+            case .live(let id): return "live-\(id.uuidString)"
+            case .summary(let id): return "summary-\(id.uuidString)"
+            }
+        }
+    }
 
     private var activeSessions: [TrackedActivitySession] {
         trackedSessions.filter { $0.lifecycleState == .inProgress || $0.lifecycleState == .paused }
+    }
+
+    private var prioritizedActiveSessions: [TrackedActivitySession] {
+        recoveryPlanner.sortedRecoverySessions(activeSessions)
     }
 
     private var recentSessions: [TrackedActivitySession] {
@@ -36,18 +55,52 @@ struct ActivitiesHomeView: View {
             .map { $0 }
     }
 
+    private var healthFollowUpSessions: [TrackedActivitySession] {
+        recoveryPlanner.sortedHealthFollowUpSessions(recentSessions)
+    }
+
+    private var primaryRecoverySession: TrackedActivitySession? {
+        prioritizedActiveSessions.first
+    }
+
+    private var primaryHealthFollowUpSession: TrackedActivitySession? {
+        healthFollowUpSessions.first
+    }
+
     var body: some View {
         List {
-            if let recoverySession = activeSessions.first {
+            if let recoverySession = primaryRecoverySession {
                 Section {
-                    NavigationLink {
-                        TrackedActivitySessionScreen(sessionID: recoverySession.id)
+                    Button {
+                        handleActiveSessionTap(recoverySession)
                     } label: {
-                        recoveryCard(for: recoverySession)
+                        recoveryCard(
+                            for: recoverySession,
+                            state: recoveryPlanner.recoveryState(for: recoverySession)
+                        )
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("Activities.Recovery.Card")
                 } header: {
                     Text(String(localized: "activities.section.recovery", defaultValue: "Recovery"))
+                }
+                .listRowBackground(Color.clear)
+            }
+
+            if let followUpSession = primaryHealthFollowUpSession {
+                Section {
+                    Button {
+                        destination = .summary(followUpSession.id)
+                    } label: {
+                        healthFollowUpCard(
+                            for: followUpSession,
+                            state: recoveryPlanner.healthFollowUpState(for: followUpSession)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("Activities.HealthFollowUp.Card")
+                } header: {
+                    Text(String(localized: "activities.section.health_follow_up", defaultValue: "Health follow-up"))
                 }
                 .listRowBackground(Color.clear)
             }
@@ -74,14 +127,19 @@ struct ActivitiesHomeView: View {
             }
             .listRowBackground(Color.clear)
 
-            if !activeSessions.isEmpty {
+            if !prioritizedActiveSessions.isEmpty {
                 Section(String(localized: "activities.section.active", defaultValue: "Active")) {
-                    ForEach(activeSessions) { session in
-                        NavigationLink {
-                            TrackedActivitySessionScreen(sessionID: session.id)
+                    ForEach(prioritizedActiveSessions) { session in
+                        Button {
+                            handleActiveSessionTap(session)
                         } label: {
-                            TrackedActivitySessionRow(session: session)
+                            TrackedActivitySessionRow(
+                                session: session,
+                                recoveryState: recoveryPlanner.recoveryState(for: session),
+                                healthFollowUpState: .none
+                            )
                         }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -89,11 +147,16 @@ struct ActivitiesHomeView: View {
             if !recentSessions.isEmpty {
                 Section(String(localized: "activities.section.recent", defaultValue: "Recent")) {
                     ForEach(recentSessions) { session in
-                        NavigationLink {
-                            TrackedActivityFinishSummaryView(sessionID: session.id)
+                        Button {
+                            destination = .summary(session.id)
                         } label: {
-                            TrackedActivitySessionRow(session: session)
+                            TrackedActivitySessionRow(
+                                session: session,
+                                recoveryState: .none,
+                                healthFollowUpState: recoveryPlanner.healthFollowUpState(for: session)
+                            )
                         }
+                        .buttonStyle(.plain)
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             if session.allowsLocalDeletion {
                                 Button(role: .destructive) {
@@ -143,6 +206,14 @@ struct ActivitiesHomeView: View {
         .task {
             healthKitAuthorizationService.refresh()
         }
+        .navigationDestination(item: $destination) { destination in
+            switch destination {
+            case .live(let id):
+                TrackedActivitySessionScreen(sessionID: id)
+            case .summary(let id):
+                TrackedActivityFinishSummaryView(sessionID: id)
+            }
+        }
         .confirmationDialog(
             sessionPendingDeletion?.localDeleteTitle ?? String(localized: "activities.delete.title.default", defaultValue: "Delete activity?"),
             isPresented: Binding(
@@ -166,22 +237,52 @@ struct ActivitiesHomeView: View {
         } message: {
             Text(sessionPendingDeletion?.localDeleteMessage ?? "")
         }
-        .alert(
-            String(localized: "activities.delete.failure.title", defaultValue: "Could not delete activity"),
+        .confirmationDialog(
+            recoveryPromptSession?.recoveryPromptTitle ?? String(localized: "activities.recovery.prompt.title", defaultValue: "Review previous activity?"),
             isPresented: Binding(
-                get: { deleteFailureMessage != nil },
+                get: { recoveryPromptSession != nil },
                 set: { isPresented in
                     if !isPresented {
-                        deleteFailureMessage = nil
+                        recoveryPromptSession = nil
+                    }
+                }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let recoveryPromptSession {
+                Button(recoveryPromptSession.recoveryResumeActionTitle) {
+                    resumeFromRecovery(recoveryPromptSession)
+                }
+                Button(String(localized: "activities.recovery.keep_for_later", defaultValue: "Keep for later")) {
+                    keepForLater(recoveryPromptSession)
+                }
+                Button(String(localized: "activities.recovery.discard", defaultValue: "Discard activity"), role: .destructive) {
+                    discard(recoveryPromptSession)
+                }
+                .accessibilityIdentifier("Activities.Recovery.Discard")
+            }
+            Button(String(localized: "common.cancel", defaultValue: "Cancel"), role: .cancel) {
+                recoveryPromptSession = nil
+            }
+        } message: {
+            Text(recoveryPromptSession?.recoveryPromptMessage ?? "")
+        }
+        .alert(
+            String(localized: "activities.session.update_error.title", defaultValue: "Could not update activity"),
+            isPresented: Binding(
+                get: { errorMessage != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        errorMessage = nil
                     }
                 }
             )
         ) {
             Button(String(localized: "common.ok", defaultValue: "OK"), role: .cancel) {
-                deleteFailureMessage = nil
+                errorMessage = nil
             }
         } message: {
-            Text(deleteFailureMessage ?? String(localized: "activities.delete.failure.message", defaultValue: "WorkoutTracker could not remove this activity right now. Please try again."))
+            Text(errorMessage ?? String(localized: "common.unknown_error", defaultValue: "Unknown error"))
         }
     }
 
@@ -228,18 +329,12 @@ struct ActivitiesHomeView: View {
         .padding(.vertical, 8)
     }
 
-
-    private func recoveryCard(for session: TrackedActivitySession) -> some View {
+    private func recoveryCard(for session: TrackedActivitySession, state: TrackedActivityRecoveryPlanner.RecoveryState) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label(
-                session.lifecycleState == .paused
-                    ? String(localized: "activities.recovery.paused_title", defaultValue: "Resume your paused activity")
-                    : String(localized: "activities.recovery.live_title", defaultValue: "Return to your active activity"),
-                systemImage: session.activityKind.systemImage
-            )
-            .font(.headline)
+            Label(session.recoveryCardTitle(for: state), systemImage: session.activityKind.systemImage)
+                .font(.headline)
 
-            Text(String(localized: "activities.recovery.message", defaultValue: "WorkoutTracker kept this tracked activity open so you can resume it honestly after an interruption or relaunch."))
+            Text(session.recoveryCardMessage(for: state))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -247,9 +342,35 @@ struct ActivitiesHomeView: View {
             HStack(spacing: 10) {
                 Text(session.activityKind.displayName)
                     .font(.caption.weight(.medium))
-                Text(session.lifecycleState.badgeText)
+                Text(session.recoveryBadgeText(for: state))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 8)
+    }
+
+    private func healthFollowUpCard(
+        for session: TrackedActivitySession,
+        state: TrackedActivityRecoveryPlanner.HealthFollowUpState
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(session.healthFollowUpTitle(for: state), systemImage: "heart.text.square")
+                .font(.headline)
+
+            Text(session.healthFollowUpMessage(for: state))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 10) {
+                Text(session.activityKind.displayName)
+                    .font(.caption.weight(.medium))
+                if let endedAt = session.endedAt {
+                    Text(endedAt.formatted(date: .abbreviated, time: .shortened))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(.vertical, 8)
@@ -265,9 +386,69 @@ struct ActivitiesHomeView: View {
             return .secondary
         }
     }
-    
+
     private func recentSortDate(for session: TrackedActivitySession) -> Date {
         session.endedAt ?? session.updatedAt ?? session.startedAt ?? session.createdAt
+    }
+
+    private func handleActiveSessionTap(_ session: TrackedActivitySession) {
+        let state = recoveryPlanner.recoveryState(for: session)
+        if state.shouldShowPrompt {
+            recoveryPromptSession = session
+            return
+        }
+
+        if session.lifecycleState == .paused {
+            resumeAndOpen(session)
+        } else {
+            openLiveSession(session)
+        }
+    }
+
+    private func openLiveSession(_ session: TrackedActivitySession) {
+        do {
+            try recorder.noteRecoveryOpened(session, context: modelContext)
+            destination = .live(session.id)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func resumeAndOpen(_ session: TrackedActivitySession) {
+        do {
+            try recorder.resume(session, context: modelContext)
+            destination = .live(session.id)
+            recoveryPromptSession = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func keepForLater(_ session: TrackedActivitySession) {
+        do {
+            try recorder.keepForLater(session, context: modelContext)
+            recoveryPromptSession = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func discard(_ session: TrackedActivitySession) {
+        do {
+            try recorder.discard(session, context: modelContext)
+            recoveryPromptSession = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func resumeFromRecovery(_ session: TrackedActivitySession) {
+        if session.lifecycleState == .paused {
+            resumeAndOpen(session)
+        } else {
+            openLiveSession(session)
+            recoveryPromptSession = nil
+        }
     }
 
     private func delete(_ session: TrackedActivitySession) {
@@ -275,13 +456,15 @@ struct ActivitiesHomeView: View {
             try recorder.delete(session, context: modelContext)
             sessionPendingDeletion = nil
         } catch {
-            deleteFailureMessage = error.localizedDescription
+            errorMessage = error.localizedDescription
         }
     }
 }
 
 private struct TrackedActivitySessionRow: View {
     let session: TrackedActivitySession
+    let recoveryState: TrackedActivityRecoveryPlanner.RecoveryState
+    let healthFollowUpState: TrackedActivityRecoveryPlanner.HealthFollowUpState
 
     private let summaryBuilder = TrackedActivitySummaryBuilder()
 
@@ -293,7 +476,7 @@ private struct TrackedActivitySessionRow: View {
 
                 Spacer(minLength: 8)
 
-                Text(session.lifecycleState.badgeText)
+                Text(badgeText)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(badgeColor)
             }
@@ -302,6 +485,13 @@ private struct TrackedActivitySessionRow: View {
                 Text(startedAt.formatted(date: .abbreviated, time: .shortened))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+            }
+
+            if let followUpMessage {
+                Text(followUpMessage)
+                    .font(.footnote)
+                    .foregroundStyle(followUpColor)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             let metrics = summaryBuilder.metrics(for: session)
@@ -325,18 +515,78 @@ private struct TrackedActivitySessionRow: View {
         .padding(.vertical, 4)
     }
 
-    private var badgeColor: Color {
-        switch session.lifecycleState {
-        case .inProgress:
-            return .green
+    private var badgeText: String {
+        switch recoveryState {
+        case .staleNeedsPrompt, .staleSuppressed:
+            return String(localized: "activities.recovery.badge.previous_day", defaultValue: "Previous day")
+        case .interrupted:
+            return String(localized: "activities.recovery.badge.interrupted", defaultValue: "Interrupted")
         case .paused:
+            return String(localized: "activities.lifecycle.paused", defaultValue: "Paused")
+        case .live, .none:
+            return session.lifecycleState.badgeText
+        }
+    }
+
+    private var badgeColor: Color {
+        switch recoveryState {
+        case .staleNeedsPrompt, .staleSuppressed, .paused, .interrupted:
             return .orange
-        case .completed:
-            return .blue
-        case .discarded:
+        case .live:
+            return .green
+        case .none:
+            switch session.lifecycleState {
+            case .inProgress:
+                return .green
+            case .paused:
+                return .orange
+            case .completed:
+                return .blue
+            case .discarded, .planned:
+                return .secondary
+            }
+        }
+    }
+
+    private var followUpMessage: String? {
+        switch healthFollowUpState {
+        case .none:
+            switch recoveryState {
+            case .staleNeedsPrompt:
+                return String(localized: "activities.recovery.row.previous_day", defaultValue: "Previous-day activity needs a resume, keep-for-later, or discard decision.")
+            case .staleSuppressed:
+                return String(localized: "activities.recovery.row.suppressed", defaultValue: "Kept for later today. You can still reopen it directly.")
+            case .interrupted:
+                return String(localized: "activities.recovery.row.interrupted", defaultValue: "WorkoutTracker kept this live activity open after an interruption.")
+            case .paused:
+                return String(localized: "activities.recovery.row.paused", defaultValue: "Paused and ready to continue when you return.")
+            case .live, .none:
+                return nil
+            }
+        case .exportPending:
+            return String(localized: "activities.health.follow_up.pending", defaultValue: "Apple Health save is still pending. Open the summary to verify the final status.")
+        case .exportFailed:
+            return String(localized: "activities.health.follow_up.failed", defaultValue: "Apple Health save failed. Open the summary to retry or review permissions.")
+        case .savedWithLocalChanges:
+            return String(localized: "activities.health.follow_up.local_changes", defaultValue: "WorkoutTracker saved later edits locally only. Open the summary to review what differs from Apple Health.")
+        }
+    }
+
+    private var followUpColor: Color {
+        switch healthFollowUpState {
+        case .exportFailed:
+            return .orange
+        case .exportPending:
             return .secondary
-        case .planned:
+        case .savedWithLocalChanges:
             return .secondary
+        case .none:
+            switch recoveryState {
+            case .staleNeedsPrompt, .staleSuppressed, .paused, .interrupted:
+                return .secondary
+            case .live, .none:
+                return .secondary
+            }
         }
     }
 }

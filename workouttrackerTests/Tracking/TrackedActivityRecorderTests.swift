@@ -32,4 +32,30 @@ final class TrackedActivityRecorderTests: XCTestCase {
         let totals = recorder.liveTotals(for: session, now: start.addingTimeInterval(30))
         XCTAssertEqual(totals.elapsedDuration, 120, accuracy: 0.001)
     }
+    func testMarkBackgroundedAndKeepForLater_updateRecoveryMetadata() {
+        let start = Date(timeIntervalSince1970: 4_000)
+        let session = TrackedActivitySession(
+            createdAt: start,
+            updatedAt: start,
+            startedAt: start,
+            endedAt: nil,
+            activeIntervalStartedAt: start,
+            activityKind: .walking,
+            environment: .outdoor,
+            lifecycleState: .inProgress,
+            totals: TrackedActivityTotals(elapsedDuration: 0),
+            lastResumedAt: start
+        )
+
+        session.markBackgrounded(at: start.addingTimeInterval(20))
+        session.keepForLater(at: start.addingTimeInterval(30))
+
+        XCTAssertEqual(session.lastBackgroundedAt, start.addingTimeInterval(20))
+        XCTAssertEqual(session.dismissedRecoveryPromptAt, start.addingTimeInterval(30))
+
+        session.resume(at: start.addingTimeInterval(40))
+        XCTAssertEqual(session.lastResumedAt, start.addingTimeInterval(40))
+        XCTAssertNil(session.dismissedRecoveryPromptAt)
+    }
+
 }

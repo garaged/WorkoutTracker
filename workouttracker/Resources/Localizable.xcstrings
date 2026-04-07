@@ -2140,6 +2140,105 @@
         }
       }
     },
+    "activities.health.follow_up.card.failed_message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The last Apple Health save attempt failed. Open the summary to retry after checking permissions and route availability."
+          }
+        }
+      }
+    },
+    "activities.health.follow_up.card.failed_title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Retry Apple Health save"
+          }
+        }
+      }
+    },
+    "activities.health.follow_up.card.local_changes_message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This workout was saved to Apple Health earlier, but later edits now only live inside WorkoutTracker. Open the summary to review the difference honestly."
+          }
+        }
+      }
+    },
+    "activities.health.follow_up.card.local_changes_title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Review local-only edits"
+          }
+        }
+      }
+    },
+    "activities.health.follow_up.card.pending_message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "WorkoutTracker still shows this save as pending. Open the summary to verify the final Health status before you move on."
+          }
+        }
+      }
+    },
+    "activities.health.follow_up.card.pending_title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Finish Apple Health save"
+          }
+        }
+      }
+    },
+    "activities.health.follow_up.failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Apple Health save failed. Open the summary to retry or review permissions."
+          }
+        }
+      }
+    },
+    "activities.health.follow_up.local_changes" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "WorkoutTracker saved later edits locally only. Open the summary to review what differs from Apple Health."
+          }
+        }
+      }
+    },
+    "activities.health.follow_up.pending" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Apple Health save is still pending. Open the summary to verify the final status."
+          }
+        }
+      }
+    },
     "activities.health.not_available" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2649,6 +2748,72 @@
         }
       }
     },
+    "activities.recovery.badge.interrupted" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Interrupted"
+          }
+        }
+      }
+    },
+    "activities.recovery.badge.previous_day" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Previous day"
+          }
+        }
+      }
+    },
+    "activities.recovery.discard" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Discard activity"
+          }
+        }
+      }
+    },
+    "activities.recovery.interrupted_message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "WorkoutTracker kept this tracked activity open after an interruption so the elapsed time and route can stay consistent when you come back."
+          }
+        }
+      }
+    },
+    "activities.recovery.interrupted_title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Return to your interrupted activity"
+          }
+        }
+      }
+    },
+    "activities.recovery.keep_for_later" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Keep for later"
+          }
+        }
+      }
+    },
     "activities.recovery.live_title" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -2671,6 +2836,28 @@
         }
       }
     },
+    "activities.recovery.open_action" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open activity"
+          }
+        }
+      }
+    },
+    "activities.recovery.paused_message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "WorkoutTracker kept this paused tracked activity ready so you can continue honestly after a relaunch or interruption."
+          }
+        }
+      }
+    },
     "activities.recovery.paused_title" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -2682,6 +2869,116 @@
         }
       }
     },
+    "activities.recovery.prompt.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This tracked activity started on %@. Resume it now, keep it for later today, or discard it so your recovery state stays honest."
+          }
+        }
+      }
+    },
+    "activities.recovery.prompt.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Review previous activity?"
+          }
+        }
+      }
+    },
+    "activities.recovery.resume_action" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Resume activity"
+          }
+        }
+      }
+    },
+    "activities.recovery.row.interrupted" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "WorkoutTracker kept this live activity open after an interruption."
+          }
+        }
+      }
+    },
+    "activities.recovery.row.paused" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Paused and ready to continue when you return."
+          }
+        }
+      }
+    },
+    "activities.recovery.row.previous_day" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Previous-day activity needs a resume, keep-for-later, or discard decision."
+          }
+        }
+      }
+    },
+    "activities.recovery.row.suppressed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Kept for later today. You can still reopen it directly."
+          }
+        }
+      }
+    },
+    "activities.recovery.stale_message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This tracked activity started on a previous day. Resume it now, keep it for later today, or discard it so unfinished activity data stays trustworthy."
+          }
+        }
+      }
+    },
+    "activities.recovery.stale_title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Review your previous activity"
+          }
+        }
+      }
+    },
+    "activities.recovery.suppressed_message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You already chose to keep this previous-day activity for later today. WorkoutTracker will let you reopen it directly until you decide what to do."
+          }
+        }
+      }
+    },
     "activities.section.active" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -2689,6 +2986,17 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Active"
+          }
+        }
+      }
+    },
+    "activities.section.health_follow_up" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Health follow-up"
           }
         }
       }
@@ -3017,6 +3325,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir resumen"
+          }
+        }
+      }
+    },
+    "activities.session.recovery_banner.interrupted" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "WorkoutTracker recovered this tracked activity after an interruption so the timer, route, and summary can stay consistent."
+          }
+        }
+      }
+    },
+    "activities.session.recovery_banner.paused" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "WorkoutTracker reopened this tracked activity in its paused state. Resume when you are ready to continue."
+          }
+        }
+      }
+    },
+    "activities.session.recovery_banner.stale" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This tracked activity originally started on %@. Review the final summary carefully when you finish."
           }
         }
       }

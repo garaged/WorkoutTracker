@@ -30,6 +30,10 @@ final class BackupServiceTrackedActivityTests: XCTestCase {
 
         let attemptedAt = Date(timeIntervalSince1970: 1_710_000_000)
         let succeededAt = attemptedAt.addingTimeInterval(15)
+        let resumedAt = attemptedAt.addingTimeInterval(-120)
+        let backgroundedAt = attemptedAt.addingTimeInterval(-30)
+        let dismissedAt = attemptedAt.addingTimeInterval(45)
+        let activeIntervalStartedAt = attemptedAt.addingTimeInterval(-60)
         let session = TrackedActivitySession(
             id: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!,
             createdAt: attemptedAt.addingTimeInterval(-300),
@@ -53,6 +57,10 @@ final class BackupServiceTrackedActivityTests: XCTestCase {
             healthKitExportFailureMessage: nil,
             hasLocalChangesSinceHealthKitExport: true
         )
+        session.activeIntervalStartedAt = activeIntervalStartedAt
+        session.lastResumedAt = resumedAt
+        session.lastBackgroundedAt = backgroundedAt
+        session.dismissedRecoveryPromptAt = dismissedAt
         context.insert(session)
         try context.save()
 
@@ -70,6 +78,10 @@ final class BackupServiceTrackedActivityTests: XCTestCase {
         assertISO8601Date(entity.attributes["healthKitExportSucceededAt"], equals: succeededAt)
         assertNull(entity.attributes["healthKitExportFailureMessage"])
         assertBool(entity.attributes["hasLocalChangesSinceHealthKitExport"], equals: true)
+        assertISO8601Date(entity.attributes["activeIntervalStartedAt"], equals: activeIntervalStartedAt)
+        assertISO8601Date(entity.attributes["lastResumedAt"], equals: resumedAt)
+        assertISO8601Date(entity.attributes["lastBackgroundedAt"], equals: backgroundedAt)
+        assertISO8601Date(entity.attributes["dismissedRecoveryPromptAt"], equals: dismissedAt)
         assertString(entity.attributes["notes"], equals: "Evening interval session")
     }
 
@@ -110,6 +122,10 @@ final class BackupServiceTrackedActivityTests: XCTestCase {
         let sessionID = UUID(uuidString: "33333333-3333-3333-3333-333333333333")!
         let linkedActivityID = UUID(uuidString: "44444444-4444-4444-4444-444444444444")!
 
+        let resumedAt = attemptedAt.addingTimeInterval(-180)
+        let backgroundedAt = attemptedAt.addingTimeInterval(-90)
+        let dismissedAt = attemptedAt.addingTimeInterval(30)
+        let activeIntervalStartedAt = attemptedAt.addingTimeInterval(-30)
         let session = TrackedActivitySession(
             id: sessionID,
             createdAt: attemptedAt.addingTimeInterval(-600),
@@ -133,6 +149,10 @@ final class BackupServiceTrackedActivityTests: XCTestCase {
             healthKitExportFailureMessage: failureMessage,
             hasLocalChangesSinceHealthKitExport: true
         )
+        session.activeIntervalStartedAt = activeIntervalStartedAt
+        session.lastResumedAt = resumedAt
+        session.lastBackgroundedAt = backgroundedAt
+        session.dismissedRecoveryPromptAt = dismissedAt
         sourceContext.insert(session)
         try sourceContext.save()
 
@@ -156,6 +176,10 @@ final class BackupServiceTrackedActivityTests: XCTestCase {
         XCTAssertNil(restoredSession.healthKitExportSucceededAt)
         XCTAssertEqual(restoredSession.healthKitExportFailureMessage, failureMessage)
         XCTAssertTrue(restoredSession.hasLocalChangesSinceHealthKitExport)
+        XCTAssertEqual(restoredSession.activeIntervalStartedAt, activeIntervalStartedAt)
+        XCTAssertEqual(restoredSession.lastResumedAt, resumedAt)
+        XCTAssertEqual(restoredSession.lastBackgroundedAt, backgroundedAt)
+        XCTAssertEqual(restoredSession.dismissedRecoveryPromptAt, dismissedAt)
         XCTAssertEqual(restoredSession.linkedActivityId, linkedActivityID)
         XCTAssertEqual(restoredSession.notes, "Route attachment retry needed")
         XCTAssertEqual(restoredSession.elapsedDuration, 360, accuracy: 0.001)

@@ -19,12 +19,14 @@ struct TrackedActivitySessionScreen: View {
     @State private var showFinishSummary = false
     @State private var lastPersistedRoutePointCount = 0
     @State private var healthExportBannerMessage: String?
+    @State private var recoveryBannerMessage: String?
 
     @StateObject private var routeRecorder = OutdoorRouteRecorder()
 
     private let recorder = TrackedActivityRecorder()
     private let summaryBuilder = TrackedActivitySummaryBuilder()
     private let exportCoordinator = TrackedActivityHealthExportCoordinator()
+    private let recoveryPlanner = TrackedActivityRecoveryPlanner()
 
     private var session: TrackedActivitySession? {
         trackedSessions.first(where: { $0.id == sessionID })
@@ -36,6 +38,14 @@ struct TrackedActivitySessionScreen: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         header(for: session)
+                        if let recoveryBannerMessage {
+                            Text(recoveryBannerMessage)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .padding(12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        }
                         if let healthExportBannerMessage {
                             Text(healthExportBannerMessage)
                                 .font(.footnote)
@@ -77,6 +87,9 @@ struct TrackedActivitySessionScreen: View {
                     TrackedActivityFinishSummaryView(sessionID: sessionID)
                 }
                 .onAppear {
+                    let recoveryState = recoveryPlanner.recoveryState(for: session)
+                    recoveryBannerMessage = recoveryBanner(for: session, state: recoveryState)
+                    try? recorder.noteRecoveryOpened(session, context: modelContext)
                     WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
                     WorkoutRemoteControlRouter.shared.refreshNowPlaying()
                     lastPersistedRoutePointCount = session.routePointCount
@@ -363,6 +376,20 @@ struct TrackedActivitySessionScreen: View {
             }
         } catch {
             healthExportBannerMessage = error.localizedDescription
+        }
+    }
+
+    private func recoveryBanner(for session: TrackedActivitySession, state: TrackedActivityRecoveryPlanner.RecoveryState) -> String? {
+        switch state {
+        case .paused:
+            return String(localized: "activities.session.recovery_banner.paused", defaultValue: "WorkoutTracker reopened this tracked activity in its paused state. Resume when you are ready to continue.")
+        case .interrupted:
+            return String(localized: "activities.session.recovery_banner.interrupted", defaultValue: "WorkoutTracker recovered this tracked activity after an interruption so the timer, route, and summary can stay consistent.")
+        case .staleNeedsPrompt, .staleSuppressed:
+            let startedText = (session.startedAt ?? session.createdAt).formatted(date: .abbreviated, time: .shortened)
+            return String(localized: "activities.session.recovery_banner.stale", defaultValue: "This tracked activity originally started on \(startedText). Review the final summary carefully when you finish.")
+        case .live, .none:
+            return nil
         }
     }
 

@@ -51,6 +51,9 @@ struct AppRootView: View {
     @Query
     private var activities: [Activity]
 
+    @Query(sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)])
+    private var trackedActivitySessions: [TrackedActivitySession]
+
     @State private var didSeed = false
     @AppStorage("workouttracker.starterPackVersion") private var starterPackVersion = 0
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
@@ -69,6 +72,7 @@ struct AppRootView: View {
     private let routeResolver = RouteResolver()
     private let systemIntegrationRouteResolver = SystemIntegrationRouteResolver()
     private let snapshotBuilder = CurrentSessionSnapshotBuilder()
+    private let trackedActivityRecorder = TrackedActivityRecorder()
 
     var body: some View {
         rootContent
@@ -564,6 +568,7 @@ struct AppRootView: View {
         }
 
         if oldPhase == .active {
+            markTrackedActivitiesBackgroundedIfNeeded()
             syncLiveActivity()
         }
     }
@@ -571,6 +576,17 @@ struct AppRootView: View {
     private func handleSessionsChanged() {
         attemptPendingIntentRouteResolution()
         syncLiveActivity()
+    }
+
+    private func markTrackedActivitiesBackgroundedIfNeeded() {
+        let activeTrackedSessions = trackedActivitySessions.filter {
+            $0.lifecycleState == .inProgress || $0.lifecycleState == .paused
+        }
+        guard !activeTrackedSessions.isEmpty else { return }
+
+        for session in activeTrackedSessions {
+            try? trackedActivityRecorder.markBackgroundedIfNeeded(session, context: modelContext)
+        }
     }
 
     private func handleRoutinesChanged() {

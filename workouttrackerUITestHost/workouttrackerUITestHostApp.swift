@@ -134,6 +134,8 @@ private enum ProgressUITestSeed {
 enum TrackedActivityUITestSeed {
     static let liveSessionID = UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!
     static let summarySessionID = UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!
+    static let staleSessionID = UUID(uuidString: "cccccccc-cccc-cccc-cccc-cccccccccccc")!
+    static let failedExportSessionID = UUID(uuidString: "dddddddd-dddd-dddd-dddd-dddddddddddd")!
 }
 
 // MARK: - Calendar UITest seed
@@ -792,6 +794,10 @@ private func assertUITestLaunchConfiguration(_ env: [String: String]) {
         fatalError("UITESTS assertion failed: UITESTS_NO_ACTIVE_SESSIONS expects UITESTS_START=home.")
     }
 
+    if (env["UITESTS_TRACKED_ACTIVITY_STALE"] == "1" || env["UITESTS_TRACKED_ACTIVITY_EXPORT_FAILED"] == "1") && start != "activities" {
+        fatalError("UITESTS assertion failed: tracked-activity recovery follow-up tests must launch with UITESTS_START=activities.")
+    }
+
     if env["UITESTS_DEEP_LINK_SMOKE"] == "1" {
         guard start == "home" else {
             fatalError("UITESTS assertion failed: Deep-link smoke test must launch with UITESTS_START=home.")
@@ -945,9 +951,65 @@ private func seedTrackedActivityUITestDataIfNeeded(context: ModelContext, now: D
             ),
             healthKitExportState: .notRequested,
             routePoints: liveRoutePoints,
-            notes: "UITest live session"
+            notes: "UITest live session",
+            lastResumedAt: startedAt
         )
         context.insert(liveSession)
+    }
+
+    if !existing.contains(where: { $0.id == TrackedActivityUITestSeed.staleSessionID }) {
+        let startedAt = Calendar.current.date(byAdding: .day, value: -1, to: now)!.addingTimeInterval(-(20 * 60))
+        let pausedAt = startedAt.addingTimeInterval(18 * 60)
+        let staleSession = TrackedActivitySession(
+            id: TrackedActivityUITestSeed.staleSessionID,
+            createdAt: startedAt,
+            updatedAt: pausedAt,
+            startedAt: startedAt,
+            endedAt: nil,
+            activeIntervalStartedAt: nil,
+            activityKind: .walking,
+            environment: .outdoor,
+            lifecycleState: .paused,
+            totals: TrackedActivityTotals(
+                elapsedDuration: 18 * 60,
+                distanceMeters: 1_450,
+                activeEnergyKilocalories: 88,
+                stepCount: 2_040
+            ),
+            healthKitExportState: .notRequested,
+            notes: "UITest stale session",
+            lastResumedAt: startedAt,
+            lastBackgroundedAt: pausedAt
+        )
+        context.insert(staleSession)
+    }
+
+    if !existing.contains(where: { $0.id == TrackedActivityUITestSeed.failedExportSessionID }) {
+        let startedAt = now.addingTimeInterval(-(90 * 60))
+        let endedAt = startedAt.addingTimeInterval(35 * 60)
+        let failedExportSession = TrackedActivitySession(
+            id: TrackedActivityUITestSeed.failedExportSessionID,
+            createdAt: startedAt,
+            updatedAt: endedAt,
+            startedAt: startedAt,
+            endedAt: endedAt,
+            activeIntervalStartedAt: nil,
+            activityKind: .walking,
+            environment: .outdoor,
+            lifecycleState: .completed,
+            totals: TrackedActivityTotals(
+                elapsedDuration: endedAt.timeIntervalSince(startedAt),
+                distanceMeters: 3_100,
+                activeEnergyKilocalories: 210,
+                stepCount: 4_100
+            ),
+            healthKitExportState: .failed,
+            routePoints: [],
+            notes: "UITest failed export session",
+            healthKitExportAttemptedAt: endedAt,
+            healthKitExportFailureMessage: "UITest Apple Health save failed"
+        )
+        context.insert(failedExportSession)
     }
 
     try context.save()
@@ -982,6 +1044,35 @@ private func assertTrackedActivityUITestSeed(context: ModelContext, env: [String
 
         guard liveSession.activeIntervalStartedAt != nil else {
             fatalError("UITESTS assertion failed: tracked-activity live seed expected an active interval anchor for elapsed timing.")
+        }
+    }
+
+    if env["UITESTS_TRACKED_ACTIVITY_STALE"] == "1" {
+        guard let staleSession = sessions.first(where: { $0.id == TrackedActivityUITestSeed.staleSessionID }) else {
+            fatalError("UITESTS assertion failed: tracked-activity stale recovery route expected a seeded previous-day TrackedActivitySession.")
+        }
+
+        guard staleSession.lifecycleState == .paused else {
+            fatalError("UITESTS assertion failed: tracked-activity stale seed expected the session to stay paused before recovery.")
+        }
+
+        guard staleSession.startedAt != nil,
+              Calendar.current.startOfDay(for: staleSession.startedAt!) < Calendar.current.startOfDay(for: Date()) else {
+            fatalError("UITESTS assertion failed: tracked-activity stale seed expected a previous-day start date.")
+        }
+    }
+
+    if env["UITESTS_TRACKED_ACTIVITY_EXPORT_FAILED"] == "1" {
+        guard let failedSession = sessions.first(where: { $0.id == TrackedActivityUITestSeed.failedExportSessionID }) else {
+            fatalError("UITESTS assertion failed: tracked-activity follow-up route expected a seeded completed TrackedActivitySession with failed Health export.")
+        }
+
+        guard failedSession.lifecycleState == .completed else {
+            fatalError("UITESTS assertion failed: tracked-activity failed-export seed expected the session to be completed.")
+        }
+
+        guard failedSession.healthKitExportState == .failed else {
+            fatalError("UITESTS assertion failed: tracked-activity failed-export seed expected Apple Health export to be failed.")
         }
     }
 }

@@ -229,3 +229,92 @@ extension TrackedActivitySession {
         )
     }
 }
+
+
+extension TrackedActivitySession {
+    var recoveryResumeActionTitle: String {
+        if lifecycleState == .paused {
+            return String(localized: "activities.recovery.resume_action", defaultValue: "Resume activity")
+        }
+        return String(localized: "activities.recovery.open_action", defaultValue: "Open activity")
+    }
+
+    var recoveryPromptTitle: String {
+        String(localized: "activities.recovery.prompt.title", defaultValue: "Review previous activity?")
+    }
+
+    var recoveryPromptMessage: String {
+        let formattedDay = (startedAt ?? createdAt).formatted(date: .abbreviated, time: .shortened)
+        return String(
+            localized: "activities.recovery.prompt.message",
+            defaultValue: "This tracked activity started on \(formattedDay). Resume it now, keep it for later today, or discard it so your recovery state stays honest."
+        )
+    }
+
+    func recoveryCardTitle(for state: TrackedActivityRecoveryPlanner.RecoveryState) -> String {
+        switch state {
+        case .paused:
+            return String(localized: "activities.recovery.paused_title", defaultValue: "Resume your paused activity")
+        case .interrupted:
+            return String(localized: "activities.recovery.interrupted_title", defaultValue: "Return to your interrupted activity")
+        case .staleNeedsPrompt, .staleSuppressed:
+            return String(localized: "activities.recovery.stale_title", defaultValue: "Review your previous activity")
+        case .live, .none:
+            return String(localized: "activities.recovery.live_title", defaultValue: "Return to your active activity")
+        }
+    }
+
+    func recoveryCardMessage(for state: TrackedActivityRecoveryPlanner.RecoveryState) -> String {
+        switch state {
+        case .paused:
+            return String(localized: "activities.recovery.paused_message", defaultValue: "WorkoutTracker kept this paused tracked activity ready so you can continue honestly after a relaunch or interruption.")
+        case .interrupted:
+            return String(localized: "activities.recovery.interrupted_message", defaultValue: "WorkoutTracker kept this tracked activity open after an interruption so the elapsed time and route can stay consistent when you come back.")
+        case .staleNeedsPrompt:
+            return String(localized: "activities.recovery.stale_message", defaultValue: "This tracked activity started on a previous day. Resume it now, keep it for later today, or discard it so unfinished activity data stays trustworthy.")
+        case .staleSuppressed:
+            return String(localized: "activities.recovery.suppressed_message", defaultValue: "You already chose to keep this previous-day activity for later today. WorkoutTracker will let you reopen it directly until you decide what to do.")
+        case .live, .none:
+            return String(localized: "activities.recovery.message", defaultValue: "WorkoutTracker kept this tracked activity open so you can resume it honestly after an interruption or relaunch.")
+        }
+    }
+
+    func recoveryBadgeText(for state: TrackedActivityRecoveryPlanner.RecoveryState) -> String {
+        switch state {
+        case .staleNeedsPrompt, .staleSuppressed:
+            return String(localized: "activities.recovery.badge.previous_day", defaultValue: "Previous day")
+        case .interrupted:
+            return String(localized: "activities.recovery.badge.interrupted", defaultValue: "Interrupted")
+        case .paused:
+            return String(localized: "activities.lifecycle.paused", defaultValue: "Paused")
+        case .live, .none:
+            return lifecycleState.badgeText
+        }
+    }
+
+    func healthFollowUpTitle(for state: TrackedActivityRecoveryPlanner.HealthFollowUpState) -> String {
+        switch state {
+        case .exportPending:
+            return String(localized: "activities.health.follow_up.card.pending_title", defaultValue: "Finish Apple Health save")
+        case .exportFailed:
+            return String(localized: "activities.health.follow_up.card.failed_title", defaultValue: "Retry Apple Health save")
+        case .savedWithLocalChanges:
+            return String(localized: "activities.health.follow_up.card.local_changes_title", defaultValue: "Review local-only edits")
+        case .none:
+            return String(localized: "activities.health.title", defaultValue: "Apple Health")
+        }
+    }
+
+    func healthFollowUpMessage(for state: TrackedActivityRecoveryPlanner.HealthFollowUpState) -> String {
+        switch state {
+        case .exportPending:
+            return String(localized: "activities.health.follow_up.card.pending_message", defaultValue: "WorkoutTracker still shows this save as pending. Open the summary to verify the final Health status before you move on.")
+        case .exportFailed:
+            return String(localized: "activities.health.follow_up.card.failed_message", defaultValue: "The last Apple Health save attempt failed. Open the summary to retry after checking permissions and route availability.")
+        case .savedWithLocalChanges:
+            return String(localized: "activities.health.follow_up.card.local_changes_message", defaultValue: "This workout was saved to Apple Health earlier, but later edits now only live inside WorkoutTracker. Open the summary to review the difference honestly.")
+        case .none:
+            return healthKitExportHelperText
+        }
+    }
+}

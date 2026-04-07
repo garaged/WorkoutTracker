@@ -21,7 +21,8 @@ struct TrackedActivityRecorder {
             environment: normalizedEnvironment,
             lifecycleState: .inProgress,
             totals: TrackedActivityTotals(elapsedDuration: 0),
-            notes: normalize(notes)
+            notes: normalize(notes),
+            lastResumedAt: date
         )
 
         context.insert(session)
@@ -56,6 +57,24 @@ struct TrackedActivityRecorder {
     func delete(_ session: TrackedActivitySession, context: ModelContext) throws {
         guard session.allowsLocalDeletion else { return }
         context.delete(session)
+        try context.save()
+    }
+
+    func noteRecoveryOpened(_ session: TrackedActivitySession, context: ModelContext, at date: Date = Date()) throws {
+        guard session.lifecycleState == .inProgress || session.lifecycleState == .paused else { return }
+        session.markRecoveryOpened(at: date)
+        try context.save()
+    }
+
+    func keepForLater(_ session: TrackedActivitySession, context: ModelContext, at date: Date = Date()) throws {
+        guard session.lifecycleState == .inProgress || session.lifecycleState == .paused else { return }
+        session.keepForLater(at: date)
+        try context.save()
+    }
+
+    func markBackgroundedIfNeeded(_ session: TrackedActivitySession, context: ModelContext, at date: Date = Date()) throws {
+        guard session.lifecycleState == .inProgress || session.lifecycleState == .paused else { return }
+        session.markBackgrounded(at: date)
         try context.save()
     }
 

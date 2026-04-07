@@ -356,6 +356,10 @@ final class BackupService {
                 healthKitExportFailureMessage: raw.healthKitExportFailureMessage,
                 hasLocalChangesSinceHealthKitExport: raw.hasLocalChangesSinceHealthKitExport
             )
+            model.activeIntervalStartedAt = raw.activeIntervalStartedAt
+            model.lastResumedAt = raw.lastResumedAt
+            model.lastBackgroundedAt = raw.lastBackgroundedAt
+            model.dismissedRecoveryPromptAt = raw.dismissedRecoveryPromptAt
             context.insert(model)
         }
 
@@ -784,6 +788,10 @@ final class BackupService {
                 "updatedAt": .string(Self.iso8601.string(from: model.updatedAt)),
                 "startedAt": model.startedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
                 "endedAt": model.endedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
+                "activeIntervalStartedAt": model.activeIntervalStartedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
+                "lastResumedAt": model.lastResumedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
+                "lastBackgroundedAt": model.lastBackgroundedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
+                "dismissedRecoveryPromptAt": model.dismissedRecoveryPromptAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
                 "activityKindRaw": .string(model.activityKindRaw),
                 "environmentRaw": .string(model.environmentRaw),
                 "lifecycleStateRaw": .string(model.lifecycleStateRaw),
@@ -1059,6 +1067,10 @@ final class BackupService {
         let updatedAt: Date
         let startedAt: Date?
         let endedAt: Date?
+        let activeIntervalStartedAt: Date?
+        let lastResumedAt: Date?
+        let lastBackgroundedAt: Date?
+        let dismissedRecoveryPromptAt: Date?
         let activityKindRaw: String
         let environmentRaw: String
         let lifecycleStateRaw: String
@@ -1266,6 +1278,10 @@ final class BackupService {
                 updatedAt: date("updatedAt", in: e) ?? Date(),
                 startedAt: date("startedAt", in: e),
                 endedAt: date("endedAt", in: e),
+                activeIntervalStartedAt: date("activeIntervalStartedAt", in: e),
+                lastResumedAt: date("lastResumedAt", in: e),
+                lastBackgroundedAt: date("lastBackgroundedAt", in: e),
+                dismissedRecoveryPromptAt: date("dismissedRecoveryPromptAt", in: e),
                 activityKindRaw: string("activityKindRaw", in: e) ?? TrackedActivityKind.walking.rawValue,
                 environmentRaw: string("environmentRaw", in: e) ?? ActivityEnvironment.unspecified.rawValue,
                 lifecycleStateRaw: string("lifecycleStateRaw", in: e) ?? TrackedActivityLifecycleState.planned.rawValue,

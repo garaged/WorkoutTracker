@@ -32,6 +32,10 @@ final class TrackedActivitySession {
     var healthKitExportFailureMessage: String?
     var hasLocalChangesSinceHealthKitExport: Bool
 
+    var lastResumedAt: Date?
+    var lastBackgroundedAt: Date?
+    var dismissedRecoveryPromptAt: Date?
+
     init(
         id: UUID = UUID(),
         createdAt: Date = Date(),
@@ -50,7 +54,10 @@ final class TrackedActivitySession {
         healthKitExportAttemptedAt: Date? = nil,
         healthKitExportSucceededAt: Date? = nil,
         healthKitExportFailureMessage: String? = nil,
-        hasLocalChangesSinceHealthKitExport: Bool = false
+        hasLocalChangesSinceHealthKitExport: Bool = false,
+        lastResumedAt: Date? = nil,
+        lastBackgroundedAt: Date? = nil,
+        dismissedRecoveryPromptAt: Date? = nil
     ) {
         self.id = id
         self.createdAt = createdAt
@@ -74,6 +81,9 @@ final class TrackedActivitySession {
         self.healthKitExportSucceededAt = healthKitExportSucceededAt
         self.healthKitExportFailureMessage = healthKitExportFailureMessage
         self.hasLocalChangesSinceHealthKitExport = hasLocalChangesSinceHealthKitExport
+        self.lastResumedAt = lastResumedAt
+        self.lastBackgroundedAt = lastBackgroundedAt
+        self.dismissedRecoveryPromptAt = dismissedRecoveryPromptAt
 
         normalizeLifecycleConsistency()
     }
@@ -189,6 +199,8 @@ final class TrackedActivitySession {
             startedAt = date
         }
         activeIntervalStartedAt = date
+        lastResumedAt = date
+        dismissedRecoveryPromptAt = nil
         lifecycleStateRaw = TrackedActivityLifecycleState.inProgress.rawValue
         if environment == .unspecified {
             environmentRaw = activityKind.defaultEnvironment.rawValue
@@ -208,6 +220,8 @@ final class TrackedActivitySession {
             startedAt = date
         }
         activeIntervalStartedAt = date
+        lastResumedAt = date
+        dismissedRecoveryPromptAt = nil
         lifecycleStateRaw = TrackedActivityLifecycleState.inProgress.rawValue
         updatedAt = date
     }
@@ -219,6 +233,7 @@ final class TrackedActivitySession {
         accumulateElapsedIfNeeded(until: date)
         activeIntervalStartedAt = nil
         endedAt = endedAt ?? date
+        dismissedRecoveryPromptAt = nil
         lifecycleStateRaw = TrackedActivityLifecycleState.completed.rawValue
         updatedAt = date
     }
@@ -228,6 +243,26 @@ final class TrackedActivitySession {
         activeIntervalStartedAt = nil
         lifecycleStateRaw = TrackedActivityLifecycleState.discarded.rawValue
         endedAt = endedAt ?? date
+        dismissedRecoveryPromptAt = nil
+        updatedAt = date
+    }
+
+    func markRecoveryOpened(at date: Date = Date()) {
+        guard lifecycleState == .inProgress || lifecycleState == .paused else { return }
+        lastResumedAt = date
+        dismissedRecoveryPromptAt = nil
+        updatedAt = date
+    }
+
+    func markBackgrounded(at date: Date = Date()) {
+        guard lifecycleState == .inProgress || lifecycleState == .paused else { return }
+        lastBackgroundedAt = date
+        updatedAt = date
+    }
+
+    func keepForLater(at date: Date = Date()) {
+        guard lifecycleState == .inProgress || lifecycleState == .paused else { return }
+        dismissedRecoveryPromptAt = date
         updatedAt = date
     }
 
@@ -304,6 +339,16 @@ final class TrackedActivitySession {
 
         if lifecycleState == .discarded && endedAt == nil {
             endedAt = updatedAt
+        }
+
+        if lifecycleState == .inProgress || lifecycleState == .paused {
+            if lastResumedAt == nil {
+                lastResumedAt = startedAt ?? updatedAt
+            }
+        }
+
+        if lifecycleState == .completed || lifecycleState == .discarded {
+            dismissedRecoveryPromptAt = nil
         }
 
         if healthKitExportState == .exported {
