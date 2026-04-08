@@ -102,6 +102,22 @@ struct ProgressDashboardView: View {
                 }
 
                 LazyVStack(spacing: 14) {
+                    if let trackedActivityCardModel {
+                        sectionHeader(
+                            title: String(localized: "progress.section.tracked_activities", defaultValue: "Tracked activities"),
+                            subtitle: String(localized: "progress.section.tracked_activities.subtitle", defaultValue: "Walking, running, hiking, and yoga summaries stay separate from your strength trends."),
+                            systemImage: "figure.walk.motion"
+                        )
+
+                        TrackedActivitySummaryCard(model: trackedActivityCardModel)
+                    }
+
+                    sectionHeader(
+                        title: String(localized: "progress.section.strength", defaultValue: "Strength training"),
+                        subtitle: String(localized: "progress.section.strength.subtitle", defaultValue: "Volume, consistency, recovery, and featured lifts are shown below."),
+                        systemImage: "figure.strengthtraining.traditional"
+                    )
+
                     StrengthProgressCard(model: content.strength) { exerciseID in
                         viewModel.openExerciseDetail(exerciseID: exerciseID)
                     }
@@ -117,9 +133,6 @@ struct ProgressDashboardView: View {
 
                     ConsistencyCard(model: content.consistency)
                     RecoveryInsightCard(model: content.recovery)
-                    if let trackedActivityCardModel {
-                        TrackedActivitySummaryCard(model: trackedActivityCardModel)
-                    }
                 }
             }
             .padding()
@@ -134,6 +147,20 @@ struct ProgressDashboardView: View {
             .map(\.summary)
             .filter { $0.lifecycleState == .completed || $0.lifecycleState == .discarded }
         return TrackedActivitySummaryCardModel.build(from: summaries)
+    }
+
+
+    private func sectionHeader(title: String, subtitle: String, systemImage: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label(title, systemImage: systemImage)
+                .font(.headline)
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 2)
     }
 
     private func header(content: ProgressDashboardViewModel.DashboardContent) -> some View {

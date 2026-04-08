@@ -19,20 +19,26 @@ final class FreshInstallWorkoutRoutineSmokeUITests: XCTestCase {
         app = UITestLaunch.app(start: "calendar", reset: true, seed: true)
         app.launch()
 
+        let initialActivityCount = timelineActivityCount(in: app)
+
         XCTAssertTrue(tapNewActivityButton(app), "Expected to find/tap New Activity button")
         XCTAssertTrue(app.navigationBars["New Activity"].waitForExistence(timeout: t(6)), "Expected New Activity sheet")
 
         let title = "UITest — Fresh Workout"
         let titleField = app.el("activityEditor.titleField")
         XCTAssertTrue(titleField.waitForExistence(timeout: t(6)), "Expected activity title field")
-        titleField.tap()
-        titleField.typeText(title)
+        replaceText(in: titleField, with: title)
 
         XCTAssertTrue(ensureWorkoutKindSelected(app), "Expected Workout kind to be selected")
 
         let save = app.el("activityEditor.saveButton")
         XCTAssertTrue(save.waitForExistence(timeout: t(4)), "Expected Save button")
         tapSafely(save)
+
+        XCTAssertTrue(
+            waitForTimelineToReflectNewActivity(in: app, previousCount: initialActivityCount, timeout: t(12)),
+            "Expected timeline to dismiss the editor and include the new activity"
+        )
 
         startSessionFromTimelineBlock(named: title, in: app)
 
@@ -69,6 +75,17 @@ final class FreshInstallWorkoutRoutineSmokeUITests: XCTestCase {
         } else {
             el.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         }
+    }
+
+    private func replaceText(in field: XCUIElement, with text: String) {
+        field.tap()
+
+        if let existingText = field.value as? String, !existingText.isEmpty {
+            let deleteSequence = String(repeating: XCUIKeyboardKey.delete.rawValue, count: existingText.count)
+            field.typeText(deleteSequence)
+        }
+
+        field.typeText(text)
     }
 
     private func any(_ app: XCUIApplication, id: String) -> XCUIElement {
@@ -196,10 +213,17 @@ final class FreshInstallWorkoutRoutineSmokeUITests: XCTestCase {
     }
 
     private func startSessionFromTimelineBlock(named title: String, in app: XCUIApplication) {
-        let predicate = NSPredicate(format: "label CONTAINS[c] %@", title)
-        let blockTitle = app.descendants(matching: .any).matching(predicate).firstMatch
+        let blockTitle = app.descendants(matching: .any)
+            .matching(
+                NSPredicate(
+                    format: "identifier == %@ AND label == %@",
+                    "DayTimeline.WorkoutCard.DefaultAction",
+                    title
+                )
+            )
+            .firstMatch
 
-        if !blockTitle.waitForExistence(timeout: t(2)) {
+        if !blockTitle.waitForExistence(timeout: t(3)) {
             for _ in 0..<12 {
                 swipeScrollableUp(app)
                 if blockTitle.exists { break }
@@ -218,36 +242,53 @@ final class FreshInstallWorkoutRoutineSmokeUITests: XCTestCase {
             return
         }
 
-        func nearestAction(identifier: String, to anchor: XCUIElement) -> XCUIElement? {
-            let candidates = app.descendants(matching: .any)
-                .matching(NSPredicate(format: "identifier == %@", identifier))
-                .allElementsBoundByIndex
-                .filter { $0.exists && !$0.frame.isEmpty }
-
-            guard !candidates.isEmpty else { return nil }
-
-            let ax = anchor.frame.midX
-            let ay = anchor.frame.midY
-
-            return candidates.min { lhs, rhs in
-                let ld = hypot(lhs.frame.midX - ax, lhs.frame.midY - ay)
-                let rd = hypot(rhs.frame.midX - ax, rhs.frame.midY - ay)
-                return ld < rd
+        func nearestAction(identifier: String, to anchor: XCUIElement) -> XCUIElement {
+            let candidates = app.buttons.matching(identifier: identifier).allElementsBoundByIndex.filter { button in
+                button.exists &&
+                !button.frame.isEmpty &&
+                abs(button.frame.midY - anchor.frame.midY) < 80 &&
+                abs(button.frame.midX - anchor.frame.midX) < 220
             }
+
+            if let nearest = candidates.min(by: { lhs, rhs in
+                let ld = hypot(lhs.frame.midX - anchor.frame.midX, lhs.frame.midY - anchor.frame.midY)
+                let rd = hypot(rhs.frame.midX - anchor.frame.midX, rhs.frame.midY - anchor.frame.midY)
+                return ld < rd
+            }) {
+                return nearest
+            }
+
+            return app.buttons.matching(identifier: identifier).firstMatch
         }
 
         func waitForSessionScreen() -> Bool {
             any(app, id: "WorkoutSession.Screen").waitForExistence(timeout: t(6))
         }
 
+        func confirmLaunchSheetStartIfPresent() -> Bool {
+            let launchSheet = app.sheets.firstMatch
+            guard launchSheet.waitForExistence(timeout: t(1.5)) else { return false }
+            let startInSheet = launchSheet.buttons["Start"].firstMatch
+            guard startInSheet.waitForExistence(timeout: t(2)) else { return false }
+            startInSheet.tap()
+            return waitForSessionScreen()
+        }
+
+        if blockTitle.exists {
+            tapSafely(blockTitle)
+            if waitForSessionScreen() || confirmLaunchSheetStartIfPresent() { return }
+        }
+
         // Preferred path: tap the Start overlay that belongs to this exact card.
-        if let startOverlay = nearestAction(identifier: "DayTimeline.WorkoutOverlay.Start", to: blockTitle) {
+        let startOverlay = nearestAction(identifier: "DayTimeline.WorkoutOverlay.Start", to: blockTitle)
+        if startOverlay.waitForExistence(timeout: t(1.5)) {
             tapSafely(startOverlay)
-            if waitForSessionScreen() { return }
+            if waitForSessionScreen() || confirmLaunchSheetStartIfPresent() { return }
         }
 
         // Fallback: tap the card default action, then accept the popover Start path if it appears.
-        guard let defaultAction = nearestAction(identifier: "DayTimeline.WorkoutCard.DefaultAction", to: blockTitle) else {
+        let defaultAction = nearestAction(identifier: "DayTimeline.WorkoutCard.DefaultAction", to: blockTitle)
+        guard defaultAction.waitForExistence(timeout: t(1.5)) else {
             attachUITestDebug(app, name: "FreshInstallWorkout_DefaultActionMissing")
             XCTFail("Expected DayTimeline.WorkoutCard.DefaultAction near \(title).")
             return
@@ -267,20 +308,51 @@ final class FreshInstallWorkoutRoutineSmokeUITests: XCTestCase {
         }
 
         tapSafely(defaultAction)
-
-        // If the app chooses the launch popover path, confirm it with Start.
-        let launchSheet = app.sheets.firstMatch
-        if launchSheet.waitForExistence(timeout: t(2)) {
-            let startInSheet = launchSheet.buttons["Start"].firstMatch
-            if startInSheet.waitForExistence(timeout: t(2)) {
-                startInSheet.tap()
-            }
-        }
+        if confirmLaunchSheetStartIfPresent() { return }
 
         if !waitForSessionScreen() {
             attachUITestDebug(app, name: "FreshInstallWorkout_SessionDidNotOpen")
             XCTFail("Expected tapping \(title) to open WorkoutSession.Screen.")
         }
+    }
+
+    private func timelineActivityCount(in app: XCUIApplication) -> Int? {
+        let countLabel = app.staticTexts["DayTimeline.Debug.ActivitiesCount"]
+        guard countLabel.waitForExistence(timeout: t(6)) else { return nil }
+
+        return parseTrailingCount(from: countLabel.label)
+    }
+
+    private func waitForTimelineToReflectNewActivity(
+        in app: XCUIApplication,
+        previousCount: Int?,
+        timeout: TimeInterval
+    ) -> Bool {
+        let editorNav = app.navigationBars["New Activity"].firstMatch
+        let countLabel = app.staticTexts["DayTimeline.Debug.ActivitiesCount"]
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while Date() < deadline {
+            let editorDismissed = !editorNav.exists
+            let updatedCount = parseTrailingCount(from: countLabel.label)
+            let countAdvanced = previousCount == nil || (updatedCount.map { $0 > previousCount! } ?? false)
+
+            if editorDismissed && countAdvanced {
+                return true
+            }
+
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+
+        if editorNav.exists || countLabel.exists {
+            attachUITestDebug(app, name: "FreshInstallWorkout_TimelineDidNotRefresh")
+        }
+        return false
+    }
+
+    private func parseTrailingCount(from label: String) -> Int? {
+        let digits = label.split(separator: ":").last?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return digits.flatMap(Int.init)
     }
 
     private var doneTogglePredicate: NSPredicate {

@@ -155,12 +155,12 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
 
     // MARK: - Session helpers
 
-    private func tapSafely(_ el: XCUIElement) {
-        if el.isHittable {
-            el.tap()
-        } else {
-            el.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        }
+    @discardableResult
+    private func tapSafely(_ el: XCUIElement) -> Bool {
+        guard el.waitForExistence(timeout: t(1.5)) else { return false }
+        guard el.isHittable else { return false }
+        el.tap()
+        return true
     }
 
     private func waitAny(_ candidates: [XCUIElement], timeout: TimeInterval) -> XCUIElement? {
@@ -182,14 +182,57 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
         app.swipeUp()
     }
 
+    private func swipeScrollableDown(_ app: XCUIApplication) {
+        if app.tables.firstMatch.exists { app.tables.firstMatch.swipeDown(); return }
+        if app.collectionViews.firstMatch.exists { app.collectionViews.firstMatch.swipeDown(); return }
+        if app.scrollViews.firstMatch.exists { app.scrollViews.firstMatch.swipeDown(); return }
+        app.swipeDown()
+    }
+
+    private func workoutRowButton(
+        identifiedBy identifier: String,
+        nearWorkoutTitle title: String,
+        in app: XCUIApplication
+    ) -> XCUIElement {
+        let anchor = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", title))
+            .firstMatch
+        guard anchor.waitForExistence(timeout: t(2)) else {
+            return app.buttons.matching(identifier: identifier).firstMatch
+        }
+
+        let candidates = app.buttons.matching(identifier: identifier).allElementsBoundByIndex.filter { button in
+            button.exists &&
+            !button.frame.isEmpty &&
+            abs(button.frame.midY - anchor.frame.midY) < 80 &&
+            abs(button.frame.midX - anchor.frame.midX) < 220
+        }
+
+        if let nearest = candidates.min(by: { lhs, rhs in
+            hypot(lhs.frame.midX - anchor.frame.midX, lhs.frame.midY - anchor.frame.midY) <
+            hypot(rhs.frame.midX - anchor.frame.midX, rhs.frame.midY - anchor.frame.midY)
+        }) {
+            return nearest
+        }
+
+        return app.buttons.matching(identifier: identifier).firstMatch
+    }
+
     private func startSessionFromTimelineBlock(named title: String, in app: XCUIApplication) {
-        let predicate = NSPredicate(format: "label CONTAINS[c] %@", title)
-        let blockTitle = app.descendants(matching: .any).matching(predicate).firstMatch
+        let blockTitle = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", title))
+            .firstMatch
 
         if !blockTitle.waitForExistence(timeout: t(2)) {
             for _ in 0..<12 {
                 swipeScrollableUp(app)
                 if blockTitle.exists { break }
+            }
+            if !blockTitle.exists {
+                for _ in 0..<12 {
+                    swipeScrollableDown(app)
+                    if blockTitle.exists { break }
+                }
             }
         }
 
@@ -199,33 +242,42 @@ final class DistanceUnitsSmokeUITests: XCTestCase {
             return
         }
 
-        let directAction = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "identifier == %@", "DayTimeline.WorkoutCard.DefaultAction"))
-            .firstMatch
-
-        let startOverlay = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "identifier == %@", "DayTimeline.WorkoutOverlay.Start"))
-            .firstMatch
-
-        let fallbackStart = app.buttons["Start"]
-
-        if let startTarget = waitAny([startOverlay, directAction, fallbackStart], timeout: t(1.5)) {
-            tapSafely(startTarget)
+        if tapSafely(blockTitle), waitForStartedCardioSession(in: app, timeout: t(3)) {
             return
         }
 
-        tapSafely(blockTitle)
-
-        if let startTarget = waitAny([startOverlay, directAction, fallbackStart], timeout: t(2)) {
-            tapSafely(startTarget)
-            return
+        func startCandidates() -> [XCUIElement] {
+            [
+                workoutRowButton(
+                    identifiedBy: "DayTimeline.WorkoutOverlay.Start",
+                    nearWorkoutTitle: title,
+                    in: app
+                ),
+                workoutRowButton(
+                    identifiedBy: "DayTimeline.WorkoutCard.DefaultAction",
+                    nearWorkoutTitle: title,
+                    in: app
+                ),
+                app.buttons["Start"]
+            ]
         }
 
-        swipeScrollableUp(app)
+        for _ in 0..<3 {
+            if let startTarget = waitAny(startCandidates(), timeout: t(1.5)) {
+                if tapSafely(startTarget) { return }
+            }
 
-        if let startTarget = waitAny([startOverlay, directAction, fallbackStart], timeout: t(1.5)) {
-            tapSafely(startTarget)
-            return
+            if tapSafely(blockTitle), waitForStartedCardioSession(in: app, timeout: t(3)) {
+                return
+            }
+
+            if let startTarget = waitAny(startCandidates(), timeout: t(1.5)) {
+                if tapSafely(startTarget) { return }
+            }
+
+            swipeScrollableUp(app)
+            if blockTitle.exists { continue }
+            swipeScrollableDown(app)
         }
 
         attachUITestDebug(app, name: "DistanceUnits_StartActionMissing")
