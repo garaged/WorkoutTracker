@@ -318,3 +318,197 @@ extension TrackedActivitySession {
         }
     }
 }
+
+extension TrackedActivitySession {
+    var healthKitRouteAttachmentDisplayName: String {
+        switch healthKitRouteAttachmentState {
+        case .unknown:
+            return String(localized: "activities.health.route_attachment.unknown", defaultValue: "Unknown")
+        case .notApplicable:
+            return String(localized: "activities.health.route_attachment.not_applicable", defaultValue: "Not applicable")
+        case .noRouteData:
+            return String(localized: "activities.health.route_attachment.no_route_data", defaultValue: "No route data")
+        case .attached:
+            return String(localized: "activities.health.route_attachment.attached", defaultValue: "Attached")
+        case .failed:
+            return String(localized: "activities.health.route_attachment.failed", defaultValue: "Could not attach")
+        }
+    }
+
+    var healthKitRouteAttachmentHelperText: String {
+        if healthKitRouteAttachmentState == .failed,
+           let healthKitRouteAttachmentFailureMessage,
+           !healthKitRouteAttachmentFailureMessage.isEmpty {
+            return healthKitRouteAttachmentFailureMessage
+        }
+
+        switch healthKitRouteAttachmentState {
+        case .unknown:
+            return String(
+                localized: "activities.health.route_attachment.helper.unknown",
+                defaultValue: "Route attachment outcome is not available yet."
+            )
+        case .notApplicable:
+            return String(
+                localized: "activities.health.route_attachment.helper.not_applicable",
+                defaultValue: "This activity type does not attach an outdoor route in Apple Health."
+            )
+        case .noRouteData:
+            return String(
+                localized: "activities.health.route_attachment.helper.no_route_data",
+                defaultValue: "The workout saved, but there were no captured route points to attach."
+            )
+        case .attached:
+            return String(
+                localized: "activities.health.route_attachment.helper.attached",
+                defaultValue: "The captured outdoor route was attached when this workout was saved to Apple Health."
+            )
+        case .failed:
+            return String(
+                localized: "activities.health.route_attachment.helper.failed",
+                defaultValue: "The workout saved, but the outdoor route could not be attached."
+            )
+        }
+    }
+}
+
+extension TrackedActivitySession {
+    var capturedRouteDisplayValue: String {
+        guard hasRecordedRoute else {
+            return String(localized: "activities.health.route_attachment.not_captured", defaultValue: "No route captured")
+        }
+
+        return String(
+            format: String(localized: "activities.health.route_points", defaultValue: "%lld points"),
+            Int64(routePointCount)
+        )
+    }
+
+    @MainActor
+    func routeAttachmentReadinessValue(using healthAuthorizationService: HealthKitAuthorizationService) -> String {
+        guard environment == .outdoor, activityKind.supportsDistance else {
+            return String(localized: "activities.health.not_available", defaultValue: "Not available")
+        }
+
+        guard hasRecordedRoute else {
+            return String(localized: "activities.health.route_attachment.not_captured", defaultValue: "No route captured")
+        }
+
+        if healthKitExportState == .pending {
+            return String(localized: "activities.health.route_attachment.pending", defaultValue: "Waiting to save")
+        }
+
+        if healthKitExportState == .exported {
+            return healthKitRouteAttachmentDisplayName
+        }
+
+        switch healthAuthorizationService.routeState {
+        case .authorized:
+            return String(localized: "activities.health.route_attachment.ready", defaultValue: "Ready to attach")
+        case .notRequested, .denied:
+            return String(localized: "activities.health.route_attachment.permission_needed", defaultValue: "Permission needed")
+        case .unavailable:
+            return String(localized: "activities.health.route_attachment.unavailable", defaultValue: "Unavailable")
+        }
+    }
+
+    @MainActor
+    func routeAttachmentReadinessMessage(using healthAuthorizationService: HealthKitAuthorizationService) -> String {
+        guard environment == .outdoor, activityKind.supportsDistance else {
+            return String(
+                localized: "activities.health.route_attachment.message.not_applicable",
+                defaultValue: "This activity type does not attach an outdoor route in Apple Health."
+            )
+        }
+
+        guard hasRecordedRoute else {
+            return String(
+                localized: "activities.health.route_attachment.message.not_captured",
+                defaultValue: "No outdoor route points were captured for this activity, so Apple Health can only save the workout."
+            )
+        }
+
+        if healthKitExportState == .pending {
+            return String(
+                localized: "activities.health.route_attachment.message.pending",
+                defaultValue: "WorkoutTracker still needs to finish saving this workout before the captured route can be attached in Apple Health."
+            )
+        }
+
+        if healthKitExportState == .exported {
+            return healthKitRouteAttachmentHelperText
+        }
+
+        switch healthAuthorizationService.routeState {
+        case .authorized:
+            return String(
+                localized: "activities.health.route_attachment.message.ready",
+                defaultValue: "This activity captured route points locally. Apple Health route attachment is ready the next time you save the workout."
+            )
+        case .notRequested:
+            return String(
+                localized: "activities.health.route_attachment.message.not_requested",
+                defaultValue: "This activity captured route points locally, but Apple Health route access still needs to be granted before the route can be attached during export."
+            )
+        case .denied:
+            return String(
+                localized: "activities.health.route_attachment.message.denied",
+                defaultValue: "This activity captured route points locally, but Apple Health route access is currently blocked until it is re-enabled in Settings."
+            )
+        case .unavailable:
+            return String(
+                localized: "activities.health.route_attachment.message.unavailable",
+                defaultValue: "This activity captured route points locally, but Apple Health route export is unavailable on this device."
+            )
+        }
+    }
+
+    @MainActor
+    func liveRouteExportReadinessValue(using healthAuthorizationService: HealthKitAuthorizationService) -> String {
+        guard environment == .outdoor, activityKind.supportsDistance else {
+            return String(localized: "activities.health.not_available", defaultValue: "Not available")
+        }
+
+        switch healthAuthorizationService.routeState {
+        case .authorized:
+            return String(localized: "activities.session.route.export_readiness.ready", defaultValue: "Ready when captured")
+        case .notRequested, .denied:
+            return String(localized: "activities.health.route_attachment.permission_needed", defaultValue: "Permission needed")
+        case .unavailable:
+            return String(localized: "activities.health.route_attachment.unavailable", defaultValue: "Unavailable")
+        }
+    }
+
+    @MainActor
+    func liveRouteExportReadinessMessage(using healthAuthorizationService: HealthKitAuthorizationService) -> String {
+        guard environment == .outdoor, activityKind.supportsDistance else {
+            return String(
+                localized: "activities.session.route.export_readiness.not_applicable",
+                defaultValue: "This activity type does not attach an outdoor route in Apple Health."
+            )
+        }
+
+        switch healthAuthorizationService.routeState {
+        case .authorized:
+            return String(
+                localized: "activities.session.route.export_readiness.message.ready",
+                defaultValue: "If route points are captured during this activity, Apple Health route attachment is ready when you save the workout."
+            )
+        case .notRequested:
+            return String(
+                localized: "activities.session.route.export_readiness.message.not_requested",
+                defaultValue: "Route points can still be captured locally now, but Apple Health route access still needs to be granted before they can be attached during export."
+            )
+        case .denied:
+            return String(
+                localized: "activities.session.route.export_readiness.message.denied",
+                defaultValue: "Route points can still be captured locally now, but Apple Health route access is currently blocked until it is re-enabled in Settings."
+            )
+        case .unavailable:
+            return String(
+                localized: "activities.session.route.export_readiness.message.unavailable",
+                defaultValue: "Route points can still stay local in WorkoutTracker, but Apple Health route export is unavailable on this device."
+            )
+        }
+    }
+}

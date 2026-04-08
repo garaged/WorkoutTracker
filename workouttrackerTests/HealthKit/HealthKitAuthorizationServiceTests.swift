@@ -7,31 +7,69 @@ final class HealthKitAuthorizationServiceTests: XCTestCase {
     func testAuthorizationState_unavailableWhenHealthDataIsUnavailable() {
         let store = MockHealthKitStoreProxy(
             isHealthDataAvailable: false,
-            authorizationStatus: .notDetermined
+            workoutAuthorizationStatus: .notDetermined,
+            routeAuthorizationStatus: .notDetermined
         )
 
         let service = HealthKitAuthorizationService(store: store)
 
         XCTAssertEqual(service.state, .unavailable)
+        XCTAssertEqual(service.routeState, .unavailable)
     }
 
     func testAuthorizationState_deniedWhenWorkoutWritePermissionIsDenied() {
         let store = MockHealthKitStoreProxy(
             isHealthDataAvailable: true,
-            authorizationStatus: .sharingDenied
+            workoutAuthorizationStatus: .sharingDenied,
+            routeAuthorizationStatus: .sharingAuthorized
         )
 
         let service = HealthKitAuthorizationService(store: store)
 
         XCTAssertEqual(service.state, .denied)
+        XCTAssertEqual(service.routeState, .denied)
     }
 
-    func testRequestAuthorization_refreshesAuthorizedState() async throws {
+    func testRouteAuthorizationState_notRequestedWhenWorkoutAuthorizedButRouteStillNeedsAccess() {
         let store = MockHealthKitStoreProxy(
             isHealthDataAvailable: true,
-            authorizationStatus: .notDetermined,
+            workoutAuthorizationStatus: .sharingAuthorized,
+            routeAuthorizationStatus: .notDetermined
+        )
+
+        let service = HealthKitAuthorizationService(store: store)
+
+        XCTAssertEqual(service.state, .authorized)
+        XCTAssertEqual(service.routeState, .notRequested)
+        XCTAssertTrue(service.canExportWorkouts)
+        XCTAssertFalse(service.canExportRoutes)
+        XCTAssertEqual(service.routePermissionAction, .requestAuthorization)
+    }
+
+    func testRouteAuthorizationState_deniedWhenWorkoutAuthorizedButRouteWasRevoked() {
+        let store = MockHealthKitStoreProxy(
+            isHealthDataAvailable: true,
+            workoutAuthorizationStatus: .sharingAuthorized,
+            routeAuthorizationStatus: .sharingDenied
+        )
+
+        let service = HealthKitAuthorizationService(store: store)
+
+        XCTAssertEqual(service.state, .authorized)
+        XCTAssertEqual(service.routeState, .denied)
+        XCTAssertTrue(service.canExportWorkouts)
+        XCTAssertFalse(service.canExportRoutes)
+        XCTAssertEqual(service.routePermissionAction, .openSettings)
+    }
+
+    func testRequestAuthorization_refreshesAuthorizedWorkoutAndRouteState() async throws {
+        let store = MockHealthKitStoreProxy(
+            isHealthDataAvailable: true,
+            workoutAuthorizationStatus: .notDetermined,
+            routeAuthorizationStatus: .notDetermined,
             requestAuthorizationResult: true,
-            authorizationStatusAfterRequest: .sharingAuthorized
+            workoutAuthorizationStatusAfterRequest: .sharingAuthorized,
+            routeAuthorizationStatusAfterRequest: .sharingAuthorized
         )
 
         let service = HealthKitAuthorizationService(store: store)
@@ -39,27 +77,34 @@ final class HealthKitAuthorizationServiceTests: XCTestCase {
 
         XCTAssertEqual(state, .authorized)
         XCTAssertEqual(service.state, .authorized)
+        XCTAssertEqual(service.routeState, .authorized)
         XCTAssertEqual(store.requestAuthorizationCallCount, 1)
     }
 }
 
 private final class MockHealthKitStoreProxy: HealthKitStoreProxy {
     var isHealthDataAvailableValue: Bool
-    var authorizationStatusValue: HKAuthorizationStatus
+    var workoutAuthorizationStatusValue: HKAuthorizationStatus
+    var routeAuthorizationStatusValue: HKAuthorizationStatus
     var requestAuthorizationResult: Bool
-    var authorizationStatusAfterRequest: HKAuthorizationStatus?
+    var workoutAuthorizationStatusAfterRequest: HKAuthorizationStatus?
+    var routeAuthorizationStatusAfterRequest: HKAuthorizationStatus?
     var requestAuthorizationCallCount = 0
 
     init(
         isHealthDataAvailable: Bool,
-        authorizationStatus: HKAuthorizationStatus,
+        workoutAuthorizationStatus: HKAuthorizationStatus,
+        routeAuthorizationStatus: HKAuthorizationStatus,
         requestAuthorizationResult: Bool = true,
-        authorizationStatusAfterRequest: HKAuthorizationStatus? = nil
+        workoutAuthorizationStatusAfterRequest: HKAuthorizationStatus? = nil,
+        routeAuthorizationStatusAfterRequest: HKAuthorizationStatus? = nil
     ) {
         self.isHealthDataAvailableValue = isHealthDataAvailable
-        self.authorizationStatusValue = authorizationStatus
+        self.workoutAuthorizationStatusValue = workoutAuthorizationStatus
+        self.routeAuthorizationStatusValue = routeAuthorizationStatus
         self.requestAuthorizationResult = requestAuthorizationResult
-        self.authorizationStatusAfterRequest = authorizationStatusAfterRequest
+        self.workoutAuthorizationStatusAfterRequest = workoutAuthorizationStatusAfterRequest
+        self.routeAuthorizationStatusAfterRequest = routeAuthorizationStatusAfterRequest
     }
 
     func isHealthDataAvailable() -> Bool {
@@ -67,13 +112,22 @@ private final class MockHealthKitStoreProxy: HealthKitStoreProxy {
     }
 
     func authorizationStatus(for type: HKObjectType) -> HKAuthorizationStatus {
-        authorizationStatusValue
+        if type.identifier == HKObjectType.workoutType().identifier {
+            return workoutAuthorizationStatusValue
+        }
+        if type.identifier == HKSeriesType.workoutRoute().identifier {
+            return routeAuthorizationStatusValue
+        }
+        return .notDetermined
     }
 
     func requestAuthorization(toShare shareTypes: Set<HKSampleType>, read readTypes: Set<HKObjectType>) async throws -> Bool {
         requestAuthorizationCallCount += 1
-        if let authorizationStatusAfterRequest {
-            authorizationStatusValue = authorizationStatusAfterRequest
+        if let workoutAuthorizationStatusAfterRequest {
+            workoutAuthorizationStatusValue = workoutAuthorizationStatusAfterRequest
+        }
+        if let routeAuthorizationStatusAfterRequest {
+            routeAuthorizationStatusValue = routeAuthorizationStatusAfterRequest
         }
         return requestAuthorizationResult
     }

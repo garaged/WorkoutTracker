@@ -125,13 +125,65 @@ final class HealthKitAuthorizationService: ObservableObject {
         }
     }
 
+    enum RouteAuthorizationState: Equatable {
+        case unavailable
+        case notRequested
+        case denied
+        case authorized
+
+        var title: String {
+            switch self {
+            case .unavailable:
+                return String(localized: "health.route_authorization.title.unavailable", defaultValue: "Unavailable")
+            case .notRequested:
+                return String(localized: "health.route_authorization.title.permission_needed", defaultValue: "Permission needed")
+            case .denied:
+                return String(localized: "health.route_authorization.title.permission_needed", defaultValue: "Permission needed")
+            case .authorized:
+                return String(localized: "health.route_authorization.title.ready", defaultValue: "Ready")
+            }
+        }
+
+        var message: String {
+            switch self {
+            case .unavailable:
+                return String(
+                    localized: "health.route_authorization.message.unavailable",
+                    defaultValue: "Apple Health route export is not available on this device. Outdoor route points can still stay local in WorkoutTracker."
+                )
+            case .notRequested:
+                return String(
+                    localized: "health.route_authorization.message.not_requested",
+                    defaultValue: "WorkoutTracker can save workouts to Apple Health, but outdoor route attachment still needs Apple Health route access."
+                )
+            case .denied:
+                return String(
+                    localized: "health.route_authorization.message.denied",
+                    defaultValue: "WorkoutTracker can save workouts to Apple Health, but outdoor route attachment is currently blocked until route access is re-enabled in Settings."
+                )
+            case .authorized:
+                return String(
+                    localized: "health.route_authorization.message.authorized",
+                    defaultValue: "Outdoor route attachment is ready when route points are captured and the workout is saved."
+                )
+            }
+        }
+    }
+
+    enum RoutePermissionAction: Equatable {
+        case requestAuthorization
+        case openSettings
+    }
+
     @Published private(set) var state: AuthorizationState
+    @Published private(set) var routeState: RouteAuthorizationState
 
     private let store: HealthKitStoreProxy
 
     init(store: HealthKitStoreProxy = LiveHealthKitStoreProxy()) {
         self.store = store
         self.state = Self.authorizationState(using: store)
+        self.routeState = Self.routeAuthorizationState(using: store)
     }
 
     var isAvailable: Bool {
@@ -142,14 +194,69 @@ final class HealthKitAuthorizationService: ObservableObject {
         state == .authorized
     }
 
+    var canExportRoutes: Bool {
+        canExportWorkouts && routeState == .authorized
+    }
+
+    var routePermissionAction: RoutePermissionAction? {
+        guard canExportWorkouts else { return nil }
+        switch routeState {
+        case .notRequested:
+            return .requestAuthorization
+        case .denied:
+            return .openSettings
+        case .authorized, .unavailable:
+            return nil
+        }
+    }
+
+    var routePermissionActionTitle: String? {
+        switch routePermissionAction {
+        case .requestAuthorization:
+            return String(localized: "health.route_authorization.cta.enable", defaultValue: "Enable route access")
+        case .openSettings:
+            return String(localized: "health.route_authorization.cta.open_settings", defaultValue: "Open Settings")
+        case nil:
+            return nil
+        }
+    }
+
+    var statusSummaryMessage: String {
+        guard state == .authorized else {
+            return state.message
+        }
+
+        switch routeState {
+        case .authorized:
+            return state.message
+        case .notRequested:
+            return String(
+                localized: "health.authorization.summary.workout_only_not_requested",
+                defaultValue: "WorkoutTracker can save completed tracked activities to Apple Health. Outdoor route attachment still needs Apple Health route access."
+            )
+        case .denied:
+            return String(
+                localized: "health.authorization.summary.workout_only_denied",
+                defaultValue: "WorkoutTracker can save completed tracked activities to Apple Health, but outdoor route attachment is currently blocked until route access is re-enabled in Settings."
+            )
+        case .unavailable:
+            return String(
+                localized: "health.authorization.summary.route_unavailable",
+                defaultValue: "WorkoutTracker can save completed tracked activities to Apple Health, but outdoor route attachment is unavailable on this device."
+            )
+        }
+    }
+
     func refresh() {
         state = Self.authorizationState(using: store)
+        routeState = Self.routeAuthorizationState(using: store)
     }
 
     @discardableResult
     func requestAuthorization() async throws -> AuthorizationState {
         guard store.isHealthDataAvailable() else {
             state = .unavailable
+            routeState = .unavailable
             return state
         }
 
@@ -162,7 +269,7 @@ final class HealthKitAuthorizationService: ObservableObject {
             throw HealthKitAuthorizationError.requestDidNotComplete
         }
 
-        state = Self.authorizationState(using: store)
+        refresh()
         return state
     }
 
@@ -176,6 +283,34 @@ final class HealthKitAuthorizationService: ObservableObject {
         }
 
         switch store.authorizationStatus(for: HKObjectType.workoutType()) {
+        case .notDetermined:
+            return .notRequested
+        case .sharingDenied:
+            return .denied
+        case .sharingAuthorized:
+            return .authorized
+        @unknown default:
+            return .notRequested
+        }
+    }
+
+    static func routeAuthorizationState(using store: HealthKitStoreProxy) -> RouteAuthorizationState {
+        guard store.isHealthDataAvailable() else {
+            return .unavailable
+        }
+
+        switch authorizationState(using: store) {
+        case .unavailable:
+            return .unavailable
+        case .notRequested:
+            return .notRequested
+        case .denied:
+            return .denied
+        case .authorized:
+            break
+        }
+
+        switch store.authorizationStatus(for: HKSeriesType.workoutRoute()) {
         case .notDetermined:
             return .notRequested
         case .sharingDenied:

@@ -142,7 +142,8 @@ struct TrackedActivityFinishSummaryView: View {
             LabeledContent(String(localized: "activities.health.workout_save_state", defaultValue: "Workout save state"), value: session.healthKitExportDisplayName)
 
             if session.environment == .outdoor && session.activityKind.supportsDistance {
-                LabeledContent(String(localized: "activities.health.captured_route", defaultValue: "Captured route"), value: session.hasRecordedRoute ? String(format: String(localized: "activities.health.route_points", defaultValue: "%lld points"), Int64(session.routePointCount)) : String(localized: "activities.health.not_available", defaultValue: "Not available"))
+                LabeledContent(String(localized: "activities.health.captured_route", defaultValue: "Captured route"), value: session.capturedRouteDisplayValue)
+                LabeledContent(String(localized: "activities.health.route_attachment", defaultValue: "Route attachment"), value: session.routeAttachmentReadinessValue(using: healthKitAuthorizationService))
             }
 
             Text(session.healthKitExportHelperText)
@@ -150,12 +151,17 @@ struct TrackedActivityFinishSummaryView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text(healthKitAuthorizationService.state.message)
+            Text(healthKitAuthorizationService.statusSummaryMessage)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             if session.environment == .outdoor && session.activityKind.supportsDistance {
+                Text(session.routeAttachmentReadinessMessage(using: healthKitAuthorizationService))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
                 Text(String(localized: "activities.health.route_requirement", defaultValue: "Outdoor routes require Apple Health access for workout routes and location while using the app during the activity."))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -195,9 +201,7 @@ struct TrackedActivityFinishSummaryView: View {
                 .accessibilityIdentifier("trackedActivity.openHealthSettingsButton")
 
             case .authorized:
-                if session.healthKitExportState == .exported && !session.hasLocalChangesSinceHealthKitExport {
-                    EmptyView()
-                } else {
+                if session.healthKitExportState != .exported || session.hasLocalChangesSinceHealthKitExport {
                     Button {
                         Task { await exportToHealth(session) }
                     } label: {
@@ -211,6 +215,22 @@ struct TrackedActivityFinishSummaryView: View {
                     .foregroundStyle(.white)
                     .disabled(isExporting || session.lifecycleState != .completed || session.hasLocalChangesSinceHealthKitExport)
                     .accessibilityIdentifier("trackedActivity.exportToHealthKitButton")
+                }
+
+                if session.environment == .outdoor,
+                   session.activityKind.supportsDistance,
+                   let actionTitle = healthKitAuthorizationService.routePermissionActionTitle {
+                    Button(actionTitle) {
+                        switch healthKitAuthorizationService.routePermissionAction {
+                        case .requestAuthorization:
+                            Task { await requestAuthorization() }
+                        case .openSettings:
+                            openSystemSettings()
+                        case nil:
+                            break
+                        }
+                    }
+                    .buttonStyle(.bordered)
                 }
             }
         }
@@ -280,7 +300,11 @@ struct TrackedActivityFinishSummaryView: View {
             if outcome.didSaveRoute {
                 healthExportMessage = String(localized: "activities.summary.health.saved_with_route", defaultValue: "Saved to Apple Health with your outdoor route.")
             } else if session.environment == .outdoor && session.activityKind.supportsDistance {
-                healthExportMessage = String(localized: "activities.summary.health.saved_without_route", defaultValue: "Saved to Apple Health. The workout was exported even though route data was unavailable or could not be attached.")
+                if session.hasRecordedRoute && !healthKitAuthorizationService.canExportRoutes {
+                    healthExportMessage = String(localized: "activities.summary.health.saved_without_route_permission", defaultValue: "Saved to Apple Health. The workout export succeeded, but the captured route still needs Apple Health route access before it can be attached.")
+                } else {
+                    healthExportMessage = String(localized: "activities.summary.health.saved_without_route", defaultValue: "Saved to Apple Health. The workout was exported even though route data was unavailable or could not be attached.")
+                }
             } else {
                 healthExportMessage = String(localized: "activities.summary.health.saved", defaultValue: "Saved to Apple Health.")
             }

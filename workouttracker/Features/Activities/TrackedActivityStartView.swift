@@ -118,7 +118,7 @@ struct TrackedActivityStartView: View {
     private var healthStatusColor: Color {
         switch healthKitAuthorizationService.state {
         case .authorized:
-            return .green
+            return healthKitAuthorizationService.routeState == .denied ? .orange : .green
         case .denied:
             return .orange
         case .notRequested, .unavailable:
@@ -127,6 +127,19 @@ struct TrackedActivityStartView: View {
     }
 
     private var healthStatusExplanation: String {
+        if selectedEnvironment == .outdoor && selectedKind.supportsDistance {
+            if autoSaveToAppleHealth {
+                return String(
+                    localized: "activities.start.health.auto_save_explanation.outdoor",
+                    defaultValue: "Completed sessions try to save automatically to Apple Health when permission is available. Outdoor route points can still be captured locally even if Apple Health route access still needs attention."
+                )
+            }
+            return String(
+                localized: "activities.start.health.manual_explanation.outdoor",
+                defaultValue: "You can save completed tracked activities to Apple Health later from the summary. Outdoor route points are still captured locally first, then attached only when Apple Health route access is ready."
+            )
+        }
+
         if autoSaveToAppleHealth {
             return String(localized: "activities.start.health.auto_save_explanation", defaultValue: "Completed sessions try to save automatically to Apple Health when permission is available. If a save fails, you can still retry later from the summary.")
         }

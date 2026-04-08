@@ -2273,6 +2273,354 @@
         }
       }
     },
+    "activities.health.route_attachment" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Route attachment"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adjuntar ruta"
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.attached" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Attached"
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not attach"
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.helper.attached" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The captured outdoor route was attached when this workout was saved to Apple Health."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.helper.failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The workout saved, but the outdoor route could not be attached."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.helper.no_route_data" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The workout saved, but there were no captured route points to attach."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.helper.not_applicable" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This activity type does not attach an outdoor route in Apple Health."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.helper.unknown" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Route attachment outcome is not available yet."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.message.denied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This activity captured route points locally, but Apple Health route access is currently blocked until it is re-enabled in Settings."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad capturó puntos de ruta localmente, pero el acceso a rutas de Apple Health está bloqueado hasta que se vuelva a habilitar en Configuración."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.message.exported_ready" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This activity captured route points locally. Check the latest Apple Health save message below to confirm whether the route was attached during export."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad capturó puntos de ruta localmente. Revisa el mensaje más reciente de guardado en Apple Health abajo para confirmar si la ruta se adjuntó durante la exportación."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.message.not_applicable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This activity type does not attach an outdoor route in Apple Health."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este tipo de actividad no adjunta una ruta exterior en Apple Health."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.message.not_captured" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No outdoor route points were captured for this activity, so Apple Health can only save the workout."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se capturaron puntos de ruta exterior para esta actividad, así que Apple Health solo puede guardar el entrenamiento."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.message.not_requested" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This activity captured route points locally, but Apple Health route access still needs to be granted before the route can be attached during export."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad capturó puntos de ruta localmente, pero el acceso a rutas de Apple Health todavía debe concederse antes de que la ruta pueda adjuntarse durante la exportación."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.message.pending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker still needs to finish saving this workout before the captured route can be attached in Apple Health."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker todavía necesita terminar de guardar este entrenamiento antes de que la ruta capturada pueda adjuntarse en Apple Health."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.message.ready" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This activity captured route points locally. Apple Health route attachment is ready the next time you save the workout."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad capturó puntos de ruta localmente. Adjuntar la ruta en Apple Health está listo la próxima vez que guardes el entrenamiento."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.message.unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This activity captured route points locally, but Apple Health route export is unavailable on this device."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad capturó puntos de ruta localmente, pero la exportación de rutas a Apple Health no está disponible en este dispositivo."
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.no_route_data" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No route data"
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.not_applicable" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Not applicable"
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.not_captured" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No route captured"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se capturó ruta"
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.pending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting to save"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En espera de guardarse"
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.permission_needed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permission needed"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permiso necesario"
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.ready" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready to attach"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lista para adjuntarse"
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unavailable"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible"
+          }
+        }
+      }
+    },
+    "activities.health.route_attachment.unknown" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unknown"
+          }
+        }
+      }
+    },
     "activities.health.route_points" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3396,6 +3744,23 @@
         }
       }
     },
+    "activities.session.route.capture_started_banner" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Route capture is active. WorkoutTracker has started recording outdoor points for this activity."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La captura de ruta está activa. WorkoutTracker empezó a registrar puntos exteriores para esta actividad."
+          }
+        }
+      }
+    },
     "activities.session.route.captured_points" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3409,6 +3774,125 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Puntos capturados"
+          }
+        }
+      }
+    },
+    "activities.session.route.export_readiness" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health route"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruta en Apple Health"
+          }
+        }
+      }
+    },
+    "activities.session.route.export_readiness.message.denied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Route points can still be captured locally now, but Apple Health route access is currently blocked until it is re-enabled in Settings."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los puntos de ruta todavía se pueden capturar localmente ahora, pero el acceso a rutas de Apple Health está bloqueado hasta que se vuelva a habilitar en Configuración."
+          }
+        }
+      }
+    },
+    "activities.session.route.export_readiness.message.not_requested" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Route points can still be captured locally now, but Apple Health route access still needs to be granted before they can be attached during export."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los puntos de ruta todavía se pueden capturar localmente ahora, pero el acceso a rutas de Apple Health todavía debe concederse antes de que puedan adjuntarse durante la exportación."
+          }
+        }
+      }
+    },
+    "activities.session.route.export_readiness.message.ready" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If route points are captured during this activity, Apple Health route attachment is ready when you save the workout."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si se capturan puntos de ruta durante esta actividad, adjuntar la ruta en Apple Health estará listo cuando guardes el entrenamiento."
+          }
+        }
+      }
+    },
+    "activities.session.route.export_readiness.message.unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Route points can still stay local in WorkoutTracker, but Apple Health route export is unavailable on this device."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los puntos de ruta todavía pueden quedarse locales en WorkoutTracker, pero la exportación de rutas a Apple Health no está disponible en este dispositivo."
+          }
+        }
+      }
+    },
+    "activities.session.route.export_readiness.not_applicable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This activity type does not attach an outdoor route in Apple Health."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este tipo de actividad no adjunta una ruta exterior en Apple Health."
+          }
+        }
+      }
+    },
+    "activities.session.route.export_readiness.ready" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready when captured"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lista cuando se capture"
           }
         }
       }
@@ -3549,6 +4033,23 @@
         }
       }
     },
+    "activities.start.health.auto_save_explanation.outdoor" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed sessions try to save automatically to Apple Health when permission is available. Outdoor route points can still be captured locally even if Apple Health route access still needs attention."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las sesiones completadas intentan guardarse automáticamente en Apple Health cuando hay permiso disponible. Los puntos de ruta exterior todavía pueden capturarse localmente aunque el acceso a rutas de Apple Health todavía requiera atención."
+          }
+        }
+      }
+    },
     "activities.start.health.manual_explanation" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3562,6 +4063,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Puedes iniciar actividades registradas incluso sin acceso a Apple Health. Las sesiones completadas se pueden guardar después en Apple Health desde el resumen final."
+          }
+        }
+      }
+    },
+    "activities.start.health.manual_explanation.outdoor" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can save completed tracked activities to Apple Health later from the summary. Outdoor route points are still captured locally first, then attached only when Apple Health route access is ready."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes guardar actividades registradas completadas en Apple Health después desde el resumen. Los puntos de ruta exterior primero se capturan localmente y solo se adjuntan cuando el acceso a rutas de Apple Health está listo."
           }
         }
       }
@@ -3698,6 +4216,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Guardado en Apple Health. El entrenamiento se exportó aunque los datos de la ruta no estaban disponibles o no se pudieron adjuntar."
+          }
+        }
+      }
+    },
+    "activities.summary.health.saved_without_route_permission" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved to Apple Health. The workout export succeeded, but the captured route still needs Apple Health route access before it can be attached."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado en Apple Health. La exportación del entrenamiento se completó, pero la ruta capturada todavía necesita acceso de ruta en Apple Health antes de poder adjuntarse."
           }
         }
       }
@@ -7491,6 +8026,57 @@
         }
       }
     },
+    "health.authorization.summary.route_unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker can save completed tracked activities to Apple Health, but outdoor route attachment is unavailable on this device."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker puede guardar actividades registradas completadas en Apple Health, pero adjuntar rutas exteriores no está disponible en este dispositivo."
+          }
+        }
+      }
+    },
+    "health.authorization.summary.workout_only_denied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker can save completed tracked activities to Apple Health, but outdoor route attachment is currently blocked until route access is re-enabled in Settings."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker puede guardar actividades registradas completadas en Apple Health, pero adjuntar rutas exteriores está bloqueado hasta que el acceso a rutas se vuelva a habilitar en Configuración."
+          }
+        }
+      }
+    },
+    "health.authorization.summary.workout_only_not_requested" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker can save completed tracked activities to Apple Health. Outdoor route attachment still needs Apple Health route access."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker puede guardar actividades registradas completadas en Apple Health. Adjuntar rutas exteriores todavía necesita acceso de ruta en Apple Health."
+          }
+        }
+      }
+    },
     "health.authorization.title.connected" : {
       "localizations" : {
         "en" : {
@@ -8033,6 +8619,159 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apple Health"
+          }
+        }
+      }
+    },
+    "health.route_authorization.cta.enable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable route access"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar acceso a rutas"
+          }
+        }
+      }
+    },
+    "health.route_authorization.cta.open_settings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Settings"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Configuración"
+          }
+        }
+      }
+    },
+    "health.route_authorization.message.authorized" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outdoor route attachment is ready when route points are captured and the workout is saved."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adjuntar rutas exteriores está listo cuando se capturan puntos de ruta y se guarda el entrenamiento."
+          }
+        }
+      }
+    },
+    "health.route_authorization.message.denied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker can save workouts to Apple Health, but outdoor route attachment is currently blocked until route access is re-enabled in Settings."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker puede guardar entrenamientos en Apple Health, pero adjuntar rutas exteriores está bloqueado hasta que el acceso a rutas se vuelva a habilitar en Configuración."
+          }
+        }
+      }
+    },
+    "health.route_authorization.message.not_requested" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker can save workouts to Apple Health, but outdoor route attachment still needs Apple Health route access."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker puede guardar entrenamientos en Apple Health, pero adjuntar rutas exteriores todavía necesita acceso de ruta en Apple Health."
+          }
+        }
+      }
+    },
+    "health.route_authorization.message.unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Health route export is not available on this device. Outdoor route points can still stay local in WorkoutTracker."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La exportación de rutas a Apple Health no está disponible en este dispositivo. Los puntos de ruta exteriores aún pueden quedarse localmente en WorkoutTracker."
+          }
+        }
+      }
+    },
+    "health.route_authorization.title.permission_needed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permission needed"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permiso necesario"
+          }
+        }
+      }
+    },
+    "health.route_authorization.title.ready" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lista"
+          }
+        }
+      }
+    },
+    "health.route_authorization.title.unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unavailable"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible"
           }
         }
       }

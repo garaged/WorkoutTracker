@@ -321,7 +321,7 @@ struct ActivitiesHomeView: View {
                     .foregroundStyle(healthStatusColor)
             }
 
-            Text(healthKitAuthorizationService.state.message)
+            Text(healthKitAuthorizationService.statusSummaryMessage)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -379,7 +379,7 @@ struct ActivitiesHomeView: View {
     private var healthStatusColor: Color {
         switch healthKitAuthorizationService.state {
         case .authorized:
-            return .green
+            return healthKitAuthorizationService.routeState == .denied ? .orange : .green
         case .denied:
             return .orange
         case .notRequested, .unavailable:

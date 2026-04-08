@@ -20,8 +20,10 @@ struct TrackedActivitySessionScreen: View {
     @State private var lastPersistedRoutePointCount = 0
     @State private var healthExportBannerMessage: String?
     @State private var recoveryBannerMessage: String?
+    @State private var routeCaptureBannerMessage: String?
 
     @StateObject private var routeRecorder = OutdoorRouteRecorder()
+    @StateObject private var healthKitAuthorizationService = HealthKitAuthorizationService()
 
     private let recorder = TrackedActivityRecorder()
     private let summaryBuilder = TrackedActivitySummaryBuilder()
@@ -40,6 +42,14 @@ struct TrackedActivitySessionScreen: View {
                         header(for: session)
                         if let recoveryBannerMessage {
                             Text(recoveryBannerMessage)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .padding(12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        }
+                        if let routeCaptureBannerMessage {
+                            Text(routeCaptureBannerMessage)
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                                 .padding(12)
@@ -94,6 +104,7 @@ struct TrackedActivitySessionScreen: View {
                     WorkoutRemoteControlRouter.shared.refreshNowPlaying()
                     lastPersistedRoutePointCount = session.routePointCount
                     routeRecorder.sync(with: session)
+                    healthKitAuthorizationService.refresh()
                 }
                 .onDisappear {
                     persistRouteIfNeeded(for: session, force: true)
@@ -106,8 +117,14 @@ struct TrackedActivitySessionScreen: View {
                         persistRouteIfNeeded(for: session, force: true)
                     }
                 }
-                .onChange(of: routeRecorder.capturedPoints.count) { _, newCount in
+                .onChange(of: routeRecorder.capturedPoints.count) { oldCount, newCount in
                     guard newCount > 0 else { return }
+                    if oldCount == 0 {
+                        routeCaptureBannerMessage = String(
+                            localized: "activities.session.route.capture_started_banner",
+                            defaultValue: "Route capture is active. WorkoutTracker has started recording outdoor points for this activity."
+                        )
+                    }
                     if newCount - lastPersistedRoutePointCount >= 5 {
                         persistRouteIfNeeded(for: session, force: false)
                     }
@@ -206,6 +223,7 @@ struct TrackedActivitySessionScreen: View {
 
                 LabeledContent(String(localized: "activities.session.route.capture", defaultValue: "Route capture"), value: routeRecorder.captureState.title)
                 LabeledContent(String(localized: "activities.session.route.captured_points", defaultValue: "Captured points"), value: String(max(session.routePointCount, routeRecorder.capturedPoints.count)))
+                LabeledContent(String(localized: "activities.session.route.export_readiness", defaultValue: "Apple Health route"), value: session.liveRouteExportReadinessValue(using: healthKitAuthorizationService))
 
                 if let liveRouteDistance = routeRecorder.derivedDistanceMeters ?? session.routeDistanceMeters {
                     LabeledContent(String(localized: "activities.session.route.approx_distance", defaultValue: "Approximate route distance"), value: formattedRouteDistance(liveRouteDistance))
@@ -216,8 +234,27 @@ struct TrackedActivitySessionScreen: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
+                Text(session.liveRouteExportReadinessMessage(using: healthKitAuthorizationService))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
                 if routeRecorder.canOpenSystemSettings {
                     Button(String(localized: "activities.session.open_location_settings", defaultValue: "Open Location Settings")) {
+                        openSystemSettings()
+                    }
+                    .buttonStyle(.bordered)
+                } else if let actionTitle = healthKitAuthorizationService.routePermissionActionTitle,
+                          healthKitAuthorizationService.routePermissionAction == .requestAuthorization {
+                    Button(actionTitle) {
+                        Task {
+                            _ = try? await healthKitAuthorizationService.requestAuthorization()
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                } else if let actionTitle = healthKitAuthorizationService.routePermissionActionTitle,
+                          healthKitAuthorizationService.routePermissionAction == .openSettings {
+                    Button(actionTitle) {
                         openSystemSettings()
                     }
                     .buttonStyle(.bordered)

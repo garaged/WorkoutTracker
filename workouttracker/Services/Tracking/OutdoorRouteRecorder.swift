@@ -48,13 +48,13 @@ final class OutdoorRouteRecorder: NSObject, ObservableObject {
             case .requestingPermission:
                 return "Allow location while using the app to capture an outdoor route."
             case .permissionDenied:
-                return "WorkoutTracker does not currently have permission to capture your route. You can still finish the activity and add distance manually."
+                return "WorkoutTracker does not currently have permission to capture your route. Any points already captured stay local, but new route points cannot be recorded until location access is restored."
             case .paused:
                 return "Route capture is paused while this activity is paused."
             case .searchingForLocation:
                 return "WorkoutTracker is waiting for the first reliable location fix. This can take a moment outdoors, and iPhone Simulator also needs an active simulated location or GPX route."
             case .recording:
-                return "Location updates are being collected for this route while the activity screen stays open."
+                return "Location updates are being collected for this route while the live activity stays open on iPhone."
             case .unavailable:
                 return "Location services are not available on this device."
             case .failed(let message):
@@ -143,6 +143,14 @@ final class OutdoorRouteRecorder: NSObject, ObservableObject {
         authorizationDenied
     }
 
+    var hasCapturedAnyPoints: Bool {
+        !capturedPoints.isEmpty
+    }
+
+    var hasRecordedRoute: Bool {
+        capturedPoints.count > 1
+    }
+
     private var authorizationDenied: Bool {
         authorizationStatus == .denied || authorizationStatus == .restricted
     }
@@ -228,6 +236,7 @@ extension OutdoorRouteRecorder: CLLocationManagerDelegate {
                     captureState = capturedPoints.isEmpty ? .searchingForLocation : .recording
                 }
             } else if authorizationStatus == .denied || authorizationStatus == .restricted {
+                stopUpdatingLocationOnly()
                 captureState = .permissionDenied
             }
         }
@@ -255,7 +264,7 @@ extension OutdoorRouteRecorder: CLLocationManagerDelegate {
                 stopUpdatingLocationOnly()
                 captureState = .permissionDenied
             case .network, .deferredFailed, .deferredNotUpdatingLocation, .deferredAccuracyTooLow, .deferredDistanceFiltered, .deferredCanceled:
-                captureState = .failed("Route capture was interrupted. WorkoutTracker will keep trying while this activity remains active.")
+                handleTransientFailureWhileRecording()
             default:
                 captureState = .failed(clError.localizedDescription)
             }

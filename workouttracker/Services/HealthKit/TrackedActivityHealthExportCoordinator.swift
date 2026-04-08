@@ -48,6 +48,26 @@ struct TrackedActivityHealthExportCoordinator {
         do {
             let outcome = try await exportService.export(session)
             try recorder.updateHealthKitExportState(for: session, state: .exported, context: context)
+            
+            let routeUpdateDate = Date()
+            switch outcome.routeExportStatus {
+            case .saved:
+                session.markHealthKitRouteAttachment(state: .attached, at: routeUpdateDate)
+            case .notApplicable:
+                session.markHealthKitRouteAttachment(state: .notApplicable, at: routeUpdateDate)
+            case .noRouteData:
+                session.markHealthKitRouteAttachment(state: .noRouteData, at: routeUpdateDate)
+            case .failed(let reason):
+                let cleanReason = reason.trimmingCharacters(in: .whitespacesAndNewlines)
+                session.markHealthKitRouteAttachment(
+                    state: .failed,
+                    message: cleanReason.isEmpty ? nil : cleanReason,
+                    at: routeUpdateDate
+                )
+            }
+
+            try? context.save()
+            
             return successMessage(for: session, routeStatus: outcome.routeExportStatus, trigger: trigger)
         } catch let exportError as HealthKitWorkoutExportError {
             let failedState: HealthKitExportState = {

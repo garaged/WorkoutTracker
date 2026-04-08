@@ -31,6 +31,10 @@ final class TrackedActivitySession {
     var healthKitExportSucceededAt: Date?
     var healthKitExportFailureMessage: String?
     var hasLocalChangesSinceHealthKitExport: Bool
+    
+    var healthKitRouteAttachmentStateRaw: String
+    var healthKitRouteAttachmentFailureMessage: String?
+    var healthKitRouteAttachmentUpdatedAt: Date?
 
     var lastResumedAt: Date?
     var lastBackgroundedAt: Date?
@@ -57,7 +61,10 @@ final class TrackedActivitySession {
         hasLocalChangesSinceHealthKitExport: Bool = false,
         lastResumedAt: Date? = nil,
         lastBackgroundedAt: Date? = nil,
-        dismissedRecoveryPromptAt: Date? = nil
+        dismissedRecoveryPromptAt: Date? = nil,
+        healthKitRouteAttachmentState: HealthKitRouteAttachmentState = .unknown,
+        healthKitRouteAttachmentFailureMessage: String? = nil,
+        healthKitRouteAttachmentUpdatedAt: Date? = nil
     ) {
         self.id = id
         self.createdAt = createdAt
@@ -84,6 +91,9 @@ final class TrackedActivitySession {
         self.lastResumedAt = lastResumedAt
         self.lastBackgroundedAt = lastBackgroundedAt
         self.dismissedRecoveryPromptAt = dismissedRecoveryPromptAt
+        self.healthKitRouteAttachmentStateRaw = healthKitRouteAttachmentState.rawValue
+        self.healthKitRouteAttachmentFailureMessage = healthKitRouteAttachmentFailureMessage
+        self.healthKitRouteAttachmentUpdatedAt = healthKitRouteAttachmentUpdatedAt
 
         normalizeLifecycleConsistency()
     }
@@ -117,6 +127,14 @@ final class TrackedActivitySession {
         get { HealthKitExportState(rawValue: healthKitExportStateRaw) ?? .notRequested }
         set {
             healthKitExportStateRaw = newValue.rawValue
+            touch()
+        }
+    }
+    
+    var healthKitRouteAttachmentState: HealthKitRouteAttachmentState {
+        get { HealthKitRouteAttachmentState(rawValue: healthKitRouteAttachmentStateRaw) ?? .unknown }
+        set {
+            healthKitRouteAttachmentStateRaw = newValue.rawValue
             touch()
         }
     }
@@ -270,6 +288,9 @@ final class TrackedActivitySession {
         healthKitExportStateRaw = HealthKitExportState.pending.rawValue
         healthKitExportAttemptedAt = date
         healthKitExportFailureMessage = nil
+        healthKitRouteAttachmentStateRaw = HealthKitRouteAttachmentState.unknown.rawValue
+        healthKitRouteAttachmentFailureMessage = nil
+        healthKitRouteAttachmentUpdatedAt = date
         updatedAt = date
     }
 
@@ -299,6 +320,17 @@ final class TrackedActivitySession {
             return
         }
         hasLocalChangesSinceHealthKitExport = true
+        updatedAt = date
+    }
+    
+    func markHealthKitRouteAttachment(
+        state: HealthKitRouteAttachmentState,
+        message: String? = nil,
+        at date: Date = Date()
+    ) {
+        healthKitRouteAttachmentStateRaw = state.rawValue
+        healthKitRouteAttachmentFailureMessage = message
+        healthKitRouteAttachmentUpdatedAt = date
         updatedAt = date
     }
 
@@ -371,4 +403,12 @@ final class TrackedActivitySession {
         guard let data else { return [] }
         return (try? JSONDecoder().decode([TrackedActivityRoutePoint].self, from: data)) ?? []
     }
+}
+
+enum HealthKitRouteAttachmentState: String, Codable {
+    case unknown
+    case notApplicable
+    case noRouteData
+    case attached
+    case failed
 }
