@@ -11,7 +11,7 @@
 		35A4C0842F5E174900F30117 /* watchkitapp Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 35A4C07A2F5E174800F30117 /* watchkitapp Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		35F8F98A2F721A71001EFDC1 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 35F8F9892F721A71001EFDC1 /* ZIPFoundation */; };
 		35F8F98C2F721A87001EFDC1 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 35F8F98B2F721A87001EFDC1 /* ZIPFoundation */; };
-		36A0A0012F90000100AAA001 /* workouttrackerWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 36A0A0022F90000100AAA001 /* workouttrackerWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		36A0A0012F90000100AAA001 /* workouttrackerWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 36A0A0022F90000100AAA001 /* workouttrackerWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -80,15 +80,15 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		36A0A0082F90000100AAA001 /* Embed App Extensions */ = {
+		36A0A0082F90000100AAA001 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				36A0A0012F90000100AAA001 /* workouttrackerWidgets.appex in Embed App Extensions */,
+				36A0A0012F90000100AAA001 /* workouttrackerWidgets.appex in Embed Foundation Extensions */,
 			);
-			name = "Embed App Extensions";
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -367,7 +367,7 @@
 				35BA2D412F11D33200EEE02C /* Frameworks */,
 				35BA2D422F11D33200EEE02C /* Resources */,
 				3555D42C2F56616E0014C9CB /* CopyFiles */,
-				36A0A0082F90000100AAA001 /* Embed App Extensions */,
+				36A0A0082F90000100AAA001 /* Embed Foundation Extensions */,
 				35A4C0882F5E174900F30117 /* Embed Watch Content */,
 			);
 			buildRules = (
@@ -488,7 +488,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2640;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					356003F62F875EE100ADF29B = {
 						CreatedOnToolsVersion = 26.4;
