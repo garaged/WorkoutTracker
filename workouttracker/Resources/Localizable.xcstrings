@@ -16764,7 +16764,6 @@
       }
     },
     "watch.activities.action.open_controls" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -16780,8 +16779,29 @@
         }
       }
     },
+    "watch.activities.action.open_current_activity" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open Current Activity"
+          }
+        }
+      }
+    },
+    "watch.activities.action.reconnect_controls" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reconnect Controls"
+          }
+        }
+      }
+    },
     "watch.activities.action.resume_activity" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -17035,6 +17055,28 @@
         }
       }
     },
+    "watch.now_playing.action.pause" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pause"
+          }
+        }
+      }
+    },
+    "watch.now_playing.action.resume" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Resume"
+          }
+        }
+      }
+    },
     "watch.now_playing.empty.subtitle" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -17086,8 +17128,29 @@
         }
       }
     },
+    "watch.now_playing.footer.current_activity_hint" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Use these controls to keep the current activity honest from your watch."
+          }
+        }
+      }
+    },
+    "watch.now_playing.footer.recovery_hint" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Controls stay here while the watch reconnects to your iPhone session."
+          }
+        }
+      }
+    },
     "watch.now_playing.rest" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

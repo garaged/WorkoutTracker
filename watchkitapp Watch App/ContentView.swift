@@ -16,11 +16,19 @@ struct ContentView: View {
                     }
                 }
             }
-            .onAppear { client.start() }
-            .onChange(of: client.nowPlaying.isActiveSession) { _, isActive in
-                if !isActive, launcher.route == .nowPlaying {
+            .onAppear {
+                client.start()
+                if let seed = WatchUITestSeed.current {
+                    launcher.applyUITestSeedRoute(seed.route == .nowPlaying ? .nowPlaying : .shortcuts)
+                }
+            }
+            .onChange(of: client.hasRecoverableNowPlayingSession) { _, hasSession in
+                if !hasSession, launcher.route == .nowPlaying {
                     launcher.showShortcuts()
                 }
+            }
+            .onChange(of: client.hasRecoverableNowPlayingSession) { _, hasSession in
+                launcher.consumeAutoOpenIfPossible(hasActiveSession: hasSession)
             }
         }
     }

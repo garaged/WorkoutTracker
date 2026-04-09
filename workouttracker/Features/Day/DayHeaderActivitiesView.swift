@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct DayHeaderActivitiesView: View {
     let dayStart: Date

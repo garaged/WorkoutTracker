@@ -388,7 +388,7 @@ struct ActivitiesHomeView: View {
     }
 
     private func recentSortDate(for session: TrackedActivitySession) -> Date {
-        session.endedAt ?? session.updatedAt ?? session.startedAt ?? session.createdAt
+        session.endedAt ?? session.updatedAt
     }
 
     private func handleActiveSessionTap(_ session: TrackedActivitySession) {

@@ -19,9 +19,13 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
     @Published private(set) var isReachable: Bool = false
     @Published private(set) var canSendCommands: Bool = false
     @Published private(set) var nowPlaying: WatchNowPlayingState = .inactive
+    @Published private(set) var lastStateReceivedAt: Date?
 
     private var sourceNowPlaying: WatchNowPlayingState = .inactive
+    private var lastKnownActiveSessionState: WatchNowPlayingState?
     private var countdownTask: Task<Void, Never>?
+    private let recoveryEvaluator = WatchRecoveryEvaluator(recoveryGraceInterval: 20)
+    private var activeUITestSeed: WatchUITestSeed?
 
     private override init() {
         super.init()
@@ -31,7 +35,83 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
         countdownTask?.cancel()
     }
 
+    var hasRecoverableNowPlayingSession: Bool {
+        recoveryEvaluator.hasRecoverableNowPlayingSession(
+            displayedIsActiveSession: nowPlaying.isActiveSession,
+            isRecoveringRecentSession: isRecoveringRecentSession
+        )
+    }
+
+    var isRecoveringRecentSession: Bool {
+        recoveryEvaluator.isRecoveringRecentSession(
+            sourceIsActiveSession: sourceNowPlaying.isActiveSession,
+            canSendCommands: canSendCommands,
+            isReachable: isReachable,
+            lastKnownActiveSession: lastKnownActiveSessionState?.isActiveSession == true,
+            lastStateReceivedAt: lastStateReceivedAt
+        )
+    }
+
+    var transportStatusText: String? {
+        switch recoveryEvaluator.transportStatus(
+            isRecoveringRecentSession: isRecoveringRecentSession,
+            canSendCommands: canSendCommands,
+            isReachable: isReachable
+        ) {
+        case .reconnecting:
+            return String(localized: "watch.transport.status.reconnecting", defaultValue: "Reconnecting to iPhone")
+        case .phoneUnavailable:
+            return String(localized: "watch.now_playing.status.phone_unavailable", defaultValue: "Phone unavailable")
+        case .phoneClosed:
+            return String(localized: "watch.now_playing.status.phone_closed", defaultValue: "Phone app closed — commands may take a moment")
+        case nil:
+            return nil
+        }
+    }
+
+    var transportStatusSymbol: String {
+        switch recoveryEvaluator.transportStatus(
+            isRecoveringRecentSession: isRecoveringRecentSession,
+            canSendCommands: canSendCommands,
+            isReachable: isReachable
+        ) {
+        case .reconnecting:
+            return "arrow.triangle.2.circlepath"
+        case .phoneUnavailable:
+            return "iphone.slash"
+        case .phoneClosed:
+            return "iphone.gen2.radiowaves.left.and.right"
+        case nil:
+            return "checkmark.circle"
+        }
+    }
+
+    var trackedActivityStatusText: String {
+        switch recoveryEvaluator.trackedActivityStatus(
+            isPaused: nowPlaying.isPaused,
+            isRecoveringRecentSession: isRecoveringRecentSession
+        ) {
+        case .paused:
+            return String(localized: "watch.now_playing.state.paused", defaultValue: "Paused")
+        case .pausedReconnecting:
+            return String(localized: "watch.now_playing.state.paused_reconnecting", defaultValue: "Paused — reconnecting")
+        case .liveReconnecting:
+            return String(localized: "watch.now_playing.state.live_reconnecting", defaultValue: "Active — reconnecting")
+        case .trackingLiveOnPhone:
+            return String(localized: "watch.now_playing.state.tracking_live_on_phone", defaultValue: "Tracking live on iPhone")
+        }
+    }
+
+    private var isTransportHealthy: Bool {
+        recoveryEvaluator.isTransportHealthy(canSendCommands: canSendCommands, isReachable: isReachable)
+    }
+
     func start() {
+        if let seed = WatchUITestSeed.current {
+            applyUITestSeed(seed)
+            return
+        }
+
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
         session.delegate = self
@@ -52,6 +132,7 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
     }
 
     func send(_ command: WatchCommand) {
+        if activeUITestSeed != nil { return }
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
         refreshTransportState(from: session)
@@ -76,7 +157,21 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
         )
     }
 
+
+    func applyUITestSeed(_ seed: WatchUITestSeed) {
+        activeUITestSeed = seed
+        isSupported = true
+        isReachable = seed.isReachable
+        canSendCommands = seed.canSendCommands
+        lastStateReceivedAt = seed.lastStateReceivedAt
+        sourceNowPlaying = seed.nowPlayingState
+        lastKnownActiveSessionState = seed.nowPlayingState.isActiveSession ? seed.nowPlayingState : nil
+        syncTickerForCurrentState()
+        recomputeDisplayedState(playFinishHapticIfNeeded: false)
+    }
+
     private func sendInteractive(_ command: WatchCommand) {
+        if activeUITestSeed != nil { return }
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
         refreshTransportState(from: session)
@@ -124,32 +219,35 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
 
     private func applyReceivedState(_ state: WatchNowPlayingState) {
         sourceNowPlaying = state
+        lastStateReceivedAt = Date()
+
+        if state.isActiveSession {
+            lastKnownActiveSessionState = state
+        } else if isTransportHealthy {
+            lastKnownActiveSessionState = nil
+        }
+
         syncTickerForCurrentState()
         recomputeDisplayedState(playFinishHapticIfNeeded: false)
     }
 
     private func syncTickerForCurrentState() {
-        if shouldRunLocalTicker(for: sourceNowPlaying) {
+        if recoveryEvaluator.shouldRunLocalTicker(
+            for: .init(
+                isActiveSession: sourceNowPlaying.isActiveSession,
+                isTrackedActivitySession: sourceNowPlaying.isTrackedActivitySession,
+                isPaused: sourceNowPlaying.isPaused,
+                isRestRunning: sourceNowPlaying.isRestRunning,
+                restEndsAtEpochSeconds: sourceNowPlaying.restEndsAtEpochSeconds,
+                elapsedSeconds: sourceNowPlaying.elapsedSeconds,
+                elapsedUpdatedAtEpochSeconds: sourceNowPlaying.elapsedUpdatedAtEpochSeconds
+            ),
+            isRecoveringRecentSession: isRecoveringRecentSession
+        ) {
             startCountdownIfNeeded()
         } else {
             stopCountdown()
         }
-    }
-
-    private func shouldRunLocalTicker(for state: WatchNowPlayingState) -> Bool {
-        if state.isRestRunning, let end = state.restEndsAtEpochSeconds {
-            return end > Date().timeIntervalSince1970
-        }
-
-        if state.isTrackedActivitySession,
-           state.isActiveSession,
-           !state.isPaused,
-           state.elapsedSeconds != nil,
-           state.elapsedUpdatedAtEpochSeconds != nil {
-            return true
-        }
-
-        return false
     }
 
     private func startCountdownIfNeeded() {
@@ -170,9 +268,21 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
         countdownTask = nil
     }
 
+    private func displayedStateSource() -> WatchNowPlayingState {
+        if sourceNowPlaying.isActiveSession {
+            return sourceNowPlaying
+        }
+
+        if isRecoveringRecentSession, let lastKnownActiveSessionState {
+            return lastKnownActiveSessionState
+        }
+
+        return sourceNowPlaying
+    }
+
     private func recomputeDisplayedState(playFinishHapticIfNeeded: Bool) {
         let previous = nowPlaying
-        var next = sourceNowPlaying
+        var next = displayedStateSource()
 
         if next.isRestRunning, let endEpoch = next.restEndsAtEpochSeconds {
             let remaining = max(0, Int(Date(timeIntervalSince1970: endEpoch).timeIntervalSinceNow.rounded(.up)))

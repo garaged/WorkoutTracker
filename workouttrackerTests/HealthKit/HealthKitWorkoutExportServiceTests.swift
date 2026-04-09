@@ -4,7 +4,7 @@ import CoreLocation
 @testable import workouttracker
 
 final class HealthKitWorkoutExportServiceTests: XCTestCase {
-    func testMakeWorkout_runningMapsDistanceEnergyAndIndoorMetadata() throws {
+    func testSaveWorkout_runningMapsDistanceEnergyAndIndoorMetadata() async throws {
         let session = TrackedActivitySession(
             createdAt: referenceDate,
             updatedAt: referenceDate,
@@ -22,16 +22,19 @@ final class HealthKitWorkoutExportServiceTests: XCTestCase {
             notes: "Tempo"
         )
 
-        let service = HealthKitWorkoutExportService(store: MockExportHealthKitStoreProxy())
-        let workout = try service.makeWorkout(from: session)
+        let store = MockExportHealthKitStoreProxy()
+        let service = HealthKitWorkoutExportService(store: store)
+        _ = try await service.saveWorkout(from: session)
 
-        XCTAssertEqual(workout.workoutActivityType, .running)
-        XCTAssertEqual(workout.duration, 1_800, accuracy: 0.001)
-        let totalDistance = try XCTUnwrap(workout.totalDistance)
+        let request = try XCTUnwrap(store.savedRequests.first)
+        XCTAssertEqual(request.activityType, .running)
+        XCTAssertEqual(request.startDate, referenceDate)
+        XCTAssertEqual(request.endDate, referenceDate.addingTimeInterval(1_800))
+        let totalDistance = try XCTUnwrap(request.totalDistance)
         XCTAssertEqual(totalDistance.doubleValue(for: .meter()), 5_000, accuracy: 0.001)
-        let totalEnergyBurned = try XCTUnwrap(workout.totalEnergyBurned)
+        let totalEnergyBurned = try XCTUnwrap(request.totalEnergyBurned)
         XCTAssertEqual(totalEnergyBurned.doubleValue(for: .kilocalorie()), 420, accuracy: 0.001)
-        XCTAssertEqual(workout.metadata?[HKMetadataKeyIndoorWorkout] as? Bool, true)
+        XCTAssertEqual(request.metadata?[HKMetadataKeyIndoorWorkout] as? Bool, true)
     }
 
     func testExport_callsSaveWhenAuthorized() async throws {
@@ -44,8 +47,8 @@ final class HealthKitWorkoutExportServiceTests: XCTestCase {
 
         let outcome = try await service.export(session)
 
-        XCTAssertEqual(store.savedWorkouts.count, 1)
-        XCTAssertEqual(store.savedWorkouts.first?.workoutActivityType, .yoga)
+        XCTAssertEqual(store.savedRequests.count, 1)
+        XCTAssertEqual(store.savedRequests.first?.activityType, .yoga)
         XCTAssertFalse(outcome.didSaveRoute)
     }
 
@@ -109,7 +112,7 @@ final class HealthKitWorkoutExportServiceTests: XCTestCase {
 private final class MockExportHealthKitStoreProxy: HealthKitStoreProxy {
     var isHealthDataAvailableValue: Bool
     var authorizationStatusValue: HKAuthorizationStatus
-    var savedWorkouts: [HKWorkout] = []
+    var savedRequests: [HealthKitWorkoutSaveRequest] = []
 
     init(
         isHealthDataAvailable: Bool = true,
@@ -131,8 +134,9 @@ private final class MockExportHealthKitStoreProxy: HealthKitStoreProxy {
         true
     }
 
-    func save(_ workout: HKWorkout) async throws {
-        savedWorkouts.append(workout)
+    func saveWorkout(_ request: HealthKitWorkoutSaveRequest) async throws -> HKWorkout {
+        savedRequests.append(request)
+        return makeStubWorkout()
     }
 }
 
@@ -162,4 +166,9 @@ private func XCTAssertThrowsErrorAsync<T>(
     } catch {
         errorHandler(error)
     }
+}
+
+private func makeStubWorkout() -> HKWorkout {
+    // Tests only pass this through to collaborators that never read workout fields.
+    unsafeBitCast(NSObject(), to: HKWorkout.self)
 }

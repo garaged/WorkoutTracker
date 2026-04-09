@@ -132,7 +132,12 @@ private final class MockHealthKitStoreProxy: HealthKitStoreProxy {
         return requestAuthorizationResult
     }
 
-    func save(_ workout: HKWorkout) async throws {
-        XCTFail("save(_:) should not be called in authorization tests")
+    func saveWorkout(_ request: HealthKitWorkoutSaveRequest) async throws -> HKWorkout {
+        XCTFail("saveWorkout(_:) should not be called in authorization tests")
+        return makeStubWorkout()
     }
+}
+
+private func makeStubWorkout() -> HKWorkout {
+    unsafeBitCast(NSObject(), to: HKWorkout.self)
 }

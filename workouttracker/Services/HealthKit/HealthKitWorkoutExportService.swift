@@ -53,8 +53,7 @@ struct HealthKitWorkoutExportService {
             throw HealthKitWorkoutExportError.permissionDenied
         }
 
-        let workout = try makeWorkout(from: session)
-        try await store.save(workout)
+        let workout = try await saveWorkout(from: session)
 
         let routeExportStatus = try await routeExportService.exportRouteIfAvailable(
             from: session,
@@ -63,7 +62,7 @@ struct HealthKitWorkoutExportService {
         return HealthKitWorkoutExportOutcome(routeExportStatus: routeExportStatus)
     }
 
-    func makeWorkout(from session: TrackedActivitySession) throws -> HKWorkout {
+    func saveWorkout(from session: TrackedActivitySession) async throws -> HKWorkout {
         guard session.lifecycleState == .completed else {
             throw HealthKitWorkoutExportError.sessionMustBeCompleted
         }
@@ -80,15 +79,16 @@ struct HealthKitWorkoutExportService {
             HKQuantity(unit: .meter(), doubleValue: $0)
         }
 
-        return HKWorkout(
+        let request = HealthKitWorkoutSaveRequest(
             activityType: activityType,
-            start: startedAt,
-            end: endedAt,
-            duration: session.elapsedDuration,
+            startDate: startedAt,
+            endDate: endedAt,
             totalEnergyBurned: totalEnergyBurned,
             totalDistance: totalDistance,
             metadata: metadata(for: session)
         )
+
+        return try await store.saveWorkout(request)
     }
 
     func workoutActivityType(for kind: TrackedActivityKind) throws -> HKWorkoutActivityType {

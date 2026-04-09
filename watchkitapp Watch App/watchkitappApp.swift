@@ -10,7 +10,11 @@ import SwiftUI
 @main
 struct watchkitapp_Watch_AppApp: App {
     init() {
-        WatchConnectivityClient.shared.start()
+        if let seed = WatchUITestSeed.current {
+            WatchConnectivityClient.shared.applyUITestSeed(seed)
+        } else {
+            WatchConnectivityClient.shared.start()
+        }
     }
 
     var body: some Scene {

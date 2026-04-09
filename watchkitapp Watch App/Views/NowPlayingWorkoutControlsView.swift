@@ -4,6 +4,7 @@ struct NowPlayingWorkoutControlsView: View {
 
     let onClose: () -> Void
     @StateObject private var client = WatchConnectivityClient.shared
+    private let presentation = WatchPresentationEvaluator()
 
     init(onClose: @escaping () -> Void = {}) {
         self.onClose = onClose
@@ -12,10 +13,12 @@ struct NowPlayingWorkoutControlsView: View {
     var body: some View {
         VStack(spacing: 10) {
             header
+            statusRow
             controlsRow
             footerRow
         }
         .padding(.vertical, 8)
+        .accessibilityIdentifier("Watch.NowPlaying.Screen")
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button(String(localized: "watch.now_playing.action.back", defaultValue: "Back"), action: onClose)
@@ -26,79 +29,97 @@ struct NowPlayingWorkoutControlsView: View {
 
     private var header: some View {
         VStack(spacing: 4) {
-            if client.nowPlaying.isActiveSession {
+            if showsTrackedActivityControls || client.nowPlaying.isActiveSession {
                 Text(client.nowPlaying.exerciseName ?? String(localized: "watch.now_playing.fallback.workout", defaultValue: "Workout"))
                     .font(.headline)
                     .multilineTextAlignment(.center)
-                    .lineLimit(2)
 
-                if client.nowPlaying.isTrackedActivitySession,
-                   let elapsedSeconds = client.nowPlaying.elapsedSeconds {
-                    Text(format(seconds: elapsedSeconds))
-                        .font(.system(size: 22, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
+                if let subtitle = client.nowPlaying.setTitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
+            } else {
+                Text(String(localized: "watch.now_playing.title", defaultValue: "Now Playing"))
+                    .font(.headline)
+            }
+        }
+    }
 
-                if let title = client.nowPlaying.setTitle {
-                    Text(title)
-                        .font(.subheadline)
-                        .lineLimit(1)
-                }
+    private var showsTrackedActivityControls: Bool {
+        client.nowPlaying.isTrackedActivitySession &&
+        (
+            client.nowPlaying.isActiveSession ||
+            client.nowPlaying.isPaused ||
+            client.hasRecoverableNowPlayingSession ||
+            client.isRecoveringRecentSession
+        )
+    }
 
-                if let detail = client.nowPlaying.setDetail {
-                    Text(detail)
+    @ViewBuilder
+    private var statusRow: some View {
+        if showsTrackedActivityControls {
+            VStack(spacing: 6) {
+                Label(
+                    client.trackedActivityStatusText,
+                    systemImage: client.nowPlaying.isPaused ? "pause.circle.fill" : "figure.walk.motion"
+                )
+                .font(.footnote.weight(.semibold))
+                .multilineTextAlignment(.center)
+                .accessibilityIdentifier("Watch.NowPlaying.TrackedStatus")
+
+                if let transportStatusText = client.transportStatusText {
+                    Label(transportStatusText, systemImage: client.transportStatusSymbol)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
-                        .lineLimit(2)
                 }
-            } else {
-                Text(String(localized: "watch.now_playing.empty.title", defaultValue: "No active workout"))
-                    .font(.headline)
-                Text(String(localized: "watch.now_playing.empty.subtitle", defaultValue: "Start on iPhone or watch"))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
 
-            if !client.canSendCommands {
-                Text(String(localized: "watch.now_playing.status.phone_unavailable", defaultValue: "Phone unavailable"))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            } else if !client.isReachable {
-                Text(
-                    String(
-                        localized: "watch.now_playing.status.phone_closed",
-                        defaultValue: "Phone app closed — commands may take a moment"
-                    )
-                )
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                if let elapsedSeconds = client.nowPlaying.elapsedSeconds {
+                    Text(format(seconds: elapsedSeconds))
+                        .font(.title3.monospacedDigit())
+                }
             }
+        } else if let restSeconds = client.nowPlaying.restRemainingSeconds, client.nowPlaying.isRestRunning {
+            Text(format(seconds: restSeconds))
+                .font(.title2.monospacedDigit())
+        } else {
+            Text(String(localized: "watch.now_playing.status.no_active_session", defaultValue: "No active session"))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
     }
 
     @ViewBuilder
     private var controlsRow: some View {
-        if client.nowPlaying.isTrackedActivitySession {
-            HStack(spacing: 12) {
+        if showsTrackedActivityControls {
+            VStack(spacing: 8) {
                 Button {
-                    client.send(
-                        .init(
-                            kind: client.nowPlaying.isPaused ? .resumeTrackedActivity : .pauseTrackedActivity,
-                            sessionID: client.nowPlaying.sessionID
-                        )
-                    )
+                    let kind: WatchCommandKind = client.nowPlaying.isPaused ? .resumeTrackedActivity : .pauseTrackedActivity
+                    client.send(.init(kind: kind, sessionID: client.nowPlaying.sessionID))
+                    client.requestState()
                 } label: {
-                    Image(systemName: client.nowPlaying.isPaused ? "play.fill" : "pause.fill")
+                    Label(
+                        presentation.trackedControlsPrimaryActionTitle(isPaused: client.nowPlaying.isPaused),
+                        systemImage: client.nowPlaying.isPaused ? "play.fill" : "pause.fill"
+                    )
+                    .frame(maxWidth: .infinity)
                 }
-                .disabled(!client.canSendCommands || !client.nowPlaying.canPauseOrResume)
+                .disabled(!client.canSendCommands)
+                .accessibilityIdentifier("Watch.NowPlaying.PrimaryAction")
 
                 Button {
                     client.send(.init(kind: .finishTrackedActivity, sessionID: client.nowPlaying.sessionID))
+                    client.requestState()
                 } label: {
-                    Image(systemName: "stop.fill")
+                    Label(
+                        String(localized: "watch.now_playing.action.finish", defaultValue: "Finish"),
+                        systemImage: "stop.fill"
+                    )
+                    .frame(maxWidth: .infinity)
                 }
                 .disabled(!client.canSendCommands || !client.nowPlaying.canFinish)
+                .accessibilityIdentifier("Watch.NowPlaying.FinishAction")
             }
             .buttonStyle(.borderedProminent)
         } else {
@@ -130,18 +151,16 @@ struct NowPlayingWorkoutControlsView: View {
 
     @ViewBuilder
     private var footerRow: some View {
-        if client.nowPlaying.isTrackedActivitySession {
-            HStack(spacing: 8) {
-                Image(systemName: client.nowPlaying.isPaused ? "pause.circle.fill" : "figure.walk.motion")
-                Text(
-                    client.nowPlaying.isPaused
-                        ? String(localized: "watch.now_playing.state.paused", defaultValue: "Paused")
-                        : String(localized: "watch.now_playing.state.tracking_live_on_phone", defaultValue: "Tracking live on iPhone")
+        if showsTrackedActivityControls {
+            Text(
+                presentation.footerText(
+                    isTrackedActivitySession: client.nowPlaying.isTrackedActivitySession,
+                    isRecoveringRecentSession: client.isRecoveringRecentSession
                 )
-                .font(.footnote)
-                .multilineTextAlignment(.center)
-            }
+            )
+            .font(.footnote)
             .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
         } else {
             Button {
                 client.send(.init(kind: .toggleRestTimer))

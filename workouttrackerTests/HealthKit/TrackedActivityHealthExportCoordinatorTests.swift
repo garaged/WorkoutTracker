@@ -142,8 +142,9 @@ private final class FakeHealthStore: HealthKitStoreProxy {
         true
     }
 
-    func save(_ workout: HKWorkout) async throws {
+    func saveWorkout(_ request: HealthKitWorkoutSaveRequest) async throws -> HKWorkout {
         saveCallCount += 1
+        return makeStubWorkout()
     }
 }
 
@@ -164,4 +165,8 @@ private final class FakeRouteStore: HealthKitWorkoutRouteStoreProxy {
         saveRouteCallCount += 1
         if let saveError { throw saveError }
     }
+}
+
+private func makeStubWorkout() -> HKWorkout {
+    unsafeBitCast(NSObject(), to: HKWorkout.self)
 }

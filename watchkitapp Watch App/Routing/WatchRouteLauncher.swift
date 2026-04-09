@@ -3,31 +3,31 @@ import Combine
 
 @MainActor
 final class WatchRouteLauncher: ObservableObject {
-    enum Route: Equatable {
-        case shortcuts
-        case nowPlaying
-    }
+    typealias Route = WatchRouteLaunchStateMachine.Route
 
     @Published private(set) var route: Route = .shortcuts
-    private var shouldAutoOpenControls = false
+    private var stateMachine = WatchRouteLaunchStateMachine()
 
     func showShortcuts() {
-        route = .shortcuts
-        shouldAutoOpenControls = false
+        stateMachine.showShortcuts()
+        route = stateMachine.route
     }
 
     func openNowPlaying() {
-        route = .nowPlaying
-        shouldAutoOpenControls = false
+        stateMachine.openNowPlaying()
+        route = stateMachine.route
     }
 
     func armAutoOpenControls() {
-        shouldAutoOpenControls = true
+        stateMachine.armAutoOpenControls()
     }
 
     func consumeAutoOpenIfPossible(hasActiveSession: Bool) {
-        guard shouldAutoOpenControls, hasActiveSession else { return }
-        route = .nowPlaying
-        shouldAutoOpenControls = false
+        stateMachine.consumeAutoOpenIfPossible(hasActiveSession: hasActiveSession)
+        route = stateMachine.route
+    }
+
+    func applyUITestSeedRoute(_ route: Route) {
+        self.route = route
     }
 }

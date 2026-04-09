@@ -51,10 +51,21 @@ private let trackedActivityShortcuts: [WatchTrackedActivityShortcut] = [
 struct WatchWorkoutShortcutsView: View {
     @ObservedObject var client: WatchConnectivityClient
     @ObservedObject var launcher: WatchRouteLauncher
+    private let presentation = WatchPresentationEvaluator()
+
+    private var showsCurrentTrackedActivitySection: Bool {
+        client.nowPlaying.isTrackedActivitySession &&
+        (
+            client.nowPlaying.isActiveSession ||
+            client.nowPlaying.isPaused ||
+            client.hasRecoverableNowPlayingSession ||
+            client.isRecoveringRecentSession
+        )
+    }
 
     var body: some View {
         List {
-            if client.nowPlaying.isActiveSession, client.nowPlaying.isTrackedActivitySession {
+            if showsCurrentTrackedActivitySection {
                 Section(String(localized: "watch.activities.section.current_activity", defaultValue: "Current Activity")) {
                     Button {
                         launcher.armAutoOpenControls()
@@ -62,47 +73,27 @@ struct WatchWorkoutShortcutsView: View {
                         client.requestState()
                     } label: {
                         Label(
-                            client.nowPlaying.isPaused
-                                ? String(localized: "watch.activities.action.resume_activity", defaultValue: "Resume Activity")
-                                : String(localized: "watch.activities.action.open_activity", defaultValue: "Open Activity"),
+                            presentation.currentActivityPrimaryActionTitle(isPaused: client.nowPlaying.isPaused),
                             systemImage: client.nowPlaying.isPaused ? "play.circle.fill" : "figure.walk.motion"
                         )
                     }
                     .disabled(!client.canSendCommands)
+                    .accessibilityIdentifier("Watch.Shortcuts.PrimaryAction")
 
                     Button {
                         launcher.openNowPlaying()
                     } label: {
                         Label(
-                            String(localized: "watch.activities.action.open_controls", defaultValue: "Open Controls"),
+                            presentation.currentActivityControlsActionTitle(isRecoveringRecentSession: client.isRecoveringRecentSession),
                             systemImage: "applewatch.watchface"
                         )
                     }
-                }
-            }
+                    .accessibilityIdentifier("Watch.Shortcuts.OpenCurrentActivity")
 
-            if client.nowPlaying.isActiveSession, client.nowPlaying.isStrengthSession {
-                Section(String(localized: "watch.activities.section.current_workout", defaultValue: "Current Workout")) {
-                    Button {
-                        client.send(.init(kind: .resumeCurrentSession, sessionID: client.nowPlaying.sessionID))
-                        launcher.armAutoOpenControls()
-                        client.requestState()
-                    } label: {
-                        Label(
-                            String(localized: "watch.activities.action.resume_workout", defaultValue: "Resume Workout"),
-                            systemImage: "arrow.clockwise.circle.fill"
-                        )
-                    }
-                    .disabled(!client.canSendCommands)
-
-                    Button {
-                        launcher.openNowPlaying()
-                    } label: {
-                        Label(
-                            String(localized: "watch.activities.action.open_active_session", defaultValue: "Open Active Session"),
-                            systemImage: "figure.strengthtraining.traditional"
-                        )
-                    }
+                    Text(client.trackedActivityStatusText)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("Watch.Shortcuts.TrackedStatus")
                 }
             }
 
@@ -141,30 +132,20 @@ struct WatchWorkoutShortcutsView: View {
                 }
             }
 
-            if !client.canSendCommands {
+            if let transportStatusText = client.transportStatusText {
                 Section {
-                    Text(String(localized: "watch.activities.status.phone_unavailable", defaultValue: "Phone unavailable"))
+                    Label(transportStatusText, systemImage: client.transportStatusSymbol)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                }
-            } else if !client.isReachable {
-                Section {
-                    Text(
-                        String(
-                            localized: "watch.activities.status.phone_closed",
-                            defaultValue: "Phone app closed — commands may take a moment"
-                        )
-                    )
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
                 }
             }
         }
         .listStyle(.carousel)
+        .accessibilityIdentifier("Watch.Shortcuts.Screen")
         .navigationTitle(String(localized: "watch.activities.title", defaultValue: "Workout"))
         .onAppear { client.requestState() }
-        .onChange(of: client.nowPlaying.isActiveSession) { _, isActive in
-            launcher.consumeAutoOpenIfPossible(hasActiveSession: isActive)
+        .onChange(of: client.hasRecoverableNowPlayingSession) { _, hasSession in
+            launcher.consumeAutoOpenIfPossible(hasActiveSession: hasSession)
         }
     }
 }

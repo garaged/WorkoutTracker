@@ -2,11 +2,20 @@ import Foundation
 import HealthKit
 import Combine
 
+struct HealthKitWorkoutSaveRequest {
+    let activityType: HKWorkoutActivityType
+    let startDate: Date
+    let endDate: Date
+    let totalEnergyBurned: HKQuantity?
+    let totalDistance: HKQuantity?
+    let metadata: [String: Any]?
+}
+
 protocol HealthKitStoreProxy {
     func isHealthDataAvailable() -> Bool
     func authorizationStatus(for type: HKObjectType) -> HKAuthorizationStatus
     func requestAuthorization(toShare shareTypes: Set<HKSampleType>, read readTypes: Set<HKObjectType>) async throws -> Bool
-    func save(_ workout: HKWorkout) async throws
+    func saveWorkout(_ request: HealthKitWorkoutSaveRequest) async throws -> HKWorkout
 }
 
 struct LiveHealthKitStoreProxy: HealthKitStoreProxy {
@@ -32,18 +41,58 @@ struct LiveHealthKitStoreProxy: HealthKitStoreProxy {
         }
     }
 
-    func save(_ workout: HKWorkout) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            healthStore.save(workout) { success, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else if success {
-                    continuation.resume(returning: ())
-                } else {
-                    continuation.resume(throwing: HealthKitAuthorizationError.unknownSaveFailure)
-                }
-            }
+    func saveWorkout(_ request: HealthKitWorkoutSaveRequest) async throws -> HKWorkout {
+        let configuration = HKWorkoutConfiguration()
+        configuration.activityType = request.activityType
+
+        let builder = HKWorkoutBuilder(
+            healthStore: healthStore,
+            configuration: configuration,
+            device: nil
+        )
+
+        try await builder.beginCollection(at: request.startDate)
+
+        if let metadata = request.metadata, metadata.isEmpty == false {
+            try await builder.addMetadata(metadata)
         }
+
+        var samples: [HKSample] = []
+        if let totalEnergyBurned = request.totalEnergyBurned,
+           let quantityType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
+            samples.append(
+                HKQuantitySample(
+                    type: quantityType,
+                    quantity: totalEnergyBurned,
+                    start: request.startDate,
+                    end: request.endDate
+                )
+            )
+        }
+
+        if let totalDistance = request.totalDistance,
+           let quantityType = HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning) {
+            samples.append(
+                HKQuantitySample(
+                    type: quantityType,
+                    quantity: totalDistance,
+                    start: request.startDate,
+                    end: request.endDate
+                )
+            )
+        }
+
+        if samples.isEmpty == false {
+            try await builder.addSamples(samples)
+        }
+
+        try await builder.endCollection(at: request.endDate)
+
+        guard let workout = try await builder.finishWorkout() else {
+            throw HealthKitAuthorizationError.unknownSaveFailure
+        }
+
+        return workout
     }
 }
 

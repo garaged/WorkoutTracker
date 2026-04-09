@@ -1,0 +1,30 @@
+{
+  "configurations" : [
+    {
+      "id" : "E4F832D9-C179-4536-9615-B901089F1D9B",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:workouttracker.xcodeproj",
+      "identifier" : "35A4C0792F5E174800F30117",
+      "name" : "watchkitapp Watch App"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:workouttracker.xcodeproj",
+        "identifier" : "356003F62F875EE100ADF29B",
+        "name" : "watchkitapp Watch AppUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
