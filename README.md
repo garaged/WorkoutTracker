@@ -31,6 +31,16 @@ Non-goals:
 
 ## Changelog
 
+### v2.2.1 — Tracked activity polish and trust pass
+
+- Apple Health auto-save for completed tracked activities
+- Stronger interrupted/stale tracked-activity recovery
+- Clearer route capture and route-attachment status
+- Better tracked-activity history/progress presentation
+- Improved watch recovery and current-activity controls
+- Localization and reliability cleanup across new tracked-activity surfaces
+
+
 ### v2.2.0 — Tracked activities + Apple Health foundation
 
 What’s new in 2.2.0:

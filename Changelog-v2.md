@@ -1,3 +1,20 @@
+# Version 2.2.1 - Tracked activity polish and trust pass
+
+- Tracked activities auto-save to Health when enabled
+- Failed Health exports are recoverable
+- Partial-success Health exports are messaged honestly
+- Exported vs local-edited state is honest
+- Interrupted tracked activities recover clearly after relaunch/backgrounding
+- Stale tracked activity prompts are understandable
+- Route capture status and route attachment outcome are visible and non-misleading
+- Denied/revoked location permission is handled cleanly
+- Live timer and current metrics do not reset or stall during normal re-entry
+- Delete semantics are honest for completed tracked activities
+- Tracked activities feel visually first-class in history/progress
+- Watch paused/recovering/current-activity states are clearer and resilient
+- Backup/restore preserves new tracked-activity Health/recovery metadata
+- All touched strings are localized and polished
+
 # Version 2.2.0 - Tracked activities + HealthKit foundation
 
 WorkoutTracker now supports tracked activities alongside strength workouts, with a new foundation for Apple Health, Apple Watch control, and outdoor route capture.
