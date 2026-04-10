@@ -23,8 +23,14 @@ struct UITestHostRootView: View {
                 ActivitiesHomeView()
             case "tracked-session":
                 TrackedActivitySessionScreen(sessionID: TrackedActivityUITestSeed.liveSessionID)
+            case "tracked-session-heavy":
+                TrackedActivitySessionScreen(sessionID: PerformanceUITestSeed.heavyTrackedLiveSessionID)
+                    .accessibilityIdentifier("UITestHeavyTrackedSession.Screen")
             case "tracked-summary":
                 TrackedActivityFinishSummaryView(sessionID: TrackedActivityUITestSeed.summarySessionID)
+            case "tracked-summary-heavy":
+                TrackedActivityFinishSummaryView(sessionID: PerformanceUITestSeed.heavyTrackedSummarySessionID)
+                    .accessibilityIdentifier("UITestHeavyTrackedSummary.Screen")
             case "home":
                 UITestHomeRouteLauncherView()
             case "progress":
@@ -37,6 +43,8 @@ struct UITestHostRootView: View {
                 ExercisePickerSheet(onPick: { _ in })
             case "session":
                 UITestStrengthSessionBootstrapView()
+            case "session-heavy":
+                UITestHeavyStrengthSessionBootstrapView()
             case "calendar", "":
                 DayTimelineEntryScreen()
             default:
@@ -254,6 +262,85 @@ private struct UITestStrengthSessionBootstrapView: View {
     }
 }
 
+private struct UITestHeavyStrengthSessionBootstrapView: View {
+    @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
+    private var sessions: [WorkoutSession]
+
+    @State private var launchedSession: WorkoutSession?
+    @State private var didBootstrap = false
+
+    var body: some View {
+        Group {
+            if let session = launchedSession {
+                WorkoutSessionScreen(session: session)
+            } else {
+                ProgressView()
+                    .accessibilityIdentifier("UITestHeavySessionBootstrap.Progress")
+                    .task {
+                        bootstrapIfNeeded()
+                    }
+            }
+        }
+    }
+
+    @MainActor
+    private func bootstrapIfNeeded() {
+        guard !didBootstrap else { return }
+        didBootstrap = true
+
+        guard let session = sessions.first(where: { $0.sourceRoutineNameSnapshot == PerformanceUITestSeed.heavyStrengthSessionName }) else {
+            fatalError(
+                "UITESTS assertion failed: heavy session route expected a seeded WorkoutSession named \(PerformanceUITestSeed.heavyStrengthSessionName)."
+            )
+        }
+
+        guard session.status == .inProgress, session.endedAt == nil else {
+            fatalError("UITESTS assertion failed: heavy session route expected the seeded WorkoutSession to be in progress and not ended.")
+        }
+
+        let orderedExercises = session.exercises.sorted { lhs, rhs in
+            if lhs.order != rhs.order { return lhs.order < rhs.order }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
+
+        guard orderedExercises.count >= 10 else {
+            fatalError("UITESTS assertion failed: heavy session route expected at least 10 seeded exercise cards.")
+        }
+
+        let planner = SessionResumePlanner().target(for: session)
+        guard let targetSetID = planner?.setID else {
+            fatalError("UITESTS assertion failed: heavy session route expected SessionResumePlanner to resolve a target set.")
+        }
+
+        var targetExerciseIndex: Int?
+        var precedingSetCount = 0
+        for (index, exercise) in orderedExercises.enumerated() {
+            let sets = exercise.setLogs.sorted { lhs, rhs in
+                if lhs.order != rhs.order { return lhs.order < rhs.order }
+                return lhs.id.uuidString < rhs.id.uuidString
+            }
+            if sets.contains(where: { $0.id == targetSetID }) {
+                targetExerciseIndex = index
+                break
+            }
+            precedingSetCount += sets.count
+        }
+
+        guard let resolvedTargetExerciseIndex = targetExerciseIndex else {
+            fatalError("UITESTS assertion failed: heavy session route expected the planner target to belong to the seeded WorkoutSession.")
+        }
+
+        guard resolvedTargetExerciseIndex > 0 else {
+            fatalError("UITESTS assertion failed: heavy session route expected the planner target to belong to a later exercise card.")
+        }
+
+        guard precedingSetCount >= 8 else {
+            fatalError("UITESTS assertion failed: heavy session route expected at least 8 set rows before the planner target.")
+        }
+
+        launchedSession = session
+    }
+}
 
 private struct UITestHomeRouteLauncherView: View {
     @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])

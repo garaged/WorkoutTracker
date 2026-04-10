@@ -106,6 +106,21 @@ struct workouttrackerUITestHostApp: App {
                     try seedTrackedActivityUITestDataIfNeeded(context: context)
                     try assertTrackedActivityUITestSeed(context: context, env: env)
                 }
+
+                if env["UITESTS_PERF_HEAVY_SESSION"] == "1" {
+                    try seedHeavyStrengthSessionUITestDataIfNeeded(context: context)
+                    try assertHeavyStrengthSessionUITestSeed(context: context)
+                }
+
+                if env["UITESTS_PERF_HEAVY_TRACKED_ACTIVITY"] == "1" {
+                    try seedHeavyTrackedActivityUITestDataIfNeeded(context: context)
+                    try assertHeavyTrackedActivityUITestSeed(context: context)
+                }
+
+                if env["UITESTS_PERF_HEAVY_TRACKED_SUMMARY"] == "1" {
+                    try seedHeavyTrackedActivityUITestDataIfNeeded(context: context)
+                    try assertHeavyTrackedSummaryUITestSeed(context: context)
+                }
             }
 
             self.container = c
@@ -136,6 +151,13 @@ enum TrackedActivityUITestSeed {
     static let summarySessionID = UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!
     static let staleSessionID = UUID(uuidString: "cccccccc-cccc-cccc-cccc-cccccccccccc")!
     static let failedExportSessionID = UUID(uuidString: "dddddddd-dddd-dddd-dddd-dddddddddddd")!
+}
+
+enum PerformanceUITestSeed {
+    static let heavyStrengthSessionName = "UITest — Heavy Session"
+    static let heavyStrengthActivityTitle = "UITest — Heavy Session"
+    static let heavyTrackedLiveSessionID = UUID(uuidString: "99999999-9999-9999-9999-999999999999")!
+    static let heavyTrackedSummarySessionID = UUID(uuidString: "88888888-8888-8888-8888-888888888888")!
 }
 
 // MARK: - Calendar UITest seed
@@ -773,6 +795,26 @@ private func assertUITestLaunchConfiguration(_ env: [String: String]) {
         fatalError("UITESTS assertion failed: Choose only one Home active-session mode. UITESTS_ACTIVE_SESSIONS, UITESTS_ACTIVE_SESSIONS_SCROLL, and UITESTS_NO_ACTIVE_SESSIONS are mutually exclusive.")
     }
 
+    let perfModes = [
+        env["UITESTS_PERF_HEAVY_SESSION"] == "1",
+        env["UITESTS_PERF_HEAVY_TRACKED_ACTIVITY"] == "1",
+        env["UITESTS_PERF_HEAVY_TRACKED_SUMMARY"] == "1"
+    ].filter { $0 }.count
+    if perfModes > 1 {
+        fatalError("UITESTS assertion failed: Choose only one performance seed mode. UITESTS_PERF_HEAVY_SESSION, UITESTS_PERF_HEAVY_TRACKED_ACTIVITY, and UITESTS_PERF_HEAVY_TRACKED_SUMMARY are mutually exclusive.")
+    }
+
+    if perfModes > 0 {
+        if env["UITESTS_PROGRESS"] == "1" ||
+            env["UITESTS_PROGRESS_LOW_DATA"] == "1" ||
+            env["UITESTS_LINKED_FLOW"] == "1" ||
+            env["UITESTS_ACTIVE_SESSIONS"] == "1" ||
+            env["UITESTS_ACTIVE_SESSIONS_SCROLL"] == "1" ||
+            env["UITESTS_NO_ACTIVE_SESSIONS"] == "1" {
+            fatalError("UITESTS assertion failed: Performance seed modes cannot be combined with Progress, linked-flow, or Home active-session seed modes.")
+        }
+    }
+
     if (env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1") && start != "progress" {
         fatalError("UITESTS assertion failed: Progress seed modes must launch with UITESTS_START=progress.")
     }
@@ -811,7 +853,19 @@ private func assertUITestLaunchConfiguration(_ env: [String: String]) {
         }
     }
 
-    let needsSeededData = start == "session" || env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1" || env["UITESTS_LINKED_FLOW"] == "1"
+    if env["UITESTS_PERF_HEAVY_SESSION"] == "1", start != "session-heavy" {
+        fatalError("UITESTS assertion failed: UITESTS_PERF_HEAVY_SESSION expects UITESTS_START=session-heavy.")
+    }
+
+    if env["UITESTS_PERF_HEAVY_TRACKED_ACTIVITY"] == "1", start != "tracked-session-heavy" {
+        fatalError("UITESTS assertion failed: UITESTS_PERF_HEAVY_TRACKED_ACTIVITY expects UITESTS_START=tracked-session-heavy.")
+    }
+
+    if env["UITESTS_PERF_HEAVY_TRACKED_SUMMARY"] == "1", start != "tracked-summary-heavy" {
+        fatalError("UITESTS assertion failed: UITESTS_PERF_HEAVY_TRACKED_SUMMARY expects UITESTS_START=tracked-summary-heavy.")
+    }
+
+    let needsSeededData = start == "session" || start == "session-heavy" || env["UITESTS_PROGRESS"] == "1" || env["UITESTS_PROGRESS_LOW_DATA"] == "1" || env["UITESTS_LINKED_FLOW"] == "1" || env["UITESTS_PERF_HEAVY_SESSION"] == "1" || env["UITESTS_PERF_HEAVY_TRACKED_ACTIVITY"] == "1" || env["UITESTS_PERF_HEAVY_TRACKED_SUMMARY"] == "1"
     if needsSeededData, env["UITESTS_SEED"] != "1" {
         fatalError("UITESTS assertion failed: Session and Progress UITest routes require UITESTS_SEED=1 so starter-pack and scenario data are available.")
     }

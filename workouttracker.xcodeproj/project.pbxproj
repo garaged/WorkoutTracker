@@ -97,7 +97,7 @@
 		350B85372F232D7900E7C785 /* workouttrackerTest.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = workouttrackerTest.xctestplan; sourceTree = "<group>"; };
 		350B861C2F25BE6B00E7C785 /* workouttrackerUITests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = workouttrackerUITests.xctestplan; sourceTree = "<group>"; };
 		356003F72F875EE100ADF29B /* watchkitapp Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "watchkitapp Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		356004082F875FAE00ADF29B /* watchkitapp Watch App.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = file; path = "watchkitapp Watch App.xctestplan"; sourceTree = "<group>"; };
+		356004082F875FAE00ADF29B /* watchkitapp Watch App.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "watchkitapp Watch App.xctestplan"; sourceTree = "<group>"; };
 		35A4C07A2F5E174800F30117 /* watchkitapp Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "watchkitapp Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		35BA2D442F11D33200EEE02C /* workouttracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = workouttracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		35BA2D532F11D33300EEE02C /* workouttrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = workouttrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -160,6 +160,7 @@
 			membershipExceptions = (
 				"Services/Watch/WorkoutRemoteControlRouter+UITestHost.swift",
 				UITestHostRootView.swift,
+				UITestPerformanceSeed.swift,
 				workouttrackerUITestHostApp.swift,
 			);
 			target = 35D84B842F3C2BCE000BEFC0 /* workouttrackerUITestHost */;
@@ -743,7 +744,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.1;
+				MARKETING_VERSION = 2.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RESOURCES_TARGETED_DEVICE_FAMILY = 4;
@@ -778,7 +779,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.1;
+				MARKETING_VERSION = 2.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RESOURCES_TARGETED_DEVICE_FAMILY = 4;
@@ -962,7 +963,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.1;
+				MARKETING_VERSION = 2.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1006,7 +1007,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.1;
+				MARKETING_VERSION = 2.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1129,7 +1130,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.1;
+				MARKETING_VERSION = 2.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.garaged.workouttracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1164,7 +1165,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.1;
+				MARKETING_VERSION = 2.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.garaged.workouttracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1195,7 +1196,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 2.2.1;
+				MARKETING_VERSION = 2.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -1227,7 +1228,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 2.2.1;
+				MARKETING_VERSION = 2.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
