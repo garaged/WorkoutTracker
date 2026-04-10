@@ -8,8 +8,7 @@ struct TrackedActivityFinishSummaryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
-    @Query(sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)])
-    private var trackedSessions: [TrackedActivitySession]
+    @Query private var trackedSessions: [TrackedActivitySession]
 
     @State private var distanceKilometersText = ""
     @State private var activeEnergyText = ""
@@ -26,10 +25,22 @@ struct TrackedActivityFinishSummaryView: View {
 
     private let recorder = TrackedActivityRecorder()
     private let summaryBuilder = TrackedActivitySummaryBuilder()
-    private let exportService = HealthKitWorkoutExportService()
+    private let exportCoordinator = TrackedActivityHealthExportCoordinator()
+
+    init(sessionID: UUID) {
+        self.sessionID = sessionID
+
+        let targetSessionID = sessionID
+        _trackedSessions = Query(
+            filter: #Predicate<TrackedActivitySession> { session in
+                session.id == targetSessionID
+            },
+            sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)]
+        )
+    }
 
     private var session: TrackedActivitySession? {
-        trackedSessions.first(where: { $0.id == sessionID })
+        trackedSessions.first
     }
 
     var body: some View {
@@ -266,66 +277,18 @@ struct TrackedActivityFinishSummaryView: View {
                 notes: notes,
                 context: modelContext
             )
+
             saveConfirmationVisible = true
-            if session.healthKitExportState == .failed {
-                healthExportMessage = String(localized: "activities.summary.health.saved_retry", defaultValue: "Summary saved. You can retry saving to Apple Health with the updated values.")
-            } else if session.healthKitExportState == .exported {
-                healthExportMessage = String(localized: "activities.summary.health.saved_local_only", defaultValue: "Summary saved locally. Because this workout was already saved to Apple Health, later edits here do not update the exported Health workout in this release.")
-            } else {
-                healthExportMessage = nil
+            errorMessage = nil
+            healthExportMessage = nil
+
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                saveConfirmationVisible = false
             }
         } catch {
             errorMessage = error.localizedDescription
         }
-    }
-
-    private func requestAuthorization() async {
-        do {
-            _ = try await healthKitAuthorizationService.requestAuthorization()
-        } catch {
-            healthKitAuthorizationService.refresh()
-            errorMessage = error.localizedDescription
-        }
-    }
-
-    private func exportToHealth(_ session: TrackedActivitySession) async {
-        guard !isExporting else { return }
-        isExporting = true
-        healthExportMessage = nil
-
-        do {
-            try recorder.updateHealthKitExportState(for: session, state: .pending, context: modelContext)
-            let outcome = try await exportService.export(session)
-            try recorder.updateHealthKitExportState(for: session, state: .exported, context: modelContext)
-            if outcome.didSaveRoute {
-                healthExportMessage = String(localized: "activities.summary.health.saved_with_route", defaultValue: "Saved to Apple Health with your outdoor route.")
-            } else if session.environment == .outdoor && session.activityKind.supportsDistance {
-                if session.hasRecordedRoute && !healthKitAuthorizationService.canExportRoutes {
-                    healthExportMessage = String(localized: "activities.summary.health.saved_without_route_permission", defaultValue: "Saved to Apple Health. The workout export succeeded, but the captured route still needs Apple Health route access before it can be attached.")
-                } else {
-                    healthExportMessage = String(localized: "activities.summary.health.saved_without_route", defaultValue: "Saved to Apple Health. The workout was exported even though route data was unavailable or could not be attached.")
-                }
-            } else {
-                healthExportMessage = String(localized: "activities.summary.health.saved", defaultValue: "Saved to Apple Health.")
-            }
-        } catch let exportError as HealthKitWorkoutExportError {
-            let failedState: HealthKitExportState = {
-                switch exportError {
-                case .healthDataUnavailable:
-                    return .notAvailable
-                case .permissionDenied, .sessionMustBeCompleted, .sessionDatesUnavailable, .unsupportedActivity:
-                    return .failed
-                }
-            }()
-            try? recorder.updateHealthKitExportState(for: session, state: failedState, context: modelContext)
-            errorMessage = exportError.localizedDescription
-        } catch {
-            try? recorder.updateHealthKitExportState(for: session, state: .failed, context: modelContext)
-            errorMessage = error.localizedDescription
-        }
-
-        healthKitAuthorizationService.refresh()
-        isExporting = false
     }
 
     private func delete(_ session: TrackedActivitySession) {
@@ -337,20 +300,47 @@ struct TrackedActivityFinishSummaryView: View {
         }
     }
 
-    private func openSystemSettings() {
-        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-        UIApplication.shared.open(url)
-    }
-
-    private func parseDouble(_ value: String) -> Double? {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    private func parseDouble(_ text: String) -> Double? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         return Double(trimmed.replacingOccurrences(of: ",", with: "."))
     }
 
-    private func parseInt(_ value: String) -> Int? {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    private func parseInt(_ text: String) -> Int? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         return Int(trimmed)
+    }
+
+    private func requestAuthorization() async {
+        do {
+            _ = try await healthKitAuthorizationService.requestAuthorization()
+            healthExportMessage = nil
+        } catch {
+            healthExportMessage = error.localizedDescription
+        }
+    }
+
+    private func exportToHealth(_ session: TrackedActivitySession) async {
+        guard !isExporting else { return }
+        isExporting = true
+        defer { isExporting = false }
+
+        do {
+            healthExportMessage = try await exportCoordinator.export(
+                session,
+                trigger: .manual,
+                context: modelContext
+            )
+        } catch {
+            healthExportMessage = error.localizedDescription
+        }
+    }
+
+    private func openSystemSettings() {
+        #if canImport(UIKit)
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+        #endif
     }
 }

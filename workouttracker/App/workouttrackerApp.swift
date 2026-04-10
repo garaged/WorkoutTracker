@@ -74,14 +74,50 @@ struct workouttrackerApp: App {
             try? fm.removeItem(at: URL(fileURLWithPath: storeURL.path + "-wal"))
         }
 
+        #if DEBUG
+        if env["DEBUG_RESET_STORE"] == "1" {
+            nukeStoreFiles()
+            PerformanceSeedInstaller.clearInstalledMarker()
+        }
+        #endif
+
+        func buildPersistentContainer() throws -> ModelContainer {
+            try ModelContainerFactory.makeOnDiskContainer(name: "default", storeURL: storeURL)
+        }
+
         do {
-            return try ModelContainerFactory.makeOnDiskContainer(name: "default", storeURL: storeURL)
+            let container = try buildPersistentContainer()
+
+            #if DEBUG
+            if env["DEBUG_INSTALL_LARGE_SEED"] == "1" {
+                let context = ModelContext(container)
+                do {
+                    try PerformanceSeedInstaller.installIfRequested(context: context, env: env)
+                } catch {
+                    fatalError("Could not install DEBUG large seed: \(error)")
+                }
+            }
+            #endif
+
+            return container
         } catch {
             #if DEBUG
             // Dev-only: schema changed, old store is incompatible -> wipe and retry once
             nukeStoreFiles()
+            PerformanceSeedInstaller.clearInstalledMarker()
             do {
-                return try ModelContainerFactory.makeOnDiskContainer(name: "default", storeURL: storeURL)
+                let container = try buildPersistentContainer()
+
+                if env["DEBUG_INSTALL_LARGE_SEED"] == "1" {
+                    let context = ModelContext(container)
+                    do {
+                        try PerformanceSeedInstaller.installIfRequested(context: context, env: env)
+                    } catch {
+                        fatalError("Could not install DEBUG large seed after wiping store: \(error)")
+                    }
+                }
+
+                return container
             } catch {
                 fatalError("Could not create ModelContainer after wiping store: \(error)")
             }

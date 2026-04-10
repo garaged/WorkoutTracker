@@ -14,12 +14,7 @@ struct WorkoutSessionSummaryBuilder {
             return lhs.id.uuidString < rhs.id.uuidString
         }
 
-        let orderedSets = orderedExercises.flatMap { exercise in
-            exercise.setLogs.sorted { lhs, rhs in
-                if lhs.order != rhs.order { return lhs.order < rhs.order }
-                return lhs.id.uuidString < rhs.id.uuidString
-            }
-        }
+        let orderedSets = orderedExercises.flatMap(orderedSets(for:))
 
         let completedSets = orderedSets.filter(\.completed).count
         let totalSets = orderedSets.count
@@ -122,12 +117,7 @@ struct WorkoutSessionSummaryBuilder {
         }
 
         return grouped.map { entry in
-            let sets = entry.exercises.flatMap { exercise in
-                exercise.setLogs.sorted { lhs, rhs in
-                    if lhs.order != rhs.order { return lhs.order < rhs.order }
-                    return lhs.id.uuidString < rhs.id.uuidString
-                }
-            }
+            let sets = entry.exercises.flatMap(orderedSets(for:))
 
             let total = sets.count
             let completed = sets.filter(\.completed).count
@@ -147,34 +137,25 @@ struct WorkoutSessionSummaryBuilder {
         exercises: [WorkoutSessionExercise],
         context: ModelContext
     ) -> [WorkoutSessionSummaryViewData.PRItem] {
+        let groupedExercises = groupedCurrentSessionExercises(from: exercises)
+        let exerciseIDs = groupedExercises.map(\.exerciseID)
+        let cutoff = session.endedAt ?? session.startedAt
+        let historyIndex = fetchHistoricalCompletedSetsIndex(
+            exerciseIDs: exerciseIDs,
+            excludingSessionID: session.id,
+            before: cutoff,
+            context: context
+        )
+
         var items: [WorkoutSessionSummaryViewData.PRItem] = []
         var seen: Set<String> = []
 
-        for exercise in exercises {
-            let previous = fetchHistoricalCompletedSets(
-                exerciseId: exercise.exerciseId,
-                excludingSessionID: session.id,
-                before: session.endedAt ?? session.startedAt,
-                context: context
-            )
-
-            guard !previous.isEmpty else { continue }
-
-            let previousCompleted = previous.map {
-                CoachSuggestionService.CompletedSet(
-                    weight: $0.weight,
-                    reps: $0.reps,
-                    weightUnitRaw: $0.weightUnit.rawValue,
-                    rpe: $0.rpe
-                )
+        for exercise in groupedExercises {
+            guard let previousCompleted = historyIndex[exercise.exerciseID], !previousCompleted.isEmpty else {
+                continue
             }
 
-            let orderedSets = exercise.setLogs.sorted { lhs, rhs in
-                if lhs.order != rhs.order { return lhs.order < rhs.order }
-                return lhs.id.uuidString < rhs.id.uuidString
-            }
-
-            for set in orderedSets where set.completed {
+            for set in exercise.completedSets {
                 let current = CoachSuggestionService.CompletedSet(
                     weight: set.weight,
                     reps: set.reps,
@@ -189,13 +170,13 @@ struct WorkoutSessionSummaryBuilder {
 
                 for achievement in achievements {
                     let detail = "\(achievement.kind.rawValue): \(achievement.valueText)"
-                    let key = "\(exercise.exerciseNameSnapshot)|\(detail)"
+                    let key = "\(exercise.title)|\(detail)"
                     guard seen.insert(key).inserted else { continue }
 
                     items.append(
                         WorkoutSessionSummaryViewData.PRItem(
                             id: key,
-                            title: exercise.exerciseNameSnapshot,
+                            title: exercise.title,
                             detail: detail
                         )
                     )
@@ -206,30 +187,85 @@ struct WorkoutSessionSummaryBuilder {
         return items
     }
 
-    private func fetchHistoricalCompletedSets(
-        exerciseId: UUID,
+    private func orderedSets(for exercise: WorkoutSessionExercise) -> [WorkoutSetLog] {
+        exercise.setLogs.sorted { lhs, rhs in
+            if lhs.order != rhs.order { return lhs.order < rhs.order }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
+    }
+
+    private struct CurrentSessionExerciseGroup {
+        let exerciseID: UUID
+        let title: String
+        var completedSets: [WorkoutSetLog]
+    }
+
+    private func groupedCurrentSessionExercises(
+        from exercises: [WorkoutSessionExercise]
+    ) -> [CurrentSessionExerciseGroup] {
+        var groups: [CurrentSessionExerciseGroup] = []
+        var indexByExerciseID: [UUID: Int] = [:]
+
+        for exercise in exercises {
+            let completedSets = orderedSets(for: exercise).filter(\.completed)
+            guard !completedSets.isEmpty else { continue }
+
+            if let index = indexByExerciseID[exercise.exerciseId] {
+                groups[index].completedSets.append(contentsOf: completedSets)
+            } else {
+                indexByExerciseID[exercise.exerciseId] = groups.count
+                groups.append(
+                    CurrentSessionExerciseGroup(
+                        exerciseID: exercise.exerciseId,
+                        title: exercise.exerciseNameSnapshot,
+                        completedSets: completedSets
+                    )
+                )
+            }
+        }
+
+        return groups
+    }
+
+    private func fetchHistoricalCompletedSetsIndex(
+        exerciseIDs: [UUID],
         excludingSessionID: UUID,
         before cutoff: Date,
         context: ModelContext
-    ) -> [WorkoutSetLog] {
-        let exId: UUID? = exerciseId
+    ) -> [UUID: [CoachSuggestionService.CompletedSet]] {
+        guard !exerciseIDs.isEmpty else { return [:] }
+
+        let exerciseIDSet = Set(exerciseIDs)
 
         do {
             let descriptor = FetchDescriptor<WorkoutSetLog>(
                 predicate: #Predicate<WorkoutSetLog> { set in
-                    set.completed == true &&
-                    set.sessionExercise?.exerciseId == exId
+                    set.completed == true
                 },
                 sortBy: [SortDescriptor(\WorkoutSetLog.completedAt, order: .forward)]
             )
 
-            return try context.fetch(descriptor).filter { set in
-                guard set.sessionExercise?.session?.id != excludingSessionID else { return false }
-                guard let completedAt = set.completedAt else { return false }
-                return completedAt < cutoff
+            let allCompletedSets = try context.fetch(descriptor)
+            var grouped: [UUID: [CoachSuggestionService.CompletedSet]] = [:]
+
+            for set in allCompletedSets {
+                guard let completedAt = set.completedAt, completedAt < cutoff else { continue }
+                guard set.sessionExercise?.session?.id != excludingSessionID else { continue }
+                guard let exerciseID = set.sessionExercise?.exerciseId, exerciseIDSet.contains(exerciseID) else { continue }
+
+                grouped[exerciseID, default: []].append(
+                    CoachSuggestionService.CompletedSet(
+                        weight: set.weight,
+                        reps: set.reps,
+                        weightUnitRaw: set.weightUnit.rawValue,
+                        rpe: set.rpe
+                    )
+                )
             }
+
+            return grouped
         } catch {
-            return []
+            return [:]
         }
     }
 
