@@ -57,7 +57,7 @@ struct WorkoutSetEditorRow: View {
     /// Called only when a set transitions from not-done -> done. Parameter is suggested rest seconds.
     var onCompleted: ((Int?) -> Void)? = nil
 
-    /// Called when the user edits fields directly (TextFields). Keep this light (save context).
+    /// Called when the user edits row values. The row debounces text-entry saves and only flushes on disappear when edits are still pending.
     var onPersist: (() -> Void)? = nil
 
     // Actions (typically backed by `WorkoutLoggingService` in the parent screen)
@@ -72,6 +72,9 @@ struct WorkoutSetEditorRow: View {
     var weightStep: Double = 2.5
 
     @State private var persistDebounceTask: Task<Void, Never>?
+    @State private var hasPendingPersist = false
+    @State private var trackedSetID: UUID?
+    @State private var lastPersistedState: PersistedRowState?
 
     /// Used to make accessibility identifiers unique per row.
     /// This keeps UI tests deterministic even when multiple sets are on screen.
@@ -165,10 +168,12 @@ struct WorkoutSetEditorRow: View {
         .accessibilityValue(rowAccessibilityValue)
         .accessibilityIdentifier("\(a11yPrefix).Row")
         .padding(.vertical, isCompact ? 4 : 6)
+        .onAppear {
+            synchronizePersistTrackingBaseline()
+        }
         .onDisappear {
-            persistDebounceTask?.cancel()
-            persistDebounceTask = nil
-            onPersist?()
+            cancelPersistDebounce()
+            flushPendingPersistIfNeeded()
         }
     }
 
@@ -319,7 +324,7 @@ struct WorkoutSetEditorRow: View {
 
         set.completed.toggle()
         set.completedAt = set.completed ? Date() : nil
-        onPersist?()
+        persistImmediatelyIfNeeded()
 
         if !wasCompleted && set.completed {
             fireCompletionHaptic()
@@ -334,7 +339,7 @@ struct WorkoutSetEditorRow: View {
         } else {
             let cur = set.reps ?? 0
             set.reps = max(0, cur + delta)
-            onPersist?()
+            schedulePersistIfNeeded()
         }
     }
 
@@ -346,20 +351,81 @@ struct WorkoutSetEditorRow: View {
             let curPreferred = set.weight(in: preferredUnit) ?? 0
             let nextPreferred = max(0, curPreferred + delta)
             set.setWeight(nextPreferred == 0 ? nil : nextPreferred, preferredUnit: preferredUnit)
-            onPersist?()
+            schedulePersistIfNeeded()
         }
     }
 
     private func schedulePersist() {
+        schedulePersistIfNeeded()
+    }
+
+    private func schedulePersistIfNeeded() {
         guard !isReadOnly else { return }
+        synchronizePersistTrackingBaseline()
         guard let onPersist else { return }
 
-        persistDebounceTask?.cancel()
+        let currentState = currentPersistedState()
+        guard currentState != lastPersistedState else {
+            hasPendingPersist = false
+            cancelPersistDebounce()
+            return
+        }
+
+        hasPendingPersist = true
+        cancelPersistDebounce()
         persistDebounceTask = Task {
             try? await Task.sleep(nanoseconds: 350_000_000)
             if Task.isCancelled { return }
-            await MainActor.run { onPersist() }
+            await MainActor.run {
+                onPersist()
+                lastPersistedState = currentPersistedState()
+                hasPendingPersist = false
+                persistDebounceTask = nil
+            }
         }
+    }
+
+    private func persistImmediatelyIfNeeded() {
+        guard !isReadOnly else { return }
+        synchronizePersistTrackingBaseline()
+        guard let onPersist else { return }
+
+        let currentState = currentPersistedState()
+        guard currentState != lastPersistedState else { return }
+
+        cancelPersistDebounce()
+        onPersist()
+        lastPersistedState = currentPersistedState()
+        hasPendingPersist = false
+    }
+
+    private func flushPendingPersistIfNeeded() {
+        guard hasPendingPersist else { return }
+        persistImmediatelyIfNeeded()
+    }
+
+    private func cancelPersistDebounce() {
+        persistDebounceTask?.cancel()
+        persistDebounceTask = nil
+    }
+
+    private func synchronizePersistTrackingBaseline() {
+        let currentSetID = set.id
+        guard trackedSetID != currentSetID || lastPersistedState == nil else { return }
+        trackedSetID = currentSetID
+        lastPersistedState = currentPersistedState()
+        hasPendingPersist = false
+        cancelPersistDebounce()
+    }
+
+    private func currentPersistedState() -> PersistedRowState {
+        PersistedRowState(
+            reps: set.reps,
+            weight: set.weight,
+            weightUnitRaw: set.weightUnit.rawValue,
+            completed: set.completed,
+            completedAt: set.completedAt
+        )
     }
 
     // MARK: - Subviews
@@ -463,6 +529,14 @@ struct WorkoutSetEditorRow: View {
             }
             return normalizedWeights.map { availableWidth * ($0 / totalWeight) }
         }
+    }
+
+    private struct PersistedRowState: Equatable {
+        let reps: Int?
+        let weight: Double?
+        let weightUnitRaw: String
+        let completed: Bool
+        let completedAt: Date?
     }
 
     private struct StepIconButton: View {
