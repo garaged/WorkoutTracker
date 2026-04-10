@@ -30,16 +30,64 @@ struct WorkoutSessionScreen: View {
         self.initialRoute = initialRoute
     }
 
-    /// Display numbering for set rows.
-    ///
-    /// The UI should always show sets as 1-based in their visible sorted order,
-    /// regardless of how `WorkoutSetLog.order` was originally persisted.
-    private func displaySetNumber(for set: WorkoutSetLog, in ex: WorkoutSessionExercise) -> Int {
-        let ordered = sortedSets(for: ex)
-        guard let index = ordered.firstIndex(where: { $0.id == set.id }) else {
-            return max(1, set.order + 1)
+    private struct FirstIncompleteVisibleTarget {
+        let exercise: WorkoutSessionExercise
+        let set: WorkoutSetLog
+    }
+
+    private struct SessionDisplayState {
+        let visibleExercises: [WorkoutSessionExercise]
+        let allSets: [WorkoutSetLog]
+        let allSessionSets: [WorkoutSetLog]
+        let currentSegmentKind: WorkoutExerciseSegment?
+        let firstIncompleteVisibleTarget: FirstIncompleteVisibleTarget?
+        let localizedExerciseNamesByModelID: [UUID: String]
+        let orderedSetsByExerciseID: [UUID: [WorkoutSetLog]]
+
+        func orderedSets(for exercise: WorkoutSessionExercise) -> [WorkoutSetLog] {
+            orderedSetsByExerciseID[exercise.id] ?? []
         }
-        return index + 1
+
+        func localizedExerciseName(for exercise: WorkoutSessionExercise) -> String {
+            localizedExerciseNamesByModelID[exercise.id] ?? exercise.exerciseNameSnapshot
+        }
+
+        func displaySetNumber(for set: WorkoutSetLog, in exercise: WorkoutSessionExercise) -> Int {
+            let ordered = orderedSets(for: exercise)
+            guard let index = ordered.firstIndex(where: { $0.id == set.id }) else {
+                return max(1, set.order + 1)
+            }
+            return index + 1
+        }
+
+        func segmentProgressText(for kind: WorkoutExerciseSegment) -> String? {
+            let exercises = visibleExercises.filter { $0.segment == kind }
+            guard !exercises.isEmpty else { return nil }
+
+            let sets = exercises.flatMap { orderedSets(for: $0) }
+            let total = sets.count
+            let completed = sets.filter(\.completed).count
+            return "\(completed)/\(max(total, 1)) sets"
+        }
+
+        func isStartOfSegment(at index: Int) -> Bool {
+            guard index < visibleExercises.count else { return false }
+            guard index > 0 else { return true }
+            return visibleExercises[index - 1].segment != visibleExercises[index].segment
+        }
+
+        func currentExerciseName(activeExerciseID: UUID?) -> String? {
+            if let activeExerciseID,
+               let match = visibleExercises.first(where: { $0.id == activeExerciseID }) {
+                return localizedExerciseName(for: match)
+            }
+
+            if let target = firstIncompleteVisibleTarget {
+                return localizedExerciseName(for: target.exercise)
+            }
+
+            return visibleExercises.first.map(localizedExerciseName)
+        }
     }
 
     @State private var showFinishConfirm = false
@@ -68,6 +116,7 @@ struct WorkoutSessionScreen: View {
     @State private var uiTestLastSkippedSegment: String = ""
     @State private var uiTestSkipInvocationCount: Int = 0
     @State private var autoRecenteringSuppressionDepth: Int = 0
+    @State private var localizedExercisesByID: [UUID: Exercise] = [:]
     
     private var bottomInsetLayoutKey: String {
         "\(shouldShowCoachPrompt)-\(shouldShowRestTimerCard)-\(canMutateProgress)"
@@ -137,28 +186,11 @@ struct WorkoutSessionScreen: View {
         AdaptiveLayoutMetrics.shouldStackBottomActionBar(dynamicTypeSize: dynamicTypeSize)
     }
 
-    private var currentExerciseName: String? {
-        if let activeExerciseID,
-           let match = sortedExercises.first(where: { $0.id == activeExerciseID }) {
-            return localizedExerciseName(for: match)
-        }
-
-        if let target = firstIncompleteVisibleTarget() {
-            return localizedExerciseName(for: target.exercise)
-        }
-
-        return sortedExercises.first.map(localizedExerciseName)
-    }
-
-    private var currentExercisesByID: [UUID: Exercise] {
-        ExerciseLocalizationService.loadExercisesByID(context: modelContext)
-    }
-
     private func localizedExerciseName(for exercise: WorkoutSessionExercise) -> String {
         ExerciseLocalizationService.displayName(
             exerciseID: exercise.exerciseId,
             fallbackName: exercise.exerciseNameSnapshot,
-            exercisesByID: currentExercisesByID
+            exercisesByID: localizedExercisesByID
         )
     }
 
@@ -175,22 +207,25 @@ struct WorkoutSessionScreen: View {
     }
 
     var body: some View {
-        if ProcessInfo.processInfo.environment["UITESTS"] == "1" {
-            Text("\(uiTestLastSkippedSegment)#\(uiTestSkipInvocationCount)")
-                .font(.caption2)
-                .foregroundStyle(.clear)
-                .accessibilityHidden(false)
-                .accessibilityIdentifier("WorkoutSession.UITest.LastSkippedSegment")
-        }
-        ZStack {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 0) {
-                        headerSection
-                        summarySectionIfReadOnly
-                        exercisesSection(proxy: proxy)
+        let displayState = makeDisplayState()
+
+        ZStack(alignment: .topLeading) {
+            if ProcessInfo.processInfo.environment["UITESTS"] == "1" {
+                Text("\(uiTestLastSkippedSegment)#\(uiTestSkipInvocationCount)")
+                    .font(.caption2)
+                    .foregroundStyle(.clear)
+                    .accessibilityHidden(false)
+                    .accessibilityIdentifier("WorkoutSession.UITest.LastSkippedSegment")
+            }
+            ZStack {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            headerSection(displayState: displayState)
+                            summarySectionIfReadOnly
+                            exercisesSection(proxy: proxy, displayState: displayState)
+                        }
                     }
-                }
                 .accessibilityIdentifier("WorkoutSession.Screen")
                 .navigationTitle(session.sourceRoutineNameSnapshot ?? String(localized: "session.title.fallback"))
                 .navigationBarTitleDisplayMode(.inline)
@@ -258,6 +293,7 @@ struct WorkoutSessionScreen: View {
                     Text(String(localized: "session.abandon_workout.message"))
                 }
                 .task(id: session.id) {
+                    refreshLocalizedExercisesCache()
                     await applyGoalPrefillIfNeeded()
                     await reloadPinnedTargets()
                     await centerActionableSetOnOpen(proxy: proxy)
@@ -290,55 +326,57 @@ struct WorkoutSessionScreen: View {
                     .transition(.opacity)
             }
         }
-        .sheet(isPresented: $showReflectionSheet, onDismiss: {
-            if dismissAfterReflectionSheet { dismiss() }
-            dismissAfterReflectionSheet = false
-        }) {
-            SessionReflectionSheet(session: session)
         }
-        .sheet(item: $prDetails) { ctx in
-            PRDetailsSheetView(ctx: ctx)
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("WorkoutSession.Screen")
-        .onAppear {
-            syncRestTimerVisibility()
-            refreshFinishSummaryIfNeeded()
-            syncSystemIntegrations()
-            syncWatchRemoteCursor()
-        }
-        .onDisappear {
-            WorkoutRemoteControlRouter.shared.clearNowPlaying(sessionID: session.id)
-        }
-        .onChange(of: activeExerciseID, initial: false) { _, _ in
-            syncWatchRemoteCursor()
-        }
-        .onChange(of: activeSetID, initial: false) { _, _ in
-            syncWatchRemoteCursor()
-        }
-        .onChange(of: session.status, initial: false) { _, _ in
-            syncWatchRemoteCursor()
-        }
-        .onChange(of: restTimer.hasConfiguredTimer, initial: false) { _, hasConfiguredTimer in
-            withAdaptiveAnimation { showRestTimer = hasConfiguredTimer ? showRestTimer || hasConfiguredTimer : false }
-            syncSystemIntegrations()
-        }
-        .onChange(of: restTimer.isRunning, initial: false) { _, isRunning in
-            if isRunning {
-                withAdaptiveAnimation { showRestTimer = true }
-            } else if !restTimer.hasConfiguredTimer {
-                withAdaptiveAnimation { showRestTimer = false }
+            .sheet(isPresented: $showReflectionSheet, onDismiss: {
+                if dismissAfterReflectionSheet { dismiss() }
+                dismissAfterReflectionSheet = false
+            }) {
+                SessionReflectionSheet(session: session)
             }
-            syncSystemIntegrations()
-        }
-        .onChange(of: restTimer.didFinishToken, initial: false) { _, token in
-            guard token != nil else { return }
-            Haptics.success()
-        }
+            .sheet(item: $prDetails) { ctx in
+                PRDetailsSheetView(ctx: ctx)
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("WorkoutSession.Screen")
+            .onAppear {
+                refreshLocalizedExercisesCache()
+                syncRestTimerVisibility()
+                refreshFinishSummaryIfNeeded()
+                syncSystemIntegrations()
+                syncWatchRemoteCursor()
+            }
+            .onDisappear {
+                WorkoutRemoteControlRouter.shared.clearNowPlaying(sessionID: session.id)
+            }
+            .onChange(of: activeExerciseID, initial: false) { _, _ in
+                syncWatchRemoteCursor()
+            }
+            .onChange(of: activeSetID, initial: false) { _, _ in
+                syncWatchRemoteCursor()
+            }
+            .onChange(of: session.status, initial: false) { _, _ in
+                syncWatchRemoteCursor()
+            }
+            .onChange(of: restTimer.hasConfiguredTimer, initial: false) { _, hasConfiguredTimer in
+                withAdaptiveAnimation { showRestTimer = hasConfiguredTimer ? showRestTimer || hasConfiguredTimer : false }
+                syncSystemIntegrations()
+            }
+            .onChange(of: restTimer.isRunning, initial: false) { _, isRunning in
+                if isRunning {
+                    withAdaptiveAnimation { showRestTimer = true }
+                } else if !restTimer.hasConfiguredTimer {
+                    withAdaptiveAnimation { showRestTimer = false }
+                }
+                syncSystemIntegrations()
+            }
+            .onChange(of: restTimer.didFinishToken, initial: false) { _, token in
+                guard token != nil else { return }
+                Haptics.success()
+            }
     }
 
-    private var headerSection: some View {
-        let summaryBaseSets = isReadOnly ? allSessionSets : allSets
+    private func headerSection(displayState: SessionDisplayState) -> some View {
+        let summaryBaseSets = isReadOnly ? displayState.allSessionSets : displayState.allSets
         let completedSets = summaryBaseSets.filter(\.completed).count
         let totalSets = summaryBaseSets.count
         let progress = totalSets == 0 ? 0.0 : Double(completedSets) / Double(totalSets)
@@ -392,7 +430,7 @@ struct WorkoutSessionScreen: View {
                 }
             }
 
-            if let currentExerciseName, isInProgress {
+            if let currentExerciseName = displayState.currentExerciseName(activeExerciseID: activeExerciseID), isInProgress {
                 Label(currentExerciseName, systemImage: "location.fill")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
@@ -643,11 +681,63 @@ struct WorkoutSessionScreen: View {
 
     // MARK: Data helpers
 
-    private var allOrderedExercises: [WorkoutSessionExercise] {
-        session.exercises.sorted { lhs, rhs in
+    private func orderedExercises(from exercises: [WorkoutSessionExercise]) -> [WorkoutSessionExercise] {
+        exercises.sorted { lhs, rhs in
             if lhs.order != rhs.order { return lhs.order < rhs.order }
             return lhs.id.uuidString < rhs.id.uuidString
         }
+    }
+
+    private func orderedSets(for exercise: WorkoutSessionExercise) -> [WorkoutSetLog] {
+        exercise.setLogs.sorted { lhs, rhs in
+            if lhs.order != rhs.order { return lhs.order < rhs.order }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
+    }
+
+    private func makeDisplayState() -> SessionDisplayState {
+        let allOrderedExercises = orderedExercises(from: session.exercises)
+        let visibleExercises = allOrderedExercises.filter { !skippedSegmentKinds.contains($0.segment) }
+        let orderedSetsByExerciseID = Dictionary(uniqueKeysWithValues: allOrderedExercises.map { ($0.id, orderedSets(for: $0)) })
+        let allSets = visibleExercises.flatMap { orderedSetsByExerciseID[$0.id] ?? [] }
+        let allSessionSets = allOrderedExercises.flatMap { orderedSetsByExerciseID[$0.id] ?? [] }
+        let currentSegmentKind = visibleExercises.first(where: { exercise in
+            (orderedSetsByExerciseID[exercise.id] ?? []).contains(where: { !$0.completed })
+        })?.segment ?? visibleExercises.last?.segment
+        let firstIncompleteVisibleTarget = visibleExercises.lazy.compactMap { exercise -> FirstIncompleteVisibleTarget? in
+            guard let set = (orderedSetsByExerciseID[exercise.id] ?? []).first(where: { !$0.completed }) else {
+                return nil
+            }
+            return FirstIncompleteVisibleTarget(exercise: exercise, set: set)
+        }.first
+        let localizedExerciseNamesByModelID = Dictionary(uniqueKeysWithValues: allOrderedExercises.map { exercise in
+            (
+                exercise.id,
+                ExerciseLocalizationService.displayName(
+                    exerciseID: exercise.exerciseId,
+                    fallbackName: exercise.exerciseNameSnapshot,
+                    exercisesByID: localizedExercisesByID
+                )
+            )
+        })
+
+        return SessionDisplayState(
+            visibleExercises: visibleExercises,
+            allSets: allSets,
+            allSessionSets: allSessionSets,
+            currentSegmentKind: currentSegmentKind,
+            firstIncompleteVisibleTarget: firstIncompleteVisibleTarget,
+            localizedExerciseNamesByModelID: localizedExerciseNamesByModelID,
+            orderedSetsByExerciseID: orderedSetsByExerciseID
+        )
+    }
+
+    private func refreshLocalizedExercisesCache() {
+        localizedExercisesByID = ExerciseLocalizationService.loadExercisesByID(context: modelContext)
+    }
+
+    private var allOrderedExercises: [WorkoutSessionExercise] {
+        orderedExercises(from: session.exercises)
     }
 
     private var sortedExercises: [WorkoutSessionExercise] {
@@ -663,10 +753,15 @@ struct WorkoutSessionScreen: View {
     }
 
     private func sortedSets(for ex: WorkoutSessionExercise) -> [WorkoutSetLog] {
-        ex.setLogs.sorted { lhs, rhs in
-            if lhs.order != rhs.order { return lhs.order < rhs.order }
-            return lhs.id.uuidString < rhs.id.uuidString
+        orderedSets(for: ex)
+    }
+
+    private func displaySetNumber(for set: WorkoutSetLog, in exercise: WorkoutSessionExercise) -> Int {
+        let ordered = sortedSets(for: exercise)
+        guard let index = ordered.firstIndex(where: { $0.id == set.id }) else {
+            return max(1, set.order + 1)
         }
+        return index + 1
     }
 
     private var orderedVisibleSegmentKinds: [WorkoutExerciseSegment] {
@@ -975,16 +1070,16 @@ struct WorkoutSessionScreen: View {
     // MARK: View builders
 
     @ViewBuilder
-    private func exercisesSection(proxy: ScrollViewProxy) -> some View {
-        if sortedExercises.isEmpty {
+    private func exercisesSection(proxy: ScrollViewProxy, displayState: SessionDisplayState) -> some View {
+        if displayState.visibleExercises.isEmpty {
             emptyExercisesSection
         } else {
-            ForEach(Array(sortedExercises.enumerated()), id: \.element.id) { index, ex in
-                if isStartOfSegment(at: index) {
+            ForEach(Array(displayState.visibleExercises.enumerated()), id: \.element.id) { index, ex in
+                if displayState.isStartOfSegment(at: index) {
                     SessionSegmentHeaderView(
                         kind: ex.segment,
-                        progressText: segmentProgressText(for: ex.segment),
-                        isCurrent: ex.segment == currentSegmentKind,
+                        progressText: displayState.segmentProgressText(for: ex.segment),
+                        isCurrent: ex.segment == displayState.currentSegmentKind,
                         showsSkipAction: canSkipSegment(ex.segment),
                         onSkip: canSkipSegment(ex.segment) ? { skipCurrentSegment() } : nil
                     )
@@ -995,7 +1090,7 @@ struct WorkoutSessionScreen: View {
                     .padding(.bottom, 8)
                 }
 
-                exerciseSection(ex, proxy: proxy)
+                exerciseSection(ex, proxy: proxy, displayState: displayState)
             }
         }
     }
@@ -1010,12 +1105,16 @@ struct WorkoutSessionScreen: View {
         }
     }
 
-    private func exerciseSection(_ ex: WorkoutSessionExercise, proxy: ScrollViewProxy) -> some View {
+    private func exerciseSection(
+        _ ex: WorkoutSessionExercise,
+        proxy: ScrollViewProxy,
+        displayState: SessionDisplayState
+    ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            exerciseCardHeader(ex)
+            exerciseCardHeader(ex, displayState: displayState)
 
             VStack(alignment: .leading, spacing: 10) {
-                setsList(for: ex, proxy: proxy)
+                setsList(for: ex, proxy: proxy, displayState: displayState)
             }
         }
         .id(ex.id)
@@ -1032,16 +1131,16 @@ struct WorkoutSessionScreen: View {
         .listRowBackground(Color.clear)
     }
 
-    private func exerciseCardHeader(_ ex: WorkoutSessionExercise) -> some View {
+    private func exerciseCardHeader(_ ex: WorkoutSessionExercise, displayState: SessionDisplayState) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             if AdaptiveLayoutMetrics.shouldStackExerciseHeader(dynamicTypeSize: dynamicTypeSize) {
                 VStack(alignment: .leading, spacing: 8) {
-                    titleRow(for: ex)
+                    titleRow(for: ex, displayState: displayState)
                     nextTargetRow(for: ex)
                 }
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    titleRow(for: ex)
+                    titleRow(for: ex, displayState: displayState)
                     nextTargetRow(for: ex)
                 }
             }
@@ -1049,9 +1148,9 @@ struct WorkoutSessionScreen: View {
     }
 
     @ViewBuilder
-    private func titleRow(for ex: WorkoutSessionExercise) -> some View {
+    private func titleRow(for ex: WorkoutSessionExercise, displayState: SessionDisplayState) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(localizedExerciseName(for: ex))
+            Text(displayState.localizedExerciseName(for: ex))
                 .font(.headline)
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1115,14 +1214,18 @@ struct WorkoutSessionScreen: View {
     }
 
     @ViewBuilder
-    private func setsList(for ex: WorkoutSessionExercise, proxy: ScrollViewProxy) -> some View {
-        let sets = sortedSets(for: ex)
+    private func setsList(
+        for ex: WorkoutSessionExercise,
+        proxy: ScrollViewProxy,
+        displayState: SessionDisplayState
+    ) -> some View {
+        let sets = displayState.orderedSets(for: ex)
 
         VStack(spacing: 10) {
             ForEach(sets, id: \.id) { set in
                 let state = setRowVisualState(for: set)
 
-                setRow(ex: ex, set: set, proxy: proxy)
+                setRow(ex: ex, set: set, proxy: proxy, displayState: displayState)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .background(setRowChrome(state: state))
@@ -1791,11 +1894,16 @@ struct WorkoutSessionScreen: View {
     }
     
     @ViewBuilder
-    private func setRow(ex: WorkoutSessionExercise, set: WorkoutSetLog, proxy: ScrollViewProxy) -> some View {
+    private func setRow(
+        ex: WorkoutSessionExercise,
+        set: WorkoutSetLog,
+        proxy: ScrollViewProxy,
+        displayState: SessionDisplayState
+    ) -> some View {
         if WorkoutSetRowRouting.shouldUseTimedRow(for: ex, set: set) {
             TimedSetEditorRow(
                 set: set,
-                setNumber: displaySetNumber(for: set, in: ex),
+                setNumber: displayState.displaySetNumber(for: set, in: ex),
                 isReadOnly: isReadOnly,
                 showsDistance: (ex.trackingStyle.showsDistance || set.targetDistance != nil || set.actualDistance != nil),
                 onPersist: {
@@ -1846,7 +1954,7 @@ struct WorkoutSessionScreen: View {
             let state = setRowVisualState(for: set)
             WorkoutSetEditorRow(
                 set: set,
-                setNumber: displaySetNumber(for: set, in: ex),
+                setNumber: displayState.displaySetNumber(for: set, in: ex),
                 isReadOnly: isReadOnly,
                 accessibilityStateText: accessibilityStateText(for: state),
                 onCompleted: { suggestedRest in
@@ -1926,8 +2034,8 @@ struct WorkoutSessionScreen: View {
                     Button {
                         prDetails = PRDetailsContext(
                             setId: set.id,
-                            exerciseName: localizedExerciseName(for: ex),
-                            setNumber: displaySetNumber(for: set, in: ex),
+                            exerciseName: displayState.localizedExerciseName(for: ex),
+                            setNumber: displayState.displaySetNumber(for: set, in: ex),
                             achievements: ach,
                             weight: set.weight,
                             reps: set.reps,
@@ -2235,12 +2343,13 @@ struct WorkoutSessionScreen: View {
     @MainActor
     private func reloadPinnedTargets() async {
         var out: [UUID: PinnedTarget] = [:]
+        let uniqueExerciseIDs = Array(Set(sortedExercises.map(\.exerciseId))).sorted { $0.uuidString < $1.uuidString }
 
-        for ex in sortedExercises {
+        for exerciseID in uniqueExerciseIDs {
             do {
-                let rec = try prService.records(for: ex.exerciseId, context: modelContext)
-                if let t = try prService.nextTarget(for: ex.exerciseId, records: rec, context: modelContext) {
-                    out[ex.exerciseId] = PinnedTarget(text: t.text, weight: t.targetWeight, reps: t.targetReps)
+                let rec = try prService.records(for: exerciseID, context: modelContext)
+                if let t = try prService.nextTarget(for: exerciseID, records: rec, context: modelContext) {
+                    out[exerciseID] = PinnedTarget(text: t.text, weight: t.targetWeight, reps: t.targetReps)
                 }
             } catch {
                 // ignore; keep UX smooth

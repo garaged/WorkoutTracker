@@ -25,6 +25,21 @@ struct SessionResumePlanner {
         self.continueNavigator = continueNavigator
     }
 
+
+    private func orderedExercises(from exercises: [WorkoutSessionExercise]) -> [WorkoutSessionExercise] {
+        exercises.sorted { lhs, rhs in
+            if lhs.order != rhs.order { return lhs.order < rhs.order }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
+    }
+
+    private func orderedSets(from exercise: WorkoutSessionExercise) -> [WorkoutSetLog] {
+        exercise.setLogs.sorted { lhs, rhs in
+            if lhs.order != rhs.order { return lhs.order < rhs.order }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
+    }
+
     func sortedActiveSessions(
         _ sessions: [WorkoutSession],
         activitiesByID: [UUID: Activity]
@@ -139,11 +154,7 @@ struct SessionResumePlanner {
         activeSetID: UUID? = nil,
         visibleExercises: [WorkoutSessionExercise]? = nil
     ) -> SessionResumeTarget? {
-        let orderedExercises = (visibleExercises ?? session.exercises)
-            .sorted { lhs, rhs in
-                if lhs.order != rhs.order { return lhs.order < rhs.order }
-                return lhs.id.uuidString < rhs.id.uuidString
-            }
+        let orderedExercises = orderedExercises(from: visibleExercises ?? session.exercises)
 
         guard !orderedExercises.isEmpty else {
             return SessionResumeTarget(
@@ -173,10 +184,7 @@ struct SessionResumePlanner {
             return nil
         }
 
-        let orderedSets = owningExercise.setLogs.sorted { lhs, rhs in
-            if lhs.order != rhs.order { return lhs.order < rhs.order }
-            return lhs.id.uuidString < rhs.id.uuidString
-        }
+        let orderedSets = orderedSets(from: owningExercise)
         let targetSet = orderedSets.first(where: { $0.id == targetSetID })
 
         return SessionResumeTarget(
