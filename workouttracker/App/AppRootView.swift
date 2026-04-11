@@ -71,7 +71,7 @@ struct AppRootView: View {
     private let sessionResumePlanner = SessionResumePlanner()
     private let routeResolver = RouteResolver()
     private let systemIntegrationRouteResolver = SystemIntegrationRouteResolver()
-    private let snapshotBuilder = CurrentSessionSnapshotBuilder()
+    private let systemSurfaceSyncCoordinator = SystemSurfaceSyncCoordinator()
     private let trackedActivityRecorder = TrackedActivityRecorder()
 
     var body: some View {
@@ -556,26 +556,26 @@ struct AppRootView: View {
     private func handleAppear() {
         refreshPendingIntentURLIfNeeded()
         attemptPendingIntentRouteResolution()
-        syncSystemIntegrations()
+        systemSurfaceSyncCoordinator.syncAll(context: modelContext)
     }
 
     private func handleScenePhaseChange(_ oldPhase: ScenePhase, _ newPhase: ScenePhase) {
         if newPhase == .active {
             refreshPendingIntentURLIfNeeded()
             attemptPendingIntentRouteResolution()
-            syncSystemIntegrations()
+            systemSurfaceSyncCoordinator.syncAll(context: modelContext)
             return
         }
 
         if oldPhase == .active {
             markTrackedActivitiesBackgroundedIfNeeded()
-            syncLiveActivity()
+            systemSurfaceSyncCoordinator.syncLiveActivity(context: modelContext, force: true)
         }
     }
 
     private func handleSessionsChanged() {
         attemptPendingIntentRouteResolution()
-        syncLiveActivity()
+        systemSurfaceSyncCoordinator.syncActiveSessionSurfaces(context: modelContext)
     }
 
     private func markTrackedActivitiesBackgroundedIfNeeded() {
@@ -591,7 +591,6 @@ struct AppRootView: View {
 
     private func handleRoutinesChanged() {
         attemptPendingIntentRouteResolution()
-        syncLiveActivity()
     }
 
     private func handleShortcutRoutineFingerprintChanged() {
@@ -602,7 +601,7 @@ struct AppRootView: View {
     private func handleLiveActivityRefreshTick() {
         guard scenePhase == .active,
               ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
-        syncLiveActivity()
+        systemSurfaceSyncCoordinator.syncLiveActivity(context: modelContext, force: true)
     }
 
     private func handleOpenURL(_ url: URL) {
@@ -617,17 +616,4 @@ struct AppRootView: View {
         open(route, preserveLaunchRoute: true)
     }
     
-    private func syncSystemIntegrations() {
-        WidgetRefreshCoordinator().refresh(context: modelContext)
-        syncLiveActivity()
-    }
-
-    private func syncLiveActivity() {
-        guard #available(iOS 16.1, *) else { return }
-        let snapshot = snapshotBuilder.buildWidgetSnapshot(context: modelContext)
-
-        Task { @MainActor in
-            await LiveActivityCoordinator().sync(using: snapshot)
-        }
-    }
 }

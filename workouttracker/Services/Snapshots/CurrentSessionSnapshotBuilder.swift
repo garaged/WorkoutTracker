@@ -34,58 +34,36 @@ struct CurrentSessionSnapshotBuilder {
         let progressSummary = (try? ProgressSummaryService(calendar: calendar).summarize(weeksBack: 12, context: context))
         let workoutsThisWeek = progressSummary?.weeks.last?.workoutsCompleted ?? 0
 
-        let activeSession: WidgetExternalSnapshot.ActiveSession?
-        if let sessionID = currentSession.sessionID,
-           let openRouteURL = validatedURLString(
-                for: currentSession.openRoute,
-                expectedSessionID: sessionID,
-                sessions: sessions,
-                routines: routines,
-                activitiesByID: activitiesByID
-           ) {
-            let resumeRouteURL = validatedURLString(
-                for: currentSession.resumeRoute,
-                expectedSessionID: sessionID,
-                sessions: sessions,
-                routines: routines,
-                activitiesByID: activitiesByID
-            )
-            let restRouteURL = validatedURLString(
-                for: currentSession.restRoute,
-                expectedSessionID: sessionID,
-                sessions: sessions,
-                routines: routines,
-                activitiesByID: activitiesByID
-            )
+        return makeWidgetSnapshot(
+            currentSession: currentSession,
+            currentStreakDays: progressSummary?.currentStreakDays ?? 0,
+            longestStreakDays: progressSummary?.longestStreakDays ?? 0,
+            workoutsThisWeek: workoutsThisWeek,
+            validateRoutes: true,
+            sessions: sessions,
+            routines: routines,
+            activitiesByID: activitiesByID
+        )
+    }
 
-            activeSession = WidgetExternalSnapshot.ActiveSession(
-                sessionID: sessionID,
-                title: currentSession.sessionTitle,
-                currentExerciseName: currentSession.currentExerciseName,
-                currentSetIndex: currentSession.currentSetIndex,
-                totalSets: currentSession.totalSets,
-                elapsedSeconds: Int(max(0, currentSession.elapsedSeconds ?? 0).rounded()),
-                restState: widgetRestState(for: currentSession.restState),
-                restSeconds: currentSession.restSeconds,
-                isResumable: resumeRouteURL != nil,
-                isFinishable: currentSession.isFinishable,
-                openRouteURL: openRouteURL,
-                resumeRouteURL: resumeRouteURL,
-                restRouteURL: restRouteURL
-            )
-        } else {
-            activeSession = nil
-        }
+    @MainActor
+    func buildActiveSessionSurfaceSnapshot(
+        context: ModelContext,
+        preservedCurrentStreakDays: Int,
+        preservedLongestStreakDays: Int,
+        preservedWorkoutsThisWeek: Int
+    ) -> WidgetExternalSnapshot {
+        let currentSession = build(context: context)
 
-        return WidgetExternalSnapshot(
-            generatedAt: Date(),
-            activeSession: activeSession,
-            streak: .init(
-                currentStreakDays: progressSummary?.currentStreakDays ?? 0,
-                longestStreakDays: progressSummary?.longestStreakDays ?? 0,
-                workoutsThisWeek: workoutsThisWeek
-            ),
-            schemaVersion: WidgetExternalSnapshot.currentSchemaVersion
+        return makeWidgetSnapshot(
+            currentSession: currentSession,
+            currentStreakDays: preservedCurrentStreakDays,
+            longestStreakDays: preservedLongestStreakDays,
+            workoutsThisWeek: preservedWorkoutsThisWeek,
+            validateRoutes: false,
+            sessions: [],
+            routines: [],
+            activitiesByID: [:]
         )
     }
 
@@ -159,6 +137,111 @@ struct CurrentSessionSnapshotBuilder {
         case .running: .running
         case .overdue: .overdue
         }
+    }
+
+    private func makeWidgetSnapshot(
+        currentSession: CurrentSessionSnapshot,
+        currentStreakDays: Int,
+        longestStreakDays: Int,
+        workoutsThisWeek: Int,
+        validateRoutes: Bool,
+        sessions: [WorkoutSession],
+        routines: [WorkoutRoutine],
+        activitiesByID: [UUID: Activity]
+    ) -> WidgetExternalSnapshot {
+        let activeSession = activeSessionPayload(
+            from: currentSession,
+            validateRoutes: validateRoutes,
+            sessions: sessions,
+            routines: routines,
+            activitiesByID: activitiesByID
+        )
+
+        return WidgetExternalSnapshot(
+            generatedAt: Date(),
+            activeSession: activeSession,
+            streak: .init(
+                currentStreakDays: currentStreakDays,
+                longestStreakDays: longestStreakDays,
+                workoutsThisWeek: workoutsThisWeek
+            ),
+            schemaVersion: WidgetExternalSnapshot.currentSchemaVersion
+        )
+    }
+
+    private func activeSessionPayload(
+        from currentSession: CurrentSessionSnapshot,
+        validateRoutes: Bool,
+        sessions: [WorkoutSession],
+        routines: [WorkoutRoutine],
+        activitiesByID: [UUID: Activity]
+    ) -> WidgetExternalSnapshot.ActiveSession? {
+        guard let sessionID = currentSession.sessionID else { return nil }
+
+        let openRouteURL = routeURLString(
+            for: currentSession.openRoute,
+            expectedSessionID: sessionID,
+            validateRoute: validateRoutes,
+            sessions: sessions,
+            routines: routines,
+            activitiesByID: activitiesByID
+        )
+        guard let openRouteURL else { return nil }
+
+        let resumeRouteURL = routeURLString(
+            for: currentSession.resumeRoute,
+            expectedSessionID: sessionID,
+            validateRoute: validateRoutes,
+            sessions: sessions,
+            routines: routines,
+            activitiesByID: activitiesByID
+        )
+        let restRouteURL = routeURLString(
+            for: currentSession.restRoute,
+            expectedSessionID: sessionID,
+            validateRoute: validateRoutes,
+            sessions: sessions,
+            routines: routines,
+            activitiesByID: activitiesByID
+        )
+
+        return WidgetExternalSnapshot.ActiveSession(
+            sessionID: sessionID,
+            title: currentSession.sessionTitle,
+            currentExerciseName: currentSession.currentExerciseName,
+            currentSetIndex: currentSession.currentSetIndex,
+            totalSets: currentSession.totalSets,
+            elapsedSeconds: Int(max(0, currentSession.elapsedSeconds ?? 0).rounded()),
+            restState: widgetRestState(for: currentSession.restState),
+            restSeconds: currentSession.restSeconds,
+            isResumable: resumeRouteURL != nil,
+            isFinishable: currentSession.isFinishable,
+            openRouteURL: openRouteURL,
+            resumeRouteURL: resumeRouteURL,
+            restRouteURL: restRouteURL
+        )
+    }
+
+    private func routeURLString(
+        for route: AppRoute?,
+        expectedSessionID: UUID,
+        validateRoute: Bool,
+        sessions: [WorkoutSession],
+        routines: [WorkoutRoutine],
+        activitiesByID: [UUID: Activity]
+    ) -> String? {
+        guard validateRoute else {
+            guard let route else { return nil }
+            return urlString(for: route)
+        }
+
+        return validatedURLString(
+            for: route,
+            expectedSessionID: expectedSessionID,
+            sessions: sessions,
+            routines: routines,
+            activitiesByID: activitiesByID
+        )
     }
 
     private func validatedURLString(
