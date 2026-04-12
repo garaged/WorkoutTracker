@@ -21,15 +21,31 @@ struct ContentView: View {
                 if let seed = WatchUITestSeed.current {
                     launcher.applyUITestSeedRoute(seed.route == .nowPlaying ? .nowPlaying : .shortcuts)
                 }
+                syncRouteWithNowPlaying()
             }
-            .onChange(of: client.hasRecoverableNowPlayingSession) { _, hasSession in
-                if !hasSession, launcher.route == .nowPlaying {
-                    launcher.showShortcuts()
-                }
+            .onChange(of: client.hasRecoverableNowPlayingSession) { _, _ in
+                syncRouteWithNowPlaying()
             }
-            .onChange(of: client.hasRecoverableNowPlayingSession) { _, hasSession in
-                launcher.consumeAutoOpenIfPossible(hasActiveSession: hasSession)
+            .onChange(of: client.nowPlaying.sessionID) { _, _ in
+                syncRouteWithNowPlaying()
             }
+            .onChange(of: client.lastStateReceivedAt) { _, _ in
+                syncRouteWithNowPlaying()
+            }
+        }
+    }
+
+
+    private func syncRouteWithNowPlaying() {
+        let hasSession = client.hasRecoverableNowPlayingSession
+
+        if hasSession {
+            if launcher.route == .shortcuts {
+                launcher.openNowPlaying()
+            }
+            launcher.consumeAutoOpenIfPossible(hasActiveSession: true)
+        } else if launcher.route == .nowPlaying {
+            launcher.showShortcuts()
         }
     }
 }

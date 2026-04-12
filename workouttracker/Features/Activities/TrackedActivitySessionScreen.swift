@@ -95,21 +95,21 @@ struct TrackedActivitySessionScreen: View {
                 }
                 .navigationDestination(isPresented: $showFinishSummary) {
                     TrackedActivityFinishSummaryView(sessionID: sessionID)
+//                    Text("Summary placeholder")
                 }
                 .onAppear {
                     let recoveryState = recoveryPlanner.recoveryState(for: session)
                     recoveryBannerMessage = recoveryBanner(for: session, state: recoveryState)
                     try? recorder.noteRecoveryOpened(session, context: modelContext)
                     WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
-                    WorkoutRemoteControlRouter.shared.refreshNowPlaying()
                     lastPersistedRoutePointCount = session.routePointCount
                     routeRecorder.sync(with: session)
                     healthKitAuthorizationService.refresh()
                 }
                 .onDisappear {
-                    persistRouteIfNeeded(for: session, force: true)
-                    routeRecorder.stopRecording(resetSession: false)
-                    WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
+//                    persistRouteIfNeeded(for: session, force: true)
+//                    routeRecorder.stopRecording(resetSession: false)
+//                    WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
                 }
                 .onChange(of: session.lifecycleStateRaw) { _, _ in
                     routeRecorder.sync(with: session)
@@ -351,7 +351,6 @@ struct TrackedActivitySessionScreen: View {
             try recorder.pause(session, context: modelContext)
             routeRecorder.sync(with: session)
             WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
-            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -362,7 +361,6 @@ struct TrackedActivitySessionScreen: View {
             try recorder.resume(session, context: modelContext)
             routeRecorder.sync(with: session)
             WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
-            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -372,17 +370,32 @@ struct TrackedActivitySessionScreen: View {
         do {
             persistRouteIfNeeded(for: session, force: true)
             try recorder.complete(session, context: modelContext)
-            routeRecorder.sync(with: session)
+            routeRecorder.stopRecording(resetSession: false)
             WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
-            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
-            healthExportBannerMessage = autoSaveToAppleHealth ? String(localized: "activities.session.health.auto_save_banner", defaultValue: "Apple Health auto-save will run after finish when permission is available.") : nil
-            showFinishSummary = true
+            healthKitAuthorizationService.refresh()
 
-            if autoSaveToAppleHealth {
-                Task {
-                    await runAutomaticHealthExport(for: session)
-                }
-            }
+            switch healthKitAuthorizationService.state {
+            case .authorized:
+                healthExportBannerMessage = autoSaveToAppleHealth
+                    ? String(localized: "activities.session.health.auto_save_banner", defaultValue: "Apple Health auto-save will run after the summary opens when permission is available.")
+                    : nil
+
+            case .notRequested:
+                healthExportBannerMessage = autoSaveToAppleHealth
+                    ? String(localized: "activities.session.health.auto_save_requires_permission", defaultValue: "Apple Health auto-save is enabled, but permission has not been granted yet. You can enable it from the summary screen.")
+                    : nil
+
+            case .denied:
+                healthExportBannerMessage = autoSaveToAppleHealth
+                    ? String(localized: "activities.session.health.auto_save_denied", defaultValue: "Apple Health auto-save is enabled, but access is currently denied. You can review this from the summary screen.")
+                    : nil
+
+            case .unavailable:
+                healthExportBannerMessage = autoSaveToAppleHealth
+                    ? String(localized: "activities.session.health.auto_save_deferred_banner", defaultValue: "Apple Health auto-save is enabled, but export was deferred so finish stays fast and reliable. You can save from the summary screen.")
+                    : nil            }
+
+            showFinishSummary = true
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -394,25 +407,9 @@ struct TrackedActivitySessionScreen: View {
             try recorder.discard(session, context: modelContext)
             routeRecorder.stopRecording(resetSession: false)
             WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
-            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
-        }
-    }
-
-    private func runAutomaticHealthExport(for session: TrackedActivitySession) async {
-        do {
-            let message = try await exportCoordinator.autoExportIfEnabled(
-                for: session,
-                isEnabled: autoSaveToAppleHealth,
-                context: modelContext
-            )
-            if let message {
-                healthExportBannerMessage = message
-            }
-        } catch {
-            healthExportBannerMessage = error.localizedDescription
         }
     }
 
@@ -432,8 +429,12 @@ struct TrackedActivitySessionScreen: View {
 
     private func persistRouteIfNeeded(for session: TrackedActivitySession, force: Bool) {
         let currentPointCount = routeRecorder.capturedPoints.count
-        guard force || currentPointCount - lastPersistedRoutePointCount >= 5 else { return }
         guard currentPointCount > 0 else { return }
+        if force {
+            guard currentPointCount != lastPersistedRoutePointCount else { return }
+        } else {
+            guard currentPointCount - lastPersistedRoutePointCount >= 5 else { return }
+        }
 
         do {
             try recorder.updateCapturedRoute(

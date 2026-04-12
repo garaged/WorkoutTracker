@@ -22,16 +22,27 @@ struct LiveHealthKitWorkoutRouteStoreProxy: HealthKitWorkoutRouteStoreProxy {
 
     private func insert(_ locations: [CLLocation], into builder: HKWorkoutRouteBuilder) async throws {
         guard !locations.isEmpty else { return }
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            builder.insertRouteData(locations) { success, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else if success {
-                    continuation.resume(returning: ())
-                } else {
-                    continuation.resume(throwing: HealthKitAuthorizationError.unknownSaveFailure)
+
+        let chunkSize = 100
+        var start = 0
+
+        while start < locations.count {
+            let end = min(start + chunkSize, locations.count)
+            let chunk = Array(locations[start..<end])
+
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                builder.insertRouteData(chunk) { success, error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else if success {
+                        continuation.resume(returning: ())
+                    } else {
+                        continuation.resume(throwing: HealthKitAuthorizationError.unknownSaveFailure)
+                    }
                 }
             }
+
+            start = end
         }
     }
 
@@ -64,32 +75,35 @@ struct HealthKitWorkoutRouteExportService {
         self.store = store
     }
 
-    func exportRouteIfAvailable(from session: TrackedActivitySession, associatingWith workout: HKWorkout) async throws -> HealthKitWorkoutRouteExportStatus {
+    func exportRouteIfAvailable(
+        from payload: TrackedActivityHealthExportPayload,
+        associatingWith workout: HKWorkout
+    ) async throws -> HealthKitWorkoutRouteExportStatus {
         guard store.isHealthDataAvailable() else {
             return .failed("Apple Health route data is not available on this device.")
         }
 
-        guard session.environment == .outdoor, session.activityKind.supportsDistance else {
+        guard payload.environment == .outdoor, payload.activityKind.supportsDistance else {
             return .notApplicable
         }
 
-        let locations = session.routePoints.map(\.location)
+        let locations = payload.routeLocations.map(\.clLocation)
         guard locations.count > 1 else {
             return .noRouteData
         }
 
         do {
-            try await store.saveRoute(for: workout, locations: locations, metadata: metadata(for: session))
+            try await store.saveRoute(for: workout, locations: locations, metadata: metadata(for: payload))
             return .saved
         } catch {
             return .failed(error.localizedDescription)
         }
     }
 
-    func metadata(for session: TrackedActivitySession) -> [String: Any]? {
-        guard session.routePointCount > 0 else { return nil }
+    func metadata(for payload: TrackedActivityHealthExportPayload) -> [String: Any]? {
+        guard payload.routePointCount > 0 else { return nil }
         return [
-            "org.garaged.workouttracker.route_point_count": session.routePointCount
+            "org.garaged.workouttracker.route_point_count": payload.routePointCount
         ]
     }
 }

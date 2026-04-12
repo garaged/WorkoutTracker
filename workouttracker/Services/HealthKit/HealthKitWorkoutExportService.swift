@@ -44,7 +44,7 @@ struct HealthKitWorkoutExportService {
         self.routeExportService = routeExportService
     }
 
-    func export(_ session: TrackedActivitySession) async throws -> HealthKitWorkoutExportOutcome {
+    func export(_ payload: TrackedActivityHealthExportPayload) async throws -> HealthKitWorkoutExportOutcome {
         guard store.isHealthDataAvailable() else {
             throw HealthKitWorkoutExportError.healthDataUnavailable
         }
@@ -53,29 +53,29 @@ struct HealthKitWorkoutExportService {
             throw HealthKitWorkoutExportError.permissionDenied
         }
 
-        let workout = try await saveWorkout(from: session)
+        let workout = try await saveWorkout(from: payload)
 
         let routeExportStatus = try await routeExportService.exportRouteIfAvailable(
-            from: session,
+            from: payload,
             associatingWith: workout
         )
         return HealthKitWorkoutExportOutcome(routeExportStatus: routeExportStatus)
     }
 
-    func saveWorkout(from session: TrackedActivitySession) async throws -> HKWorkout {
-        guard session.lifecycleState == .completed else {
+    func saveWorkout(from payload: TrackedActivityHealthExportPayload) async throws -> HKWorkout {
+        guard payload.lifecycleState == .completed else {
             throw HealthKitWorkoutExportError.sessionMustBeCompleted
         }
 
-        guard let startedAt = session.startedAt, let endedAt = session.endedAt else {
+        guard let startedAt = payload.startedAt, let endedAt = payload.endedAt else {
             throw HealthKitWorkoutExportError.sessionDatesUnavailable
         }
 
-        let activityType = try workoutActivityType(for: session.activityKind)
-        let totalEnergyBurned = session.activeEnergyKilocalories.map {
+        let activityType = try workoutActivityType(for: payload.activityKind)
+        let totalEnergyBurned = payload.activeEnergyKilocalories.map {
             HKQuantity(unit: .kilocalorie(), doubleValue: $0)
         }
-        let totalDistance = session.distanceMeters.map {
+        let totalDistance = payload.distanceMeters.map {
             HKQuantity(unit: .meter(), doubleValue: $0)
         }
 
@@ -85,7 +85,7 @@ struct HealthKitWorkoutExportService {
             endDate: endedAt,
             totalEnergyBurned: totalEnergyBurned,
             totalDistance: totalDistance,
-            metadata: metadata(for: session)
+            metadata: metadata(for: payload)
         )
 
         return try await store.saveWorkout(request)
@@ -104,10 +104,10 @@ struct HealthKitWorkoutExportService {
         }
     }
 
-    func metadata(for session: TrackedActivitySession) -> [String: Any]? {
+    func metadata(for payload: TrackedActivityHealthExportPayload) -> [String: Any]? {
         var values: [String: Any] = [:]
 
-        switch session.environment {
+        switch payload.environment {
         case .indoor:
             values[HKMetadataKeyIndoorWorkout] = true
         case .outdoor:
@@ -116,7 +116,7 @@ struct HealthKitWorkoutExportService {
             break
         }
 
-        if session.hasRecordedRoute {
+        if payload.hasRecordedRoute {
             values["org.garaged.workouttracker.has_route"] = true
         }
 

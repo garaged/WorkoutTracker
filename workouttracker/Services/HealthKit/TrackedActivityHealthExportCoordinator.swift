@@ -26,6 +26,11 @@ struct TrackedActivityHealthExportCoordinator {
         self.exportService = exportService
     }
 
+    @MainActor
+    private enum TrackedActivityHealthExportInFlight {
+        static var sessionIDs: Set<UUID> = []
+    }
+
     func autoExportIfEnabled(
         for session: TrackedActivitySession,
         isEnabled: Bool,
@@ -35,6 +40,8 @@ struct TrackedActivityHealthExportCoordinator {
         guard session.lifecycleState == .completed else { return nil }
         guard session.healthKitExportState != .pending else { return nil }
         guard session.healthKitExportState != .exported else { return nil }
+        guard !TrackedActivityHealthExportInFlight.sessionIDs.contains(session.id) else { return nil }
+
         return try await export(session, trigger: .automatic, context: context)
     }
 
@@ -43,12 +50,22 @@ struct TrackedActivityHealthExportCoordinator {
         trigger: TrackedActivityHealthExportTrigger,
         context: ModelContext
     ) async throws -> String {
+        guard !TrackedActivityHealthExportInFlight.sessionIDs.contains(session.id) else {
+            return successMessage(for: session, routeStatus: .notApplicable, trigger: trigger)
+        }
+
+        TrackedActivityHealthExportInFlight.sessionIDs.insert(session.id)
+        defer { TrackedActivityHealthExportInFlight.sessionIDs.remove(session.id) }
+
+        let payload = TrackedActivityHealthExportPayload.make(from: session)
+
         try recorder.updateHealthKitExportState(for: session, state: .pending, context: context)
 
         do {
-            let outcome = try await exportService.export(session)
+            let outcome = try await exportService.export(payload)
+
             try recorder.updateHealthKitExportState(for: session, state: .exported, context: context)
-            
+
             let routeUpdateDate = Date()
             switch outcome.routeExportStatus {
             case .saved:
@@ -67,7 +84,7 @@ struct TrackedActivityHealthExportCoordinator {
             }
 
             try? context.save()
-            
+
             return successMessage(for: session, routeStatus: outcome.routeExportStatus, trigger: trigger)
         } catch let exportError as HealthKitWorkoutExportError {
             let failedState: HealthKitExportState = {

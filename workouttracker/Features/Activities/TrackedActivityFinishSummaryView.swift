@@ -8,7 +8,10 @@ struct TrackedActivityFinishSummaryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
-    @Query private var trackedSessions: [TrackedActivitySession]
+    @AppStorage(TrackedActivityHealthPreferences.autoSaveCompletedActivitiesKey)
+    private var autoSaveToAppleHealth = false
+
+    @State private var session: TrackedActivitySession?
 
     @State private var distanceKilometersText = ""
     @State private var activeEnergyText = ""
@@ -20,28 +23,14 @@ struct TrackedActivityFinishSummaryView: View {
     @State private var isExporting = false
     @State private var healthExportMessage: String?
     @State private var isShowingDeleteConfirmation = false
+    @State private var showAppleHealthDetails = false
+    @State private var didAttemptDeferredAutoSave = false
 
     @StateObject private var healthKitAuthorizationService = HealthKitAuthorizationService()
 
     private let recorder = TrackedActivityRecorder()
     private let summaryBuilder = TrackedActivitySummaryBuilder()
     private let exportCoordinator = TrackedActivityHealthExportCoordinator()
-
-    init(sessionID: UUID) {
-        self.sessionID = sessionID
-
-        let targetSessionID = sessionID
-        _trackedSessions = Query(
-            filter: #Predicate<TrackedActivitySession> { session in
-                session.id == targetSessionID
-            },
-            sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)]
-        )
-    }
-
-    private var session: TrackedActivitySession? {
-        trackedSessions.first
-    }
 
     var body: some View {
         Group {
@@ -63,23 +52,36 @@ struct TrackedActivityFinishSummaryView: View {
                     if session.activityKind.supportsDistance || session.activityKind.supportsSteps || session.activityKind == .yoga {
                         Section(String(localized: "activities.summary.refine_metrics.section", defaultValue: "Refine metrics")) {
                             if session.activityKind.supportsDistance {
-                                TextField(String(localized: "activities.summary.refine_metrics.distance_km", defaultValue: "Distance (km)"), text: $distanceKilometersText)
-                                    .keyboardType(.decimalPad)
+                                TextField(
+                                    String(localized: "activities.summary.refine_metrics.distance_km", defaultValue: "Distance (km)"),
+                                    text: $distanceKilometersText
+                                )
+                                .keyboardType(.decimalPad)
                             }
 
-                            TextField(String(localized: "activities.summary.refine_metrics.active_energy", defaultValue: "Active energy (kcal)"), text: $activeEnergyText)
-                                .keyboardType(.decimalPad)
+                            TextField(
+                                String(localized: "activities.summary.refine_metrics.active_energy", defaultValue: "Active energy (kcal)"),
+                                text: $activeEnergyText
+                            )
+                            .keyboardType(.decimalPad)
 
                             if session.activityKind.supportsSteps {
-                                TextField(String(localized: "activities.summary.refine_metrics.steps", defaultValue: "Steps"), text: $stepCountText)
-                                    .keyboardType(.numberPad)
+                                TextField(
+                                    String(localized: "activities.summary.refine_metrics.steps", defaultValue: "Steps"),
+                                    text: $stepCountText
+                                )
+                                .keyboardType(.numberPad)
                             }
                         }
                     }
 
                     Section(String(localized: "activities.summary.notes.section", defaultValue: "Notes")) {
-                        TextField(String(localized: "activities.summary.notes.placeholder", defaultValue: "Optional notes"), text: $notes, axis: .vertical)
-                            .lineLimit(3...6)
+                        TextField(
+                            String(localized: "activities.summary.notes.placeholder", defaultValue: "Optional notes"),
+                            text: $notes,
+                            axis: .vertical
+                        )
+                        .lineLimit(3...6)
                     }
 
                     Section {
@@ -111,10 +113,6 @@ struct TrackedActivityFinishSummaryView: View {
                         }
                     }
                 }
-                .onAppear {
-                    loadFieldsIfNeeded(from: session)
-                    healthKitAuthorizationService.refresh()
-                }
                 .accessibilityIdentifier("TrackedActivity.FinishSummary.Screen")
                 .confirmationDialog(
                     session.localDeleteTitle,
@@ -128,11 +126,16 @@ struct TrackedActivityFinishSummaryView: View {
                 } message: {
                     Text(session.localDeleteMessage)
                 }
-                .alert(String(localized: "activities.summary.save_error.title", defaultValue: "Could not save summary"), isPresented: Binding(
-                    get: { errorMessage != nil },
-                    set: { if !$0 { errorMessage = nil } }
-                )) {
-                    Button(String(localized: "common.ok", defaultValue: "OK"), role: .cancel) { errorMessage = nil }
+                .alert(
+                    String(localized: "activities.summary.save_error.title", defaultValue: "Could not save summary"),
+                    isPresented: Binding(
+                        get: { errorMessage != nil },
+                        set: { if !$0 { errorMessage = nil } }
+                    )
+                ) {
+                    Button(String(localized: "common.ok", defaultValue: "OK"), role: .cancel) {
+                        errorMessage = nil
+                    }
                 } message: {
                     Text(errorMessage ?? String(localized: "common.unknown_error", defaultValue: "Unknown error"))
                 }
@@ -144,106 +147,194 @@ struct TrackedActivityFinishSummaryView: View {
                 )
             }
         }
+        .task(id: sessionID) {
+            reloadSession()
+            healthKitAuthorizationService.refresh()
+            await attemptDeferredAutoSaveIfNeeded()
+        }
     }
 
     @ViewBuilder
     private func appleHealthSection(for session: TrackedActivitySession) -> some View {
         Section(String(localized: "activities.health.title", defaultValue: "Apple Health")) {
-            LabeledContent(String(localized: "activities.health.permission", defaultValue: "Permission"), value: healthKitAuthorizationService.state.title)
-            LabeledContent(String(localized: "activities.health.workout_save_state", defaultValue: "Workout save state"), value: session.healthKitExportDisplayName)
+            LabeledContent(
+                String(localized: "activities.health.workout_save_state", defaultValue: "Workout save state"),
+                value: session.healthKitExportDisplayName
+            )
 
-            if session.environment == .outdoor && session.activityKind.supportsDistance {
-                LabeledContent(String(localized: "activities.health.captured_route", defaultValue: "Captured route"), value: session.capturedRouteDisplayValue)
-                LabeledContent(String(localized: "activities.health.route_attachment", defaultValue: "Route attachment"), value: session.routeAttachmentReadinessValue(using: healthKitAuthorizationService))
-            }
-
-            Text(session.healthKitExportHelperText)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Text(healthKitAuthorizationService.statusSummaryMessage)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if session.environment == .outdoor && session.activityKind.supportsDistance {
-                Text(session.routeAttachmentReadinessMessage(using: healthKitAuthorizationService))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text(String(localized: "activities.health.route_requirement", defaultValue: "Outdoor routes require Apple Health access for workout routes and location while using the app during the activity."))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            if let recoveryText = session.healthKitExportRecoveryText {
-                Text(recoveryText)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            if let healthExportMessage {
-                Text(healthExportMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            switch healthKitAuthorizationService.state {
-            case .unavailable:
-                EmptyView()
-
-            case .notRequested:
-                Button(String(localized: "activities.health.enable", defaultValue: "Enable Apple Health")) {
-                    Task { await requestAuthorization() }
+            Button {
+                showAppleHealthDetails.toggle()
+                if showAppleHealthDetails {
+                    healthKitAuthorizationService.refresh()
                 }
-                .buttonStyle(.borderedProminent)
-                .accessibilityIdentifier("trackedActivity.enableHealthKitButton")
+            } label: {
+                Text(
+                    showAppleHealthDetails
+                    ? String(localized: "activities.health.hide_details", defaultValue: "Hide Apple Health details")
+                    : String(localized: "activities.health.show_details", defaultValue: "Show Apple Health details")
+                )
+            }
+            .buttonStyle(.bordered)
 
-            case .denied:
-                Button(String(localized: "common.open_settings", defaultValue: "Open Settings")) {
-                    openSystemSettings()
+            if showAppleHealthDetails {
+                LabeledContent(
+                    String(localized: "activities.health.permission", defaultValue: "Permission"),
+                    value: healthKitAuthorizationService.state.title
+                )
+
+                if session.environment == .outdoor && session.activityKind.supportsDistance {
+                    LabeledContent(
+                        String(localized: "activities.health.captured_route", defaultValue: "Captured route"),
+                        value: session.capturedRouteDisplayValue
+                    )
+                    LabeledContent(
+                        String(localized: "activities.health.route_attachment", defaultValue: "Route attachment"),
+                        value: session.routeAttachmentReadinessValue(using: healthKitAuthorizationService)
+                    )
                 }
-                .buttonStyle(.bordered)
-                .accessibilityIdentifier("trackedActivity.openHealthSettingsButton")
 
-            case .authorized:
-                if session.healthKitExportState != .exported || session.hasLocalChangesSinceHealthKitExport {
-                    Button {
-                        Task { await exportToHealth(session) }
-                    } label: {
-                        if isExporting {
-                            Label(String(localized: "activities.health.saving", defaultValue: "Saving to Apple Health…"), systemImage: "heart.text.square")
-                        } else {
-                            Label(String(localized: "activities.health.save", defaultValue: "Save to Apple Health"), systemImage: "heart.text.square")
-                        }
+                Text(session.healthKitExportHelperText)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(healthKitAuthorizationService.statusSummaryMessage)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if session.environment == .outdoor && session.activityKind.supportsDistance {
+                    Text(session.routeAttachmentReadinessMessage(using: healthKitAuthorizationService))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text(String(localized: "activities.health.route_requirement", defaultValue: "Outdoor routes require Apple Health access for workout routes and location while using the app during the activity."))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if let recoveryText = session.healthKitExportRecoveryText {
+                    Text(recoveryText)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if let healthExportMessage {
+                    Text(healthExportMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                switch healthKitAuthorizationService.state {
+                case .unavailable:
+                    EmptyView()
+
+                case .notRequested:
+                    Button(String(localized: "activities.health.enable", defaultValue: "Enable Apple Health")) {
+                        Task { await requestAuthorization() }
                     }
                     .buttonStyle(.borderedProminent)
-                    .foregroundStyle(.white)
-                    .disabled(isExporting || session.lifecycleState != .completed || session.hasLocalChangesSinceHealthKitExport)
-                    .accessibilityIdentifier("trackedActivity.exportToHealthKitButton")
-                }
+                    .accessibilityIdentifier("trackedActivity.enableHealthKitButton")
 
-                if session.environment == .outdoor,
-                   session.activityKind.supportsDistance,
-                   let actionTitle = healthKitAuthorizationService.routePermissionActionTitle {
-                    Button(actionTitle) {
-                        switch healthKitAuthorizationService.routePermissionAction {
-                        case .requestAuthorization:
-                            Task { await requestAuthorization() }
-                        case .openSettings:
-                            openSystemSettings()
-                        case nil:
-                            break
-                        }
+                case .denied:
+                    Button(String(localized: "common.open_settings", defaultValue: "Open Settings")) {
+                        openSystemSettings()
                     }
                     .buttonStyle(.bordered)
+                    .accessibilityIdentifier("trackedActivity.openHealthSettingsButton")
+
+                case .authorized:
+                    if session.healthKitExportState != .exported || session.hasLocalChangesSinceHealthKitExport {
+                        Button {
+                            Task { await exportToHealth(session) }
+                        } label: {
+                            if isExporting {
+                                Label(
+                                    String(localized: "activities.health.saving", defaultValue: "Saving to Apple Health…"),
+                                    systemImage: "heart.text.square"
+                                )
+                            } else {
+                                Label(
+                                    String(localized: "activities.health.save", defaultValue: "Save to Apple Health"),
+                                    systemImage: "heart.text.square"
+                                )
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .foregroundStyle(.white)
+                        .disabled(isExporting || session.lifecycleState != .completed)
+                        .accessibilityIdentifier("trackedActivity.exportToHealthKitButton")
+                    }
+
+                    if session.environment == .outdoor,
+                       session.activityKind.supportsDistance,
+                       let actionTitle = healthKitAuthorizationService.routePermissionActionTitle {
+                        Button(actionTitle) {
+                            switch healthKitAuthorizationService.routePermissionAction {
+                            case .requestAuthorization:
+                                Task { await requestAuthorization() }
+                            case .openSettings:
+                                openSystemSettings()
+                            case nil:
+                                break
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                    }
                 }
             }
+        }
+    }
+
+    private func reloadSession() {
+        let targetSessionID = sessionID
+        let descriptor = FetchDescriptor<TrackedActivitySession>(
+            predicate: #Predicate<TrackedActivitySession> { session in
+                session.id == targetSessionID
+            },
+            sortBy: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)]
+        )
+
+        do {
+            let loaded = try modelContext.fetch(descriptor).first
+            session = loaded
+            if let loaded {
+                loadFieldsIfNeeded(from: loaded)
+            }
+        } catch {
+            session = nil
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func attemptDeferredAutoSaveIfNeeded() async {
+        guard !didAttemptDeferredAutoSave else { return }
+        guard autoSaveToAppleHealth else { return }
+        guard let session else { return }
+        guard session.lifecycleState == .completed else { return }
+        guard healthKitAuthorizationService.state == .authorized else { return }
+        guard !isExporting else { return }
+        guard session.healthKitExportState != .exported || session.hasLocalChangesSinceHealthKitExport else { return }
+
+        didAttemptDeferredAutoSave = true
+        isExporting = true
+        defer { isExporting = false }
+
+        do {
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            healthExportMessage = try await exportCoordinator.export(
+                session,
+                trigger: .automatic,
+                context: modelContext
+            )
+            reloadSession()
+            healthKitAuthorizationService.refresh()
+        } catch {
+            healthExportMessage = error.localizedDescription
         }
     }
 
@@ -281,6 +372,8 @@ struct TrackedActivityFinishSummaryView: View {
             saveConfirmationVisible = true
             errorMessage = nil
             healthExportMessage = nil
+            didAttemptDeferredAutoSave = false
+            reloadSession()
 
             Task { @MainActor in
                 try? await Task.sleep(nanoseconds: 1_500_000_000)
@@ -316,6 +409,9 @@ struct TrackedActivityFinishSummaryView: View {
         do {
             _ = try await healthKitAuthorizationService.requestAuthorization()
             healthExportMessage = nil
+            healthKitAuthorizationService.refresh()
+            reloadSession()
+            await attemptDeferredAutoSaveIfNeeded()
         } catch {
             healthExportMessage = error.localizedDescription
         }
@@ -332,6 +428,8 @@ struct TrackedActivityFinishSummaryView: View {
                 trigger: .manual,
                 context: modelContext
             )
+            reloadSession()
+            healthKitAuthorizationService.refresh()
         } catch {
             healthExportMessage = error.localizedDescription
         }

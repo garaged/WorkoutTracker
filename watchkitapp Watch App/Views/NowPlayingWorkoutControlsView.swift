@@ -24,7 +24,10 @@ struct NowPlayingWorkoutControlsView: View {
                 Button(String(localized: "watch.now_playing.action.back", defaultValue: "Back"), action: onClose)
             }
         }
-        .onAppear { client.start() }
+        .onAppear {
+            client.start()
+            client.requestState()
+        }
     }
 
     private var header: some View {
@@ -97,7 +100,6 @@ struct NowPlayingWorkoutControlsView: View {
                 Button {
                     let kind: WatchCommandKind = client.nowPlaying.isPaused ? .resumeTrackedActivity : .pauseTrackedActivity
                     client.send(.init(kind: kind, sessionID: client.nowPlaying.sessionID))
-                    client.requestState()
                 } label: {
                     Label(
                         presentation.trackedControlsPrimaryActionTitle(isPaused: client.nowPlaying.isPaused),
@@ -110,7 +112,6 @@ struct NowPlayingWorkoutControlsView: View {
 
                 Button {
                     client.send(.init(kind: .finishTrackedActivity, sessionID: client.nowPlaying.sessionID))
-                    client.requestState()
                 } label: {
                     Label(
                         String(localized: "watch.now_playing.action.finish", defaultValue: "Finish"),

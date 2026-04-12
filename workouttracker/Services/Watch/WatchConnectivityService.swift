@@ -15,6 +15,8 @@ final class WatchConnectivityService: NSObject, ObservableObject {
 
     private var latestState: WatchNowPlayingState = .inactive
     private var needsFlushLatestState: Bool = false
+    private var lastApplicationContextState: WatchNowPlayingState?
+    private var lastInteractiveState: WatchNowPlayingState?
 
     private let log = Logger(subsystem: "garaged.org.workouttracker", category: "WatchConnectivity")
 
@@ -32,7 +34,7 @@ final class WatchConnectivityService: NSObject, ObservableObject {
         // Small delayed flush to cover "activation finishes right after start()".
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 300_000_000)
-            self.flushLatestStateIfNeeded()
+            self.flushLatestStateIfNeeded(forceInteractive: session.isReachable)
         }
     }
 
@@ -49,7 +51,7 @@ final class WatchConnectivityService: NSObject, ObservableObject {
             return
         }
 
-        flush(state, via: session)
+        flush(state, via: session, forceInteractive: false)
     }
 
     func clearNowPlaying() {
@@ -63,33 +65,37 @@ final class WatchConnectivityService: NSObject, ObservableObject {
         log.debug("Flags paired=\(self.isPaired) installed=\(self.isWatchAppInstalled) reachable=\(self.isReachable)")
     }
 
-    private func flushLatestStateIfNeeded() {
+    private func flushLatestStateIfNeeded(forceInteractive: Bool = false) {
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
         guard session.activationState == .activated else { return }
 
-        guard needsFlushLatestState || latestState != .inactive else { return }
+        guard needsFlushLatestState || latestState != .inactive || forceInteractive else { return }
         needsFlushLatestState = false
-        flush(latestState, via: session)
+        flush(latestState, via: session, forceInteractive: forceInteractive)
     }
 
-    private func flush(_ state: WatchNowPlayingState, via session: WCSession) {
+    private func flush(_ state: WatchNowPlayingState, via session: WCSession, forceInteractive: Bool) {
         guard session.isPaired else { return }
         guard session.isWatchAppInstalled else {
             needsFlushLatestState = true
             return
         }
-        do {
-            try session.updateApplicationContext(WatchMessageCodec.encodeState(state))
-            log.debug("updateApplicationContext OK; active=\(state.isActiveSession)")
-        } catch {
-            needsFlushLatestState = true
-            log.error("updateApplicationContext failed: \(String(describing: error))")
-            return
+        if lastApplicationContextState != state {
+            do {
+                try session.updateApplicationContext(WatchMessageCodec.encodeState(state))
+                lastApplicationContextState = state
+                log.debug("updateApplicationContext OK; active=\(state.isActiveSession)")
+            } catch {
+                needsFlushLatestState = true
+                log.error("updateApplicationContext failed: \(String(describing: error))")
+                return
+            }
         }
 
         // Live push only when reachable (watch app open + phone app active).
-        if session.isReachable {
+        if session.isReachable, (forceInteractive || lastInteractiveState != state) {
+            lastInteractiveState = state
             session.sendMessage(WatchMessageCodec.encodeState(state),
                                 replyHandler: nil,
                                 errorHandler: { err in
@@ -99,11 +105,14 @@ final class WatchConnectivityService: NSObject, ObservableObject {
     }
 
     private func handleIncomingCommand(_ command: WatchCommand, reply: (([String: Any]) -> Void)?) {
-        if command.kind == .requestState {
-            reply?(WatchMessageCodec.encodeState(latestState))
-            return
-        }
+        // requestState must rebuild/push the latest phone-side state first; replying with a stale
+        // cached value makes the watch look disconnected even when the phone has an active session.
         onCommand?(command)
+
+        if command.kind == .requestState {
+            flushLatestStateIfNeeded(forceInteractive: true)
+        }
+
         reply?(WatchMessageCodec.encodeState(latestState))
     }
 }
@@ -115,7 +124,7 @@ extension WatchConnectivityService: WCSessionDelegate {
                              error: Error?) {
         Task { @MainActor in
             self.refreshFlags(from: session)
-            self.flushLatestStateIfNeeded()
+            self.flushLatestStateIfNeeded(forceInteractive: session.isReachable)
         }
     }
 
@@ -125,14 +134,14 @@ extension WatchConnectivityService: WCSessionDelegate {
         session.activate()
         Task { @MainActor in
             self.refreshFlags(from: session)
-            self.flushLatestStateIfNeeded()
+            self.flushLatestStateIfNeeded(forceInteractive: session.isReachable)
         }
     }
 
     nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
         Task { @MainActor in
             self.refreshFlags(from: session)
-            self.flushLatestStateIfNeeded()
+            self.flushLatestStateIfNeeded(forceInteractive: session.isReachable)
         }
     }
 

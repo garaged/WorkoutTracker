@@ -88,6 +88,12 @@ struct AppRootView: View {
             .onChange(of: sessions.count) { _, _ in
                 handleSessionsChanged()
             }
+            .onChange(of: watchSessionFingerprint) { _, _ in
+                handleWatchSessionFingerprintChanged()
+            }
+            .onChange(of: watchTrackedActivityFingerprint) { _, _ in
+                handleWatchTrackedActivityFingerprintChanged()
+            }
             .onChange(of: routines.count) { _, _ in
                 handleRoutinesChanged()
             }
@@ -493,6 +499,24 @@ struct AppRootView: View {
             .map { "\($0.id.uuidString)|\($0.name)|\($0.notes ?? "")" }
             .sorted()
     }
+
+    private var watchSessionFingerprint: [String] {
+        sessions
+            .map { session in
+                let ended = session.endedAt?.timeIntervalSince1970 ?? 0
+                let paused = session.isPaused ? "paused" : "live"
+                return "\(session.id.uuidString)|\(session.status.rawValue)|\(paused)|\(ended)"
+            }
+            .sorted()
+    }
+
+    private var watchTrackedActivityFingerprint: [String] {
+        trackedActivitySessions
+            .map { session in
+                "\(session.id.uuidString)|\(session.lifecycleStateRaw)|\(session.updatedAt.timeIntervalSince1970)|\(session.routePointCount)"
+            }
+            .sorted()
+    }
     
     private func handleOpenTimelineNotification(_ note: Notification) {
         guard let date = note.object as? Date else { return }
@@ -557,6 +581,7 @@ struct AppRootView: View {
         refreshPendingIntentURLIfNeeded()
         attemptPendingIntentRouteResolution()
         systemSurfaceSyncCoordinator.syncAll(context: modelContext)
+        WorkoutRemoteControlRouter.shared.refreshNowPlaying()
     }
 
     private func handleScenePhaseChange(_ oldPhase: ScenePhase, _ newPhase: ScenePhase) {
@@ -564,18 +589,31 @@ struct AppRootView: View {
             refreshPendingIntentURLIfNeeded()
             attemptPendingIntentRouteResolution()
             systemSurfaceSyncCoordinator.syncAll(context: modelContext)
+            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
             return
         }
 
         if oldPhase == .active {
             markTrackedActivitiesBackgroundedIfNeeded()
             systemSurfaceSyncCoordinator.syncLiveActivity(context: modelContext, force: true)
+            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
         }
     }
 
     private func handleSessionsChanged() {
         attemptPendingIntentRouteResolution()
         systemSurfaceSyncCoordinator.syncActiveSessionSurfaces(context: modelContext)
+        WorkoutRemoteControlRouter.shared.refreshNowPlaying()
+    }
+
+    private func handleWatchSessionFingerprintChanged() {
+        guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
+        WorkoutRemoteControlRouter.shared.refreshNowPlaying()
+    }
+
+    private func handleWatchTrackedActivityFingerprintChanged() {
+        guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
+        WorkoutRemoteControlRouter.shared.refreshNowPlaying()
     }
 
     private func markTrackedActivitiesBackgroundedIfNeeded() {

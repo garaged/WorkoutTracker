@@ -2198,6 +2198,17 @@
         }
       }
     },
+    "activities.health.hide_details" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hide Apple Health details"
+          }
+        }
+      }
+    },
     "activities.health.not_available" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -2513,6 +2524,17 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Saving to Apple Health…"
+          }
+        }
+      }
+    },
+    "activities.health.show_details" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Apple Health details"
           }
         }
       }
@@ -3356,7 +3378,46 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Apple Health auto-save will run after finish when permission is available."
+            "value" : "Apple Health auto-save will run after the summary opens when permission is available."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto-guardado en Apple Health correrá cuando se abra el resumen de la actividad si el permiso está otorgado para ello."
+          }
+        }
+      }
+    },
+    "activities.session.health.auto_save_deferred_banner" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Apple Health auto-save is enabled, but export was deferred so finish stays fast and reliable. You can save from the summary screen."
+          }
+        }
+      }
+    },
+    "activities.session.health.auto_save_denied" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Apple Health auto-save is enabled, but access is currently denied. You can review this from the summary screen."
+          }
+        }
+      }
+    },
+    "activities.session.health.auto_save_requires_permission" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Apple Health auto-save is enabled, but permission has not been granted yet. You can enable it from the summary screen."
           }
         }
       }

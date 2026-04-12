@@ -12,36 +12,39 @@ import WatchKit
 ///   watch controls feel live even before the next mirrored state arrives.
 @MainActor
 final class WatchConnectivityClient: NSObject, ObservableObject {
-
+    
     static let shared = WatchConnectivityClient()
-
+    
     @Published private(set) var isSupported: Bool = WCSession.isSupported()
     @Published private(set) var isReachable: Bool = false
     @Published private(set) var canSendCommands: Bool = false
     @Published private(set) var nowPlaying: WatchNowPlayingState = .inactive
     @Published private(set) var lastStateReceivedAt: Date?
-
+    
     private var sourceNowPlaying: WatchNowPlayingState = .inactive
     private var lastKnownActiveSessionState: WatchNowPlayingState?
     private var countdownTask: Task<Void, Never>?
     private let recoveryEvaluator = WatchRecoveryEvaluator(recoveryGraceInterval: 20)
     private var activeUITestSeed: WatchUITestSeed?
-
+    private var hasStarted = false
+    private var pendingStateRequest = false
+    private var lastRequestedStateAt: Date?
+    
     private override init() {
         super.init()
     }
-
+    
     deinit {
         countdownTask?.cancel()
     }
-
+    
     var hasRecoverableNowPlayingSession: Bool {
         recoveryEvaluator.hasRecoverableNowPlayingSession(
             displayedIsActiveSession: nowPlaying.isActiveSession,
             isRecoveringRecentSession: isRecoveringRecentSession
         )
     }
-
+    
     var isRecoveringRecentSession: Bool {
         recoveryEvaluator.isRecoveringRecentSession(
             sourceIsActiveSession: sourceNowPlaying.isActiveSession,
@@ -51,7 +54,7 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
             lastStateReceivedAt: lastStateReceivedAt
         )
     }
-
+    
     var transportStatusText: String? {
         switch recoveryEvaluator.transportStatus(
             isRecoveringRecentSession: isRecoveringRecentSession,
@@ -68,7 +71,7 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
             return nil
         }
     }
-
+    
     var transportStatusSymbol: String {
         switch recoveryEvaluator.transportStatus(
             isRecoveringRecentSession: isRecoveringRecentSession,
@@ -85,7 +88,7 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
             return "checkmark.circle"
         }
     }
-
+    
     var trackedActivityStatusText: String {
         switch recoveryEvaluator.trackedActivityStatus(
             isPaused: nowPlaying.isPaused,
@@ -101,44 +104,51 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
             return String(localized: "watch.now_playing.state.tracking_live_on_phone", defaultValue: "Tracking live on iPhone")
         }
     }
-
+    
     private var isTransportHealthy: Bool {
         recoveryEvaluator.isTransportHealthy(canSendCommands: canSendCommands, isReachable: isReachable)
     }
-
+    
     func start() {
         if let seed = WatchUITestSeed.current {
             applyUITestSeed(seed)
             return
         }
-
+        
+        guard !hasStarted else {
+            requestState()
+            return
+        }
+        hasStarted = true
+        
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
         session.delegate = self
         session.activate()
-
+        
         refreshTransportState(from: session)
-
+        
         let ctx = session.receivedApplicationContext
         if let state = WatchMessageCodec.decodeState(from: ctx) {
             applyReceivedState(state)
         }
-
+        
         requestState()
     }
-
+    
     func requestState() {
-        sendInteractive(.init(kind: .requestState))
+        pendingStateRequest = true
+        flushPendingStateRequestIfPossible()
     }
-
+    
     func send(_ command: WatchCommand) {
         if activeUITestSeed != nil { return }
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
         refreshTransportState(from: session)
-
+        
         guard canSendCommands else { return }
-
+        
         session.sendMessage(
             WatchMessageCodec.encodeCommand(command),
             replyHandler: { [weak self] reply in
@@ -151,13 +161,15 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
                 Task { @MainActor in
                     guard let self else { return }
                     self.refreshTransportState(from: session)
-                    self.enqueueBackgroundDeliveryIfNeeded(command, via: session)
+                    if command.kind != .requestState {
+                        self.requestState()
+                    }
                 }
             }
         )
     }
-
-
+    
+    
     func applyUITestSeed(_ seed: WatchUITestSeed) {
         activeUITestSeed = seed
         isSupported = true
@@ -169,15 +181,15 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
         syncTickerForCurrentState()
         recomputeDisplayedState(playFinishHapticIfNeeded: false)
     }
-
+    
     private func sendInteractive(_ command: WatchCommand) {
         if activeUITestSeed != nil { return }
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
         refreshTransportState(from: session)
-
+        
         guard canSendCommands else { return }
-
+        
         session.sendMessage(
             WatchMessageCodec.encodeCommand(command),
             replyHandler: { [weak self] reply in
@@ -190,47 +202,56 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
                 Task { @MainActor in
                     guard let self else { return }
                     self.refreshTransportState(from: session)
+                    self.pendingStateRequest = true
                 }
             }
         )
     }
-
-    private func enqueueBackgroundDeliveryIfNeeded(_ command: WatchCommand, via session: WCSession) {
-        guard shouldBackgroundDeliver(command) else { return }
-        session.transferUserInfo(WatchMessageCodec.encodeCommand(command))
-    }
-
-    private func shouldBackgroundDeliver(_ command: WatchCommand) -> Bool {
-        switch command.kind {
-        case .requestState:
-            return false
-        case .toggleRestTimer, .markSetComplete, .nextSet, .previousSet,
-             .openCurrentSession, .resumeCurrentSession, .startRoutine,
-             .startTrackedActivity, .resumeCurrentTrackedActivity,
-             .pauseTrackedActivity, .resumeTrackedActivity, .finishTrackedActivity:
-            return true
+    
+    
+    private func flushPendingStateRequestIfPossible() {
+        guard pendingStateRequest else { return }
+        if activeUITestSeed != nil {
+            pendingStateRequest = false
+            return
         }
+        guard WCSession.isSupported() else { return }
+        
+        let now = Date()
+        if let lastRequestedStateAt, now.timeIntervalSince(lastRequestedStateAt) < 1.0 {
+            return
+        }
+        
+        let session = WCSession.default
+        guard session.activationState == .activated else { return }
+        
+        pendingStateRequest = false
+        lastRequestedStateAt = now
+        sendInteractive(.init(kind: .requestState))
     }
-
+    
     private func refreshTransportState(from session: WCSession) {
         isReachable = session.isReachable
-        canSendCommands = session.activationState == .activated
+        canSendCommands = session.activationState == .activated && session.isReachable
+        if session.activationState == .activated {
+            flushPendingStateRequestIfPossible()
+        }
     }
-
+    
     private func applyReceivedState(_ state: WatchNowPlayingState) {
         sourceNowPlaying = state
         lastStateReceivedAt = Date()
-
+        
         if state.isActiveSession {
             lastKnownActiveSessionState = state
         } else if isTransportHealthy {
             lastKnownActiveSessionState = nil
         }
-
+        
         syncTickerForCurrentState()
         recomputeDisplayedState(playFinishHapticIfNeeded: false)
     }
-
+    
     private func syncTickerForCurrentState() {
         if recoveryEvaluator.shouldRunLocalTicker(
             for: .init(
@@ -249,7 +270,7 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
             stopCountdown()
         }
     }
-
+    
     private func startCountdownIfNeeded() {
         guard countdownTask == nil else { return }
         countdownTask = Task { @MainActor [weak self] in
@@ -262,31 +283,31 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
             }
         }
     }
-
+    
     private func stopCountdown() {
         countdownTask?.cancel()
         countdownTask = nil
     }
-
+    
     private func displayedStateSource() -> WatchNowPlayingState {
         if sourceNowPlaying.isActiveSession {
             return sourceNowPlaying
         }
-
+        
         if isRecoveringRecentSession, let lastKnownActiveSessionState {
             return lastKnownActiveSessionState
         }
-
+        
         return sourceNowPlaying
     }
-
+    
     private func recomputeDisplayedState(playFinishHapticIfNeeded: Bool) {
         let previous = nowPlaying
         var next = displayedStateSource()
-
+        
         if next.isRestRunning, let endEpoch = next.restEndsAtEpochSeconds {
             let remaining = max(0, Int(Date(timeIntervalSince1970: endEpoch).timeIntervalSinceNow.rounded(.up)))
-
+            
             if remaining > 0 {
                 next.restRemainingSeconds = remaining
             } else {
@@ -294,7 +315,7 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
                 next.restRemainingSeconds = nil
             }
         }
-
+        
         if next.isTrackedActivitySession,
            next.isActiveSession,
            !next.isPaused,
@@ -303,9 +324,9 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
             let delta = max(0, Int(Date().timeIntervalSince1970 - baselineEpoch))
             next.elapsedSeconds = max(0, baselineSeconds + delta)
         }
-
+        
         nowPlaying = next
-
+        
         if playFinishHapticIfNeeded,
            previous.isRestRunning,
            (previous.restRemainingSeconds ?? 1) > 0,
@@ -324,6 +345,7 @@ extension WatchConnectivityClient: WCSessionDelegate {
                              error: Error?) {
         Task { @MainActor in
             self.refreshTransportState(from: session)
+            self.requestState()
         }
     }
 
@@ -342,6 +364,9 @@ extension WatchConnectivityClient: WCSessionDelegate {
     nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
         Task { @MainActor in
             self.refreshTransportState(from: session)
+            if session.isReachable {
+                self.requestState()
+            }
         }
     }
 

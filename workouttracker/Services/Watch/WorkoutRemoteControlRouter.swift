@@ -19,6 +19,11 @@ final class WorkoutRemoteControlRouter {
         var exerciseID: UUID?
         var setID: UUID?
     }
+
+    private enum FocusSource: Equatable {
+        case strength(UUID)
+        case tracked(UUID)
+    }
     
     // “Pinned” strength session: set by the UI when the user is in the workout screen.
     // This remains the most reliable signal for strength remote control.
@@ -28,12 +33,20 @@ final class WorkoutRemoteControlRouter {
     
     private var cursorBySessionID: [UUID: Cursor] = [:]
     private var cancellables: Set<AnyCancellable> = []
+    private var cachedQuickStartRoutines: [WatchRoutineSummary]?
+    private var lastPushedState: WatchNowPlayingState?
+    private var lastHeartbeatAt: Date?
+    private var lastFocusedSource: FocusSource?
     
     private init() {}
     
     func start(modelContainer: ModelContainer) {
         guard container == nil else { return } // idempotent
         container = modelContainer
+        cachedQuickStartRoutines = nil
+        lastPushedState = nil
+        lastHeartbeatAt = nil
+        lastFocusedSource = nil
         
         WatchConnectivityService.shared.start()
         WatchConnectivityService.shared.onCommand = { [weak self] cmd in
@@ -49,11 +62,11 @@ final class WorkoutRemoteControlRouter {
             .sink { [weak self] _ in self?.pushNowPlayingIfNeeded() }
             .store(in: &cancellables)
         
-        // Heartbeat: keeps watch state fresh even if UI didn’t call updateCursor yet.
-        Timer.publish(every: 2.0, on: .main, in: .common)
+        // Slow heartbeat: fills recovery gaps, but avoid rebuilding/pushing watch state too often.
+        Timer.publish(every: 8.0, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
-                self?.pushNowPlayingIfNeeded()
+                self?.heartbeatRefreshNowPlayingIfNeeded()
             }
             .store(in: &cancellables)
         
@@ -64,6 +77,7 @@ final class WorkoutRemoteControlRouter {
     func updateCursor(sessionID: UUID, exerciseID: UUID?, setID: UUID?) {
         pinnedTrackedActivitySessionID = nil
         pinnedSessionID = sessionID
+        lastFocusedSource = .strength(sessionID)
         cursorBySessionID[sessionID] = Cursor(exerciseID: exerciseID, setID: setID)
         pushNowPlayingIfNeeded()
     }
@@ -71,12 +85,14 @@ final class WorkoutRemoteControlRouter {
     /// Call when workout ends or user leaves the workout screen.
     func clearNowPlaying(sessionID: UUID) {
         if pinnedSessionID == sessionID { pinnedSessionID = nil }
+        if lastFocusedSource == .strength(sessionID) { lastFocusedSource = nil }
         pushNowPlayingIfNeeded()
     }
 
     func focusTrackedActivity(sessionID: UUID) {
         pinnedSessionID = nil
         pinnedTrackedActivitySessionID = sessionID
+        lastFocusedSource = .tracked(sessionID)
         pushNowPlayingIfNeeded()
     }
 
@@ -84,10 +100,20 @@ final class WorkoutRemoteControlRouter {
         if pinnedTrackedActivitySessionID == sessionID {
             pinnedTrackedActivitySessionID = nil
         }
+        if lastFocusedSource == .tracked(sessionID) { lastFocusedSource = nil }
         pushNowPlayingIfNeeded()
     }
 
     func refreshNowPlaying() {
+        pushNowPlayingIfNeeded()
+    }
+
+    private func heartbeatRefreshNowPlayingIfNeeded() {
+        let now = Date()
+        if let lastHeartbeatAt, now.timeIntervalSince(lastHeartbeatAt) < 6.0 {
+            return
+        }
+        lastHeartbeatAt = now
         pushNowPlayingIfNeeded()
     }
     
@@ -374,34 +400,76 @@ final class WorkoutRemoteControlRouter {
         guard let container else { return }
         let context = ModelContext(container)
 
-        if let trackedSession = resolvedPinnedTrackedActivitySession(context: context),
-           trackedSession.lifecycleState == .inProgress || trackedSession.lifecycleState == .paused {
-            pushNowPlaying(for: trackedSession, context: context)
-            return
+        switch preferredPresentationSource(context: context) {
+        case .strength(let session):
+            ensureCursorExists(for: session)
+            pushNowPlaying(for: session, context: context)
+        case .tracked(let session):
+            pushNowPlaying(for: session, context: context)
+        case .none:
+            WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
         }
-
-        if let session = resolvedPinnedSession(context: context) {
-            if isLaunchable(session) || pinnedSessionID == session.id {
-                ensureCursorExists(for: session)
-                pushNowPlaying(for: session, context: context)
-                return
-            }
-        }
-
-        if let strengthSession = preferredActiveSession(context: context) {
-            ensureCursorExists(for: strengthSession)
-            pushNowPlaying(for: strengthSession, context: context)
-            return
-        }
-
-        if let trackedSession = preferredActiveTrackedActivitySession(context: context) {
-            pushNowPlaying(for: trackedSession, context: context)
-            return
-        }
-
-        WatchConnectivityService.shared.pushNowPlayingState(makeInactiveState(context: context))
     }
-    
+
+    private enum PresentationSource {
+        case strength(WorkoutSession)
+        case tracked(TrackedActivitySession)
+    }
+
+    private func preferredPresentationSource(context: ModelContext) -> PresentationSource? {
+        if let focused = preferredFocusedSource(context: context) {
+            return focused
+        }
+
+        if let session = resolvedPinnedSession(context: context), isLaunchable(session) || pinnedSessionID == session.id {
+            return .strength(session)
+        }
+
+        if let tracked = resolvedPinnedTrackedActivitySession(context: context),
+           tracked.lifecycleState == .inProgress || tracked.lifecycleState == .paused {
+            return .tracked(tracked)
+        }
+
+        let strength = preferredActiveSession(context: context)
+        let tracked = preferredActiveTrackedActivitySession(context: context)
+
+        switch (strength, tracked) {
+        case let (session?, nil):
+            return .strength(session)
+        case let (nil, trackedSession?):
+            return .tracked(trackedSession)
+        case let (session?, trackedSession?):
+            let strengthDate = session.startedAt
+            let trackedDate = trackedSession.updatedAt
+            return trackedDate >= strengthDate ? .tracked(trackedSession) : .strength(session)
+        case (nil, nil):
+            return nil
+        }
+    }
+
+    private func preferredFocusedSource(context: ModelContext) -> PresentationSource? {
+        guard let lastFocusedSource else { return nil }
+
+        switch lastFocusedSource {
+        case .strength(let sessionID):
+            guard let session = fetchSession(id: sessionID, context: context),
+                  isLaunchable(session) || pinnedSessionID == session.id else {
+                if pinnedSessionID == sessionID { pinnedSessionID = nil }
+                self.lastFocusedSource = nil
+                return nil
+            }
+            return .strength(session)
+        case .tracked(let sessionID):
+            guard let session = fetchTrackedActivitySession(id: sessionID, context: context),
+                  session.lifecycleState == .inProgress || session.lifecycleState == .paused else {
+                if pinnedTrackedActivitySessionID == sessionID { pinnedTrackedActivitySessionID = nil }
+                self.lastFocusedSource = nil
+                return nil
+            }
+            return .tracked(session)
+        }
+    }
+
     private func pushNowPlaying(for session: WorkoutSession, context: ModelContext? = nil) {
         WatchConnectivityService.shared.pushNowPlayingState(makeWatchState(for: session, context: context))
     }
@@ -592,6 +660,7 @@ extension WorkoutRemoteControlRouter {
         }
 
         pinnedSessionID = session.id
+        lastFocusedSource = .strength(session.id)
         ensureCursorExists(for: session)
 
         if cmd.kind == .resumeCurrentSession {
@@ -623,6 +692,7 @@ extension WorkoutRemoteControlRouter {
 
         pinnedTrackedActivitySessionID = nil
         pinnedSessionID = session.id
+        lastFocusedSource = .strength(session.id)
         ensureCursorExists(for: session)
         stagePhoneOpen(route: route)
         syncLiveActivity(context: context)
@@ -645,6 +715,7 @@ extension WorkoutRemoteControlRouter {
 
         pinnedSessionID = nil
         pinnedTrackedActivitySessionID = session.id
+        lastFocusedSource = .tracked(session.id)
         pushNowPlaying(for: session, context: context)
     }
 
@@ -660,6 +731,7 @@ extension WorkoutRemoteControlRouter {
 
         pinnedSessionID = nil
         pinnedTrackedActivitySessionID = session.id
+        lastFocusedSource = .tracked(session.id)
         pushNowPlaying(for: session, context: context)
     }
 
@@ -673,17 +745,22 @@ extension WorkoutRemoteControlRouter {
         case .pauseTrackedActivity:
             try? trackedActivityRecorder.pause(session, context: context)
             pinnedTrackedActivitySessionID = session.id
+            lastFocusedSource = .tracked(session.id)
             pushNowPlaying(for: session, context: context)
 
         case .resumeTrackedActivity:
             try? trackedActivityRecorder.resume(session, context: context)
             pinnedTrackedActivitySessionID = session.id
+            lastFocusedSource = .tracked(session.id)
             pushNowPlaying(for: session, context: context)
 
         case .finishTrackedActivity:
             try? trackedActivityRecorder.complete(session, context: context)
             if pinnedTrackedActivitySessionID == session.id {
                 pinnedTrackedActivitySessionID = nil
+            }
+            if lastFocusedSource == .tracked(session.id) {
+                lastFocusedSource = nil
             }
             pushNowPlayingIfNeeded()
 
