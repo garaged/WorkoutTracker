@@ -3,8 +3,17 @@ import Foundation
 enum WidgetDeepLinks {
     static let homeURL = URL(string: "workouttracker://home")!
 
+    #if os(watchOS)
+    static let watchShortcutsURL = URL(string: "workouttrackerwatch://shortcuts")!
+    static let watchNowPlayingURL = URL(string: "workouttrackerwatch://now-playing")!
+    #endif
+
     static func preferredURL(for session: WorkoutWidgetSnapshot.ActiveSession?) -> URL {
-        preferredLaunchURL(for: session) ?? homeURL
+        #if os(watchOS)
+        return session == nil ? watchShortcutsURL : watchNowPlayingURL
+        #else
+        return preferredLaunchURL(for: session) ?? homeURL
+        #endif
     }
 
     static func preferredLaunchURL(for session: WorkoutWidgetSnapshot.ActiveSession?) -> URL? {
@@ -28,7 +37,11 @@ enum WidgetDeepLinks {
     }
 
     static func streakURL() -> URL {
-        homeURL
+        #if os(watchOS)
+        return watchShortcutsURL
+        #else
+        return homeURL
+        #endif
     }
 
     private static func validatedURL(from rawValue: String?) -> URL? {

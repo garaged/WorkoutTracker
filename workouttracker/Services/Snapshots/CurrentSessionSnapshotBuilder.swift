@@ -1,20 +1,31 @@
 import Foundation
 import SwiftData
 
+@MainActor
 struct CurrentSessionSnapshotBuilder {
     private let calendar: Calendar
-    private let sessionResumePlanner: SessionResumePlanner
-    private let systemIntegrationRouteResolver: SystemIntegrationRouteResolver
+        private let sessionResumePlanner: SessionResumePlanner
+        private let systemIntegrationRouteResolver: SystemIntegrationRouteResolver
+        private let trackedActivityRecorder: TrackedActivityRecorder
 
-    init(
-        calendar: Calendar = .current,
-        sessionResumePlanner: SessionResumePlanner = SessionResumePlanner(),
-        systemIntegrationRouteResolver: SystemIntegrationRouteResolver = SystemIntegrationRouteResolver()
-    ) {
-        self.calendar = calendar
-        self.sessionResumePlanner = sessionResumePlanner
-        self.systemIntegrationRouteResolver = systemIntegrationRouteResolver
-    }
+        init(
+            calendar: Calendar,
+            sessionResumePlanner: SessionResumePlanner,
+            systemIntegrationRouteResolver: SystemIntegrationRouteResolver,
+            trackedActivityRecorder: TrackedActivityRecorder
+        ) {
+            self.calendar = calendar
+            self.sessionResumePlanner = sessionResumePlanner
+            self.systemIntegrationRouteResolver = systemIntegrationRouteResolver
+            self.trackedActivityRecorder = trackedActivityRecorder
+        }
+
+        init() {
+            self.calendar = .current
+            self.sessionResumePlanner = SessionResumePlanner()
+            self.systemIntegrationRouteResolver = SystemIntegrationRouteResolver()
+            self.trackedActivityRecorder = TrackedActivityRecorder()
+        }
 
     @MainActor
     func build(context: ModelContext) -> CurrentSessionSnapshot {
@@ -27,9 +38,14 @@ struct CurrentSessionSnapshotBuilder {
     func buildWidgetSnapshot(context: ModelContext) -> WidgetExternalSnapshot {
         let sessions = (try? context.fetch(FetchDescriptor<WorkoutSession>())) ?? []
         let activities = (try? context.fetch(FetchDescriptor<Activity>())) ?? []
+        let trackedActivitySessions = (try? context.fetch(FetchDescriptor<TrackedActivitySession>())) ?? []
         let routines = (try? context.fetch(FetchDescriptor<WorkoutRoutine>())) ?? []
         let activitiesByID = Dictionary(uniqueKeysWithValues: activities.map { ($0.id, $0) })
-        let currentSession = build(sessions: sessions, activities: activities)
+        let currentSession = buildWidgetCurrentSession(
+            sessions: sessions,
+            activities: activities,
+            trackedActivitySessions: trackedActivitySessions
+        )
 
         let progressSummary = (try? ProgressSummaryService(calendar: calendar).summarize(weeksBack: 12, context: context))
         let workoutsThisWeek = progressSummary?.weeks.last?.workoutsCompleted ?? 0
@@ -41,6 +57,7 @@ struct CurrentSessionSnapshotBuilder {
             workoutsThisWeek: workoutsThisWeek,
             validateRoutes: true,
             sessions: sessions,
+            trackedActivitySessions: trackedActivitySessions,
             routines: routines,
             activitiesByID: activitiesByID
         )
@@ -62,6 +79,37 @@ struct CurrentSessionSnapshotBuilder {
             workoutsThisWeek: preservedWorkoutsThisWeek,
             validateRoutes: false,
             sessions: [],
+            trackedActivitySessions: [],
+            routines: [],
+            activitiesByID: [:]
+        )
+    }
+
+    @MainActor
+    func buildWidgetActiveSessionSnapshot(
+        context: ModelContext,
+        preservedCurrentStreakDays: Int,
+        preservedLongestStreakDays: Int,
+        preservedWorkoutsThisWeek: Int
+    ) -> WidgetExternalSnapshot {
+        let sessions = (try? context.fetch(FetchDescriptor<WorkoutSession>())) ?? []
+        let activities = (try? context.fetch(FetchDescriptor<Activity>())) ?? []
+        let trackedActivitySessions = (try? context.fetch(FetchDescriptor<TrackedActivitySession>())) ?? []
+
+        let currentSession = buildWidgetCurrentSession(
+            sessions: sessions,
+            activities: activities,
+            trackedActivitySessions: trackedActivitySessions
+        )
+
+        return makeWidgetSnapshot(
+            currentSession: currentSession,
+            currentStreakDays: preservedCurrentStreakDays,
+            longestStreakDays: preservedLongestStreakDays,
+            workoutsThisWeek: preservedWorkoutsThisWeek,
+            validateRoutes: false,
+            sessions: [],
+            trackedActivitySessions: [],
             routines: [],
             activitiesByID: [:]
         )
@@ -131,6 +179,55 @@ struct CurrentSessionSnapshotBuilder {
         )
     }
 
+
+    @MainActor
+    private func buildWidgetCurrentSession(
+        sessions: [WorkoutSession],
+        activities: [Activity],
+        trackedActivitySessions: [TrackedActivitySession]
+    ) -> CurrentSessionSnapshot {
+        let strengthSnapshot = build(sessions: sessions, activities: activities)
+        if strengthSnapshot.sessionID != nil {
+            return strengthSnapshot
+        }
+
+        guard let trackedSession = preferredWidgetTrackedActivitySession(from: trackedActivitySessions) else {
+            return .empty
+        }
+
+        let liveTotals = trackedActivityRecorder.liveTotals(for: trackedSession)
+        let subtitle = trackedSession.environment == .unspecified ? nil : trackedSession.environment.displayName
+        let launchRoute: AppRoute = .trackedActivity(sessionID: trackedSession.id)
+
+        return CurrentSessionSnapshot(
+            sessionID: trackedSession.id,
+            sessionTitle: trackedSession.activityKind.displayName,
+            currentExerciseName: subtitle,
+            currentSetIndex: nil,
+            totalSets: nil,
+            elapsedSeconds: liveTotals.elapsedDuration,
+            restState: .inactive,
+            restSeconds: nil,
+            isResumable: trackedSession.lifecycleState == .inProgress || trackedSession.lifecycleState == .paused,
+            isFinishable: trackedSession.lifecycleState == .inProgress || trackedSession.lifecycleState == .paused,
+            openRoute: launchRoute,
+            resumeRoute: launchRoute,
+            restRoute: nil
+        )
+    }
+
+    private func preferredWidgetTrackedActivitySession(
+        from trackedActivitySessions: [TrackedActivitySession]
+    ) -> TrackedActivitySession? {
+        trackedActivitySessions
+            .filter { $0.lifecycleState == .inProgress || $0.lifecycleState == .paused }
+            .sorted { lhs, rhs in
+                if lhs.updatedAt != rhs.updatedAt { return lhs.updatedAt > rhs.updatedAt }
+                return lhs.id.uuidString > rhs.id.uuidString
+            }
+            .first
+    }
+
     private func widgetRestState(for state: CurrentSessionSnapshot.RestState) -> WidgetExternalSnapshot.ActiveSession.RestState {
         switch state {
         case .inactive: .inactive
@@ -146,6 +243,7 @@ struct CurrentSessionSnapshotBuilder {
         workoutsThisWeek: Int,
         validateRoutes: Bool,
         sessions: [WorkoutSession],
+        trackedActivitySessions: [TrackedActivitySession],
         routines: [WorkoutRoutine],
         activitiesByID: [UUID: Activity]
     ) -> WidgetExternalSnapshot {
@@ -153,6 +251,7 @@ struct CurrentSessionSnapshotBuilder {
             from: currentSession,
             validateRoutes: validateRoutes,
             sessions: sessions,
+            trackedActivitySessions: trackedActivitySessions,
             routines: routines,
             activitiesByID: activitiesByID
         )
@@ -173,6 +272,7 @@ struct CurrentSessionSnapshotBuilder {
         from currentSession: CurrentSessionSnapshot,
         validateRoutes: Bool,
         sessions: [WorkoutSession],
+        trackedActivitySessions: [TrackedActivitySession],
         routines: [WorkoutRoutine],
         activitiesByID: [UUID: Activity]
     ) -> WidgetExternalSnapshot.ActiveSession? {
@@ -183,6 +283,7 @@ struct CurrentSessionSnapshotBuilder {
             expectedSessionID: sessionID,
             validateRoute: validateRoutes,
             sessions: sessions,
+            trackedActivitySessions: trackedActivitySessions,
             routines: routines,
             activitiesByID: activitiesByID
         )
@@ -193,6 +294,7 @@ struct CurrentSessionSnapshotBuilder {
             expectedSessionID: sessionID,
             validateRoute: validateRoutes,
             sessions: sessions,
+            trackedActivitySessions: trackedActivitySessions,
             routines: routines,
             activitiesByID: activitiesByID
         )
@@ -201,6 +303,7 @@ struct CurrentSessionSnapshotBuilder {
             expectedSessionID: sessionID,
             validateRoute: validateRoutes,
             sessions: sessions,
+            trackedActivitySessions: trackedActivitySessions,
             routines: routines,
             activitiesByID: activitiesByID
         )
@@ -227,6 +330,7 @@ struct CurrentSessionSnapshotBuilder {
         expectedSessionID: UUID,
         validateRoute: Bool,
         sessions: [WorkoutSession],
+        trackedActivitySessions: [TrackedActivitySession],
         routines: [WorkoutRoutine],
         activitiesByID: [UUID: Activity]
     ) -> String? {
@@ -239,6 +343,7 @@ struct CurrentSessionSnapshotBuilder {
             for: route,
             expectedSessionID: expectedSessionID,
             sessions: sessions,
+            trackedActivitySessions: trackedActivitySessions,
             routines: routines,
             activitiesByID: activitiesByID
         )
@@ -248,6 +353,7 @@ struct CurrentSessionSnapshotBuilder {
         for route: AppRoute?,
         expectedSessionID: UUID,
         sessions: [WorkoutSession],
+        trackedActivitySessions: [TrackedActivitySession],
         routines: [WorkoutRoutine],
         activitiesByID: [UUID: Activity]
     ) -> String? {
@@ -260,6 +366,7 @@ struct CurrentSessionSnapshotBuilder {
         let resolution = systemIntegrationRouteResolver.resolve(
             url: url,
             sessions: sessions,
+            trackedActivitySessions: trackedActivitySessions,
             routines: routines,
             activitiesByID: activitiesByID
         )
@@ -275,7 +382,11 @@ struct CurrentSessionSnapshotBuilder {
 
     private func routeBelongsToSession(_ route: AppRoute, sessionID: UUID) -> Bool {
         switch route {
+        case .home:
+            return true
         case .session(let resolvedSessionID):
+            return resolvedSessionID == sessionID
+        case .trackedActivity(let resolvedSessionID):
             return resolvedSessionID == sessionID
         case .sessionExercise(let resolvedSessionID, _):
             return resolvedSessionID == sessionID
@@ -294,6 +405,8 @@ struct CurrentSessionSnapshotBuilder {
             return "workouttracker://home"
         case .session(let sessionID):
             return "workouttracker://session/\(sessionID.uuidString)"
+        case .trackedActivity(let sessionID):
+            return "workouttracker://tracked-activity/\(sessionID.uuidString)"
         case .sessionExercise(let sessionID, let exerciseID):
             return "workouttracker://session/\(sessionID.uuidString)/exercise/\(exerciseID.uuidString)"
         case .sessionRest(let sessionID):

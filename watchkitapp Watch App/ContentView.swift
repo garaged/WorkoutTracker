@@ -10,17 +10,25 @@ struct ContentView: View {
                 switch launcher.route {
                 case .shortcuts:
                     WatchWorkoutShortcutsView(client: client, launcher: launcher)
+
                 case .nowPlaying:
                     NowPlayingWorkoutControlsView {
-                        launcher.showShortcuts()
+                        launcher.userClosedNowPlaying(currentSessionID: client.nowPlaying.sessionID)
                     }
                 }
             }
             .onAppear {
                 client.start()
+
                 if let seed = WatchUITestSeed.current {
-                    launcher.applyUITestSeedRoute(seed.route == .nowPlaying ? .nowPlaying : .shortcuts)
+                    switch seed.route {
+                    case .nowPlaying:
+                        launcher.applyUITestSeedRoute(.nowPlaying)
+                    case .shortcuts:
+                        launcher.applyUITestSeedRoute(.shortcuts)
+                    }
                 }
+
                 syncRouteWithNowPlaying()
             }
             .onChange(of: client.hasRecoverableNowPlayingSession) { _, _ in
@@ -32,19 +40,34 @@ struct ContentView: View {
             .onChange(of: client.lastStateReceivedAt) { _, _ in
                 syncRouteWithNowPlaying()
             }
+            .onOpenURL { url in
+                handleIncomingURL(url)
+            }
         }
     }
 
-
     private func syncRouteWithNowPlaying() {
-        let hasSession = client.hasRecoverableNowPlayingSession
+        launcher.consumeAutoOpenIfPossible(
+            hasActiveSession: client.hasRecoverableNowPlayingSession,
+            sessionID: client.nowPlaying.sessionID
+        )
+    }
 
-        if hasSession {
-            if launcher.route == .shortcuts {
-                launcher.openNowPlaying()
-            }
-            launcher.consumeAutoOpenIfPossible(hasActiveSession: true)
-        } else if launcher.route == .nowPlaying {
+    private func handleIncomingURL(_ url: URL) {
+        guard let scheme = url.scheme?.lowercased() else { return }
+        guard scheme == "workouttrackerwatch" else { return }
+
+        let host = (url.host ?? "").lowercased()
+        let path = url.path.lowercased()
+
+        if host == "now-playing" || path.contains("now-playing") || path.contains("current-activity") {
+            launcher.openNowPlaying()
+            client.start()
+            client.requestState()
+            return
+        }
+
+        if host == "shortcuts" || path.contains("shortcuts") || path.isEmpty || path == "/" {
             launcher.showShortcuts()
         }
     }

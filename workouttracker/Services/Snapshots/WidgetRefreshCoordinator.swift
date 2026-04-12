@@ -37,11 +37,16 @@ struct WidgetRefreshCoordinator {
     private let snapshotStore: WidgetSnapshotStore
 
     init(
-        snapshotBuilder: CurrentSessionSnapshotBuilder = CurrentSessionSnapshotBuilder(),
-        snapshotStore: WidgetSnapshotStore = WidgetSnapshotStore()
+        snapshotBuilder: CurrentSessionSnapshotBuilder,
+        snapshotStore: WidgetSnapshotStore
     ) {
         self.snapshotBuilder = snapshotBuilder
         self.snapshotStore = snapshotStore
+    }
+
+    init() {
+        self.snapshotBuilder = CurrentSessionSnapshotBuilder()
+        self.snapshotStore = WidgetSnapshotStore()
     }
 
     func refresh(context: ModelContext) {
@@ -75,7 +80,7 @@ struct WidgetRefreshCoordinator {
         guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
 
         let existingSnapshot = snapshotStore.load()
-        let snapshot = snapshotBuilder.buildActiveSessionSurfaceSnapshot(
+        let snapshot = snapshotBuilder.buildWidgetActiveSessionSnapshot(
             context: context,
             preservedCurrentStreakDays: existingSnapshot?.streak.currentStreakDays ?? 0,
             preservedLongestStreakDays: existingSnapshot?.streak.longestStreakDays ?? 0,

@@ -1,3 +1,13 @@
+# Version 2.2.2 - Performance, responsiveness, and architecture hardening
+
+- Tracked activity finish from phone works
+- Summary opens without hanging
+- Deferred autosave/manual export flow works
+- Watch widget opens correctly
+- Open on iPhone works
+- Phone/watch current-activity routing is working again
+
+
 # Version 2.2.1 - Tracked activity polish and trust pass
 
 - Tracked activities auto-save to Health when enabled

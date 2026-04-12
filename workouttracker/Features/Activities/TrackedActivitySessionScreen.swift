@@ -29,6 +29,7 @@ struct TrackedActivitySessionScreen: View {
     private let summaryBuilder = TrackedActivitySummaryBuilder()
     private let exportCoordinator = TrackedActivityHealthExportCoordinator()
     private let recoveryPlanner = TrackedActivityRecoveryPlanner()
+    private let systemSurfaceSyncCoordinator = SystemSurfaceSyncCoordinator()
 
     private var session: TrackedActivitySession? {
         trackedSessions.first(where: { $0.id == sessionID })
@@ -102,6 +103,8 @@ struct TrackedActivitySessionScreen: View {
                     recoveryBannerMessage = recoveryBanner(for: session, state: recoveryState)
                     try? recorder.noteRecoveryOpened(session, context: modelContext)
                     WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
+                    systemSurfaceSyncCoordinator.syncActiveSessionSurfaces(context: modelContext)
+                    WorkoutRemoteControlRouter.shared.refreshNowPlaying()
                     lastPersistedRoutePointCount = session.routePointCount
                     routeRecorder.sync(with: session)
                     healthKitAuthorizationService.refresh()
@@ -351,6 +354,8 @@ struct TrackedActivitySessionScreen: View {
             try recorder.pause(session, context: modelContext)
             routeRecorder.sync(with: session)
             WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
+            systemSurfaceSyncCoordinator.syncActiveSessionSurfaces(context: modelContext)
+            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -361,6 +366,8 @@ struct TrackedActivitySessionScreen: View {
             try recorder.resume(session, context: modelContext)
             routeRecorder.sync(with: session)
             WorkoutRemoteControlRouter.shared.focusTrackedActivity(sessionID: session.id)
+            systemSurfaceSyncCoordinator.syncActiveSessionSurfaces(context: modelContext)
+            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -372,6 +379,8 @@ struct TrackedActivitySessionScreen: View {
             try recorder.complete(session, context: modelContext)
             routeRecorder.stopRecording(resetSession: false)
             WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
+            systemSurfaceSyncCoordinator.syncActiveSessionSurfaces(context: modelContext)
+            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
             healthKitAuthorizationService.refresh()
 
             switch healthKitAuthorizationService.state {
@@ -407,6 +416,8 @@ struct TrackedActivitySessionScreen: View {
             try recorder.discard(session, context: modelContext)
             routeRecorder.stopRecording(resetSession: false)
             WorkoutRemoteControlRouter.shared.clearTrackedActivityFocus(sessionID: session.id)
+            systemSurfaceSyncCoordinator.syncActiveSessionSurfaces(context: modelContext)
+            WorkoutRemoteControlRouter.shared.refreshNowPlaying()
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

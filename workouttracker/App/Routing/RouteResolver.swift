@@ -21,6 +21,12 @@ struct RouteResolver {
         case "session":
             return sessionPayload(from: url, segments: normalizedSegments)
 
+        case "tracked-activity", "trackedactivity", "activity":
+            if let id = queryUUID(named: "id", in: url) ?? uuid(at: 1, in: normalizedSegments) {
+                return .trackedActivity(.init(sessionID: id))
+            }
+            return nil
+
         case "routine":
             if let id = queryUUID(named: "id", in: url) ?? uuid(at: 1, in: normalizedSegments) {
                 return .routine(.init(routineID: id))
@@ -41,6 +47,7 @@ struct RouteResolver {
     func route(
         for payload: RoutePayload,
         sessions: [WorkoutSession],
+        trackedActivitySessions: [TrackedActivitySession],
         routines: [WorkoutRoutine]
     ) -> AppRoute? {
         switch payload {
@@ -55,6 +62,15 @@ struct RouteResolver {
                 return .home
             }
             return .routine(routineID: payload.routineID)
+
+        case .trackedActivity(let payload):
+            guard let session = trackedActivitySessions.first(where: { $0.id == payload.sessionID }) else {
+                return .home
+            }
+            guard isLaunchable(session) else {
+                return .home
+            }
+            return .trackedActivity(sessionID: payload.sessionID)
 
         case .session(let payload):
             guard let session = sessions.first(where: { $0.id == payload.sessionID }) else {
@@ -82,10 +98,11 @@ struct RouteResolver {
     func route(
         for url: URL,
         sessions: [WorkoutSession],
+        trackedActivitySessions: [TrackedActivitySession],
         routines: [WorkoutRoutine]
     ) -> AppRoute? {
         guard let payload = payload(for: url) else { return nil }
-        return route(for: payload, sessions: sessions, routines: routines)
+        return route(for: payload, sessions: sessions, trackedActivitySessions: trackedActivitySessions, routines: routines)
     }
 
     private func normalizedSegments(for url: URL) -> [String] {
@@ -194,5 +211,9 @@ struct RouteResolver {
 
     private func isLaunchable(_ session: WorkoutSession) -> Bool {
         session.status == .inProgress && session.endedAt == nil
+    }
+
+    private func isLaunchable(_ session: TrackedActivitySession) -> Bool {
+        session.lifecycleState == .inProgress || session.lifecycleState == .paused
     }
 }

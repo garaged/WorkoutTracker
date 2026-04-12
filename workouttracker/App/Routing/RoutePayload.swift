@@ -3,6 +3,7 @@ import Foundation
 enum RoutePayload: Hashable, Equatable {
     case home
     case session(SessionPayload)
+    case trackedActivity(TrackedActivityPayload)
     case routine(RoutinePayload)
     case calendarDay(CalendarDayPayload)
 
@@ -15,6 +16,10 @@ enum RoutePayload: Hashable, Equatable {
             case exercise(UUID)
             case rest
         }
+    }
+
+    struct TrackedActivityPayload: Hashable, Equatable {
+        let sessionID: UUID
     }
 
     struct RoutinePayload: Hashable, Equatable {

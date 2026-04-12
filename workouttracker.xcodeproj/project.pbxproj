@@ -139,6 +139,13 @@
 			);
 			target = 36A0A0042F90000100AAA001 /* workouttrackerWidgets */;
 		};
+		358901442F931566005B873B /* Exceptions for "watchkitapp Watch App" folder in "watchkitapp Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"watchkitapp-Watch-App-Info.plist",
+			);
+			target = 35A4C0792F5E174800F30117 /* watchkitapp Watch App */;
+		};
 		35D84C342F3CCA92000BEFC0 /* Exceptions for "workouttracker" folder in "workouttrackerUITestHost" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -175,6 +182,9 @@
 		};
 		35A4C07B2F5E174800F30117 /* watchkitapp Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				358901442F931566005B873B /* Exceptions for "watchkitapp Watch App" folder in "watchkitapp Watch App" target */,
+			);
 			path = "watchkitapp Watch App";
 			sourceTree = "<group>";
 		};
@@ -736,10 +746,13 @@
 				DEVELOPMENT_TEAM = T3CCJTUTJ5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "watchkitapp-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Workout Tracker Watch";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKApplication = YES;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = garaged.org.workouttracker;
+				INFOPLIST_KEY_WKSupportsLiveActivityLaunchAttributeTypes = ActiveWorkoutActivityAttributes;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -771,10 +784,13 @@
 				DEVELOPMENT_TEAM = T3CCJTUTJ5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "watchkitapp-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Workout Tracker Watch";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKApplication = YES;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = garaged.org.workouttracker;
+				INFOPLIST_KEY_WKSupportsLiveActivityLaunchAttributeTypes = ActiveWorkoutActivityAttributes;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

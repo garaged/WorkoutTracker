@@ -15,6 +15,7 @@ struct SystemIntegrationRouteResolver {
     func resolve(
         url: URL,
         sessions: [WorkoutSession],
+        trackedActivitySessions: [TrackedActivitySession],
         routines: [WorkoutRoutine],
         activitiesByID: [UUID: Activity]
     ) -> SystemIntegrationRouteResolution {
@@ -25,6 +26,7 @@ struct SystemIntegrationRouteResolver {
         return resolve(
             payload: payload,
             sessions: sessions,
+            trackedActivitySessions: trackedActivitySessions,
             routines: routines,
             activitiesByID: activitiesByID
         )
@@ -33,12 +35,13 @@ struct SystemIntegrationRouteResolver {
     func resolve(
         payload: RoutePayload,
         sessions: [WorkoutSession],
+        trackedActivitySessions: [TrackedActivitySession],
         routines: [WorkoutRoutine],
         activitiesByID: [UUID: Activity]
     ) -> SystemIntegrationRouteResolution {
         switch payload {
         case .home, .calendarDay:
-            if let route = routeResolver.route(for: payload, sessions: sessions, routines: routines) {
+            if let route = routeResolver.route(for: payload, sessions: sessions, trackedActivitySessions: trackedActivitySessions, routines: routines) {
                 return .open(route)
             }
             return .fallback(.home, reason: .invalidURL)
@@ -48,11 +51,22 @@ struct SystemIntegrationRouteResolver {
                 return .fallback(.home, reason: .targetRoutineMissing)
             }
 
-            if let route = routeResolver.route(for: .routine(payload), sessions: sessions, routines: routines) {
+            if let route = routeResolver.route(for: .routine(payload), sessions: sessions, trackedActivitySessions: trackedActivitySessions, routines: routines) {
                 return .open(route)
             }
 
             return .fallback(.home, reason: .targetRoutineMissing)
+
+        case .trackedActivity(let payload):
+            guard let session = trackedActivitySessions.first(where: { $0.id == payload.sessionID }) else {
+                return missingTrackedActivityFallback(reason: .targetSessionMissing, trackedActivitySessions: trackedActivitySessions)
+            }
+
+            guard isLaunchable(session) else {
+                return missingTrackedActivityFallback(reason: .targetSessionNotLaunchable, trackedActivitySessions: trackedActivitySessions.filter { $0.id != payload.sessionID })
+            }
+
+            return .open(.trackedActivity(sessionID: session.id))
 
         case .session(let payload):
             guard let session = sessions.first(where: { $0.id == payload.sessionID }) else {
@@ -74,7 +88,7 @@ struct SystemIntegrationRouteResolver {
 
             switch payload.target {
             case .session, .rest:
-                if let route = routeResolver.route(for: .session(payload), sessions: sessions, routines: routines) {
+                if let route = routeResolver.route(for: .session(payload), sessions: sessions, trackedActivitySessions: trackedActivitySessions, routines: routines) {
                     return .open(route)
                 }
                 return .fallback(.session(sessionID: session.id), reason: .targetSessionNotLaunchable)
@@ -84,7 +98,7 @@ struct SystemIntegrationRouteResolver {
                     return .fallback(.session(sessionID: session.id), reason: .targetExerciseMissing)
                 }
 
-                if let route = routeResolver.route(for: .session(payload), sessions: sessions, routines: routines) {
+                if let route = routeResolver.route(for: .session(payload), sessions: sessions, trackedActivitySessions: trackedActivitySessions, routines: routines) {
                     return .open(route)
                 }
 
@@ -118,7 +132,24 @@ struct SystemIntegrationRouteResolver {
         return .fallback(.session(sessionID: fallbackSession.id), reason: reason)
     }
 
+    private func missingTrackedActivityFallback(
+        reason: SystemIntegrationFallbackReason,
+        trackedActivitySessions: [TrackedActivitySession]
+    ) -> SystemIntegrationRouteResolution {
+        guard let fallback = trackedActivitySessions.first(where: { isLaunchable($0) }) else {
+            let terminalReason: SystemIntegrationFallbackReason =
+                reason == .targetSessionMissing ? .targetSessionMissing : .noActiveSession
+            return .fallback(.home, reason: terminalReason)
+        }
+
+        return .fallback(.trackedActivity(sessionID: fallback.id), reason: reason)
+    }
+
     private func isLaunchable(_ session: WorkoutSession) -> Bool {
         session.status == .inProgress && session.endedAt == nil
+    }
+
+    private func isLaunchable(_ session: TrackedActivitySession) -> Bool {
+        session.lifecycleState == .inProgress || session.lifecycleState == .paused
     }
 }

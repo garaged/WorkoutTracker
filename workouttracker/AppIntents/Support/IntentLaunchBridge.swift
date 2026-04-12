@@ -31,6 +31,8 @@ enum IntentLaunchBridge {
         case .calendarDay(let date):
             let day = calendarFormatter.string(from: date)
             return URL(string: "workouttracker://calendar/\(day)")
+        case .trackedActivity(sessionID: let sessionID):
+            return URL(string: "workouttracker://tracked-activity/\(sessionID.uuidString)")
         }
     }
 

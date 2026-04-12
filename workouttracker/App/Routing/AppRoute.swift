@@ -5,6 +5,7 @@ enum AppRoute: Hashable, Equatable {
     case session(sessionID: UUID)
     case sessionExercise(sessionID: UUID, exerciseID: UUID)
     case sessionRest(sessionID: UUID)
+    case trackedActivity(sessionID: UUID)
     case routine(routineID: UUID)
     case calendarDay(date: Date)
 
@@ -12,7 +13,8 @@ enum AppRoute: Hashable, Equatable {
         switch self {
         case .session(let sessionID),
              .sessionExercise(let sessionID, _),
-             .sessionRest(let sessionID):
+             .sessionRest(let sessionID),
+             .trackedActivity(let sessionID):
             return sessionID
         default:
             return nil

@@ -58,8 +58,10 @@ struct LiveHealthKitStoreProxy: HealthKitStoreProxy {
         }
 
         var samples: [HKSample] = []
+
         if let totalEnergyBurned = request.totalEnergyBurned,
-           let quantityType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
+           let quantityType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned),
+           authorizationStatus(for: quantityType) == .sharingAuthorized {
             samples.append(
                 HKQuantitySample(
                     type: quantityType,
@@ -71,7 +73,8 @@ struct LiveHealthKitStoreProxy: HealthKitStoreProxy {
         }
 
         if let totalDistance = request.totalDistance,
-           let quantityType = HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning) {
+           let quantityType = HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning),
+           authorizationStatus(for: quantityType) == .sharingAuthorized {
             samples.append(
                 HKQuantitySample(
                     type: quantityType,
@@ -323,7 +326,20 @@ final class HealthKitAuthorizationService: ObservableObject {
     }
 
     static var workoutShareTypes: Set<HKSampleType> {
-        [HKObjectType.workoutType(), HKSeriesType.workoutRoute()]
+        var shareTypes: Set<HKSampleType> = [
+            HKObjectType.workoutType(),
+            HKSeriesType.workoutRoute()
+        ]
+
+        if let activeEnergy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
+            shareTypes.insert(activeEnergy)
+        }
+
+        if let distance = HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning) {
+            shareTypes.insert(distance)
+        }
+
+        return shareTypes
     }
 
     static func authorizationState(using store: HealthKitStoreProxy) -> AuthorizationState {

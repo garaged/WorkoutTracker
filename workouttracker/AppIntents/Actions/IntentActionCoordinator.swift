@@ -10,6 +10,7 @@ final class IntentActionCoordinator {
 
     private struct LoadedEnvironment {
         let sessions: [WorkoutSession]
+        let trackedActivitySessions: [TrackedActivitySession]
         let routines: [WorkoutRoutine]
         let activitiesByID: [UUID: Activity]
     }
@@ -168,6 +169,7 @@ final class IntentActionCoordinator {
         let resolution = systemIntegrationRouteResolver.resolve(
             url: url,
             sessions: environment.sessions,
+            trackedActivitySessions: environment.trackedActivitySessions,
             routines: environment.routines,
             activitiesByID: environment.activitiesByID
         )
@@ -181,11 +183,14 @@ final class IntentActionCoordinator {
 
     private func loadEnvironment(context: ModelContext) throws -> LoadedEnvironment {
         let sessions = try context.fetch(FetchDescriptor<WorkoutSession>())
+        let trackedActivitySessions = try context.fetch(FetchDescriptor<TrackedActivitySession>())
         let routines = try context.fetch(FetchDescriptor<WorkoutRoutine>())
         let activities = try context.fetch(FetchDescriptor<Activity>())
         let activitiesByID = Dictionary(uniqueKeysWithValues: activities.map { ($0.id, $0) })
+
         return LoadedEnvironment(
             sessions: sessions,
+            trackedActivitySessions: trackedActivitySessions,
             routines: routines,
             activitiesByID: activitiesByID
         )

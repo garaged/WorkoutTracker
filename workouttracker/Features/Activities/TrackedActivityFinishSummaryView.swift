@@ -229,6 +229,28 @@ struct TrackedActivityFinishSummaryView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
+                if session.healthKitExportState != .exported || session.hasLocalChangesSinceHealthKitExport {
+                    Button {
+                        Task { await exportToHealth(session) }
+                    } label: {
+                        if isExporting {
+                            Label(
+                                String(localized: "activities.health.saving", defaultValue: "Saving to Apple Health…"),
+                                systemImage: "heart.text.square"
+                            )
+                        } else {
+                            Label(
+                                String(localized: "activities.health.save", defaultValue: "Save to Apple Health"),
+                                systemImage: "heart.text.square"
+                            )
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .foregroundStyle(.white)
+                    .disabled(isExporting || session.lifecycleState != .completed)
+                    .accessibilityIdentifier("trackedActivity.exportToHealthKitButton")
+                }
+
                 switch healthKitAuthorizationService.state {
                 case .unavailable:
                     EmptyView()
@@ -248,28 +270,6 @@ struct TrackedActivityFinishSummaryView: View {
                     .accessibilityIdentifier("trackedActivity.openHealthSettingsButton")
 
                 case .authorized:
-                    if session.healthKitExportState != .exported || session.hasLocalChangesSinceHealthKitExport {
-                        Button {
-                            Task { await exportToHealth(session) }
-                        } label: {
-                            if isExporting {
-                                Label(
-                                    String(localized: "activities.health.saving", defaultValue: "Saving to Apple Health…"),
-                                    systemImage: "heart.text.square"
-                                )
-                            } else {
-                                Label(
-                                    String(localized: "activities.health.save", defaultValue: "Save to Apple Health"),
-                                    systemImage: "heart.text.square"
-                                )
-                            }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .foregroundStyle(.white)
-                        .disabled(isExporting || session.lifecycleState != .completed)
-                        .accessibilityIdentifier("trackedActivity.exportToHealthKitButton")
-                    }
-
                     if session.environment == .outdoor,
                        session.activityKind.supportsDistance,
                        let actionTitle = healthKitAuthorizationService.routePermissionActionTitle {
@@ -316,8 +316,7 @@ struct TrackedActivityFinishSummaryView: View {
         guard autoSaveToAppleHealth else { return }
         guard let session else { return }
         guard session.lifecycleState == .completed else { return }
-        guard healthKitAuthorizationService.state == .authorized else { return }
-        guard !isExporting else { return }
+                guard !isExporting else { return }
         guard session.healthKitExportState != .exported || session.hasLocalChangesSinceHealthKitExport else { return }
 
         didAttemptDeferredAutoSave = true
@@ -326,6 +325,7 @@ struct TrackedActivityFinishSummaryView: View {
 
         do {
             try? await Task.sleep(nanoseconds: 300_000_000)
+            healthKitAuthorizationService.refresh()
             healthExportMessage = try await exportCoordinator.export(
                 session,
                 trigger: .automatic,

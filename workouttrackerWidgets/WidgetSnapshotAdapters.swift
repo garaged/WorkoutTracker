@@ -78,9 +78,7 @@ enum WidgetSnapshotAdapters {
             return emptySessionModel()
         }
 
-        guard let preferredURL = WidgetDeepLinks.preferredLaunchURL(for: session) else {
-            return unavailableSessionModel()
-        }
+        let preferredURL = WidgetDeepLinks.preferredURL(for: session)
 
         let subtitle: String
         if let exercise = session.currentExerciseName, !exercise.isEmpty {
@@ -135,7 +133,7 @@ enum WidgetSnapshotAdapters {
             subtitle: "Start a routine to see live progress here.",
             accessoryText: nil,
             footnote: "Open WorkoutTracker",
-            url: WidgetDeepLinks.homeURL,
+            url: WidgetDeepLinks.preferredURL(for: nil),
             hasSession: false
         )
     }
@@ -146,7 +144,7 @@ enum WidgetSnapshotAdapters {
             subtitle: "Open WorkoutTracker to refresh your current session.",
             accessoryText: nil,
             footnote: "Open WorkoutTracker",
-            url: WidgetDeepLinks.homeURL,
+            url: WidgetDeepLinks.preferredURL(for: nil),
             hasSession: false
         )
     }

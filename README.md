@@ -31,6 +31,15 @@ Non-goals:
 
 ## Changelog
 
+### v2.2.2 — Performance, responsiveness, and architecture hardening
+
+- Fixed tracked-activity finish hang
+- Restored tracked-activity routing across phone/watch/widget surfaces
+- Fixed watch current-activity launch behavior
+- Stabilized summary/export flow
+- Known limitation: watch widget appearance may lag briefly after activity start
+
+
 ### v2.2.1 — Tracked activity polish and trust pass
 
 - Apple Health auto-save for completed tracked activities

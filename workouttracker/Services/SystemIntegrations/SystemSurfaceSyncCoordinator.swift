@@ -5,17 +5,17 @@ import SwiftData
 struct SystemSurfaceSyncCoordinator {
     private struct LiveActivityFingerprint: Equatable {
         let sessionID: UUID?
-        let sessionTitle: String?
+        let title: String?
         let currentExerciseName: String?
         let currentSetIndex: Int?
         let totalSets: Int?
-        let restState: CurrentSessionSnapshot.RestState
+        let restStateDescription: String?
         let restSeconds: Int?
         let isResumable: Bool
         let isFinishable: Bool
-        let openRoute: String?
-        let resumeRoute: String?
-        let restRoute: String?
+        let openRouteURL: String?
+        let resumeRouteURL: String?
+        let restRouteURL: String?
     }
 
     private static var lastLiveActivityFingerprint: LiveActivityFingerprint?
@@ -32,10 +32,8 @@ struct SystemSurfaceSyncCoordinator {
     }
 
     init() {
-        self.init(
-            snapshotBuilder: CurrentSessionSnapshotBuilder(),
-            widgetRefreshCoordinator: WidgetRefreshCoordinator()
-        )
+        self.snapshotBuilder = CurrentSessionSnapshotBuilder()
+        self.widgetRefreshCoordinator = WidgetRefreshCoordinator()
     }
 
     func syncAll(context: ModelContext) {
@@ -51,19 +49,19 @@ struct SystemSurfaceSyncCoordinator {
     func syncLiveActivity(context: ModelContext, force: Bool) {
         guard #available(iOS 16.1, *) else { return }
 
-        let currentSession = snapshotBuilder.build(context: context)
-        let fingerprint = liveActivityFingerprint(for: currentSession)
-
-        if !force, Self.lastLiveActivityFingerprint == fingerprint {
-            return
-        }
-
-        let snapshot = snapshotBuilder.buildActiveSessionSurfaceSnapshot(
+        let snapshot = snapshotBuilder.buildWidgetActiveSessionSnapshot(
             context: context,
             preservedCurrentStreakDays: 0,
             preservedLongestStreakDays: 0,
             preservedWorkoutsThisWeek: 0
         )
+
+        let fingerprint = liveActivityFingerprint(for: snapshot.activeSession)
+
+        if !force, Self.lastLiveActivityFingerprint == fingerprint {
+            return
+        }
+
         Self.lastLiveActivityFingerprint = fingerprint
 
         Task { @MainActor in
@@ -71,20 +69,22 @@ struct SystemSurfaceSyncCoordinator {
         }
     }
 
-    private func liveActivityFingerprint(for snapshot: CurrentSessionSnapshot) -> LiveActivityFingerprint {
+    private func liveActivityFingerprint(
+        for activeSession: WidgetExternalSnapshot.ActiveSession?
+    ) -> LiveActivityFingerprint {
         LiveActivityFingerprint(
-            sessionID: snapshot.sessionID,
-            sessionTitle: snapshot.sessionTitle,
-            currentExerciseName: snapshot.currentExerciseName,
-            currentSetIndex: snapshot.currentSetIndex,
-            totalSets: snapshot.totalSets,
-            restState: snapshot.restState,
-            restSeconds: snapshot.restSeconds,
-            isResumable: snapshot.isResumable,
-            isFinishable: snapshot.isFinishable,
-            openRoute: snapshot.openRoute.map(String.init(describing:)),
-            resumeRoute: snapshot.resumeRoute.map(String.init(describing:)),
-            restRoute: snapshot.restRoute.map(String.init(describing:))
+            sessionID: activeSession?.sessionID,
+            title: activeSession?.title,
+            currentExerciseName: activeSession?.currentExerciseName,
+            currentSetIndex: activeSession?.currentSetIndex,
+            totalSets: activeSession?.totalSets,
+            restStateDescription: activeSession.map { String(describing: $0.restState) },
+            restSeconds: activeSession?.restSeconds,
+            isResumable: activeSession?.isResumable ?? false,
+            isFinishable: activeSession?.isFinishable ?? false,
+            openRouteURL: activeSession?.openRouteURL,
+            resumeRouteURL: activeSession?.resumeRouteURL,
+            restRouteURL: activeSession?.restRouteURL
         )
     }
 }

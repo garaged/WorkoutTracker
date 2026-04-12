@@ -59,12 +59,17 @@ struct AppRootView: View {
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var selection: RootDestination? = .home
     @State private var presentedSessionRoute: SessionPresentationRoute? = nil
+    @State private var presentedTrackedActivity: TrackedActivityPresentation? = nil
     @State private var timelineJump: TimelineJump? = nil
     @State private var pendingIntentURL: URL? = nil
 
     private struct TimelineJump: Identifiable {
         let id = UUID()
         let day: Date
+    }
+
+    private struct TrackedActivityPresentation: Identifiable, Equatable, Hashable {
+        let id: UUID
     }
 
     private let cal = Calendar.current
@@ -335,6 +340,9 @@ struct AppRootView: View {
                     initialRoute: route.launchRoute
                 )
             }
+            .navigationDestination(item: $presentedTrackedActivity) { presentation in
+                TrackedActivitySessionScreen(sessionID: presentation.id)
+            }
         }
     }
 
@@ -350,6 +358,9 @@ struct AppRootView: View {
                             initialResumeTarget: route.initialResumeTarget,
                             initialRoute: route.launchRoute
                         )
+                    }
+                    .navigationDestination(item: $presentedTrackedActivity) { presentation in
+                        TrackedActivitySessionScreen(sessionID: presentation.id)
                     }
             }
         }
@@ -371,6 +382,7 @@ struct AppRootView: View {
         let resolution = systemIntegrationRouteResolver.resolve(
             url: url,
             sessions: sessions,
+            trackedActivitySessions: trackedActivitySessions,
             routines: routines,
             activitiesByID: activitiesByID
         )
@@ -389,14 +401,32 @@ struct AppRootView: View {
         case .home:
             selection = .home
             presentedSessionRoute = nil
+            presentedTrackedActivity = nil
             timelineJump = nil
 
         case .calendarDay(let date):
             selection = .home
+            presentedTrackedActivity = nil
             timelineJump = TimelineJump(day: cal.startOfDay(for: date))
 
         case .routine:
             selection = .routines
+            presentedTrackedActivity = nil
+            timelineJump = nil
+
+        case .trackedActivity(let sessionID):
+            selection = .activities
+            presentedSessionRoute = nil
+            timelineJump = nil
+            let presentation = TrackedActivityPresentation(id: sessionID)
+            if presentedTrackedActivity == presentation {
+                presentedTrackedActivity = nil
+                Task { @MainActor in
+                    presentedTrackedActivity = presentation
+                }
+            } else {
+                presentedTrackedActivity = presentation
+            }
 
         case .session, .sessionExercise, .sessionRest:
             guard let presentation = sessionPresentationRoute(
@@ -405,9 +435,11 @@ struct AppRootView: View {
             ) else {
                 selection = .home
                 presentedSessionRoute = nil
+                presentedTrackedActivity = nil
                 return
             }
 
+            presentedTrackedActivity = nil
             let sameSession = presentedSessionRoute?.session.persistentModelID == presentation.session.persistentModelID
             let sameLaunchRoute = presentedSessionRoute?.launchRoute == presentation.launchRoute
 
@@ -532,6 +564,7 @@ struct AppRootView: View {
         let resolution = systemIntegrationRouteResolver.resolve(
             url: url,
             sessions: sessions,
+            trackedActivitySessions: trackedActivitySessions,
             routines: routines,
             activitiesByID: activitiesByID
         )
@@ -613,6 +646,7 @@ struct AppRootView: View {
 
     private func handleWatchTrackedActivityFingerprintChanged() {
         guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
+        systemSurfaceSyncCoordinator.syncActiveSessionSurfaces(context: modelContext)
         WorkoutRemoteControlRouter.shared.refreshNowPlaying()
     }
 
@@ -646,6 +680,7 @@ struct AppRootView: View {
         let resolution = systemIntegrationRouteResolver.resolve(
             url: url,
             sessions: sessions,
+            trackedActivitySessions: trackedActivitySessions,
             routines: routines,
             activitiesByID: activitiesByID
         )
