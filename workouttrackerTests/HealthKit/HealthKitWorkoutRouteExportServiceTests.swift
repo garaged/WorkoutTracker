@@ -10,9 +10,10 @@ final class HealthKitWorkoutRouteExportServiceTests: XCTestCase {
         let service = HealthKitWorkoutRouteExportService(store: routeStore)
 
         let session = makeOutdoorCompletedSession(routePointCount: 2)
-        let status = try await service.exportRouteIfAvailable(from: session, associatingWith: makeWorkout())
+        let payload = TrackedActivityHealthExportPayload.make(from: session)
+        let status = try await service.exportRouteIfAvailable(from: payload, associatingWith: makeWorkout())
 
-        XCTAssertEqual(status, .saved)
+        XCTAssertEqual(status, HealthKitWorkoutRouteExportStatus.saved)
         XCTAssertEqual(routeStore.saveRouteCallCount, 1)
     }
 
@@ -21,9 +22,10 @@ final class HealthKitWorkoutRouteExportServiceTests: XCTestCase {
         let service = HealthKitWorkoutRouteExportService(store: routeStore)
 
         let session = makeOutdoorCompletedSession(routePointCount: 1)
-        let status = try await service.exportRouteIfAvailable(from: session, associatingWith: makeWorkout())
+        let payload = TrackedActivityHealthExportPayload.make(from: session)
+        let status = try await service.exportRouteIfAvailable(from: payload, associatingWith: makeWorkout())
 
-        XCTAssertEqual(status, .noRouteData)
+        XCTAssertEqual(status, HealthKitWorkoutRouteExportStatus.noRouteData)
         XCTAssertEqual(routeStore.saveRouteCallCount, 0)
     }
 
@@ -32,7 +34,8 @@ final class HealthKitWorkoutRouteExportServiceTests: XCTestCase {
         let service = HealthKitWorkoutRouteExportService(store: routeStore)
 
         let session = makeOutdoorCompletedSession(routePointCount: 2)
-        let status = try await service.exportRouteIfAvailable(from: session, associatingWith: makeWorkout())
+        let payload = TrackedActivityHealthExportPayload.make(from: session)
+        let status = try await service.exportRouteIfAvailable(from: payload, associatingWith: makeWorkout())
 
         guard case .failed(let reason) = status else {
             return XCTFail("Expected route export to fail when the proxy throws.")
@@ -66,15 +69,8 @@ final class HealthKitWorkoutRouteExportServiceTests: XCTestCase {
 
     private func makeWorkout() -> HKWorkout {
         let start = Date(timeIntervalSinceReferenceDate: 10_000)
-        return HKWorkout(
-            activityType: .running,
-            start: start,
-            end: start.addingTimeInterval(600),
-            duration: 600,
-            totalEnergyBurned: nil,
-            totalDistance: nil,
-            metadata: nil
-        )
+        let end = start.addingTimeInterval(600)
+        return HKWorkout(activityType: .running, start: start, end: end)
     }
 }
 

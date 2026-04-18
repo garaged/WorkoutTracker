@@ -24,7 +24,7 @@ final class HealthKitWorkoutExportServiceTests: XCTestCase {
 
         let store = MockExportHealthKitStoreProxy()
         let service = HealthKitWorkoutExportService(store: store)
-        _ = try await service.saveWorkout(from: session)
+        _ = try await service.saveWorkout(from: TrackedActivityHealthExportPayload.make(from: session))
 
         let request = try XCTUnwrap(store.savedRequests.first)
         XCTAssertEqual(request.activityType, .running)
@@ -45,7 +45,7 @@ final class HealthKitWorkoutExportServiceTests: XCTestCase {
         )
         let session = completedYogaSession()
 
-        let outcome = try await service.export(session)
+        let outcome = try await service.export(TrackedActivityHealthExportPayload.make(from: session))
 
         XCTAssertEqual(store.savedRequests.count, 1)
         XCTAssertEqual(store.savedRequests.first?.activityType, .yoga)
@@ -75,7 +75,7 @@ final class HealthKitWorkoutExportServiceTests: XCTestCase {
             ]
         )
 
-        let outcome = try await service.export(session)
+        let outcome = try await service.export(TrackedActivityHealthExportPayload.make(from: session))
 
         XCTAssertTrue(outcome.didSaveRoute)
         XCTAssertEqual(routeStore.savedLocations.count, 2)
@@ -86,7 +86,9 @@ final class HealthKitWorkoutExportServiceTests: XCTestCase {
         let service = HealthKitWorkoutExportService(store: store)
         let session = completedYogaSession()
 
-        await XCTAssertThrowsErrorAsync(try await service.export(session)) { error in
+        await XCTAssertThrowsErrorAsync(
+            try await service.export(TrackedActivityHealthExportPayload.make(from: session))
+        ) { error in
             XCTAssertEqual(error as? HealthKitWorkoutExportError, .permissionDenied)
         }
     }

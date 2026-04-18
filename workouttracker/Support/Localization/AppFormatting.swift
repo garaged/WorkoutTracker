@@ -7,6 +7,9 @@ import Foundation
 // Keeping them out of views makes locale behavior consistent and easier to test.
 
 enum AppFormatting {
+    private static let bundleCacheLock = NSLock()
+    private static var localizedBundleCache: [String: Bundle] = [:]
+
     static func duration(seconds: Int, locale: Locale = .autoupdatingCurrent) -> String {
         let absoluteSeconds = abs(seconds)
         let sign = seconds < 0 ? "-" : ""
@@ -81,19 +84,16 @@ enum AppFormatting {
     }
 
     static func date(_ date: Date, locale: Locale = .autoupdatingCurrent) -> String {
-        date.formatted(
-            Date.FormatStyle(date: .abbreviated, time: .omitted)
-                .locale(locale)
-        )
+        dateFormatter(locale: locale, dateStyle: .medium, timeStyle: .none).string(from: date)
     }
 
     static func monthDay(_ date: Date, locale: Locale = .autoupdatingCurrent) -> String {
-        date.formatted(
-            Date.FormatStyle(date: .abbreviated, time: .omitted)
-                .month(.abbreviated)
-                .day()
-                .locale(locale)
-        )
+        dateFormatter(
+            locale: locale,
+            dateStyle: .none,
+            timeStyle: .none,
+            localizedTemplate: "MMM d"
+        ).string(from: date)
     }
 
     static func dateRange(start: Date, end: Date, locale: Locale = .autoupdatingCurrent) -> String {
@@ -101,34 +101,30 @@ enum AppFormatting {
     }
 
     static func time(_ date: Date, locale: Locale = .autoupdatingCurrent) -> String {
-        date.formatted(
-            Date.FormatStyle(date: .omitted, time: .shortened)
-                .locale(locale)
-        )
+        dateFormatter(locale: locale, dateStyle: .none, timeStyle: .short).string(from: date)
     }
 
     static func dateTime(_ date: Date, locale: Locale = .autoupdatingCurrent) -> String {
-        date.formatted(
-            Date.FormatStyle(date: .abbreviated, time: .shortened)
-                .locale(locale)
-        )
+        dateFormatter(locale: locale, dateStyle: .medium, timeStyle: .short).string(from: date)
     }
 
     static func decimal(_ value: Double, maxFractionDigits: Int = 1, locale: Locale = .autoupdatingCurrent) -> String {
-        let formatter = NumberFormatter()
-        formatter.locale = locale
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = maxFractionDigits
+        let formatter = numberFormatter(
+            locale: locale,
+            numberStyle: .decimal,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: maxFractionDigits
+        )
         return formatter.string(from: NSNumber(value: value)) ?? String(value)
     }
 
     static func percent(_ value: Double, maxFractionDigits: Int = 0, locale: Locale = .autoupdatingCurrent) -> String {
-        let formatter = NumberFormatter()
-        formatter.locale = locale
-        formatter.numberStyle = .percent
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = maxFractionDigits
+        let formatter = numberFormatter(
+            locale: locale,
+            numberStyle: .percent,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: maxFractionDigits
+        )
         return formatter.string(from: NSNumber(value: value)) ?? String(value)
     }
 
@@ -174,6 +170,14 @@ enum AppFormatting {
     }
 
     private static func localizedBundle(for locale: Locale) -> Bundle {
+        let cacheKey = locale.identifier
+        bundleCacheLock.lock()
+        if let cachedBundle = localizedBundleCache[cacheKey] {
+            bundleCacheLock.unlock()
+            return cachedBundle
+        }
+        bundleCacheLock.unlock()
+
         let identifier = locale.identifier.replacingOccurrences(of: "_", with: "-")
         let languageCode = locale.language.languageCode?.identifier ?? locale.language.languageCode?.identifier ?? ""
         let candidates = [identifier, locale.identifier, languageCode].filter { !$0.isEmpty }
@@ -182,22 +186,65 @@ enum AppFormatting {
         for localization in preferred + candidates {
             if let path = Bundle.main.path(forResource: localization, ofType: "lproj"),
                let bundle = Bundle(path: path) {
+                bundleCacheLock.lock()
+                localizedBundleCache[cacheKey] = bundle
+                bundleCacheLock.unlock()
                 return bundle
             }
         }
 
+        bundleCacheLock.lock()
+        localizedBundleCache[cacheKey] = .main
+        bundleCacheLock.unlock()
         return .main
     }
 
     private static func localizedInteger(_ value: Int, minimumIntegerDigits: Int = 1, locale: Locale) -> String {
+        let formatter = numberFormatter(
+            locale: locale,
+            numberStyle: .decimal,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+            minimumIntegerDigits: minimumIntegerDigits,
+            usesGroupingSeparator: false
+        )
+        return formatter.string(from: NSNumber(value: value)) ?? String(value)
+    }
+
+    private static func numberFormatter(
+        locale: Locale,
+        numberStyle: NumberFormatter.Style,
+        minimumFractionDigits: Int,
+        maximumFractionDigits: Int,
+        minimumIntegerDigits: Int = 1,
+        usesGroupingSeparator: Bool = true
+    ) -> NumberFormatter {
         let formatter = NumberFormatter()
         formatter.locale = locale
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 0
+        formatter.numberStyle = numberStyle
+        formatter.minimumFractionDigits = minimumFractionDigits
+        formatter.maximumFractionDigits = maximumFractionDigits
         formatter.minimumIntegerDigits = minimumIntegerDigits
-        formatter.groupingSeparator = ""
-        formatter.usesGroupingSeparator = false
-        return formatter.string(from: NSNumber(value: value)) ?? String(value)
+        formatter.usesGroupingSeparator = usesGroupingSeparator
+        if !usesGroupingSeparator {
+            formatter.groupingSeparator = ""
+        }
+        return formatter
+    }
+
+    private static func dateFormatter(
+        locale: Locale,
+        dateStyle: DateFormatter.Style,
+        timeStyle: DateFormatter.Style,
+        localizedTemplate: String? = nil
+    ) -> DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.dateStyle = dateStyle
+        formatter.timeStyle = timeStyle
+        if let localizedTemplate {
+            formatter.setLocalizedDateFormatFromTemplate(localizedTemplate)
+        }
+        return formatter
     }
 }

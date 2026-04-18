@@ -80,16 +80,7 @@ struct TrackedActivitySummaryBuilder {
     }
 
     static func formatDuration(_ duration: TimeInterval) -> String {
-        let totalSeconds = max(0, Int(duration.rounded()))
-        let hours = totalSeconds / 3_600
-        let minutes = (totalSeconds % 3_600) / 60
-        let seconds = totalSeconds % 60
-
-        if hours > 0 {
-            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
-        }
-
-        return String(format: "%d:%02d", minutes, seconds)
+        AppFormatting.duration(seconds: max(0, Int(duration.rounded())))
     }
 
     static func formatDistance(_ distanceMeters: Double) -> String {
@@ -99,18 +90,19 @@ struct TrackedActivitySummaryBuilder {
     }
 
     static func formatEnergy(_ activeEnergyKilocalories: Double) -> String {
-        String(localized: "activities.metric.energy_value", defaultValue: "\(Int(activeEnergyKilocalories.rounded())) kcal")
+        String(localized: "activities.metric.energy_value", defaultValue: "\(AppFormatting.integer(Int(activeEnergyKilocalories.rounded()))) kcal")
     }
 
     static func formatSteps(_ stepCount: Int) -> String {
-        String(localized: "activities.metric.steps_value", defaultValue: "\(stepCount.formatted()) steps")
+        String(localized: "activities.metric.steps_value", defaultValue: "\(AppFormatting.integer(stepCount)) steps")
     }
 
     static func formatPace(_ paceSecondsPerKilometer: Double) -> String {
         let roundedSeconds = max(0, Int(paceSecondsPerKilometer.rounded()))
-        let minutes = roundedSeconds / 60
-        let seconds = roundedSeconds % 60
-        return String(format: String(localized: "activities.metric.pace_value", defaultValue: "%d:%02d /km"), minutes, seconds)
+        return String(
+            format: String(localized: "activities.metric.pace_value", defaultValue: "%@ /km"),
+            AppFormatting.duration(seconds: roundedSeconds)
+        )
     }
 }
 

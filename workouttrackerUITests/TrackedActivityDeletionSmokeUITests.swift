@@ -43,19 +43,20 @@ final class TrackedActivityDeletionSmokeUITests: XCTestCase {
         XCTAssertTrue(workoutTrackerOnly.waitForExistence(timeout: t(2)), "Expected delete messaging to mention WorkoutTracker-only deletion.")
         XCTAssertTrue(appleHealth.waitForExistence(timeout: t(2)), "Expected delete messaging to mention Apple Health scope explicitly.")
 
-        let deleteAction = deleteButtonInDialog(app)
+        let deleteAction = deleteButtonInDialog(app, within: deleteSheet)
         if !deleteAction.waitForExistence(timeout: t(2)) {
             attachUITestDebug(app, name: "TrackedActivityDelete_DeleteActionMissing")
         }
         XCTAssertTrue(deleteAction.exists, "Expected a destructive delete action inside the confirmation sheet.")
         tapSafely(deleteAction)
 
-        let unavailable = app.staticTexts["Summary unavailable"].firstMatch
-        if !unavailable.waitForExistence(timeout: t(6)) {
-            attachUITestDebug(app, name: "TrackedActivityDelete_UnavailableStateMissing")
+        if !waitForNonExistence(screen, timeout: t(6)) {
+            attachUITestDebug(app, name: "TrackedActivityDelete_SummaryScreenStillVisible")
         }
-        XCTAssertTrue(unavailable.exists, "Expected deleting the seeded tracked activity to remove the local summary session.")
-        XCTAssertTrue(waitForNonExistence(screen, timeout: t(2)), "Expected the summary screen collection view to disappear after deleting the tracked activity.")
+        XCTAssertTrue(
+            waitForNonExistence(screen, timeout: t(1)),
+            "Expected deleting the seeded tracked activity to dismiss the summary screen after removing the local session."
+        )
     }
 
     private func deleteConfirmationSheet(in app: XCUIApplication) -> XCUIElement {
@@ -74,20 +75,39 @@ final class TrackedActivityDeletionSmokeUITests: XCTestCase {
         return app.sheets.firstMatch
     }
 
-    private func deleteButtonInDialog(_ app: XCUIApplication) -> XCUIElement {
+    private func deleteButtonInDialog(_ app: XCUIApplication, within deleteSheet: XCUIElement) -> XCUIElement {
         let candidates: [XCUIElement] = [
+            deleteSheet.buttons["Delete activity"],
+            deleteSheet.descendants(matching: .button)
+                .matching(NSPredicate(format: "label == %@", "Delete activity"))
+                .firstMatch,
+            deleteSheet.buttons["Delete"],
+            deleteSheet.descendants(matching: .button)
+                .matching(NSPredicate(format: "label == %@", "Delete"))
+                .firstMatch,
             app.sheets.buttons["Delete activity"],
             app.alerts.buttons["Delete activity"],
-            app.buttons["Delete activity"],
             app.sheets.buttons["Delete"],
-            app.alerts.buttons["Delete"],
-            app.buttons["Delete"]
+            app.alerts.buttons["Delete"]
         ]
 
         for candidate in candidates {
             if candidate.exists || candidate.waitForExistence(timeout: t(0.5)) {
                 return candidate
             }
+        }
+
+        let fallbackCandidates = app.buttons
+            .matching(NSPredicate(format: "label IN %@", ["Delete activity", "Delete"]))
+            .allElementsBoundByIndex
+            .filter { $0.identifier != "trackedActivity.deleteButton" }
+
+        if let hittable = fallbackCandidates.first(where: \.isHittable) {
+            return hittable
+        }
+
+        if let existing = fallbackCandidates.first(where: \.exists) {
+            return existing
         }
 
         return app.buttons["Delete activity"].firstMatch

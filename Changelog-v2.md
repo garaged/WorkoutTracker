@@ -1,5 +1,7 @@
 # Version 2.2.2 - Performance, responsiveness, and architecture hardening
 
+v2.2.2 is a stability-focused release for tracked activities across iPhone, widgets, and Apple Watch. It improves current-activity routing, watch/widget handoff, finish-summary reliability, and Health save/export flow, with multiple fixes to system-surface behavior and recovery after activity transitions.
+
 - Tracked activity finish from phone works
 - Summary opens without hanging
 - Deferred autosave/manual export flow works

@@ -7,6 +7,9 @@ struct ProgressDashboardView: View {
     @Query(sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)])
     private var trackedActivitySessions: [TrackedActivitySession]
     @StateObject private var viewModel = ProgressDashboardViewModel()
+    @State private var trackedActivityCardModel: TrackedActivitySummaryCardModel?
+
+    private let trackedActivityCardBuilder = TrackedActivityProgressCardBuilder()
 
     var body: some View {
         Group {
@@ -44,10 +47,14 @@ struct ProgressDashboardView: View {
             if case .idle = viewModel.state {
                 viewModel.load()
             }
+            updateTrackedActivityCardModel()
         }
         .refreshable {
             viewModel.configureIfNeeded(context: modelContext)
             viewModel.refresh()
+        }
+        .onChange(of: trackedActivityCardBuilder.signature(for: trackedActivitySessions)) { _, _ in
+            updateTrackedActivityCardModel()
         }
     }
 
@@ -142,14 +149,6 @@ struct ProgressDashboardView: View {
     }
 
 
-    private var trackedActivityCardModel: TrackedActivitySummaryCardModel? {
-        let summaries = trackedActivitySessions
-            .map(\.summary)
-            .filter { $0.lifecycleState == .completed || $0.lifecycleState == .discarded }
-        return TrackedActivitySummaryCardModel.build(from: summaries)
-    }
-
-
     private func sectionHeader(title: String, subtitle: String, systemImage: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Label(title, systemImage: systemImage)
@@ -190,5 +189,9 @@ struct ProgressDashboardView: View {
             String(localized: "progress.dashboard.header_subtitle"),
             viewModel.localizedWindowLabel(content.windowTitle)
         ].joined(separator: ". ")
+    }
+
+    private func updateTrackedActivityCardModel() {
+        trackedActivityCardModel = trackedActivityCardBuilder.build(from: trackedActivitySessions)
     }
 }

@@ -8,8 +8,7 @@ struct TrackedActivitySessionScreen: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    @Query(sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)])
-    private var trackedSessions: [TrackedActivitySession]
+    @Query private var trackedSessions: [TrackedActivitySession]
 
     @AppStorage(TrackedActivityHealthPreferences.autoSaveCompletedActivitiesKey)
     private var autoSaveToAppleHealth = false
@@ -30,9 +29,20 @@ struct TrackedActivitySessionScreen: View {
     private let exportCoordinator = TrackedActivityHealthExportCoordinator()
     private let recoveryPlanner = TrackedActivityRecoveryPlanner()
     private let systemSurfaceSyncCoordinator = SystemSurfaceSyncCoordinator()
+    private let routePersistenceBatchSize = 5
+
+    init(sessionID: UUID) {
+        self.sessionID = sessionID
+        _trackedSessions = Query(
+            filter: #Predicate<TrackedActivitySession> { session in
+                session.id == sessionID
+            },
+            sort: [SortDescriptor(\TrackedActivitySession.updatedAt, order: .reverse)]
+        )
+    }
 
     private var session: TrackedActivitySession? {
-        trackedSessions.first(where: { $0.id == sessionID })
+        trackedSessions.first
     }
 
     var body: some View {
@@ -128,7 +138,7 @@ struct TrackedActivitySessionScreen: View {
                             defaultValue: "Route capture is active. WorkoutTracker has started recording outdoor points for this activity."
                         )
                     }
-                    if newCount - lastPersistedRoutePointCount >= 5 {
+                    if newCount - lastPersistedRoutePointCount >= routePersistenceBatchSize {
                         persistRouteIfNeeded(for: session, force: false)
                     }
                 }
@@ -166,54 +176,80 @@ struct TrackedActivitySessionScreen: View {
 
     @ViewBuilder
     private func liveMetricsSection(for session: TrackedActivitySession) -> some View {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
-            let liveTotals = liveTotals(for: session, now: context.date)
-            let metrics = summaryBuilder.metrics(for: session, liveTotals: liveTotals)
+        VStack(alignment: .leading, spacing: 20) {
+            liveDurationCard(for: session)
 
-            VStack(alignment: .leading, spacing: 20) {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(String(localized: "activities.session.live_duration", defaultValue: "Live duration"))
-                        .font(.headline)
+            VStack(alignment: .leading, spacing: 12) {
+                Text(String(localized: "activities.session.current_metrics", defaultValue: "Current metrics"))
+                    .font(.headline)
 
-                    Text(TrackedActivitySummaryBuilder.formatDuration(liveTotals.elapsedDuration))
-                        .font(.system(size: 40, weight: .bold, design: .rounded))
-                        .monospacedDigit()
+                liveMetricsGrid(for: session)
 
-                    Text(timerFooter(for: session))
+                if session.activityKind.supportsDistance {
+                    Text(String(localized: "activities.session.metrics.refine_hint", defaultValue: "Distance, steps, and energy can be refined when you finish this activity. Outdoor route distance is prefilled when location data is available."))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(18)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(String(localized: "activities.session.current_metrics", defaultValue: "Current metrics"))
-                        .font(.headline)
-
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
-                        ForEach(metrics.filter { $0.kind != .state }) { metric in
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(metric.title)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                Text(metric.value)
-                                    .font(.headline)
-                                    .monospacedDigit()
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(14)
-                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        }
-                    }
-
-                    if session.activityKind.supportsDistance {
-                        Text(String(localized: "activities.session.metrics.refine_hint", defaultValue: "Distance, steps, and energy can be refined when you finish this activity. Outdoor route distance is prefilled when location data is available."))
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func liveMetricsGrid(for session: TrackedActivitySession) -> some View {
+        if session.lifecycleState == .inProgress {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                metricsGrid(metrics: currentMetrics(for: session, now: context.date))
+            }
+        } else {
+            metricsGrid(metrics: currentMetrics(for: session, now: .now))
+        }
+    }
+
+    private func metricsGrid(metrics: [TrackedActivitySummaryBuilder.Metric]) -> some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
+            ForEach(metrics) { metric in
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(metric.title)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(metric.value)
+                        .font(.headline)
+                        .monospacedDigit()
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func liveDurationCard(for session: TrackedActivitySession) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(String(localized: "activities.session.live_duration", defaultValue: "Live duration"))
+                .font(.headline)
+
+            liveDurationText(for: session)
+                .font(.system(size: 40, weight: .bold, design: .rounded))
+                .monospacedDigit()
+
+            Text(timerFooter(for: session))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func liveDurationText(for session: TrackedActivitySession) -> some View {
+        if session.lifecycleState == .inProgress {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Text(TrackedActivitySummaryBuilder.formatDuration(liveTotals(for: session, now: context.date).elapsedDuration))
+            }
+        } else {
+            Text(TrackedActivitySummaryBuilder.formatDuration(liveTotals(for: session, now: .now).elapsedDuration))
         }
     }
 
@@ -279,6 +315,11 @@ struct TrackedActivitySessionScreen: View {
         }
 
         return totals
+    }
+
+    private func currentMetrics(for session: TrackedActivitySession, now: Date) -> [TrackedActivitySummaryBuilder.Metric] {
+        summaryBuilder.metrics(for: session, liveTotals: liveTotals(for: session, now: now))
+            .filter { $0.kind != .state && $0.kind != .duration }
     }
 
     @ViewBuilder
@@ -444,7 +485,7 @@ struct TrackedActivitySessionScreen: View {
         if force {
             guard currentPointCount != lastPersistedRoutePointCount else { return }
         } else {
-            guard currentPointCount - lastPersistedRoutePointCount >= 5 else { return }
+            guard currentPointCount - lastPersistedRoutePointCount >= routePersistenceBatchSize else { return }
         }
 
         do {

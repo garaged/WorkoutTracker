@@ -57,8 +57,13 @@ final class RouteResolverTests: XCTestCase {
             .init(sessionID: session.id, target: .exercise(UUID()))
         )
 
-        let route = resolver.route(for: payload, sessions: [session], routines: [])
-        XCTAssertEqual(route, .session(sessionID: session.id))
+        let route = resolver.route(
+            for: payload,
+            sessions: [session],
+            trackedActivitySessions: [],
+            routines: []
+        )
+        XCTAssertEqual(route, AppRoute.session(sessionID: session.id))
     }
 
     func test_route_forFinishedSessionFallsBackToHome() {
@@ -70,22 +75,37 @@ final class RouteResolverTests: XCTestCase {
             .init(sessionID: session.id, target: .session)
         )
 
-        let route = resolver.route(for: payload, sessions: [session], routines: [])
-        XCTAssertEqual(route, .home)
+        let route = resolver.route(
+            for: payload,
+            sessions: [session],
+            trackedActivitySessions: [],
+            routines: []
+        )
+        XCTAssertEqual(route, AppRoute.home)
     }
 
     func test_route_forExistingRoutineResolvesExactRoutine() {
         let routine = WorkoutRoutine(name: "Route Resolver Routine")
         let payload = RoutePayload.routine(.init(routineID: routine.id))
 
-        let route = resolver.route(for: payload, sessions: [], routines: [routine])
-        XCTAssertEqual(route, .routine(routineID: routine.id))
+        let route = resolver.route(
+            for: payload,
+            sessions: [],
+            trackedActivitySessions: [],
+            routines: [routine]
+        )
+        XCTAssertEqual(route, AppRoute.routine(routineID: routine.id))
     }
 
     func test_route_forMissingRoutineFallsBackToHome() {
         let payload = RoutePayload.routine(.init(routineID: UUID()))
 
-        let route = resolver.route(for: payload, sessions: [], routines: [])
-        XCTAssertEqual(route, .home)
+        let route = resolver.route(
+            for: payload,
+            sessions: [],
+            trackedActivitySessions: [],
+            routines: []
+        )
+        XCTAssertEqual(route, AppRoute.home)
     }
 }

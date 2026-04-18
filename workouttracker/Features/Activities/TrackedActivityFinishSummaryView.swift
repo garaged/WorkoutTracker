@@ -387,6 +387,7 @@ struct TrackedActivityFinishSummaryView: View {
     private func delete(_ session: TrackedActivitySession) {
         do {
             try recorder.delete(session, context: modelContext)
+            self.session = nil
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

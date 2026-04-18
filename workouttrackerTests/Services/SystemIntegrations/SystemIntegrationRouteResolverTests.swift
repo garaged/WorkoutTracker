@@ -18,7 +18,7 @@ final class SystemIntegrationRouteResolverTests: XCTestCase {
 
         let resolution = resolver.resolve(
             payload: .session(.init(sessionID: UUID(), target: .session)),
-            sessions: [olderSession, newerSession],
+            sessions: [olderSession, newerSession], trackedActivitySessions: [],
             routines: [],
             activitiesByID: [:]
         )
@@ -36,7 +36,7 @@ final class SystemIntegrationRouteResolverTests: XCTestCase {
 
         let resolution = resolver.resolve(
             payload: .session(.init(sessionID: UUID(), target: .session)),
-            sessions: [completedSession],
+            sessions: [completedSession], trackedActivitySessions: [],
             routines: [],
             activitiesByID: [:]
         )
@@ -58,7 +58,7 @@ final class SystemIntegrationRouteResolverTests: XCTestCase {
 
         let resolution = resolver.resolve(
             payload: .session(.init(sessionID: finishedSession.id, target: .session)),
-            sessions: [finishedSession, activeSession],
+            sessions: [finishedSession, activeSession], trackedActivitySessions: [],
             routines: [],
             activitiesByID: [:]
         )
@@ -76,7 +76,7 @@ final class SystemIntegrationRouteResolverTests: XCTestCase {
 
         let resolution = resolver.resolve(
             payload: .session(.init(sessionID: session.id, target: .exercise(UUID()))),
-            sessions: [session],
+            sessions: [session], trackedActivitySessions: [],
             routines: [],
             activitiesByID: [:]
         )
@@ -101,7 +101,7 @@ final class SystemIntegrationRouteResolverTests: XCTestCase {
 
         let resolution = resolver.resolve(
             payload: .session(.init(sessionID: session.id, target: .exercise(exercise.id))),
-            sessions: [session],
+            sessions: [session], trackedActivitySessions: [],
             routines: [],
             activitiesByID: [:]
         )
@@ -115,7 +115,7 @@ final class SystemIntegrationRouteResolverTests: XCTestCase {
     func test_resolve_missingRoutine_fallsBackToHome() {
         let resolution = resolver.resolve(
             payload: .routine(.init(routineID: UUID())),
-            sessions: [],
+            sessions: [], trackedActivitySessions: [],
             routines: [],
             activitiesByID: [:]
         )

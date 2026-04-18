@@ -2927,7 +2927,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%lld kcal"
+            "value" : "%@ kcal"
           }
         }
       }
@@ -2938,7 +2938,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$d:%2$02d /km"
+            "value" : "%@ /km"
           }
         }
       }

@@ -33,6 +33,8 @@ Non-goals:
 
 ### v2.2.2 — Performance, responsiveness, and architecture hardening
 
+This update makes tracked activities much more reliable on iPhone and Apple Watch. We fixed issues around finishing activities, opening the current activity from widgets and watch surfaces, and improved summary and Apple Health save flow.
+
 - Fixed tracked-activity finish hang
 - Restored tracked-activity routing across phone/watch/widget surfaces
 - Fixed watch current-activity launch behavior
