@@ -288,26 +288,58 @@ struct ActivitiesHomeView: View {
 
     private var activityStartCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label(String(localized: "activities.start.card.title", defaultValue: "Tracked activities"), systemImage: "figure.walk.motion")
-                .font(.headline)
+            Label(
+                String(localized: "activities.start.card.title", defaultValue: "Tracked activities"),
+                systemImage: "figure.walk.motion"
+            )
+            .font(.headline)
 
-            Text(String(localized: "activities.start.card.message", defaultValue: "Start a walk, run, hike, or yoga session. Duration is tracked live, and activity-specific metrics can be added when you finish."))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            Text(
+                String(
+                    localized: "activities.start.card.message",
+                    defaultValue: "Start a walk, run, hike, or yoga session. Duration is tracked live, and activity-specific metrics can be added when you finish."
+                )
+            )
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
 
-            HStack(spacing: 8) {
-                ForEach([TrackedActivityKind.walking, .running, .hiking, .yoga], id: \.self) { kind in
-                    Label(kind.displayName, systemImage: kind.systemImage)
-                        .font(.caption.weight(.medium))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(.thinMaterial, in: Capsule())
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    activityChip(.walking)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    activityChip(.running)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                HStack(spacing: 8) {
+                    activityChip(.hiking)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    activityChip(.yoga)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .lineLimit(1)
         }
         .padding(.vertical, 8)
+    }
+
+    private func activityChip(_ kind: TrackedActivityKind) -> some View {
+        Label(kind.displayName, systemImage: kind.systemImage)
+            .font(.caption.weight(.medium))
+            .lineLimit(1)
+            .minimumScaleFactor(0.9)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(Color.primary.opacity(0.06))
+            )
+            .overlay(
+                Capsule()
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+            )
     }
 
     private var healthStatusCard: some View {

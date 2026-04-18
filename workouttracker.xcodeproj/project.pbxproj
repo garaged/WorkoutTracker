@@ -139,13 +139,6 @@
 			);
 			target = 36A0A0042F90000100AAA001 /* workouttrackerWidgets */;
 		};
-		358901442F931566005B873B /* Exceptions for "watchkitapp Watch App" folder in "watchkitapp Watch App" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"watchkitapp-Watch-App-Info.plist",
-			);
-			target = 35A4C0792F5E174800F30117 /* watchkitapp Watch App */;
-		};
 		35D84C342F3CCA92000BEFC0 /* Exceptions for "workouttracker" folder in "workouttrackerUITestHost" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -182,9 +175,6 @@
 		};
 		35A4C07B2F5E174800F30117 /* watchkitapp Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				358901442F931566005B873B /* Exceptions for "watchkitapp Watch App" folder in "watchkitapp Watch App" target */,
-			);
 			path = "watchkitapp Watch App";
 			sourceTree = "<group>";
 		};

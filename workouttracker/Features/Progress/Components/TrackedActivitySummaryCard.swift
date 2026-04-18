@@ -19,6 +19,7 @@ struct TrackedActivitySummaryCardModel: Equatable {
     struct ActivityMixItem: Identifiable, Equatable {
         let id: String
         let title: String
+        let count: Int
         let value: String
         let systemImage: String
         let activityKind: TrackedActivityKind
@@ -205,14 +206,15 @@ struct TrackedActivitySummaryCardModel: Equatable {
                 return ActivityMixItem(
                     id: kind.rawValue,
                     title: kind.displayName,
-                    value: String(localized: "progress.activities.mix.count", defaultValue: "\(count)"),
+                    count: count,
+                    value: AppFormatting.integer(count),
                     systemImage: kind.systemImage,
                     activityKind: kind
                 )
             }
             .sorted { lhs, rhs in
-                if lhs.value == rhs.value { return lhs.title < rhs.title }
-                return Int(lhs.value) ?? 0 > Int(rhs.value) ?? 0
+                if lhs.count == rhs.count { return lhs.title < rhs.title }
+                return lhs.count > rhs.count
             }
             .prefix(3)
             .map { $0 }
