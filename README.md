@@ -9,8 +9,7 @@ A lightweight, on-device workout logging app built with **SwiftUI + SwiftData**.
 
 ## Screenshots
 
-> TODO: Add screenshots later (recommended).  
-> Path: `docs/screenshots/` and reference images here.
+[Screenshots](docs/screenshots/) and reference images here.
 
 ## Feature overview
 
