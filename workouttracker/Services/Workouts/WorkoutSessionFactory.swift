@@ -24,6 +24,7 @@ enum WorkoutSessionFactory {
         var order: Int
         var exerciseId: UUID
         var nameSnapshot: String
+        var sourceProgramPrescriptionId: UUID? = nil
         var notes: String?
         var trackingStyle: ExerciseTrackingStyle
         var segment: WorkoutExerciseSegment = .main
@@ -67,6 +68,7 @@ enum WorkoutSessionFactory {
                 order: exerciseIndex,
                 exerciseId: ex.exerciseId,
                 exerciseNameSnapshot: ex.nameSnapshot,
+                sourceProgramPrescriptionId: ex.sourceProgramPrescriptionId,
                 notes: ex.notes,
                 trackingStyle: ex.trackingStyle,
                 segment: ex.segment,

@@ -10,6 +10,7 @@ final class WorkoutSessionExercise {
     // Snapshot identity (session stays stable even if Exercise changes later)
     var exerciseId: UUID
     var exerciseNameSnapshot: String
+    var sourceProgramPrescriptionId: UUID?
 
     var notes: String?
 
@@ -54,6 +55,7 @@ final class WorkoutSessionExercise {
         order: Int,
         exerciseId: UUID,
         exerciseNameSnapshot: String,
+        sourceProgramPrescriptionId: UUID? = nil,
         notes: String? = nil,
         trackingStyle: ExerciseTrackingStyle = .strength,
         segment: WorkoutExerciseSegment = .main,
@@ -64,6 +66,7 @@ final class WorkoutSessionExercise {
         self.order = order
         self.exerciseId = exerciseId
         self.exerciseNameSnapshot = exerciseNameSnapshot
+        self.sourceProgramPrescriptionId = sourceProgramPrescriptionId
         self.notes = notes
         self.trackingStyleRaw = trackingStyle.rawValue
         self.segmentRaw = segment.rawValue

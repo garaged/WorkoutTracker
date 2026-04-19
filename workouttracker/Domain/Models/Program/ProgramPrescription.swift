@@ -14,6 +14,7 @@ public struct ProgramPrescription: Identifiable, Codable, Hashable, Sendable {
     public var targetDistance: Double?
     public var distanceUnit: DistanceUnit?
     public var targetRPE: Double?
+    public var progressionRules: [ProgressionRule]
     public var notes: String?
 
     public init(
@@ -30,6 +31,7 @@ public struct ProgramPrescription: Identifiable, Codable, Hashable, Sendable {
         targetDistance: Double? = nil,
         distanceUnit: DistanceUnit? = nil,
         targetRPE: Double? = nil,
+        progressionRules: [ProgressionRule] = [],
         notes: String? = nil
     ) {
         self.id = id
@@ -45,7 +47,14 @@ public struct ProgramPrescription: Identifiable, Codable, Hashable, Sendable {
         self.targetDistance = targetDistance
         self.distanceUnit = distanceUnit
         self.targetRPE = targetRPE
+        self.progressionRules = progressionRules
         self.notes = notes
+    }
+}
+
+extension ProgramPrescription {
+    public var hasProgressionRules: Bool {
+        !progressionRules.isEmpty
     }
 }
 
@@ -64,6 +73,7 @@ extension ProgramPrescription {
         case targetDistance
         case distanceUnit
         case targetRPE
+        case progressionRules
         case notes
     }
 
@@ -82,6 +92,7 @@ extension ProgramPrescription {
         self.targetDistance = try? c.decode(Double.self, forKey: .targetDistance)
         self.distanceUnit = try? c.decode(DistanceUnit.self, forKey: .distanceUnit)
         self.targetRPE = try? c.decode(Double.self, forKey: .targetRPE)
+        self.progressionRules = (try? c.decode([ProgressionRule].self, forKey: .progressionRules)) ?? []
         self.notes = try? c.decode(String.self, forKey: .notes)
     }
 }

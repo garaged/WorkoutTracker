@@ -166,7 +166,10 @@ enum WorkoutSessionStarter {
         now: Date = Date()
     ) throws -> WorkoutSession {
         let executionSegments = WorkoutRoutineMapper.toExecutionSegments(routine: routine)
-        let templates = WorkoutRoutineMapper.toExerciseTemplates(executionSegments: executionSegments)
+        let templates = makeProgramExerciseTemplates(
+            executionSegments: executionSegments,
+            day: day
+        )
 
         let session = WorkoutSessionFactory.makeSession(
             startedAt: now,
@@ -187,5 +190,74 @@ enum WorkoutSessionStarter {
         try context.save()
         syncSystemIntegrations(context: context)
         return session
+    }
+
+    private static func makeProgramExerciseTemplates(
+        executionSegments: [WorkoutRoutineMapper.ExecutionSegment],
+        day: ProgramDay
+    ) -> [WorkoutSessionFactory.ExerciseTemplate] {
+        var templates = WorkoutRoutineMapper.toExerciseTemplates(executionSegments: executionSegments)
+        var remainingPrescriptions = day.orderedPrescriptions
+
+        for index in templates.indices {
+            guard let matchIndex = remainingPrescriptions.firstIndex(where: { prescription in
+                matches(template: templates[index], prescription: prescription)
+            }) else {
+                continue
+            }
+
+            let prescription = remainingPrescriptions.remove(at: matchIndex)
+            templates[index].sourceProgramPrescriptionId = prescription.id
+
+            let desiredSetCount = max(prescription.targetSets ?? templates[index].sets.count, 1)
+            if desiredSetCount > templates[index].sets.count,
+               let last = templates[index].sets.last {
+                for extraIndex in templates[index].sets.count..<desiredSetCount {
+                    var copy = last
+                    copy.order = extraIndex
+                    templates[index].sets.append(copy)
+                }
+            }
+
+            for setIndex in templates[index].sets.indices {
+                templates[index].sets[setIndex].order = setIndex
+                if let targetReps = prescription.targetReps {
+                    templates[index].sets[setIndex].targetReps = targetReps
+                }
+                if let targetWeight = prescription.targetWeight {
+                    templates[index].sets[setIndex].targetWeight = targetWeight
+                }
+                if let weightUnit = prescription.weightUnit {
+                    templates[index].sets[setIndex].targetWeightUnit = weightUnit
+                }
+                if let targetRPE = prescription.targetRPE {
+                    templates[index].sets[setIndex].targetRPE = targetRPE
+                }
+                if let targetDurationSeconds = prescription.targetDurationSeconds {
+                    templates[index].sets[setIndex].targetDurationSeconds = targetDurationSeconds
+                }
+                if let targetDistance = prescription.targetDistance {
+                    templates[index].sets[setIndex].targetDistance = targetDistance
+                }
+            }
+        }
+
+        return templates
+    }
+
+    private static func matches(
+        template: WorkoutSessionFactory.ExerciseTemplate,
+        prescription: ProgramPrescription
+    ) -> Bool {
+        if let exerciseId = prescription.exerciseId {
+            return template.exerciseId == exerciseId
+        }
+
+        if let snapshot = prescription.exerciseNameSnapshot?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+           !snapshot.isEmpty {
+            return template.nameSnapshot.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == snapshot
+        }
+
+        return false
     }
 }
