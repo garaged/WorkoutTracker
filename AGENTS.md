@@ -59,8 +59,12 @@ Related docs:
 - `docs/releases/v2.3.0-programs/FILE_MAP.md`
 - `docs/releases/v2.3.0-programs/TESTING.md`
 
-## Validation and reporting
-- Run targeted tests for the files and behavior you touched.
-- Prefer focused tests before broad suite runs.
-- Summarize changed files with paths and reasons.
-- Call out any unverified risk areas honestly.
+## Validation workflow
+- Do not run tests, builds, lint, or long verification commands unless I explicitly ask.
+- After implementation, stop and provide:
+  - a concise summary of changes
+  - the exact files changed and why
+  - a short manual validation checklist I can run myself
+  - any likely compile or integration risk areas to inspect manually
+- Prefer code inspection and repo-grounded reasoning over expensive command execution.
+- If a command seems necessary for confidence, propose it but do not run it without permission.

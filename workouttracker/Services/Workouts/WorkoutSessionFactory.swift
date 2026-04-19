@@ -2,6 +2,13 @@ import Foundation
 import SwiftData
 
 enum WorkoutSessionFactory {
+    struct ProgramContext: Hashable {
+        var assignmentId: UUID
+        var programId: UUID
+        var weekIndex: Int
+        var dayIndex: Int
+    }
+
     struct SetTemplate: Hashable {
         var order: Int
         var targetReps: Int?
@@ -29,6 +36,7 @@ enum WorkoutSessionFactory {
         linkedActivityId: UUID?,
         sourceRoutineId: UUID?,
         sourceRoutineNameSnapshot: String?,
+        programContext: ProgramContext? = nil,
         exercises: [ExerciseTemplate],
         prefillActualsFromTargets: Bool = true
     ) -> WorkoutSession {
@@ -36,7 +44,11 @@ enum WorkoutSessionFactory {
             startedAt: startedAt,
             sourceRoutineId: sourceRoutineId,
             sourceRoutineNameSnapshot: sourceRoutineNameSnapshot,
-            linkedActivityId: linkedActivityId
+            linkedActivityId: linkedActivityId,
+            programAssignmentId: programContext?.assignmentId,
+            sourceProgramId: programContext?.programId,
+            sourceProgramWeekIndex: programContext?.weekIndex,
+            sourceProgramDayIndex: programContext?.dayIndex
         )
 
         // Stable sort and then normalize to session-wide sequential order.

@@ -17,6 +17,10 @@ final class WorkoutSession {
     var sourceRoutineId: UUID?
     var sourceRoutineNameSnapshot: String?
     var linkedActivityId: UUID?
+    var programAssignmentId: UUID?
+    var sourceProgramId: UUID?
+    var sourceProgramWeekIndex: Int?
+    var sourceProgramDayIndex: Int?
 
     var statusRaw: String
 
@@ -52,7 +56,11 @@ final class WorkoutSession {
         startedAt: Date = Date(),
         sourceRoutineId: UUID? = nil,
         sourceRoutineNameSnapshot: String? = nil,
-        linkedActivityId: UUID? = nil
+        linkedActivityId: UUID? = nil,
+        programAssignmentId: UUID? = nil,
+        sourceProgramId: UUID? = nil,
+        sourceProgramWeekIndex: Int? = nil,
+        sourceProgramDayIndex: Int? = nil
     ) {
         self.id = id
         self.startedAt = startedAt
@@ -60,6 +68,10 @@ final class WorkoutSession {
         self.sourceRoutineId = sourceRoutineId
         self.sourceRoutineNameSnapshot = sourceRoutineNameSnapshot
         self.linkedActivityId = linkedActivityId
+        self.programAssignmentId = programAssignmentId
+        self.sourceProgramId = sourceProgramId
+        self.sourceProgramWeekIndex = sourceProgramWeekIndex
+        self.sourceProgramDayIndex = sourceProgramDayIndex
         self.statusRaw = WorkoutSessionStatus.inProgress.rawValue
 
         self.isPaused = false

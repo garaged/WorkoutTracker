@@ -92,7 +92,7 @@ public struct ProgramDay: Identifiable, Codable, Hashable, Sendable {
     }
 
     public var isRestLikeDay: Bool {
-        kind == .rest || blocks.allSatisfy { $0.kind == .rest }
+        kind == .rest || (!blocks.isEmpty && blocks.allSatisfy { $0.kind == .rest })
     }
 
     public func validationIssues() -> [String] {

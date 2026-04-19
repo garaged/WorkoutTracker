@@ -155,4 +155,37 @@ enum WorkoutSessionStarter {
     ) throws {
         try finishFromRecovery(session, context: context, now: now)
     }
+
+    static func startSession(
+        from routine: WorkoutRoutine,
+        assignment: ProgramAssignment,
+        program: TrainingProgram,
+        weekIndex: Int,
+        day: ProgramDay,
+        context: ModelContext,
+        now: Date = Date()
+    ) throws -> WorkoutSession {
+        let executionSegments = WorkoutRoutineMapper.toExecutionSegments(routine: routine)
+        let templates = WorkoutRoutineMapper.toExerciseTemplates(executionSegments: executionSegments)
+
+        let session = WorkoutSessionFactory.makeSession(
+            startedAt: now,
+            linkedActivityId: nil,
+            sourceRoutineId: routine.id,
+            sourceRoutineNameSnapshot: routine.name,
+            programContext: .init(
+                assignmentId: assignment.id,
+                programId: program.id,
+                weekIndex: weekIndex,
+                dayIndex: day.index
+            ),
+            exercises: templates,
+            prefillActualsFromTargets: true
+        )
+
+        context.insert(session)
+        try context.save()
+        syncSystemIntegrations(context: context)
+        return session
+    }
 }
