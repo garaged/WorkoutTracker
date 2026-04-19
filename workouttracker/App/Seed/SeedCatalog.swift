@@ -36,6 +36,7 @@ struct SeedCatalog: Codable {
         let items: [SeedRoutineItem]
     }
 
+    let programs: [TrainingProgram]
     let exercises: [SeedExercise]
     let routines: [SeedRoutine]
 
@@ -53,5 +54,20 @@ struct SeedCatalog: Codable {
         }
         let data = try Data(contentsOf: url)
         return try JSONDecoder().decode(SeedCatalog.self, from: data)
+    }
+}
+
+extension SeedCatalog {
+    private enum CodingKeys: String, CodingKey {
+        case programs
+        case exercises
+        case routines
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.programs = (try? c.decode([TrainingProgram].self, forKey: .programs)) ?? []
+        self.exercises = try c.decode([SeedExercise].self, forKey: .exercises)
+        self.routines = try c.decode([SeedRoutine].self, forKey: .routines)
     }
 }

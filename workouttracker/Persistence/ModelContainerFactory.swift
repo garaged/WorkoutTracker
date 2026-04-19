@@ -20,6 +20,12 @@ enum ModelContainerFactory {
         WorkoutSessionExercise.self,
         WorkoutSetLog.self,
 
+        // Programs runtime
+        ProgramAssignment.self,
+        ProgramExecutionState.self,
+        ProgramCompletedDay.self,
+        ProgramMissedDay.self,
+
         // Tracked activities
         TrackedActivitySession.self,
 

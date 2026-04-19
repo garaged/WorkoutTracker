@@ -17,7 +17,8 @@ public struct TrainingProgram: Identifiable, Codable, Hashable, Sendable {
     public var level: Level
     public var tags: [String]
     public var equipment: [String]
-    public var weeks: [TrainingWeek]
+    public var weeks: [ProgramWeek]
+    public var source: ProgramSource
     public var createdAt: Date?
     public var updatedAt: Date?
 
@@ -30,7 +31,8 @@ public struct TrainingProgram: Identifiable, Codable, Hashable, Sendable {
         level: Level = .unknown,
         tags: [String] = [],
         equipment: [String] = [],
-        weeks: [TrainingWeek] = [],
+        weeks: [ProgramWeek] = [],
+        source: ProgramSource = .custom,
         createdAt: Date? = nil,
         updatedAt: Date? = nil
     ) {
@@ -43,14 +45,38 @@ public struct TrainingProgram: Identifiable, Codable, Hashable, Sendable {
         self.tags = tags
         self.equipment = equipment
         self.weeks = weeks
+        self.source = source
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
 
     public var durationWeeks: Int { weeks.count }
 
-    public var orderedWeeks: [TrainingWeek] {
+    public var orderedWeeks: [ProgramWeek] {
         weeks.sorted { $0.index < $1.index }
+    }
+
+    public var totalTrainingDays: Int {
+        weeks.reduce(0) { $0 + $1.days.count }
+    }
+
+    public func validationIssues() -> [String] {
+        var issues: [String] = []
+
+        if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            issues.append("Program name must not be empty.")
+        }
+
+        let weekIndexes = weeks.map(\.index)
+        if Set(weekIndexes).count != weekIndexes.count {
+            issues.append("Program contains duplicate week indexes.")
+        }
+
+        for week in weeks {
+            issues.append(contentsOf: week.validationIssues().map { "Week \(week.index): \($0)" })
+        }
+
+        return issues
     }
 
     public static func makeSlug(_ input: String) -> String {
@@ -70,7 +96,7 @@ public struct TrainingProgram: Identifiable, Codable, Hashable, Sendable {
 // MARK: - Resilient decoding (generates ids/slug if missing)
 extension TrainingProgram {
     private enum CodingKeys: String, CodingKey {
-        case id, slug, name, summary, author, level, tags, equipment, weeks, createdAt, updatedAt
+        case id, slug, name, summary, author, level, tags, equipment, weeks, source, createdAt, updatedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -86,7 +112,8 @@ extension TrainingProgram {
         self.level = (try? c.decode(Level.self, forKey: .level)) ?? .unknown
         self.tags = (try? c.decode([String].self, forKey: .tags)) ?? []
         self.equipment = (try? c.decode([String].self, forKey: .equipment)) ?? []
-        self.weeks = (try? c.decode([TrainingWeek].self, forKey: .weeks)) ?? []
+        self.weeks = (try? c.decode([ProgramWeek].self, forKey: .weeks)) ?? []
+        self.source = (try? c.decode(ProgramSource.self, forKey: .source)) ?? .custom
         self.createdAt = try? c.decode(Date.self, forKey: .createdAt)
         self.updatedAt = try? c.decode(Date.self, forKey: .updatedAt)
     }
