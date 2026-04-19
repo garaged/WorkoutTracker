@@ -12,18 +12,22 @@ final class WatchRouteLauncher: ObservableObject {
 
     private var autoOpenArmed = false
     private var suppressedSessionID: String?
+    private var preservesSeededShortcutsRoute = false
 
     func showShortcuts() {
+        preservesSeededShortcutsRoute = false
         route = .shortcuts
     }
 
     func openNowPlaying() {
+        preservesSeededShortcutsRoute = false
         suppressedSessionID = nil
         autoOpenArmed = false
         route = .nowPlaying
     }
 
     func armAutoOpenControls() {
+        preservesSeededShortcutsRoute = false
         autoOpenArmed = true
         suppressedSessionID = nil
     }
@@ -44,11 +48,16 @@ final class WatchRouteLauncher: ObservableObject {
 
     func consumeAutoOpenIfPossible(hasActiveSession: Bool, sessionID: String?) {
         guard hasActiveSession else {
+            preservesSeededShortcutsRoute = false
             autoOpenArmed = false
             suppressedSessionID = nil
             if route == .nowPlaying {
                 route = .shortcuts
             }
+            return
+        }
+
+        guard !(preservesSeededShortcutsRoute && route == .shortcuts) else {
             return
         }
 
@@ -78,6 +87,7 @@ final class WatchRouteLauncher: ObservableObject {
 
     func applyUITestSeedRoute(_ route: Route) {
         self.route = route
+        preservesSeededShortcutsRoute = route == .shortcuts
         autoOpenArmed = false
         suppressedSessionID = nil
     }

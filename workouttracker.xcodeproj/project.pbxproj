@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		3528FBE12F722D600076B574 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 3528FBE02F722D600076B574 /* ZIPFoundation */; };
+		354B5A662F90010100D0C0DE /* TrackedActivityWatchPerformanceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 354B5A652F90010100D0C0DE /* TrackedActivityWatchPerformanceUITests.swift */; };
+		354B5A682F90010100D0C0DE /* TrackedActivityWatchSmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 354B5A672F90010100D0C0DE /* TrackedActivityWatchSmokeUITests.swift */; };
 		35A4C0842F5E174900F30117 /* watchkitapp Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 35A4C07A2F5E174800F30117 /* watchkitapp Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		35F8F98A2F721A71001EFDC1 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 35F8F9892F721A71001EFDC1 /* ZIPFoundation */; };
 		35F8F98C2F721A87001EFDC1 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 35F8F98B2F721A87001EFDC1 /* ZIPFoundation */; };
@@ -96,6 +98,8 @@
 /* Begin PBXFileReference section */
 		350B85372F232D7900E7C785 /* workouttrackerTest.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = workouttrackerTest.xctestplan; sourceTree = "<group>"; };
 		350B861C2F25BE6B00E7C785 /* workouttrackerUITests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = workouttrackerUITests.xctestplan; sourceTree = "<group>"; };
+		354B5A652F90010100D0C0DE /* TrackedActivityWatchPerformanceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TrackedActivityWatchPerformanceUITests.swift; path = "watchkitapp Watch AppUITests/TrackedActivityWatchPerformanceUITests.swift"; sourceTree = "<group>"; };
+		354B5A672F90010100D0C0DE /* TrackedActivityWatchSmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TrackedActivityWatchSmokeUITests.swift; path = "watchkitapp Watch AppUITests/TrackedActivityWatchSmokeUITests.swift"; sourceTree = "<group>"; };
 		356003F72F875EE100ADF29B /* watchkitapp Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "watchkitapp Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		356004082F875FAE00ADF29B /* watchkitapp Watch App.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "watchkitapp Watch App.xctestplan"; sourceTree = "<group>"; };
 		35A4C07A2F5E174800F30117 /* watchkitapp Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "watchkitapp Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -599,6 +603,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				354B5A662F90010100D0C0DE /* TrackedActivityWatchPerformanceUITests.swift in Sources */,
+				354B5A682F90010100D0C0DE /* TrackedActivityWatchSmokeUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
