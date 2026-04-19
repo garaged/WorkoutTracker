@@ -277,6 +277,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		35A554FC2F9535B000C23469 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				354B5A652F90010100D0C0DE /* TrackedActivityWatchPerformanceUITests.swift */,
+				354B5A672F90010100D0C0DE /* TrackedActivityWatchSmokeUITests.swift */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		35BA2D3B2F11D33200EEE02C = {
 			isa = PBXGroup;
 			children = (
@@ -292,6 +301,7 @@
 				356003F82F875EE100ADF29B /* watchkitapp Watch AppUITests */,
 				35F8F9882F721A71001EFDC1 /* Frameworks */,
 				35BA2D452F11D33200EEE02C /* Products */,
+				35A554FC2F9535B000C23469 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -753,7 +763,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.2;
+				MARKETING_VERSION = 2.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RESOURCES_TARGETED_DEVICE_FAMILY = 4;
@@ -791,7 +801,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.2;
+				MARKETING_VERSION = 2.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RESOURCES_TARGETED_DEVICE_FAMILY = 4;
@@ -976,7 +986,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.2;
+				MARKETING_VERSION = 2.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1021,7 +1031,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.2;
+				MARKETING_VERSION = 2.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1144,7 +1154,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.2;
+				MARKETING_VERSION = 2.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.garaged.workouttracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1179,7 +1189,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.2.2;
+				MARKETING_VERSION = 2.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.garaged.workouttracker;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1210,7 +1220,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 2.2.2;
+				MARKETING_VERSION = 2.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -1242,7 +1252,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 2.2.2;
+				MARKETING_VERSION = 2.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = garaged.org.workouttracker.widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
