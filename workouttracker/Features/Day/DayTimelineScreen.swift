@@ -582,9 +582,11 @@ struct DayTimelineScreen: View {
 
     @MainActor
     private func presentSessionRoute(for s: WorkoutSession) {
+        let launchRoute = sessionResumePlanner.resumeRoute(for: s) ?? sessionResumePlanner.openRoute(for: s)
         let route = SessionPresentationRoute(
             session: s,
-            initialResumeTarget: sessionResumePlanner.target(for: s)
+            initialResumeTarget: sessionResumePlanner.target(for: s),
+            launchRoute: launchRoute
         )
 
         let same = presentedSessionRoute?.session.persistentModelID == s.persistentModelID

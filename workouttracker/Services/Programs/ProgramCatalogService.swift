@@ -50,41 +50,7 @@ struct ProgramCatalogService {
             throw CatalogError.missingResource
         }
         let data = try Data(contentsOf: url)
-
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        decoder.dateDecodingStrategy = .iso8601
-
-        guard let header = try? decoder.decode(Header.self, from: data) else {
-            throw CatalogError.decodeFailed
-        }
-
-        switch header.formatVersion {
-        case 1:
-            guard let pack = try? decoder.decode(ProgramPackV1.self, from: data) else {
-                throw CatalogError.decodeFailed
-            }
-            return CatalogLoad(
-                formatVersion: 1,
-                generatedAt: pack.generatedAt,
-                programs: pack.programs.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending },
-                packV2: nil
-            )
-
-        case 2:
-            guard let pack = try? decoder.decode(ProgramPackV2.self, from: data) else {
-                throw CatalogError.decodeFailed
-            }
-            return CatalogLoad(
-                formatVersion: 2,
-                generatedAt: pack.generatedAt,
-                programs: pack.programs.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending },
-                packV2: pack
-            )
-
-        default:
-            throw CatalogError.unsupportedVersion(header.formatVersion)
-        }
+        return try decodeCatalog(data)
     }
 
     // MARK: - Seeded V2 (UI tests only)
@@ -92,27 +58,33 @@ struct ProgramCatalogService {
     private func loadSeededV2Catalog() throws -> CatalogLoad {
         let json = Self.seedV2JSON
         let data = Data(json.utf8)
+        return try decodeCatalog(data)
+    }
 
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        decoder.dateDecodingStrategy = .iso8601
-
-        guard let pack = try? decoder.decode(ProgramPackV2.self, from: data) else {
-            throw CatalogError.decodeFailed
+    private func decodeCatalog(_ data: Data) throws -> CatalogLoad {
+        do {
+            let pack = try ProgramPackCodec.decode(data)
+            return CatalogLoad(
+                formatVersion: pack.schemaVersion,
+                generatedAt: pack.generatedAt,
+                programs: pack.programs.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending },
+                packV2: pack.schemaVersion == ProgramPack.supportedSchemaVersion ? pack : nil
+            )
+        } catch let error as ProgramPackCodec.CodecError {
+            switch error {
+            case .unsupportedSchemaVersion(let version):
+                throw CatalogError.unsupportedVersion(version)
+            case .decodeFailed:
+                throw CatalogError.decodeFailed
+            }
         }
-
-        return CatalogLoad(
-            formatVersion: 2,
-            generatedAt: pack.generatedAt,
-            programs: pack.programs.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending },
-            packV2: pack
-        )
     }
 
     /// Tiny deterministic V2 pack used only when UITESTS_SEED=1
     private static let seedV2JSON: String = """
     {
       "format_version": 2,
+      "pack_id": "seed-program-v2-pack",
       "generated_at": "2026-02-22T00:00:00Z",
       "exercises": [
         {

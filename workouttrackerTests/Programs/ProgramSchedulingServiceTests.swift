@@ -68,6 +68,44 @@ final class ProgramSchedulingServiceTests: XCTestCase {
         XCTAssertThrowsError(try ProgramSchedulingService.schedule(program: program, options: options, context: context))
     }
 
+    @MainActor
+    func test_preview_ignoresRestDaysWithoutRoutineReferences() throws {
+        let context = try makeInMemoryContext()
+        let pack = makeSamplePackV2(programDays: [1])
+        _ = try ProgramPackInstallService.installAssets(from: pack, context: context)
+
+        let restDay = TrainingDay(
+            index: 2,
+            title: "Rest",
+            blocks: [
+                .init(
+                    kind: .rest,
+                    title: "Rest",
+                    estimatedMinutes: 20,
+                    notes: "Optional recovery work."
+                )
+            ]
+        )
+
+        var program = pack.programs[0]
+        program.weeks[0].days.append(restDay)
+
+        let calendar = Calendar.current
+        let startDate = calendar.startOfDay(for: Date())
+        let startTime = try XCTUnwrap(calendar.date(bySettingHour: 12, minute: 0, second: 0, of: startDate))
+
+        let options = ProgramSchedulingService.Options(
+            startDate: startDate,
+            startTime: startTime,
+            includeRestDays: true,
+            conflictStrategy: .skipConflicts
+        )
+
+        let preview = ProgramSchedulingService.preview(program: program, options: options)
+        XCTAssertTrue(preview.isSchedulable)
+        XCTAssertTrue(preview.missingRoutineSlugs.isEmpty)
+    }
+
     // MARK: - Helpers
 
     private func makeInMemoryContext() throws -> ModelContext {

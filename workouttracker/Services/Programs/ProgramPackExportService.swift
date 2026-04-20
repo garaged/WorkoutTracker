@@ -103,25 +103,28 @@ enum ProgramPackExportService {
             )
         }
 
-        let pack = ProgramPackV2(
-            formatVersion: 2,
+        let pack = ProgramPack(
+            schemaVersion: ProgramPack.supportedSchemaVersion,
+            packID: makePackID(for: programs),
             generatedAt: Date(),
             exercises: exerciseDTOs,
             routines: routineDTOs,
             programs: programs
         )
-
-        let enc = JSONEncoder()
-        enc.outputFormatting = [.prettyPrinted, .sortedKeys]
-        enc.keyEncodingStrategy = .convertToSnakeCase
-        enc.dateEncodingStrategy = .iso8601
-        return try enc.encode(pack)
+        return try ProgramPackCodec.encode(pack)
     }
 
     private static func routineSlug(for day: TrainingDay) -> String? {
         let s = day.blocks.first(where: { $0.reference?.kind == .routine })?.reference?.slug
         let t = s?.trimmingCharacters(in: .whitespacesAndNewlines)
         return (t?.isEmpty == false) ? t!.lowercased() : nil
+    }
+
+    private static func makePackID(for programs: [TrainingProgram]) -> String {
+        if programs.count == 1, let program = programs.first {
+            return "\(TrainingProgram.makeSlug(program.slug))-pack"
+        }
+        return "program-pack-\(programs.count)"
     }
 }
 

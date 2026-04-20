@@ -145,6 +145,16 @@
         }
       }
     },
+    "%@. %@. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@. %2$@. %3$@"
+          }
+        }
+      }
+    },
     "%@#%lld" : {
       "localizations" : {
         "en" : {
@@ -1799,6 +1809,9 @@
           }
         }
       }
+    },
+    "Active program" : {
+
     },
     "Active Sessions" : {
       "extractionState" : "stale",
@@ -5053,6 +5066,9 @@
         }
       }
     },
+    "Choose a lightweight template for recurring days or a structured program for multi-week training." : {
+
+    },
     "Choose…" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5646,6 +5662,9 @@
         }
       }
     },
+    "Continue Program" : {
+
+    },
     "Cool-down" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5867,6 +5886,9 @@
           }
         }
       }
+    },
+    "Current assignment unavailable" : {
+
     },
     "Current Session" : {
 
@@ -7066,6 +7088,9 @@
 
     },
     "Finishing your workout session in Workout Tracker." : {
+
+    },
+    "Follow scheduled days from Calendar." : {
 
     },
     "format.duration.short.hours_minutes" : {
@@ -8308,6 +8333,9 @@
         }
       }
     },
+    "Import, review, and schedule multi-week training plans." : {
+
+    },
     "In progress" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -8740,6 +8768,9 @@
           }
         }
       }
+    },
+    "Library unavailable" : {
+
     },
     "Linked routines" : {
       "extractionState" : "stale",
@@ -9370,6 +9401,9 @@
         }
       }
     },
+    "No installed programs" : {
+
+    },
     "No logged sets yet" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -9534,6 +9568,12 @@
           }
         }
       }
+    },
+    "No templates yet" : {
+
+    },
+    "No upcoming training day" : {
+
     },
     "No warm-up suggestions matched your search. Switch to All to see the full library or create a new exercise." : {
       "extractionState" : "stale",
@@ -9735,6 +9775,9 @@
           }
         }
       }
+    },
+    "Open library" : {
+
     },
     "Open the rest timer when your current workout session is ready for one." : {
 
@@ -10057,7 +10100,69 @@
         }
       }
     },
+    "Planning" : {
+
+    },
+    "planning.programs.count" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%lld installed"
+          }
+        }
+      }
+    },
+    "planning.programs.next_day" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Next: Day %1$lld %2$@ • %3$@"
+          }
+        }
+      }
+    },
+    "planning.programs.status.behind" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Week %lld • behind schedule"
+          }
+        }
+      }
+    },
+    "planning.programs.status.on_track" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Week %lld • on track"
+          }
+        }
+      }
+    },
+    "planning.templates.count" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%lld templates"
+          }
+        }
+      }
+    },
+    "Plans" : {
+
+    },
     "Plans that auto-preload your day" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -10188,8 +10293,13 @@
         }
       }
     },
+    "Program complete" : {
+
+    },
+    "Program follow-up happens in Calendar after scheduling. Import, export, and asset repair stay available inside Programs and Settings." : {
+
+    },
     "Programs" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -12625,6 +12735,9 @@
         }
       }
     },
+    "Re-import the program to restore planning details." : {
+
+    },
     "Ready to start this routine." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -13040,6 +13153,9 @@
     "Resuming your workout in Workout Tracker." : {
 
     },
+    "Reusable day plans that can preload your calendar." : {
+
+    },
     "Review past sessions" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -13056,6 +13172,9 @@
           }
         }
       }
+    },
+    "Review your current multi-week plan here. Scheduled workout days are followed from Calendar." : {
+
     },
     "Routine" : {
       "localizations" : {
@@ -13563,6 +13682,7 @@
       }
     },
     "Schedule templates" : {
+      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -15763,6 +15883,12 @@
           }
         }
       }
+    },
+    "Templates" : {
+
+    },
+    "Templates and programs for structured scheduling" : {
+
     },
     "templates.editor.default_start_time" : {
       "extractionState" : "extracted_with_value",

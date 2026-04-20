@@ -21,7 +21,9 @@ enum ProgramPackInstallService {
     }
 
     static func installAssets(from pack: ProgramPackV2, context: ModelContext) throws -> InstallResult {
-        guard pack.formatVersion == 2 else { throw InstallError.invalidPackVersion(pack.formatVersion) }
+        guard pack.schemaVersion == ProgramPack.supportedSchemaVersion else {
+            throw InstallError.invalidPackVersion(pack.schemaVersion)
+        }
 
         var map = (try? ProgramPackAssetMapStore.load()) ?? .empty
 

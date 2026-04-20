@@ -214,7 +214,7 @@ final class ProgramsLibraryViewModel: ObservableObject {
             catalogPackV2 = load.packV2
 
             // Optional: eagerly install catalog assets once per app run (cheap; idempotent)
-            if let pack = catalogPackV2, pack.formatVersion == 2 {
+            if let pack = catalogPackV2, pack.schemaVersion == ProgramPack.supportedSchemaVersion {
                 _ = try ProgramPackInstallService.installAssets(from: pack, context: modelContext)
             }
         } catch {
@@ -234,7 +234,7 @@ final class ProgramsLibraryViewModel: ObservableObject {
 
     func addCatalogProgram(_ program: TrainingProgram, modelContext: ModelContext) async {
         do {
-            if let pack = catalogPackV2, pack.formatVersion == 2 {
+            if let pack = catalogPackV2, pack.schemaVersion == ProgramPack.supportedSchemaVersion {
                 _ = try ProgramPackInstallService.installAssets(from: pack, context: modelContext)
             }
 
@@ -268,12 +268,8 @@ final class ProgramsLibraryViewModel: ObservableObject {
         modelContext: ModelContext
     ) async {
         do {
-            if preview.packVersion == 2 {
-                let dec = JSONDecoder()
-                dec.keyDecodingStrategy = .convertFromSnakeCase
-                dec.dateDecodingStrategy = .iso8601
-                let pack = try dec.decode(ProgramPackV2.self, from: preview.rawData)
-                _ = try ProgramPackInstallService.installAssets(from: pack, context: modelContext)
+            if preview.pack.schemaVersion == ProgramPack.supportedSchemaVersion {
+                _ = try ProgramPackInstallService.installAssets(from: preview.pack, context: modelContext)
             }
 
             installed = try await io.importFromPreview(preview, strategy: strategy)

@@ -184,6 +184,9 @@ enum ProgramSchedulingService {
 
         for w in program.weeks {
             for d in w.days {
+                if d.isRestLikeDay {
+                    continue
+                }
                 guard let slug = routineSlug(for: d) else {
                     missing.insert("Missing routine reference in “\(program.name)”")
                     continue

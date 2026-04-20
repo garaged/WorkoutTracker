@@ -248,6 +248,7 @@ struct AppRootView: View {
                 subtitle: String(localized: "Plan and log your day"),
                 systemImage: "calendar",
                 tint: .accentColor,
+                accessibilityIdentifier: "Home.Tile.Calendar",
                 destination: { AnyView(DayTimelineEntryScreen()) }
             ),
             HomeTile(
@@ -255,6 +256,7 @@ struct AppRootView: View {
                 subtitle: String(localized: "Track walking, running, hiking, and yoga"),
                 systemImage: "figure.walk.motion",
                 tint: .teal,
+                accessibilityIdentifier: "Home.Tile.Activities",
                 destination: { AnyView(ActivitiesHomeView()) }
             ),
             HomeTile(
@@ -262,6 +264,7 @@ struct AppRootView: View {
                 subtitle: String(localized: "Start sessions and review history"),
                 systemImage: "dumbbell.fill",
                 tint: .orange,
+                accessibilityIdentifier: "Home.Tile.Workouts",
                 destination: { AnyView(WorkoutSessionsScreen()) }
             ),
             HomeTile(
@@ -269,6 +272,7 @@ struct AppRootView: View {
                 subtitle: String(localized: "Build plans and reuse them"),
                 systemImage: "list.bullet.rectangle.portrait",
                 tint: .purple,
+                accessibilityIdentifier: "Home.Tile.Routines",
                 destination: {
                     AnyView(
                         RoutinesScreen(onOpenSession: { session in
@@ -278,17 +282,19 @@ struct AppRootView: View {
                 }
             ),
             HomeTile(
-                title: String(localized: "Schedule templates"),
-                subtitle: String(localized: "Plans that auto-preload your day"),
-                systemImage: "wand.and.stars",
+                title: String(localized: "Plans"),
+                subtitle: String(localized: "Templates and programs for structured scheduling"),
+                systemImage: "calendar.badge.clock",
                 tint: .indigo,
-                destination: { AnyView(TemplatesScreen(applyDay: applyDay)) }
+                accessibilityIdentifier: "Home.Tile.Plans",
+                destination: { AnyView(PlanningHubScreen(applyDay: applyDay)) }
             ),
             HomeTile(
                 title: String(localized: "Exercises"),
                 subtitle: String(localized: "Browse and edit your library"),
                 systemImage: "square.grid.2x2.fill",
                 tint: .mint,
+                accessibilityIdentifier: "Home.Tile.Exercises",
                 destination: { AnyView(ExerciseLibraryScreen()) }
             ),
             HomeTile(
@@ -296,6 +302,7 @@ struct AppRootView: View {
                 subtitle: String(localized: "Streaks, volume, trends"),
                 systemImage: "chart.line.uptrend.xyaxis",
                 tint: .blue,
+                accessibilityIdentifier: "Home.Tile.Progress",
                 destination: { AnyView(ProgressScreen()) }
             ),
             HomeTile(
@@ -303,6 +310,7 @@ struct AppRootView: View {
                 subtitle: String(localized: "Measurements and tracking"),
                 systemImage: "scalemass.fill",
                 tint: .green,
+                accessibilityIdentifier: "Home.Tile.Body",
                 destination: { AnyView(MeasurementsScreen()) }
             ),
             HomeTile(
@@ -310,6 +318,7 @@ struct AppRootView: View {
                 subtitle: String(localized: "Preferences and app info"),
                 systemImage: "gearshape.fill",
                 tint: .gray,
+                accessibilityIdentifier: "Home.Tile.Settings",
                 destination: { AnyView(SettingsScreen()) }
             )
         ]

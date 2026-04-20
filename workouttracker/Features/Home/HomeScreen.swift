@@ -8,6 +8,7 @@ struct HomeTile: Identifiable {
     let subtitle: String
     let systemImage: String
     let tint: Color
+    let accessibilityIdentifier: String?
     let destination: () -> AnyView
 }
 
@@ -147,5 +148,6 @@ private struct HomeTileCard: View {
         .shadow(radius: 10, y: 6)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(tile.title). \(tile.subtitle)")
+        .accessibilityIdentifier(tile.accessibilityIdentifier ?? "")
     }
 }

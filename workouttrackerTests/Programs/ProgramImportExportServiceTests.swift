@@ -33,6 +33,61 @@ final class ProgramImportExportServiceTests: XCTestCase {
         XCTAssertEqual(library.first?.slug, "sample-program")
     }
 
+    func test_importFromPreview_keepExisting_preservesExistingProgram() async throws {
+        let existing = TrainingProgram(slug: "sample-program", name: "Existing Program", weeks: [TrainingWeek(index: 1, days: [])])
+        let incoming = TrainingProgram(id: existing.id, slug: "sample-program", name: "Incoming Program", weeks: [TrainingWeek(index: 1, days: [])])
+
+        let io = ProgramImportExportService(baseFolderName: "WorkoutTrackerTests-\(UUID().uuidString)")
+        try await io.saveLibrary([existing])
+
+        let preview = ProgramImportExportService.ImportPreview(
+            pack: ProgramPack(formatVersion: 2, packID: "sample-pack", generatedAt: Date(), programs: [incoming]),
+            validationIssues: [],
+            rawData: Data()
+        )
+
+        let library = try await io.importFromPreview(preview, strategy: .keepExisting)
+        XCTAssertEqual(library.count, 1)
+        XCTAssertEqual(library.first?.name, "Existing Program")
+    }
+
+    func test_importFromPreview_replaceExisting_updatesProgram() async throws {
+        let existing = TrainingProgram(slug: "sample-program", name: "Existing Program", weeks: [TrainingWeek(index: 1, days: [])])
+        let incoming = TrainingProgram(id: existing.id, slug: "sample-program", name: "Updated Program", weeks: [TrainingWeek(index: 1, days: [])])
+
+        let io = ProgramImportExportService(baseFolderName: "WorkoutTrackerTests-\(UUID().uuidString)")
+        try await io.saveLibrary([existing])
+
+        let preview = ProgramImportExportService.ImportPreview(
+            pack: ProgramPack(formatVersion: 2, packID: "sample-pack", generatedAt: Date(), programs: [incoming]),
+            validationIssues: [],
+            rawData: Data()
+        )
+
+        let library = try await io.importFromPreview(preview, strategy: .replaceExisting)
+        XCTAssertEqual(library.count, 1)
+        XCTAssertEqual(library.first?.name, "Updated Program")
+    }
+
+    func test_importFromPreview_renameOnConflict_importsCopyWithUniqueSlug() async throws {
+        let existing = TrainingProgram(slug: "sample-program", name: "Existing Program", weeks: [TrainingWeek(index: 1, days: [])])
+        let incoming = TrainingProgram(id: existing.id, slug: "sample-program", name: "Imported Copy", weeks: [TrainingWeek(index: 1, days: [])])
+
+        let io = ProgramImportExportService(baseFolderName: "WorkoutTrackerTests-\(UUID().uuidString)")
+        try await io.saveLibrary([existing])
+
+        let preview = ProgramImportExportService.ImportPreview(
+            pack: ProgramPack(formatVersion: 2, packID: "sample-pack", generatedAt: Date(), programs: [incoming]),
+            validationIssues: [],
+            rawData: Data()
+        )
+
+        let library = try await io.importFromPreview(preview, strategy: .renameOnConflict)
+        XCTAssertEqual(library.count, 2)
+        XCTAssertEqual(Set(library.map(\.slug)).count, 2)
+        XCTAssertTrue(library.contains { $0.slug == "sample-program-2" })
+    }
+
     // MARK: - Helpers
 
     private func makeSamplePackV2(programDays: [Int]) -> ProgramPackV2 {

@@ -31,13 +31,41 @@ final class workouttrackerUITests: XCTestCase {
         let app = UITestLaunch.app(start: "home", reset: true, seed: false)
         app.launch()
 
-        let templatesTile = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Schedule"))
-            .firstMatch
+        openPlansFromHome(app, debugContext: "NavigateToTemplatesFromHomeTile")
 
-        XCTAssertTrue(templatesTile.waitForExistence(timeout: 6.0))
-        templatesTile.tap()
+        XCTAssertTrue(app.navigationBars["Plans"].waitForExistence(timeout: 6.0))
+
+        let templatesCard = app.el("PlanningHub.Card.Templates")
+        if !templatesCard.waitForExistence(timeout: 6.0) {
+            attachUITestDebug(app, name: "NavigateToTemplatesFromHomeTile_TemplatesCardMissing")
+        }
+        XCTAssertTrue(templatesCard.exists)
+        templatesCard.tap()
 
         XCTAssertTrue(app.navigationBars["Schedule Templates"].waitForExistence(timeout: 6.0))
+    }
+
+    func test_planningHub_templatesCard_hasStableAccessibilityIdentifier() {
+        let app = UITestLaunch.app(start: "home", reset: true, seed: false)
+        app.launch()
+
+        openPlansFromHome(app, debugContext: "PlanningHubTemplatesCardIdentifier")
+
+        XCTAssertTrue(app.navigationBars["Plans"].waitForExistence(timeout: 6.0))
+
+        let templatesCard = app.el("PlanningHub.Card.Templates")
+        if !templatesCard.waitForExistence(timeout: 6.0) {
+            attachUITestDebug(app, name: "PlanningHubTemplatesCardIdentifier_TemplatesCardMissing")
+        }
+        XCTAssertTrue(templatesCard.exists, "Expected Templates card to remain discoverable by its accessibility identifier.")
+    }
+
+    private func openPlansFromHome(_ app: XCUIApplication, debugContext: String) {
+        let plansTile = app.el("Home.Tile.Plans")
+        if !plansTile.waitForExistence(timeout: 6.0) {
+            attachUITestDebug(app, name: "\(debugContext)_PlansTileMissing")
+        }
+        XCTAssertTrue(plansTile.exists, "Expected Plans tile to remain discoverable by its accessibility identifier.")
+        plansTile.tap()
     }
 }
