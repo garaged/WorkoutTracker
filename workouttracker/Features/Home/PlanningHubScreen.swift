@@ -39,10 +39,10 @@ struct PlanningHubScreen: View {
                 .buttonStyle(.plain)
 
                 NavigationLink {
-                    if let activeProgram {
-                        ProgramDetailScreen(program: activeProgram)
+                    if let activeProgram, let activeAssignment {
+                        ProgramProgressScreen(program: activeProgram, assignmentID: activeAssignment.id)
                     } else {
-                        ProgramsLibraryScreen()
+                        ProgramLibraryScreen()
                     }
                 } label: {
                     PlanningEntryCard(
@@ -58,7 +58,7 @@ struct PlanningHubScreen: View {
 
                 if activeProgram != nil {
                     NavigationLink {
-                        ProgramsLibraryScreen()
+                        ProgramLibraryScreen()
                     } label: {
                         Label(
                             String(localized: "Open library", defaultValue: "Open library"),
@@ -238,6 +238,11 @@ struct PlanningHubScreen: View {
         assignments.map { assignment in
             "\(assignment.id.uuidString)|\(assignment.programId.uuidString)|\(assignment.statusRaw)|\(assignment.startDate.timeIntervalSince1970)"
         }
+    }
+
+    private var activeAssignment: ProgramAssignment? {
+        guard let activeProgram else { return nil }
+        return assignments.first { $0.programId == activeProgram.id && $0.isActive }
     }
 }
 

@@ -97,6 +97,19 @@ struct workouttrackerUITestHostApp: App {
                     try assertHomeActiveSessionsScrollSeed(context: context)
                 }
 
+                if env["UITESTS_PROGRAMS"] == "1" {
+                    try seedProgramsUITestDataIfNeeded(
+                        context: context,
+                        includeAssignment: env["UITESTS_PROGRAMS_ASSIGNMENT"] == "1",
+                        includeMissedDay: env["UITESTS_PROGRAMS_MISSED"] == "1"
+                    )
+                    try assertProgramsUITestSeed(
+                        context: context,
+                        expectsAssignment: env["UITESTS_PROGRAMS_ASSIGNMENT"] == "1",
+                        expectsMissedDay: env["UITESTS_PROGRAMS_MISSED"] == "1"
+                    )
+                }
+
                 if env["UITESTS_NO_ACTIVE_SESSIONS"] == "1" {
                     try assertNoActiveSessionsUITestState(context: context)
                 }
@@ -158,6 +171,11 @@ enum PerformanceUITestSeed {
     static let heavyStrengthActivityTitle = "UITest — Heavy Session"
     static let heavyTrackedLiveSessionID = UUID(uuidString: "99999999-9999-9999-9999-999999999999")!
     static let heavyTrackedSummarySessionID = UUID(uuidString: "88888888-8888-8888-8888-888888888888")!
+}
+
+enum ProgramsUITestSeed {
+    static let programSlug = "seed-program-v2"
+    static let assignmentID = UUID(uuidString: "44444444-5555-6666-7777-888888888888")!
 }
 
 // MARK: - Calendar UITest seed
@@ -922,6 +940,54 @@ private func assertProgramCatalogUITestSeed() throws {
         fatalError("UITESTS assertion failed: seeded program catalog must include seed-program-v2.")
     }
 
+    guard let seedProgram = pack.programs.first(where: { $0.slug == "seed-program-v2" }) else {
+        fatalError("UITESTS assertion failed: seeded program catalog must expose seed-program-v2 for validation.")
+    }
+
+    guard pack.programs.contains(where: { $0.slug == "seed-deload-cadence" }) else {
+        fatalError("UITESTS assertion failed: seeded program catalog must include seed-deload-cadence.")
+    }
+
+    guard pack.programs.contains(where: { $0.slug == "seed-double-progression-hypertrophy" }) else {
+        fatalError("UITESTS assertion failed: seeded program catalog must include seed-double-progression-hypertrophy.")
+    }
+
+    let requiredDayCount = seedProgram.orderedWeeks
+        .flatMap(\.orderedDays)
+        .filter { !$0.isRestLikeDay }
+        .count
+    guard requiredDayCount >= 2 else {
+        fatalError("UITESTS assertion failed: seed-program-v2 must include at least 2 required training days for progress smoke coverage.")
+    }
+
+    let hasDeloadSeed = pack.programs
+        .first(where: { $0.slug == "seed-deload-cadence" })?
+        .orderedWeeks
+        .flatMap(\.orderedDays)
+        .flatMap(\.orderedPrescriptions)
+        .flatMap(\.progressionRules)
+        .contains(where: {
+            if case .deloadEvery = $0 { return true }
+            return false
+        }) == true
+    guard hasDeloadSeed else {
+        fatalError("UITESTS assertion failed: seed-deload-cadence must include at least 1 deloadEvery progression rule.")
+    }
+
+    let hasDoubleProgressionSeed = pack.programs
+        .first(where: { $0.slug == "seed-double-progression-hypertrophy" })?
+        .orderedWeeks
+        .flatMap(\.orderedDays)
+        .flatMap(\.orderedPrescriptions)
+        .flatMap(\.progressionRules)
+        .contains(where: {
+            if case .doubleProgression = $0 { return true }
+            return false
+        }) == true
+    guard hasDoubleProgressionSeed else {
+        fatalError("UITESTS assertion failed: seed-double-progression-hypertrophy must include at least 1 doubleProgression rule.")
+    }
+
     guard let goblet = pack.exercises.first(where: { ProgramPackHelpers.normalizedSlug($0.slug) == "goblet-squat" }) else {
         fatalError("UITESTS assertion failed: seeded program catalog must include goblet-squat exercise metadata.")
     }
@@ -936,6 +1002,179 @@ private func assertProgramCatalogUITestSeed() throws {
     guard hasRoutineReference else {
         fatalError("UITESTS assertion failed: seeded program routine must reference goblet-squat by stable exercise slug.")
     }
+}
+
+@MainActor
+private func seedProgramsUITestDataIfNeeded(
+    context: ModelContext,
+    includeAssignment: Bool,
+    includeMissedDay: Bool
+) throws {
+    let catalog = try ProgramCatalogService().loadCatalog()
+    guard let pack = catalog.packV2,
+          let program = pack.programs.first(where: { $0.slug == ProgramsUITestSeed.programSlug }) else {
+        fatalError("UITESTS assertion failed: expected seed-program-v2 in the bundled program catalog.")
+    }
+
+    _ = try ProgramPackInstallService.installAssets(from: pack, context: context)
+    try writeUITestProgramLibrary([program])
+
+    guard includeAssignment else { return }
+
+    guard let weekOne = program.orderedWeeks.first(where: { $0.index == 1 }) else {
+        fatalError("UITESTS assertion failed: seed-program-v2 must include Week 1 for assignment progress smoke coverage.")
+    }
+
+    let requiredDayIndexes = weekOne.orderedDays
+        .filter { !$0.isRestLikeDay }
+        .map(\.index)
+        .sorted()
+
+    guard let completedDayIndex = requiredDayIndexes.first else {
+        fatalError("UITESTS assertion failed: seed-program-v2 Week 1 must include at least 1 required training day.")
+    }
+
+    let missedDayIndex = requiredDayIndexes.dropFirst().first ?? completedDayIndex
+
+    let existingAssignments = try context.fetch(
+        FetchDescriptor<ProgramAssignment>(
+            predicate: #Predicate { $0.programId == program.id }
+        )
+    )
+
+    let assignment: ProgramAssignment
+    if let existing = existingAssignments.first {
+        assignment = existing
+        assignment.startDate = Calendar.current.startOfDay(for: Date())
+        assignment.assignedAt = Date()
+        assignment.status = .active
+        assignment.scheduleAnchorStrategy = .calendarAligned
+    } else {
+        let created = ProgramAssignment(
+            id: ProgramsUITestSeed.assignmentID,
+            program: program,
+            assignedAt: Date(),
+            startDate: Calendar.current.startOfDay(for: Date()),
+            status: .active,
+            scheduleAnchorStrategy: .calendarAligned
+        )
+        context.insert(created)
+        assignment = created
+    }
+
+    if let executionState = assignment.executionState {
+        executionState.currentWeekIndex = 1
+        executionState.currentDayIndex = missedDayIndex
+        executionState.completedDays.removeAll()
+        executionState.missedDays.removeAll()
+        executionState.repeatedWeekIndexes = []
+        executionState.deloadedWeekIndexes = []
+
+        let completedDay = ProgramCompletedDay(
+            programId: program.id,
+            weekIndex: 1,
+            dayIndex: completedDayIndex,
+            completedAt: Date(),
+            completionSource: .manual,
+            sourceRoutineId: nil,
+            sourceRoutineNameSnapshot: nil,
+            workoutSessionId: nil
+        )
+        completedDay.executionState = executionState
+        executionState.completedDays.append(completedDay)
+        context.insert(completedDay)
+
+        if includeMissedDay {
+            let missedDay = ProgramMissedDay(
+                programId: program.id,
+                weekIndex: 1,
+                dayIndex: missedDayIndex,
+                markedAt: Date(),
+                reason: .skipped
+            )
+            missedDay.executionState = executionState
+            executionState.missedDays.append(missedDay)
+            context.insert(missedDay)
+        }
+    }
+
+    try context.save()
+}
+
+@MainActor
+private func assertProgramsUITestSeed(
+    context: ModelContext,
+    expectsAssignment: Bool,
+    expectsMissedDay: Bool
+) throws {
+    let installed = try readUITestProgramLibrary()
+    guard let program = installed.first(where: { $0.slug == ProgramsUITestSeed.programSlug }) else {
+        fatalError("UITESTS assertion failed: expected seed-program-v2 to be installed in the program library.")
+    }
+
+    guard let weekOne = program.orderedWeeks.first(where: { $0.index == 1 }) else {
+        fatalError("UITESTS assertion failed: seed-program-v2 must include Week 1 for assignment progress smoke coverage.")
+    }
+
+    let requiredDayIndexes = weekOne.orderedDays
+        .filter { !$0.isRestLikeDay }
+        .map(\.index)
+        .sorted()
+
+    guard let completedDayIndex = requiredDayIndexes.first else {
+        fatalError("UITESTS assertion failed: seed-program-v2 Week 1 must include at least 1 required training day.")
+    }
+
+    guard expectsAssignment else { return }
+
+    let assignments = try context.fetch(FetchDescriptor<ProgramAssignment>())
+    guard let assignment = assignments.first(where: { $0.programSlug == ProgramsUITestSeed.programSlug && $0.isActive }) else {
+        fatalError("UITESTS assertion failed: expected an active seed-program-v2 assignment.")
+    }
+
+    guard assignment.executionState?.completedDays.contains(where: { $0.weekIndex == 1 && $0.dayIndex == completedDayIndex }) == true else {
+        fatalError("UITESTS assertion failed: seeded program assignment should include a completed required Week 1 day record.")
+    }
+
+    if expectsMissedDay {
+        let summary = ProgramAdherenceService.summary(for: assignment, program: program, now: Date())
+        guard summary.outstandingMissedDays > 0 else {
+            fatalError("UITESTS assertion failed: seeded program assignment should surface at least 1 outstanding missed required day for program progress smoke coverage.")
+        }
+    }
+}
+
+private func writeUITestProgramLibrary(_ programs: [TrainingProgram]) throws {
+    let url = try uiTestProgramLibraryURL()
+    try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+    let pack = ProgramPack(
+        schemaVersion: 1,
+        packID: "program-library",
+        generatedAt: Date(),
+        exercises: [],
+        routines: [],
+        programs: programs
+    )
+    let data = try ProgramPackCodec.encode(pack)
+    try data.write(to: url, options: [.atomic])
+}
+
+private func readUITestProgramLibrary() throws -> [TrainingProgram] {
+    let url = try uiTestProgramLibraryURL()
+    guard FileManager.default.fileExists(atPath: url.path) else { return [] }
+    let data = try Data(contentsOf: url)
+    return try ProgramPackCodec.decode(data).programs
+}
+
+private func uiTestProgramLibraryURL() throws -> URL {
+    guard let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+        throw CocoaError(.fileNoSuchFile)
+    }
+
+    return root
+        .appendingPathComponent("WorkoutTracker", isDirectory: true)
+        .appendingPathComponent("program_library_v1.json", isDirectory: false)
 }
 
 

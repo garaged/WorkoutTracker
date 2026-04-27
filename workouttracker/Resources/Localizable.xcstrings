@@ -2,10 +2,36 @@
   "sourceLanguage" : "en",
   "strings" : {
     "" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ""
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ""
+          }
+        }
+      }
     },
     " " : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        }
+      }
     },
     " (%lldd)" : {
       "localizations" : {
@@ -72,14 +98,27 @@
       }
     },
     "%@" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@"
+          }
+        }
+      }
     },
     "%@ %@" : {
       "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$@ %2$@"
           }
         },
@@ -106,7 +145,13 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "%1$@, %2$@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%1$@, %2$@"
           }
         }
@@ -117,7 +162,7 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$@: %2$@"
           }
         },
@@ -133,7 +178,7 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$@. %2$@"
           }
         },
@@ -149,7 +194,13 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "%1$@. %2$@. %3$@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%1$@. %2$@. %3$@"
           }
         }
@@ -159,7 +210,13 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "%1$@#%2$lld"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%1$@#%2$lld"
           }
         }
@@ -261,7 +318,7 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$lld exercises • %2$lld sets"
           }
         },
@@ -357,7 +414,7 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$lld weeks • %2$@"
           }
         },
@@ -1811,7 +1868,14 @@
       }
     },
     "Active program" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programa activo"
+          }
+        }
+      }
     },
     "Active Sessions" : {
       "extractionState" : "stale",
@@ -1858,12 +1922,17 @@
       }
     },
     "activities.action.start" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Start"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar"
           }
         }
       }
@@ -1933,111 +2002,161 @@
       }
     },
     "activities.delete.action" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Delete activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar actividad"
           }
         }
       }
     },
     "activities.delete.failure.message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker could not remove this activity right now. Please try again."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker no pudo eliminar esta actividad en este momento. Inténtalo de nuevo."
           }
         }
       }
     },
     "activities.delete.failure.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Could not delete activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo eliminar la actividad"
           }
         }
       }
     },
     "activities.delete.message.default" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Remove this tracked activity from WorkoutTracker."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina esta actividad registrada de WorkoutTracker."
           }
         }
       }
     },
     "activities.delete.message.saved_to_health" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Remove this tracked activity from WorkoutTracker only. The workout already saved to Apple Health will stay there."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina esta actividad registrada solo de WorkoutTracker. El entrenamiento que ya se guardó en Apple Health permanecerá allí."
           }
         }
       }
     },
     "activities.delete.title.default" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Delete activity?"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar actividad?"
           }
         }
       }
     },
     "activities.delete.title.saved_to_health" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Delete local activity?"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar actividad local?"
           }
         }
       }
     },
     "activities.distance.kilometers" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "%@ km"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%@ km"
           }
         }
       }
     },
     "activities.empty.message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Start a walk, run, hike, or yoga session here. Tracked activities stay separate from your strength workouts."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia aquí una sesión de caminata, carrera, senderismo o yoga. Las actividades registradas se mantienen separadas de tus entrenamientos de fuerza."
           }
         }
       }
     },
     "activities.empty.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "No tracked activities yet"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay actividades registradas"
           }
         }
       }
@@ -2091,485 +2210,705 @@
       }
     },
     "activities.health.captured_route" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Captured route"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruta capturada"
           }
         }
       }
     },
     "activities.health.enable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Enable Apple Health"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar Apple Health"
           }
         }
       }
     },
     "activities.health.follow_up.card.failed_message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "The last Apple Health save attempt failed. Open the summary to retry after checking permissions and route availability."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El último intento de guardado en Apple Health falló. Abre el resumen para volver a intentarlo después de revisar permisos y disponibilidad de la ruta."
           }
         }
       }
     },
     "activities.health.follow_up.card.failed_title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Retry Apple Health save"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reintentar guardado en Apple Health"
           }
         }
       }
     },
     "activities.health.follow_up.card.local_changes_message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This workout was saved to Apple Health earlier, but later edits now only live inside WorkoutTracker. Open the summary to review the difference honestly."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este entrenamiento se guardó antes en Apple Health, pero las ediciones posteriores ahora solo viven dentro de WorkoutTracker. Abre el resumen para revisar la diferencia con honestidad."
           }
         }
       }
     },
     "activities.health.follow_up.card.local_changes_title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Review local-only edits"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisar cambios solo locales"
           }
         }
       }
     },
     "activities.health.follow_up.card.pending_message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker still shows this save as pending. Open the summary to verify the final Health status before you move on."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker todavía muestra este guardado como pendiente. Abre el resumen para verificar el estado final en Health antes de seguir."
           }
         }
       }
     },
     "activities.health.follow_up.card.pending_title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Finish Apple Health save"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminar guardado en Apple Health"
           }
         }
       }
     },
     "activities.health.follow_up.failed" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Apple Health save failed. Open the summary to retry or review permissions."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El guardado en Apple Health falló. Abre el resumen para reintentar o revisar permisos."
           }
         }
       }
     },
     "activities.health.follow_up.local_changes" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker saved later edits locally only. Open the summary to review what differs from Apple Health."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker guardó las ediciones posteriores solo de forma local. Abre el resumen para revisar qué difiere de Apple Health."
           }
         }
       }
     },
     "activities.health.follow_up.pending" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Apple Health save is still pending. Open the summary to verify the final status."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El guardado en Apple Health sigue pendiente. Abre el resumen para verificar el estado final."
           }
         }
       }
     },
     "activities.health.hide_details" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Hide Apple Health details"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ocultar detalles de Apple Health"
           }
         }
       }
     },
     "activities.health.not_available" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Not available"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible"
           }
         }
       }
     },
     "activities.health.permission" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Permission"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permiso"
           }
         }
       }
     },
     "activities.health.route_attachment" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Route attachment"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adjunto de ruta"
           }
         }
       }
     },
     "activities.health.route_attachment.attached" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Attached"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adjunta"
           }
         }
       }
     },
     "activities.health.route_attachment.failed" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Could not attach"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo adjuntar"
           }
         }
       }
     },
     "activities.health.route_attachment.helper.attached" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "The captured outdoor route was attached when this workout was saved to Apple Health."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La ruta exterior capturada se adjuntó cuando este entrenamiento se guardó en Apple Health."
           }
         }
       }
     },
     "activities.health.route_attachment.helper.failed" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "The workout saved, but the outdoor route could not be attached."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El entrenamiento se guardó, pero la ruta exterior no se pudo adjuntar."
           }
         }
       }
     },
     "activities.health.route_attachment.helper.no_route_data" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "The workout saved, but there were no captured route points to attach."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El entrenamiento se guardó, pero no había puntos de ruta capturados para adjuntar."
           }
         }
       }
     },
     "activities.health.route_attachment.helper.not_applicable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This activity type does not attach an outdoor route in Apple Health."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este tipo de actividad no adjunta una ruta exterior en Apple Health."
           }
         }
       }
     },
     "activities.health.route_attachment.helper.unknown" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Route attachment outcome is not available yet."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El resultado del adjunto de la ruta todavía no está disponible."
           }
         }
       }
     },
     "activities.health.route_attachment.message.denied" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This activity captured route points locally, but Apple Health route access is currently blocked until it is re-enabled in Settings."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad capturó puntos de ruta de forma local, pero el acceso a rutas de Apple Health está bloqueado hasta que se vuelva a habilitar en Configuración."
           }
         }
       }
     },
     "activities.health.route_attachment.message.not_applicable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This activity type does not attach an outdoor route in Apple Health."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este tipo de actividad no adjunta una ruta exterior en Apple Health."
           }
         }
       }
     },
     "activities.health.route_attachment.message.not_captured" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "No outdoor route points were captured for this activity, so Apple Health can only save the workout."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se capturaron puntos de ruta exterior para esta actividad, así que Apple Health solo puede guardar el entrenamiento."
           }
         }
       }
     },
     "activities.health.route_attachment.message.not_requested" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This activity captured route points locally, but Apple Health route access still needs to be granted before the route can be attached during export."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad capturó puntos de ruta de forma local, pero todavía hace falta otorgar acceso a rutas de Apple Health para que la ruta pueda adjuntarse durante la exportación."
           }
         }
       }
     },
     "activities.health.route_attachment.message.pending" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker still needs to finish saving this workout before the captured route can be attached in Apple Health."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker todavía necesita terminar de guardar este entrenamiento antes de que la ruta capturada pueda adjuntarse en Apple Health."
           }
         }
       }
     },
     "activities.health.route_attachment.message.ready" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This activity captured route points locally. Apple Health route attachment is ready the next time you save the workout."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad capturó puntos de ruta de forma local. El adjunto de ruta en Apple Health estará listo la próxima vez que guardes el entrenamiento."
           }
         }
       }
     },
     "activities.health.route_attachment.message.unavailable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This activity captured route points locally, but Apple Health route export is unavailable on this device."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad capturó puntos de ruta de forma local, pero la exportación de rutas a Apple Health no está disponible en este dispositivo."
           }
         }
       }
     },
     "activities.health.route_attachment.no_route_data" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "No route data"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin datos de ruta"
           }
         }
       }
     },
     "activities.health.route_attachment.not_applicable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Not applicable"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No aplica"
           }
         }
       }
     },
     "activities.health.route_attachment.not_captured" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "No route captured"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se capturó ruta"
           }
         }
       }
     },
     "activities.health.route_attachment.pending" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Waiting to save"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esperando guardado"
           }
         }
       }
     },
     "activities.health.route_attachment.permission_needed" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Permission needed"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permiso necesario"
           }
         }
       }
     },
     "activities.health.route_attachment.ready" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Ready to attach"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lista para adjuntar"
           }
         }
       }
     },
     "activities.health.route_attachment.unavailable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Unavailable"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible"
           }
         }
       }
     },
     "activities.health.route_attachment.unknown" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Unknown"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desconocido"
           }
         }
       }
     },
     "activities.health.route_points" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lld points"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld puntos"
           }
         }
       }
     },
     "activities.health.route_requirement" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Outdoor routes require Apple Health access for workout routes and location while using the app during the activity."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las rutas al aire libre requieren acceso de Apple Health a las rutas de entrenamiento y ubicación mientras usas la app durante la actividad."
           }
         }
       }
     },
     "activities.health.save" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Save to Apple Health"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar en Apple Health"
           }
         }
       }
     },
     "activities.health.saving" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Saving to Apple Health…"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardando en Apple Health…"
           }
         }
       }
     },
     "activities.health.show_details" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Show Apple Health details"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar detalles de Apple Health"
           }
         }
       }
     },
     "activities.health.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "Apple Health"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Apple Health"
           }
         }
       }
     },
     "activities.health.workout_save_state" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Workout save state"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado de guardado del entrenamiento"
           }
         }
       }
@@ -2687,23 +3026,33 @@
       }
     },
     "activities.history.low_data" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "No additional metrics were recorded for this activity."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se registraron métricas adicionales para esta actividad."
           }
         }
       }
     },
     "activities.history.low_data.distance_capable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Only time was recorded for this activity. Distance and route details were not available."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo se registró el tiempo para esta actividad. No hubo detalles de distancia ni de ruta."
           }
         }
       }
@@ -2821,12 +3170,17 @@
       }
     },
     "activities.lifecycle.in_progress" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "In progress"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En curso"
           }
         }
       }
@@ -2880,517 +3234,746 @@
       }
     },
     "activities.metric.active_energy" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Active energy"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energía activa"
           }
         }
       }
     },
     "activities.metric.average_pace" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Average pace"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ritmo promedio"
           }
         }
       }
     },
     "activities.metric.distance" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Distance"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distancia"
           }
         }
       }
     },
     "activities.metric.distance_value" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "%@ km"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%@ km"
           }
         }
       }
     },
     "activities.metric.duration" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Duration"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duración"
           }
         }
       }
     },
     "activities.metric.energy_value" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "%@ kcal"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%@ kcal"
           }
         }
       }
     },
     "activities.metric.pace_value" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "%@ /km"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%@ /km"
           }
         }
       }
     },
     "activities.metric.status" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Status"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado"
           }
         }
       }
     },
     "activities.metric.steps" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Steps"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasos"
           }
         }
       }
     },
     "activities.metric.steps_value" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%@ steps"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ pasos"
           }
         }
       }
     },
     "activities.recovery.badge.interrupted" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Interrupted"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interrumpida"
           }
         }
       }
     },
     "activities.recovery.badge.previous_day" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Previous day"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Día anterior"
           }
         }
       }
     },
     "activities.recovery.discard" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Discard activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartar actividad"
           }
         }
       }
     },
     "activities.recovery.interrupted_message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker kept this tracked activity open after an interruption so the elapsed time and route can stay consistent when you come back."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker mantuvo abierta esta actividad registrada después de una interrupción para que el tiempo transcurrido y la ruta sigan siendo consistentes cuando regreses."
           }
         }
       }
     },
     "activities.recovery.interrupted_title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Return to your interrupted activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vuelve a tu actividad interrumpida"
           }
         }
       }
     },
     "activities.recovery.keep_for_later" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Keep for later"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dejar para después"
           }
         }
       }
     },
     "activities.recovery.live_title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Return to your active activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vuelve a tu actividad activa"
           }
         }
       }
     },
     "activities.recovery.message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker kept this tracked activity open so you can resume it honestly after an interruption or relaunch."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker mantuvo abierta esta actividad registrada para que puedas reanudarla con honestidad después de una interrupción o de volver a abrir la app."
           }
         }
       }
     },
     "activities.recovery.open_action" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir actividad"
           }
         }
       }
     },
     "activities.recovery.paused_message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker kept this paused tracked activity ready so you can continue honestly after a relaunch or interruption."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker dejó esta actividad registrada pausada y lista para que la continúes con honestidad después de volver a abrir la app o de una interrupción."
           }
         }
       }
     },
     "activities.recovery.paused_title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Resume your paused activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanuda tu actividad pausada"
           }
         }
       }
     },
     "activities.recovery.prompt.message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This tracked activity started on %@. Resume it now, keep it for later today, or discard it so your recovery state stays honest."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad registrada empezó el %@. Reanúdala ahora, déjala para más tarde hoy o descártala para que tu estado de recuperación siga siendo honesto."
           }
         }
       }
     },
     "activities.recovery.prompt.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Review previous activity?"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Revisar actividad anterior?"
           }
         }
       }
     },
     "activities.recovery.resume_action" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Resume activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar actividad"
           }
         }
       }
     },
     "activities.recovery.row.interrupted" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker kept this live activity open after an interruption."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker dejó abierta esta actividad activa después de una interrupción."
           }
         }
       }
     },
     "activities.recovery.row.paused" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Paused and ready to continue when you return."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausada y lista para continuar cuando vuelvas."
           }
         }
       }
     },
     "activities.recovery.row.previous_day" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Previous-day activity needs a resume, keep-for-later, or discard decision."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La actividad del día anterior necesita que decidas reanudarla, dejarla para después o descartarla."
           }
         }
       }
     },
     "activities.recovery.row.suppressed" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Kept for later today. You can still reopen it directly."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se dejó para más tarde hoy. Aún puedes volver a abrirla directamente."
           }
         }
       }
     },
     "activities.recovery.stale_message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This tracked activity started on a previous day. Resume it now, keep it for later today, or discard it so unfinished activity data stays trustworthy."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad registrada empezó un día anterior. Reanúdala ahora, déjala para más tarde hoy o descártala para que los datos de actividad sin terminar sigan siendo confiables."
           }
         }
       }
     },
     "activities.recovery.stale_title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Review your previous activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisa tu actividad anterior"
           }
         }
       }
     },
     "activities.recovery.suppressed_message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "You already chose to keep this previous-day activity for later today. WorkoutTracker will let you reopen it directly until you decide what to do."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya elegiste dejar esta actividad del día anterior para más tarde hoy. WorkoutTracker te permitirá volver a abrirla directamente hasta que decidas qué hacer."
           }
         }
       }
     },
     "activities.section.active" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Active"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa"
           }
         }
       }
     },
     "activities.section.health_follow_up" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Health follow-up"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monitoreo de salud"
           }
         }
       }
     },
     "activities.section.recent" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Recent"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reciente"
           }
         }
       }
     },
     "activities.section.recovery" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Recovery"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recuperación"
           }
         }
       }
     },
     "activities.session.badge.auto_save" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Auto-save to Health"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto-guardar a Apple Health"
           }
         }
       }
     },
     "activities.session.current_metrics" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Current metrics"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medidas actuales"
           }
         }
       }
     },
     "activities.session.discard.action" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Discard activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartar actividad"
           }
         }
       }
     },
     "activities.session.discard.message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This removes the live activity session before it is completed."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esto elimina la sesión de actividad en vivo antes de que se complete."
           }
         }
       }
     },
     "activities.session.discard.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Discard this tracked activity?"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Descartar esta actividad registrada?"
           }
         }
       }
     },
     "activities.session.footer.completed" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This tracked activity is complete. You can review and refine the final summary."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad registrada está completa. Puedes revisar y ajustar el resumen final."
           }
         }
       }
     },
     "activities.session.footer.completed_auto_save" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This tracked activity is complete. Review the summary while WorkoutTracker saves to Apple Health when possible."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad registrada está completa. Revisa el resumen mientras WorkoutTracker guarda en Apple Health cuando sea posible."
           }
         }
       }
     },
     "activities.session.footer.discarded" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This tracked activity was discarded."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad registrada fue descartada."
           }
         }
       }
     },
     "activities.session.footer.in_progress" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "The timer is live. Finish when you are done, then add any available metrics to the summary."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El temporizador está activo. Termina cuando acabes y luego agrega al resumen cualquier métrica disponible."
           }
         }
       }
     },
     "activities.session.footer.paused" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This tracked activity is paused. Resume to continue timing or finish to save what you already recorded."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad registrada está pausada. Reanúdala para seguir midiendo el tiempo o termínala para guardar lo que ya registraste."
           }
         }
       }
     },
     "activities.session.footer.planned" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This tracked activity has not started yet."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad registrada todavía no empieza."
           }
         }
       }
     },
     "activities.session.health.auto_save_banner" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Apple Health auto-save will run after the summary opens when permission is available."
           }
         },
@@ -3403,562 +3986,817 @@
       }
     },
     "activities.session.health.auto_save_deferred_banner" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Apple Health auto-save is enabled, but export was deferred so finish stays fast and reliable. You can save from the summary screen."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El auto guardado en Apple Health está activado, pero la exportación se difirió para que el cierre siga siendo rápido y confiable. Puedes guardar desde la pantalla de resumen."
           }
         }
       }
     },
     "activities.session.health.auto_save_denied" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Apple Health auto-save is enabled, but access is currently denied. You can review this from the summary screen."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El auto guardado en Apple Health está activado, pero el acceso está denegado en este momento. Puedes revisarlo desde la pantalla de resumen."
           }
         }
       }
     },
     "activities.session.health.auto_save_requires_permission" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Apple Health auto-save is enabled, but permission has not been granted yet. You can enable it from the summary screen."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El auto guardado en Apple Health está activado, pero el permiso todavía no se ha otorgado. Puedes habilitarlo desde la pantalla de resumen."
           }
         }
       }
     },
     "activities.session.live_duration" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Live duration"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duración en curso"
           }
         }
       }
     },
     "activities.session.metrics.refine_hint" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Distance, steps, and energy can be refined when you finish this activity. Outdoor route distance is prefilled when location data is available."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La distancia, los pasos y la energía se pueden ajustar cuando termines esta actividad. La distancia de la ruta exterior se rellena automáticamente cuando hay datos de ubicación disponibles."
           }
         }
       }
     },
     "activities.session.not_found.message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "The selected tracked activity no longer exists."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La actividad registrada seleccionada ya no existe."
           }
         }
       }
     },
     "activities.session.not_found.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Tracked activity not found"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se encontró la actividad registrada"
           }
         }
       }
     },
     "activities.session.open_location_settings" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Location Settings"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir configuración de ubicación"
           }
         }
       }
     },
     "activities.session.open_summary" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open summary"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir resumen"
           }
         }
       }
     },
     "activities.session.recovery_banner.interrupted" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker recovered this tracked activity after an interruption so the timer, route, and summary can stay consistent."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker recuperó esta actividad registrada después de una interrupción para que el temporizador, la ruta y el resumen sigan siendo consistentes."
           }
         }
       }
     },
     "activities.session.recovery_banner.paused" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker reopened this tracked activity in its paused state. Resume when you are ready to continue."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker volvió a abrir esta actividad registrada en estado pausado. Reanúdala cuando estés listo para continuar."
           }
         }
       }
     },
     "activities.session.recovery_banner.stale" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This tracked activity originally started on %@. Review the final summary carefully when you finish."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad registrada comenzó originalmente el %@. Revisa con cuidado el resumen final cuando la termines."
           }
         }
       }
     },
     "activities.session.route.approx_distance" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Approximate route distance"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distancia aproximada de la ruta"
           }
         }
       }
     },
     "activities.session.route.capture" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Route capture"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Captura de ruta"
           }
         }
       }
     },
     "activities.session.route.capture_started_banner" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Route capture is active. WorkoutTracker has started recording outdoor points for this activity."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La captura de ruta está activa. WorkoutTracker empezó a registrar puntos exteriores para esta actividad."
           }
         }
       }
     },
     "activities.session.route.captured_points" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Captured points"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puntos capturados"
           }
         }
       }
     },
     "activities.session.route.export_readiness" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Apple Health route"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruta de Apple Health"
           }
         }
       }
     },
     "activities.session.route.export_readiness.message.denied" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Route points can still be captured locally now, but Apple Health route access is currently blocked until it is re-enabled in Settings."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los puntos de ruta aún pueden capturarse localmente ahora, pero el acceso a rutas de Apple Health está bloqueado hasta que se vuelva a habilitar en Configuración."
           }
         }
       }
     },
     "activities.session.route.export_readiness.message.not_requested" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Route points can still be captured locally now, but Apple Health route access still needs to be granted before they can be attached during export."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los puntos de ruta aún pueden capturarse localmente ahora, pero todavía hace falta otorgar acceso a rutas de Apple Health antes de que puedan adjuntarse durante la exportación."
           }
         }
       }
     },
     "activities.session.route.export_readiness.message.ready" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "If route points are captured during this activity, Apple Health route attachment is ready when you save the workout."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si se capturan puntos de ruta durante esta actividad, el adjunto de ruta en Apple Health estará listo cuando guardes el entrenamiento."
           }
         }
       }
     },
     "activities.session.route.export_readiness.message.unavailable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Route points can still stay local in WorkoutTracker, but Apple Health route export is unavailable on this device."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los puntos de ruta aún pueden quedarse de forma local en WorkoutTracker, pero la exportación de rutas a Apple Health no está disponible en este dispositivo."
           }
         }
       }
     },
     "activities.session.route.export_readiness.not_applicable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This activity type does not attach an outdoor route in Apple Health."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este tipo de actividad no adjunta una ruta exterior en Apple Health."
           }
         }
       }
     },
     "activities.session.route.export_readiness.ready" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Ready when captured"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lista cuando se capture"
           }
         }
       }
     },
     "activities.session.route.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Outdoor route"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruta al aire libre"
           }
         }
       }
     },
     "activities.session.update_error.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Could not update activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo actualizar la actividad"
           }
         }
       }
     },
     "activities.start.auto_save" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Auto-save"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto guardado"
           }
         }
       }
     },
     "activities.start.card.message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Start a walk, run, hike, or yoga session. Duration is tracked live, and activity-specific metrics can be added when you finish."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia una sesión de caminata, carrera, senderismo o yoga. La duración se registra en vivo y las métricas específicas de la actividad se pueden agregar cuando termines."
           }
         }
       }
     },
     "activities.start.card.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Tracked activities"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actividades registradas"
           }
         }
       }
     },
     "activities.start.environment" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Environment"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entorno"
           }
         }
       }
     },
     "activities.start.error.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Could not start activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo iniciar la actividad"
           }
         }
       }
     },
     "activities.start.health.auto_save_explanation" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Completed sessions try to save automatically to Apple Health when permission is available. If a save fails, you can still retry later from the summary."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las sesiones completadas intentan guardarse automáticamente en Apple Health cuando el permiso está disponible. Si un guardado falla, todavía puedes reintentarlo más tarde desde el resumen."
           }
         }
       }
     },
     "activities.start.health.auto_save_explanation.outdoor" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Completed sessions try to save automatically to Apple Health when permission is available. Outdoor route points can still be captured locally even if Apple Health route access still needs attention."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las sesiones completadas intentan guardarse automáticamente en Apple Health cuando el permiso está disponible. Los puntos de ruta exterior todavía pueden capturarse localmente aunque el acceso a rutas de Apple Health siga necesitando atención."
           }
         }
       }
     },
     "activities.start.health.manual_explanation" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "You can start tracked activities even without Apple Health access. Completed sessions can be saved to Apple Health later from the finish summary."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes iniciar actividades registradas incluso sin acceso a Apple Health. Las sesiones completadas se pueden guardar en Apple Health más tarde desde el resumen final."
           }
         }
       }
     },
     "activities.start.health.manual_explanation.outdoor" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "You can save completed tracked activities to Apple Health later from the summary. Outdoor route points are still captured locally first, then attached only when Apple Health route access is ready."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes guardar actividades registradas completadas en Apple Health más tarde desde el resumen. Los puntos de ruta exterior primero se capturan localmente y solo se adjuntan cuando el acceso a rutas de Apple Health está listo."
           }
         }
       }
     },
     "activities.start.section.activity" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actividad"
           }
         }
       }
     },
     "activities.start.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Start activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar actividad"
           }
         }
       }
     },
     "activities.start.type" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Type"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo"
           }
         }
       }
     },
     "activities.summary.low_data" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This activity has low data so the summary only shows the metrics that were actually recorded."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad tiene pocos datos, así que el resumen solo muestra las métricas que realmente se registraron."
           }
         }
       }
     },
     "activities.summary.notes.placeholder" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Optional notes"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas opcionales"
           }
         }
       }
     },
     "activities.summary.notes.section" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Notes"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas"
           }
         }
       }
     },
     "activities.summary.refine_metrics.active_energy" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Active energy (kcal)"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energía activa (kcal)"
           }
         }
       }
     },
     "activities.summary.refine_metrics.distance_km" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Distance (km)"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distancia (km)"
           }
         }
       }
     },
     "activities.summary.refine_metrics.section" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Refine metrics"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustar métricas"
           }
         }
       }
     },
     "activities.summary.refine_metrics.steps" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Steps"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasos"
           }
         }
       }
     },
     "activities.summary.save_changes" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Save summary changes"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar cambios del resumen"
           }
         }
       }
     },
     "activities.summary.save_error.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Could not save summary"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo guardar el resumen"
           }
         }
       }
     },
     "activities.summary.section" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Summary"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resumen"
           }
         }
       }
     },
     "activities.summary.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Summary"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resumen"
           }
         }
       }
     },
     "activities.summary.unavailable.message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This tracked activity could not be loaded."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar esta actividad registrada."
           }
         }
       }
     },
     "activities.summary.unavailable.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Summary unavailable"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resumen no disponible"
           }
         }
       }
     },
     "activities.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Activities"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actividades"
           }
         }
       }
@@ -4220,6 +5058,17 @@
         }
       }
     },
+    "All required program days are marked complete." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos los días requeridos del programa están marcados como completos."
+          }
+        }
+      }
+    },
     "All required routines are installed." : {
       "localizations" : {
         "en" : {
@@ -4235,6 +5084,9 @@
           }
         }
       }
+    },
+    "All scheduled program days are complete." : {
+
     },
     "All-day" : {
       "localizations" : {
@@ -4268,7 +5120,7 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "App: %1$@ (%2$@)"
           }
         },
@@ -4347,6 +5199,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Brazo"
+          }
+        }
+      }
+    },
+    "Assign" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asignar"
+          }
+        }
+      }
+    },
+    "Assign Program" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asignar programa"
+          }
+        }
+      }
+    },
+    "Assigning a program tracks runtime progress and recommendations. Scheduled workout follow-up still happens from Calendar." : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asignar un programa lleva el progreso en tiempo real y las recomendaciones. El seguimiento de los entrenamientos programados sigue haciéndose desde Calendario."
+          }
+        }
+      }
+    },
+    "Assignment" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asignación"
           }
         }
       }
@@ -4977,6 +5869,16 @@
         }
       }
     },
+    "Calendar aligned" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alineado al calendario"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "en" : {
@@ -5067,7 +5969,14 @@
       }
     },
     "Choose a lightweight template for recurring days or a structured program for multi-week training." : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige una plantilla ligera para días recurrentes o un programa estructurado para entrenamiento de varias semanas."
+          }
+        }
+      }
     },
     "Choose…" : {
       "extractionState" : "stale",
@@ -5114,7 +6023,6 @@
       }
     },
     "Close" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -5232,23 +6140,33 @@
       }
     },
     "common.discard" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Discard"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descartar"
           }
         }
       }
     },
     "common.distance" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Distance"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distancia"
           }
         }
       }
@@ -5286,12 +6204,17 @@
       }
     },
     "common.finish" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Finish"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminar"
           }
         }
       }
@@ -5329,23 +6252,33 @@
       }
     },
     "common.on" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "On"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activado"
           }
         }
       }
     },
     "common.open_settings" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Settings"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir configuración"
           }
         }
       }
@@ -5367,11 +6300,16 @@
       }
     },
     "common.reps" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "Reps"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Reps"
           }
         }
@@ -5394,33 +6332,48 @@
       }
     },
     "common.rest" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Rest"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descanso"
           }
         }
       }
     },
     "common.resume" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Resume"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar"
           }
         }
       }
     },
     "common.rpe" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "RPE"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "RPE"
           }
         }
@@ -5444,12 +6397,17 @@
       }
     },
     "common.saved" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Saved"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado"
           }
         }
       }
@@ -5487,34 +6445,49 @@
       }
     },
     "common.status" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Status"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estado"
           }
         }
       }
     },
     "common.unknown_error" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Unknown error"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error desconocido"
           }
         }
       }
     },
     "common.weight" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Weight"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peso"
           }
         }
       }
@@ -5552,6 +6525,28 @@
         }
       }
     },
+    "Complete Day %lld next" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completa el día %lld después"
+          }
+        }
+      }
+    },
+    "Complete missed Day %lld before advancing" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completa el día %lld omitido antes de avanzar"
+          }
+        }
+      }
+    },
     "Complete sets in a workout session to see history here." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5562,6 +6557,12 @@
           }
         }
       }
+    },
+    "Complete the missed day before advancing." : {
+
+    },
+    "Complete the next scheduled training day." : {
+
     },
     "Complete workouts to see them here." : {
       "extractionState" : "stale",
@@ -5575,7 +6576,6 @@
       }
     },
     "Completed" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5663,7 +6663,14 @@
       }
     },
     "Continue Program" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar programa"
+          }
+        }
+      }
     },
     "Cool-down" : {
       "extractionState" : "stale",
@@ -5888,10 +6895,24 @@
       }
     },
     "Current assignment unavailable" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La asignación actual no está disponible"
+          }
+        }
+      }
     },
     "Current Session" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesión actual"
+          }
+        }
+      }
     },
     "Current streak" : {
       "localizations" : {
@@ -5899,6 +6920,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Racha actual"
+          }
+        }
+      }
+    },
+    "Current week" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semana actual"
           }
         }
       }
@@ -6152,6 +7183,26 @@
         }
       }
     },
+    "Deload cue" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aviso de descarga"
+          }
+        }
+      }
+    },
+    "Deload week starts next: Week %lld." : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La semana de descarga empieza después: semana %lld."
+          }
+        }
+      }
+    },
     "Describe what happened (optional)" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -6179,7 +7230,7 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Device: %1$@ • iOS %2$@"
           }
         },
@@ -6291,7 +7342,6 @@
       }
     },
     "Done." : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -6532,7 +7582,6 @@
       }
     },
     "Error" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -7063,7 +8112,14 @@
       }
     },
     "Finish Current Session" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminar sesión actual"
+          }
+        }
+      }
     },
     "Finish now" : {
       "localizations" : {
@@ -7082,16 +8138,55 @@
       }
     },
     "Finish Session" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminar sesión"
+          }
+        }
+      }
     },
     "Finish your current workout session and return to Workout Tracker." : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminar la sesión actual y volver a Workout Tracker"
+          }
+        }
+      }
     },
     "Finishing your workout session in Workout Tracker." : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Termina tu sesión en Workout Tracker"
+          }
+        }
+      }
     },
     "Follow scheduled days from Calendar." : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sigue los días programados desde Calendario."
+          }
+        }
+      }
+    },
+    "Follow the next incomplete training day." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sigue el siguiente día de entrenamiento incompleto."
+          }
+        }
+      }
     },
     "format.duration.short.hours_minutes" : {
       "extractionState" : "stale",
@@ -7285,7 +8380,14 @@
       }
     },
     "Go to Current Session" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ir a Sesión Actual"
+          }
+        }
+      }
     },
     "Go to today" : {
       "localizations" : {
@@ -7405,34 +8507,49 @@
       }
     },
     "health.authorization.summary.route_unavailable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker can save completed tracked activities to Apple Health, but outdoor route attachment is unavailable on this device."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker puede guardar actividades registradas completadas en Apple Health, pero el adjunto de rutas exteriores no está disponible en este dispositivo."
           }
         }
       }
     },
     "health.authorization.summary.workout_only_denied" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker can save completed tracked activities to Apple Health, but outdoor route attachment is currently blocked until route access is re-enabled in Settings."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker puede guardar actividades registradas completadas en Apple Health, pero el adjunto de rutas exteriores está bloqueado hasta que se vuelva a habilitar el acceso a rutas en Configuración."
           }
         }
       }
     },
     "health.authorization.summary.workout_only_not_requested" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker can save completed tracked activities to Apple Health. Outdoor route attachment still needs Apple Health route access."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker puede guardar actividades registradas completadas en Apple Health. El adjunto de rutas exteriores todavía necesita acceso a rutas de Apple Health."
           }
         }
       }
@@ -7566,12 +8683,17 @@
       }
     },
     "health.export_state_helper.retry_hint" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "You can retry the Apple Health save from this summary after checking permissions."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puedes reintentar el guardado en Apple Health desde este resumen después de revisar los permisos."
           }
         }
       }
@@ -7593,12 +8715,17 @@
       }
     },
     "health.export_state_helper.saved_local_changes" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This tracked activity was saved to Apple Health earlier. Later edits now only live in WorkoutTracker and do not update the exported Health workout in this release."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta actividad registrada se guardó antes en Apple Health. Las ediciones posteriores ahora solo viven en WorkoutTracker y no actualizan el entrenamiento exportado a Health en esta versión."
           }
         }
       }
@@ -7684,12 +8811,17 @@
       }
     },
     "health.export_state.saved_local_changes" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Saved (local changes)"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado (cambios locales)"
           }
         }
       }
@@ -7775,34 +8907,49 @@
       }
     },
     "health.permissions.auto_save.disabled" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "When this is off, you can still save completed tracked activities manually from the summary screen."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando esto está desactivado, todavía puedes guardar manualmente las actividades registradas completadas desde la pantalla de resumen."
           }
         }
       }
     },
     "health.permissions.auto_save.enabled" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "When this is on, WorkoutTracker tries to save completed tracked activities to Apple Health automatically. If a save fails, you can retry from the summary."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando esto está activado, WorkoutTracker intenta guardar automáticamente las actividades registradas completadas en Apple Health. Si un guardado falla, puedes reintentarlo desde el resumen."
           }
         }
       }
     },
     "health.permissions.auto_save.toggle" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Auto-save completed tracked activities"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto guardar actividades registradas completadas"
           }
         }
       }
@@ -7984,100 +9131,145 @@
       }
     },
     "health.route_authorization.cta.enable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Enable route access"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activar acceso a rutas"
           }
         }
       }
     },
     "health.route_authorization.cta.open_settings" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Settings"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir configuración"
           }
         }
       }
     },
     "health.route_authorization.message.authorized" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Outdoor route attachment is ready when route points are captured and the workout is saved."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El adjunto de rutas exteriores estará listo cuando se capturen puntos de ruta y se guarde el entrenamiento."
           }
         }
       }
     },
     "health.route_authorization.message.denied" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker can save workouts to Apple Health, but outdoor route attachment is currently blocked until route access is re-enabled in Settings."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker puede guardar entrenamientos en Apple Health, pero el adjunto de rutas exteriores está bloqueado hasta que se vuelva a habilitar el acceso a rutas en Configuración."
           }
         }
       }
     },
     "health.route_authorization.message.not_requested" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "WorkoutTracker can save workouts to Apple Health, but outdoor route attachment still needs Apple Health route access."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WorkoutTracker puede guardar entrenamientos en Apple Health, pero el adjunto de rutas exteriores todavía necesita acceso a rutas de Apple Health."
           }
         }
       }
     },
     "health.route_authorization.message.unavailable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Apple Health route export is not available on this device. Outdoor route points can still stay local in WorkoutTracker."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La exportación de rutas a Apple Health no está disponible en este dispositivo. Los puntos de ruta exteriores todavía pueden quedarse de forma local en WorkoutTracker."
           }
         }
       }
     },
     "health.route_authorization.title.permission_needed" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Permission needed"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permiso necesario"
           }
         }
       }
     },
     "health.route_authorization.title.ready" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Ready"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo"
           }
         }
       }
     },
     "health.route_authorization.title.unavailable" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Unavailable"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No disponible"
           }
         }
       }
@@ -8132,67 +9324,97 @@
       }
     },
     "history.empty.message" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Complete a workout or tracked activity to see it here."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completa un entrenamiento o una actividad registrada para verla aquí."
           }
         }
       }
     },
     "history.empty.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "No history yet"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay historial"
           }
         }
       }
     },
     "history.section.active_tracked" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Resume tracked activities"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar actividades registradas"
           }
         }
       }
     },
     "history.section.strength_sessions" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Strength sessions"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiones de fuerza"
           }
         }
       }
     },
     "history.section.tracked_activities" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Tracked activities"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actividades registradas"
           }
         }
       }
     },
     "history.title" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "History"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historial"
           }
         }
       }
@@ -8334,7 +9556,14 @@
       }
     },
     "Import, review, and schedule multi-week training plans." : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importa, revisa y programa planes de entrenamiento de varias semanas."
+          }
+        }
+      }
     },
     "In progress" : {
       "extractionState" : "stale",
@@ -8454,6 +9683,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Instalado"
+          }
+        }
+      }
+    },
+    "Installed assets. Added %1$lld routines and %2$lld exercises." : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se instalaron los recursos. Se agregaron %1$lld rutinas y %2$lld ejercicios."
+          }
+        }
+      }
+    },
+    "Installed catalog assets, but this program still has missing routines. If it was imported, re-import its pack." : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se instalaron los recursos del catálogo, pero a este programa todavía le faltan rutinas. Si fue importado, vuelve a importar su paquete."
           }
         }
       }
@@ -8770,7 +10019,14 @@
       }
     },
     "Library unavailable" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Biblioteca no disponible"
+          }
+        }
+      }
     },
     "Linked routines" : {
       "extractionState" : "stale",
@@ -8986,6 +10242,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Métrica"
+          }
+        }
+      }
+    },
+    "Missed" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omitido"
+          }
+        }
+      }
+    },
+    "Missed sessions" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesiones omitidas"
           }
         }
       }
@@ -9297,6 +10573,16 @@
         }
       }
     },
+    "No bundled V2 catalog assets found. If this program came from an import, re-import the pack to reinstall its routines." : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se encontraron recursos V2 del catálogo incluidos. Si este programa vino de una importación, vuelve a importar el paquete para reinstalar sus rutinas."
+          }
+        }
+      }
+    },
     "No completed sessions yet" : {
       "localizations" : {
         "es-MX" : {
@@ -9402,7 +10688,14 @@
       }
     },
     "No installed programs" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay programas instalados"
+          }
+        }
+      }
     },
     "No logged sets yet" : {
       "extractionState" : "stale",
@@ -9570,10 +10863,24 @@
       }
     },
     "No templates yet" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay plantillas"
+          }
+        }
+      }
     },
     "No upcoming training day" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay un próximo día de entrenamiento"
+          }
+        }
+      }
     },
     "No warm-up suggestions matched your search. Switch to All to see the full library or create a new exercise." : {
       "extractionState" : "stale",
@@ -9763,7 +11070,20 @@
       }
     },
     "Open deep-link smoke route" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open deep-link smoke route"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir ruta de prueba de enlace profundo"
+          }
+        }
+      }
     },
     "Open GitHub Issue" : {
       "extractionState" : "stale",
@@ -9776,23 +11096,109 @@
         }
       }
     },
+    "Open in Calendar" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir en Calendario"
+          }
+        }
+      }
+    },
     "Open library" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir biblioteca"
+          }
+        }
+      }
+    },
+    "Open program progress" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir progreso del programa"
+          }
+        }
+      }
     },
     "Open the rest timer when your current workout session is ready for one." : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir el reloj de descanso cuando la sesión de ejercicio actual está lista para ello."
+          }
+        }
+      }
     },
     "Open workout actions" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open workout actions"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir acciones del entrenamiento"
+          }
+        }
+      }
     },
     "Open your current workout session." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open your current workout session."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre tu sesión de entrenamiento actual."
+          }
+        }
+      }
     },
     "Opening the rest timer in Workout Tracker." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opening the rest timer in Workout Tracker."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abriendo el temporizador de descanso en Workout Tracker."
+          }
+        }
+      }
     },
     "Opening your current workout session in Workout Tracker." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opening your current workout session in Workout Tracker."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abriendo tu sesión de entrenamiento actual en Workout Tracker."
+          }
+        }
+      }
     },
     "Optional" : {
       "extractionState" : "stale",
@@ -10101,65 +11507,104 @@
       }
     },
     "Planning" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planificación"
+          }
+        }
+      }
     },
     "planning.programs.count" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lld installed"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld instalados"
           }
         }
       }
     },
     "planning.programs.next_day" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Next: Day %1$lld %2$@ • %3$@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sigue: Día %1$lld %2$@ • %3$@"
           }
         }
       }
     },
     "planning.programs.status.behind" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Week %lld • behind schedule"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semana %lld • retrasada"
           }
         }
       }
     },
     "planning.programs.status.on_track" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Week %lld • on track"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semana %lld • al día"
           }
         }
       }
     },
     "planning.templates.count" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lld templates"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld plantillas"
           }
         }
       }
     },
     "Plans" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planes"
+          }
+        }
+      }
     },
     "Plans that auto-preload your day" : {
       "extractionState" : "stale",
@@ -10294,10 +11739,44 @@
       }
     },
     "Program complete" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programa completado"
+          }
+        }
+      }
     },
     "Program follow-up happens in Calendar after scheduling. Import, export, and asset repair stay available inside Programs and Settings." : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El seguimiento del programa se hace desde Calendario después de programarlo. La importación, exportación y reparación de recursos siguen disponibles dentro de Programas y Configuración."
+          }
+        }
+      }
+    },
+    "Program Progress" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progreso del programa"
+          }
+        }
+      }
+    },
+    "Program Progress Unavailable" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progreso del programa no disponible"
+          }
+        }
+      }
     },
     "Programs" : {
       "localizations" : {
@@ -10328,6 +11807,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Programas (%lld)"
+          }
+        }
+      }
+    },
+    "programs.day_row.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day %1$lld • %2$@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Día %1$lld • %2$@"
+          }
+        }
+      }
+    },
+    "programs.recommendation.next_day_detail" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day %1$lld %2$@ • %3$@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Día %1$lld %2$@ • %3$@"
           }
         }
       }
@@ -10476,12 +11987,17 @@
       }
     },
     "progress.activities.headline.mixed" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%@ leads your recent tracked activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ encabeza tu actividad registrada reciente"
           }
         }
       }
@@ -10503,23 +12019,33 @@
       }
     },
     "progress.activities.low_data.distance_missing" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Distance totals appear when walking, running, or hiking activities record distance or route data."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los totales de distancia aparecen cuando las actividades de caminata, carrera o senderismo registran distancia o datos de ruta."
           }
         }
       }
     },
     "progress.activities.low_data.distance_partial" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Distance totals reflect only tracked activities that recorded distance."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los totales de distancia reflejan solo las actividades registradas que guardaron distancia."
           }
         }
       }
@@ -10607,12 +12133,17 @@
       }
     },
     "progress.activities.stats.distance_session_count" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lld sessions"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sesiones"
           }
         }
       }
@@ -10650,34 +12181,49 @@
       }
     },
     "progress.activities.stats.outdoor_count" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lld sessions"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sesiones"
           }
         }
       }
     },
     "progress.activities.supporting" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$lld completed tracked activities • %2$@ total"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld actividades registradas completadas • %2$@ en total"
           }
         }
       }
     },
     "progress.activities.supporting.with_distance" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$lld completed tracked activities • %2$@ • %3$@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld actividades registradas completadas • %2$@ • %3$@"
           }
         }
       }
@@ -12736,7 +14282,14 @@
       }
     },
     "Re-import the program to restore planning details." : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vuelve a importar el programa para restaurar los detalles de planificación."
+          }
+        }
+      }
     },
     "Ready to start this routine." : {
       "extractionState" : "stale",
@@ -12770,6 +14323,28 @@
           }
         }
       }
+    },
+    "Recommended Next Action" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siguiente acción recomendada"
+          }
+        }
+      }
+    },
+    "Recommended next action: complete Day %lld before advancing." : {
+
+    },
+    "Recommended next action: complete Day %lld." : {
+
+    },
+    "Recommended next action: repeat Week %lld." : {
+
+    },
+    "Recommended next action: start Week %1$lld with Day %2$lld." : {
+
     },
     "Recurrence" : {
       "extractionState" : "stale",
@@ -12858,6 +14433,16 @@
         }
       }
     },
+    "Remaining" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restantes"
+          }
+        }
+      }
+    },
     "Remote media" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -12868,6 +14453,15 @@
           }
         }
       }
+    },
+    "Remove" : {
+
+    },
+    "Remove Program Template" : {
+
+    },
+    "Remove this program template from the installed library?" : {
+
     },
     "Reopen" : {
       "extractionState" : "stale",
@@ -12882,6 +14476,20 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reabrir"
+          }
+        }
+      }
+    },
+    "Repeat this week to rebuild consistency." : {
+
+    },
+    "Repeat Week %lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repite la semana %lld"
           }
         }
       }
@@ -13024,7 +14632,6 @@
       }
     },
     "Rest" : {
-      "extractionState" : "stale",
       "localizations" : {
         "es-MX" : {
           "stringUnit" : {
@@ -13145,16 +14752,62 @@
       }
     },
     "Resume Workout" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume Workout"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar entrenamiento"
+          }
+        }
+      }
     },
     "Resume your current workout session and jump to the best next target." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume your current workout session and jump to the best next target."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanuda tu sesión de entrenamiento actual y salta al mejor siguiente objetivo."
+          }
+        }
+      }
     },
     "Resuming your workout in Workout Tracker." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resuming your workout in Workout Tracker."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudando tu entrenamiento en Workout Tracker."
+          }
+        }
+      }
     },
     "Reusable day plans that can preload your calendar." : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Planes diarios reusables que puedes precargar en tu calendario."
+          }
+        }
+      }
     },
     "Review past sessions" : {
       "extractionState" : "stale",
@@ -13174,7 +14827,14 @@
       }
     },
     "Review your current multi-week plan here. Scheduled workout days are followed from Calendar." : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisa aquí tu plan actual de varias semanas. Los días de entrenamiento programados se siguen desde Calendario."
+          }
+        }
+      }
     },
     "Routine" : {
       "localizations" : {
@@ -13201,6 +14861,9 @@
           }
         }
       }
+    },
+    "Routine unavailable" : {
+
     },
     "routine.link.cool_down.clear" : {
       "localizations" : {
@@ -13453,23 +15116,33 @@
       }
     },
     "routines.plan.duration_minutes" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Duration (min)"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duración (min)"
           }
         }
       }
     },
     "routines.plan.rest_seconds.compact" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%llds"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld s"
           }
         }
       }
@@ -13659,6 +15332,16 @@
         }
       }
     },
+    "Schedule anchor" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancla de programación"
+          }
+        }
+      }
+    },
     "Schedule Program" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -13819,8 +15502,31 @@
         }
       }
     },
+    "Sequential" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Secuencial"
+          }
+        }
+      }
+    },
     "Session" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesión"
+          }
+        }
+      }
     },
     "Session recovery" : {
       "extractionState" : "stale",
@@ -14160,11 +15866,16 @@
       }
     },
     "session.pr.weight_value" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "%1$@ %2$@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%1$@ %2$@"
           }
         }
@@ -15023,34 +16734,49 @@
       }
     },
     "settings.health.auto_save" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Auto-save completed tracked activities to Apple Health"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto guardar actividades registradas completadas en Apple Health"
           }
         }
       }
     },
     "settings.health.auto_save.help" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "When this is on, completed tracked activities try to save automatically to Apple Health. Manual retry stays available if a save attempt fails, and later edits remain local in WorkoutTracker."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando esto está activado, las actividades registradas completadas intentan guardarse automáticamente en Apple Health. El reintento manual sigue disponible si un intento de guardado falla y las ediciones posteriores permanecen locales en WorkoutTracker."
           }
         }
       }
     },
     "settings.health.section" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Health"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salud"
           }
         }
       }
@@ -15476,6 +17202,9 @@
         }
       }
     },
+    "Some scheduled days are still incomplete." : {
+
+    },
     "Start" : {
       "localizations" : {
         "en" : {
@@ -15493,7 +17222,20 @@
       }
     },
     "Start ${routine}" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start ${routine}"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar ${routine}"
+          }
+        }
+      }
     },
     "Start a routine to create your first session." : {
       "extractionState" : "stale",
@@ -15524,7 +17266,20 @@
       }
     },
     "Start a workout routine in Workout Tracker." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a workout routine in Workout Tracker."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia una rutina de entrenamiento en Workout Tracker."
+          }
+        }
+      }
     },
     "Start date" : {
       "localizations" : {
@@ -15565,13 +17320,52 @@
       }
     },
     "Start Rest" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Rest"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar descanso"
+          }
+        }
+      }
     },
     "Start Rest Timer" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Rest Timer"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar temporizador de descanso"
+          }
+        }
+      }
     },
     "Start Routine" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Routine"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar rutina"
+          }
+        }
+      }
     },
     "Start sessions and review history" : {
       "localizations" : {
@@ -15589,6 +17383,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hora de inicio"
+          }
+        }
+      }
+    },
+    "Start Week %1$lld with Day %2$lld" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empieza la semana %1$lld con el día %2$lld"
           }
         }
       }
@@ -15885,260 +17690,389 @@
       }
     },
     "Templates" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plantillas"
+          }
+        }
+      }
     },
     "Templates and programs for structured scheduling" : {
-
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plantillas y programas para una programación estructurada"
+          }
+        }
+      }
     },
     "templates.editor.default_start_time" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Default start time"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hora de inicio predeterminada"
           }
         }
       }
     },
     "templates.editor.duration_minutes" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "%lld min"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%lld min"
           }
         }
       }
     },
     "templates.editor.mode.create" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "New Schedule Template"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nueva plantilla de programación"
           }
         }
       }
     },
     "templates.editor.mode.edit" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Edit Schedule Template"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar plantilla de programación"
           }
         }
       }
     },
     "templates.editor.start_date" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Start date"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fecha de inicio"
           }
         }
       }
     },
     "templates.preview.error" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Couldn’t compute preview: %@"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo calcular la vista previa: %@"
           }
         }
       }
     },
     "templates.preview.item.plural" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "items"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "elementos"
           }
         }
       }
     },
     "templates.preview.item.singular" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "item"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "elemento"
           }
         }
       }
     },
     "templates.preview.next" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Next:"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siguiente:"
           }
         }
       }
     },
     "templates.preview.this_instance" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "This will update %1$lld %2$@ (apply day only)."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esto actualizará %1$lld %2$@ (solo el día aplicado)."
           }
         }
       }
     },
     "templates.recurrence.daily" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "daily"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "diario"
           }
         }
       }
     },
     "templates.recurrence.every_day" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Every day"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos los días"
           }
         }
       }
     },
     "templates.recurrence.every_n_days" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Every %lld days"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada %lld días"
           }
         }
       }
     },
     "templates.recurrence.every_n_days.lowercase" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "every %lld days"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cada %lld días"
           }
         }
       }
     },
     "templates.recurrence.every_n_weeks" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Every %lld weeks"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada %lld semanas"
           }
         }
       }
     },
     "templates.recurrence.every_n_weeks.lowercase" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "every %lld weeks"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cada %lld semanas"
           }
         }
       }
     },
     "templates.recurrence.every_week" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Every week"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada semana"
           }
         }
       }
     },
     "templates.recurrence.one_time" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "One-time"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez"
           }
         }
       }
     },
     "templates.recurrence.one_time.lowercase" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "one-time"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "una vez"
           }
         }
       }
     },
     "templates.recurrence.weekly" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "weekly"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "semanal"
           }
         }
       }
     },
     "templates.recurrence.weekly_with_days" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
+            "value" : "%1$@ (%2$@)"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "%1$@ (%2$@)"
           }
         }
       }
     },
     "templates.row.duration_minutes.compact" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lldm"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld min"
           }
         }
       }
     },
     "templates.weekday.selected" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%@ selected"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ seleccionado"
           }
         }
       }
@@ -16155,7 +18089,20 @@
       }
     },
     "That routine is no longer available." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That routine is no longer available."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esa rutina ya no está disponible."
+          }
+        }
+      }
     },
     "The attached routine could not be found. Please reattach a routine." : {
       "localizations" : {
@@ -16173,14 +18120,75 @@
         }
       }
     },
+    "The current week has missed required days, so repeating it is the honest next step." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La semana actual tiene días requeridos omitidos, así que repetirla es el siguiente paso más honesto."
+          }
+        }
+      }
+    },
+    "The next recommendation will keep this honest without dramatizing it." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La siguiente recomendación mantendrá esto honesto sin dramatizarlo."
+          }
+        }
+      }
+    },
     "There isn't an active workout session ready for a rest timer right now." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There isn't an active workout session ready for a rest timer right now."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay una sesión de entrenamiento activa lista para un temporizador de descanso en este momento."
+          }
+        }
+      }
     },
     "There isn't an active workout session to resume right now." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There isn't an active workout session to resume right now."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay una sesión de entrenamiento activa para reanudar en este momento."
+          }
+        }
+      }
     },
     "There isn't an active workout session you can finish right now." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There isn't an active workout session you can finish right now."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay una sesión de entrenamiento activa que puedas terminar en este momento."
+          }
+        }
+      }
     },
     "Thigh" : {
       "extractionState" : "stale",
@@ -16195,6 +18203,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Muslo"
+          }
+        }
+      }
+    },
+    "This assignment could not be loaded." : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar esta asignación."
           }
         }
       }
@@ -16253,6 +18271,12 @@
         }
       }
     },
+    "This program has %1$lld active assignment(s). Removing the template will keep assignment history, but current planning details may be unavailable until you re-import the program." : {
+
+    },
+    "This program has %1$lld historical assignment(s). Removing the template will keep execution history readable through saved snapshots." : {
+
+    },
     "This routine will be attached to every generated workout activity from this schedule template." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -16277,6 +18301,20 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Este entrenamiento sin terminar corresponde al %@. Reanúdalo, finalízalo ahora, descártalo o déjalo para después sin volver a mostrar este aviso hoy."
+          }
+        }
+      }
+    },
+    "This week has no completed sessions yet." : {
+
+    },
+    "This week has not started yet." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta semana todavía no ha empezado."
           }
         }
       }
@@ -16421,7 +18459,6 @@
       }
     },
     "Today" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -16517,7 +18554,20 @@
       }
     },
     "Track walking, running, hiking, and yoga" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track walking, running, hiking, and yoga"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registra caminata, carrera, senderismo y yoga"
+          }
+        }
+      }
     },
     "Tracking" : {
       "extractionState" : "stale",
@@ -16641,7 +18691,6 @@
       }
     },
     "Unknown error." : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -16680,6 +18729,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sin título"
+          }
+        }
+      }
+    },
+    "Upcoming" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próximo"
           }
         }
       }
@@ -16788,7 +18847,7 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Volume: %1$@ %2$@·reps"
           }
         },
@@ -16902,23 +18961,33 @@
       }
     },
     "watch.activities.action.open_current_activity" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Current Activity"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir actividad actual"
           }
         }
       }
     },
     "watch.activities.action.reconnect_controls" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Reconnect Controls"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconectar controles"
           }
         }
       }
@@ -17178,23 +19247,33 @@
       }
     },
     "watch.now_playing.action.pause" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Pause"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar"
           }
         }
       }
     },
     "watch.now_playing.action.resume" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Resume"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar"
           }
         }
       }
@@ -17251,23 +19330,33 @@
       }
     },
     "watch.now_playing.footer.current_activity_hint" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Use these controls to keep the current activity honest from your watch."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa estos controles para mantener honesta la actividad actual desde tu reloj."
           }
         }
       }
     },
     "watch.now_playing.footer.recovery_hint" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Controls stay here while the watch reconnects to your iPhone session."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los controles se quedan aquí mientras el reloj se vuelve a conectar a la sesión de tu iPhone."
           }
         }
       }
@@ -17384,79 +19473,191 @@
         }
       }
     },
-    "weekday.fri.short" : {
-      "extractionState" : "extracted_with_value",
+    "Week %1$lld is %2$lld of %3$lld sessions complete." : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La semana %1$lld lleva %2$lld de %3$lld sesiones completas."
+          }
+        }
+      }
+    },
+    "Week %lld" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semana %lld"
+          }
+        }
+      }
+    },
+    "Week %lld • Day %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Week %1$lld • Day %2$lld"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semana %1$lld • Día %2$lld"
+          }
+        }
+      }
+    },
+    "Week %lld has %lld missed required sessions." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Week %1$lld has %2$lld missed required sessions."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La semana %1$lld tiene %2$lld sesiones requeridas omitidas."
+          }
+        }
+      }
+    },
+    "Week %lld has %lld missed sessions." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
+            "value" : "Week %1$lld has %2$lld missed sessions."
+          }
+        }
+      }
+    },
+    "Week %lld is a deload week." : {
+
+    },
+    "Week %lld is flagged as a deload week." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La semana %lld está marcada como semana de descarga."
+          }
+        }
+      }
+    },
+    "weekday.fri.short" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "Fri"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vie"
           }
         }
       }
     },
     "weekday.mon.short" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Mon"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lun"
           }
         }
       }
     },
     "weekday.sat.short" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sat"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sáb"
           }
         }
       }
     },
     "weekday.sun.short" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sun"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dom"
           }
         }
       }
     },
     "weekday.thu.short" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Thu"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jue"
           }
         }
       }
     },
     "weekday.tue.short" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Tue"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mar"
           }
         }
       }
     },
     "weekday.wed.short" : {
-      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Wed"
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mié"
           }
         }
       }
@@ -17530,6 +19731,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Peso a lo largo del tiempo (%@)"
+          }
+        }
+      }
+    },
+    "What this does" : {
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qué hace esto"
           }
         }
       }
@@ -17656,7 +19867,20 @@
       }
     },
     "Workout Tracker couldn't open that action because its target is no longer available." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout Tracker couldn't open that action because its target is no longer available."
+          }
+        },
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout Tracker no pudo abrir esa acción porque su destino ya no está disponible."
+          }
+        }
+      }
     },
     "Workouts" : {
       "localizations" : {
@@ -17729,6 +19953,31 @@
           }
         }
       }
+    },
+    "You are behind the original schedule. The recommendation below keeps the next step honest." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vas por detrás del calendario original. La recomendación de abajo mantiene honesto el siguiente paso."
+          }
+        }
+      }
+    },
+    "You have an unfinished required day. Finish it before moving forward." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "es-MX" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienes un día requerido sin terminar. Complétalo antes de seguir avanzando."
+          }
+        }
+      }
+    },
+    "You missed a scheduled day. Complete it before advancing." : {
+
     },
     "Your support helps keep the project healthy." : {
       "extractionState" : "stale",

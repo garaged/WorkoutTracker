@@ -6,6 +6,8 @@ struct ProgramDetailScreen: View {
     let program: TrainingProgram
 
     @Environment(\.modelContext) private var modelContext
+    @Query(sort: [SortDescriptor(\ProgramAssignment.assignedAt, order: .reverse)])
+    private var assignments: [ProgramAssignment]
 
     @State private var showScheduleSheet = false
 
@@ -47,6 +49,31 @@ struct ProgramDetailScreen: View {
 
                 // ✅ NEW: schedulable status + missing routines + install CTA
                 schedulableStatusBlock
+
+                if let activeAssignment {
+                    NavigationLink {
+                        ProgramProgressScreen(program: program, assignmentID: activeAssignment.id)
+                    } label: {
+                        Label(AppFormatting.localized("View program progress"), systemImage: "chart.bar.doc.horizontal")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("programs.detail.progressButton")
+                }
+
+                NavigationLink {
+                    ProgramAssignmentScreen(program: program)
+                } label: {
+                    Label(
+                        activeAssignment == nil
+                            ? AppFormatting.localized("Assign this program")
+                            : AppFormatting.localized("Reassign program"),
+                        systemImage: "flag.checkered"
+                    )
+                    .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .buttonStyle(.bordered)
+                .accessibilityIdentifier("programs.detail.assignButton")
 
                 Button {
                     showScheduleSheet = true
@@ -138,13 +165,17 @@ struct ProgramDetailScreen: View {
             refreshSchedulablePreview()
         }
         .alert(AppFormatting.localized("Program assets"), isPresented: $showInstallMessage) {
-            Button("OK", role: .cancel) { }
+            Button(String(localized: "OK", defaultValue: "OK"), role: .cancel) { }
         } message: {
-            Text(installMessage ?? "Done.")
+            Text(installMessage ?? String(localized: "Done.", defaultValue: "Done."))
         }
     }
 
     // MARK: - Schedulable status
+
+    private var activeAssignment: ProgramAssignment? {
+        assignments.first { $0.programId == program.id && $0.isActive }
+    }
 
     private var schedulableStatusBlock: some View {
         Group {
@@ -155,12 +186,18 @@ struct ProgramDetailScreen: View {
                             .foregroundStyle(p.isSchedulable ? .green : .orange)
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(p.isSchedulable ? "Schedulable" : "Missing routines")
+                            Text(
+                                p.isSchedulable
+                                    ? String(localized: "Schedulable", defaultValue: "Schedulable")
+                                    : String(localized: "Missing routines", defaultValue: "Missing routines")
+                            )
                                 .font(.subheadline.weight(.semibold))
 
-                            Text(p.isSchedulable
-                                 ? "All required routines are installed."
-                                 : "Install the missing routines to enable scheduling.")
+                            Text(
+                                p.isSchedulable
+                                    ? String(localized: "All required routines are installed.", defaultValue: "All required routines are installed.")
+                                    : String(localized: "Install the missing routines to enable scheduling.", defaultValue: "Install the missing routines to enable scheduling.")
+                            )
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -187,7 +224,11 @@ struct ProgramDetailScreen: View {
                                     if isInstallingAssets {
                                         ProgressView().controlSize(.small)
                                     }
-                                    Text(isInstallingAssets ? "Installing..." : "Install required assets")
+                                    Text(
+                                        isInstallingAssets
+                                            ? String(localized: "Installing...", defaultValue: "Installing...")
+                                            : String(localized: "Install required assets", defaultValue: "Install required assets")
+                                    )
                                 }
                                 .frame(maxWidth: .infinity)
                             }
@@ -234,7 +275,10 @@ struct ProgramDetailScreen: View {
         do {
             let load = try ProgramCatalogService().loadCatalog()
             guard let pack = load.packV2, pack.formatVersion == 2 else {
-                installMessage = "No bundled V2 catalog assets found. If this program came from an import, re-import the pack to reinstall its routines."
+                installMessage = String(
+                    localized: "No bundled V2 catalog assets found. If this program came from an import, re-import the pack to reinstall its routines.",
+                    defaultValue: "No bundled V2 catalog assets found. If this program came from an import, re-import the pack to reinstall its routines."
+                )
                 showInstallMessage = true
                 return
             }
@@ -245,9 +289,19 @@ struct ProgramDetailScreen: View {
             refreshSchedulablePreview()
 
             if let p = schedPreview, p.isSchedulable {
-                installMessage = "Installed assets. Added \(r.installedRoutines) routines and \(r.installedExercises) exercises."
+                installMessage = String(
+                    format: String(
+                        localized: "Installed assets. Added %1$lld routines and %2$lld exercises.",
+                        defaultValue: "Installed assets. Added %1$lld routines and %2$lld exercises."
+                    ),
+                    Int64(r.installedRoutines),
+                    Int64(r.installedExercises)
+                )
             } else {
-                installMessage = "Installed catalog assets, but this program still has missing routines. If it was imported, re-import its pack."
+                installMessage = String(
+                    localized: "Installed catalog assets, but this program still has missing routines. If it was imported, re-import its pack.",
+                    defaultValue: "Installed catalog assets, but this program still has missing routines. If it was imported, re-import its pack."
+                )
             }
             showInstallMessage = true
         } catch {

@@ -106,7 +106,6 @@ struct TrackedActivitySessionScreen: View {
                 }
                 .navigationDestination(isPresented: $showFinishSummary) {
                     TrackedActivityFinishSummaryView(sessionID: sessionID)
-//                    Text("Summary placeholder")
                 }
                 .onAppear {
                     let recoveryState = recoveryPlanner.recoveryState(for: session)

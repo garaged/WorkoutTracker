@@ -33,6 +33,10 @@ struct UITestHostRootView: View {
                     .accessibilityIdentifier("UITestHeavyTrackedSummary.Screen")
             case "home":
                 UITestHomeRouteLauncherView()
+            case "programs":
+                ProgramLibraryScreen()
+            case "program-progress":
+                UITestProgramProgressLaunchView()
             case "progress":
                 ProgressDashboardView()
             case "routines":
@@ -59,6 +63,48 @@ struct UITestHostRootView: View {
             NavigationStack {
                 DayTimelineEntryScreen(initialDay: jump.day)
             }
+        }
+    }
+}
+
+private struct UITestProgramProgressLaunchView: View {
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var seededProgram: TrainingProgram?
+    @State private var didLoad = false
+
+    var body: some View {
+        Group {
+            if let seededProgram {
+                ProgramProgressScreen(program: seededProgram, assignmentID: ProgramsUITestSeed.assignmentID)
+            } else {
+                ProgressView()
+                    .task {
+                        loadProgramIfNeeded()
+                    }
+            }
+        }
+    }
+
+    @MainActor
+    private func loadProgramIfNeeded() {
+        guard !didLoad else { return }
+        didLoad = true
+
+        do {
+            let catalog = try ProgramCatalogService().loadCatalog()
+            guard let program = catalog.programs.first(where: { $0.slug == ProgramsUITestSeed.programSlug }) else {
+                fatalError("UITESTS assertion failed: program-progress route expected seed-program-v2 in the bundled program catalog.")
+            }
+
+            let assignments = try modelContext.fetch(FetchDescriptor<ProgramAssignment>())
+            guard assignments.contains(where: { $0.id == ProgramsUITestSeed.assignmentID }) else {
+                fatalError("UITESTS assertion failed: program-progress route expected the seeded program assignment.")
+            }
+
+            seededProgram = program
+        } catch {
+            fatalError("UITESTS assertion failed: program-progress route failed to load seeded program data: \(error)")
         }
     }
 }

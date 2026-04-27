@@ -158,41 +158,11 @@ struct ProgramScheduleSheet: View {
     }
 
     private func upsertProgramAssignment() throws {
-        let descriptor = FetchDescriptor<ProgramAssignment>(
-            predicate: #Predicate { $0.programId == program.id },
-            sortBy: [SortDescriptor(\.assignedAt, order: .reverse)]
+        _ = try ProgramAssignmentService.activateProgram(
+            program,
+            startDate: startDate,
+            anchorStrategy: .calendarAligned,
+            context: modelContext
         )
-
-        let normalizedStartDate = Calendar.current.startOfDay(for: startDate)
-        let firstDayIndex = program.orderedWeeks.first?.orderedDays.first?.index
-
-        if let assignment = try modelContext.fetch(descriptor).first {
-            assignment.programSlug = program.slug
-            assignment.programNameSnapshot = program.name
-            assignment.startDate = normalizedStartDate
-            assignment.assignedAt = Date()
-            assignment.status = .active
-            assignment.scheduleAnchorStrategy = .calendarAligned
-
-            if let executionState = assignment.executionState {
-                executionState.currentWeekIndex = 1
-                executionState.currentDayIndex = firstDayIndex
-            } else {
-                assignment.executionState = ProgramExecutionState(
-                    currentWeekIndex: 1,
-                    currentDayIndex: firstDayIndex
-                )
-            }
-        } else {
-            let assignment = ProgramAssignment(
-                program: program,
-                startDate: normalizedStartDate,
-                status: .active,
-                scheduleAnchorStrategy: .calendarAligned
-            )
-            modelContext.insert(assignment)
-        }
-
-        try modelContext.save()
     }
 }

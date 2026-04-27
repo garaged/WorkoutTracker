@@ -46,7 +46,8 @@ actor ProgramImportExportService {
     // MARK: - Storage
     private let fileManager: FileManager
     private let baseFolderName: String
-    private let libraryFileName = "program_library_v1.json"
+    private let libraryFileName = "program_library_v2.json"
+    private let legacyLibraryFileName = "program_library_v1.json"
 
     init(fileManager: FileManager = .default, baseFolderName: String = "WorkoutTracker") {
         self.fileManager = fileManager
@@ -55,8 +56,7 @@ actor ProgramImportExportService {
 
     // MARK: - Library
     func loadLibrary() throws -> [TrainingProgram] {
-        let url = try libraryURL()
-        guard fileManager.fileExists(atPath: url.path) else { return [] }
+        guard let url = try existingLibraryURL() else { return [] }
         let data = try Data(contentsOf: url)
 
         let pack = try ProgramPackCodec.decode(data)
@@ -74,7 +74,7 @@ actor ProgramImportExportService {
         try fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
 
         let pack = ProgramPack(
-            schemaVersion: 1,
+            schemaVersion: ProgramPack.supportedSchemaVersion,
             packID: "program-library",
             generatedAt: Date(),
             exercises: [],
@@ -175,6 +175,21 @@ actor ProgramImportExportService {
     private func libraryURL() throws -> URL {
         let base = try applicationSupportDirectory()
         return base.appendingPathComponent(libraryFileName, isDirectory: false)
+    }
+
+    private func existingLibraryURL() throws -> URL? {
+        let base = try applicationSupportDirectory()
+        let primary = base.appendingPathComponent(libraryFileName, isDirectory: false)
+        if fileManager.fileExists(atPath: primary.path) {
+            return primary
+        }
+
+        let legacy = base.appendingPathComponent(legacyLibraryFileName, isDirectory: false)
+        if fileManager.fileExists(atPath: legacy.path) {
+            return legacy
+        }
+
+        return nil
     }
 
     private func applicationSupportDirectory() throws -> URL {

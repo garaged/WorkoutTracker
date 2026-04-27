@@ -6,22 +6,42 @@ import UniformTypeIdentifiers
 struct ProgramsLibraryScreen: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var model = ProgramsLibraryViewModel()
+    @Query(sort: [SortDescriptor(\ProgramAssignment.assignedAt, order: .reverse)])
+    private var assignments: [ProgramAssignment]
 
     @State private var showImporter = false
     @State private var showExporter = false
     @State private var exportDocument: ProgramPackDocument?
 
     @State private var previewSheet: ImportPreviewSheetModel? = nil
+    @State private var pendingDeletion: PendingDeletion? = nil
 
     private struct ImportPreviewSheetModel: Identifiable {
         let id = UUID()
         let preview: ProgramImportExportService.ImportPreview
     }
+
+    private struct PendingDeletion: Identifiable {
+        let id = UUID()
+        let program: TrainingProgram
+        let activeAssignments: Int
+        let historicalAssignments: Int
+    }
+
     @State private var importStrategy: ProgramImportExportService.ConflictStrategy = .renameOnConflict
 
-    enum Tab: String, CaseIterable {
-        case installed = "Installed"
-        case catalog = "Catalog"
+    enum Tab: CaseIterable {
+        case installed
+        case catalog
+
+        var localizedTitle: String {
+            switch self {
+            case .installed:
+                return AppFormatting.localized("Installed")
+            case .catalog:
+                return AppFormatting.localized("Catalog")
+            }
+        }
     }
     @State private var tab: Tab = .installed
 
@@ -89,6 +109,16 @@ struct ProgramsLibraryScreen: View {
         } message: {
             Text(model.errorMessage ?? AppFormatting.localized("Unknown error."))
         }
+        .alert(item: $pendingDeletion) { pending in
+            Alert(
+                title: Text(String(localized: "Remove Program Template", defaultValue: "Remove Program Template")),
+                message: Text(deletionMessage(for: pending)),
+                primaryButton: .destructive(Text(String(localized: "Remove", defaultValue: "Remove"))) {
+                    Task { await model.deleteInstalled(programID: pending.program.id) }
+                },
+                secondaryButton: .cancel()
+            )
+        }
     }
 
     @ViewBuilder
@@ -96,7 +126,7 @@ struct ProgramsLibraryScreen: View {
         VStack(spacing: 12) {
             Picker("", selection: $tab) {
                 ForEach(Tab.allCases, id: \.self) { t in
-                    Text(t.rawValue).tag(t)
+                    Text(t.localizedTitle).tag(t)
                 }
             }
             .pickerStyle(.segmented)
@@ -130,15 +160,51 @@ struct ProgramsLibraryScreen: View {
                         }
                     }
                     .onDelete { idx in
-                        Task { await model.deleteInstalled(at: idx) }
+                        guard let first = idx.first else { return }
+                        queueDeletionConfirmation(for: model.installed[first])
                     }
                 } header: {
                     Text(AppFormatting.localized("Installed"))
                 } footer: {
-                    Text(AppFormatting.localized("Export produces a V2 pack (programs + routines + exercises). Scheduling is disabled unless routines exist."))
+                    Text(AppFormatting.localized("Export produces a V2 pack (programs + routines + exercises). Removing a template does not delete assignment history, but active planning details may become unavailable until the program is re-imported."))
                 }
             }
         }
+    }
+
+    private func queueDeletionConfirmation(for program: TrainingProgram) {
+        let relatedAssignments = assignments.filter { $0.programId == program.id }
+        let activeAssignments = relatedAssignments.filter(\.isActive).count
+        let historicalAssignments = relatedAssignments.count - activeAssignments
+        pendingDeletion = PendingDeletion(
+            program: program,
+            activeAssignments: activeAssignments,
+            historicalAssignments: historicalAssignments
+        )
+    }
+
+    private func deletionMessage(for pending: PendingDeletion) -> String {
+        if pending.activeAssignments > 0 {
+            return String(
+                format: String(
+                    localized: "This program has %1$lld active assignment(s). Removing the template will keep assignment history, but current planning details may be unavailable until you re-import the program.",
+                    defaultValue: "This program has %1$lld active assignment(s). Removing the template will keep assignment history, but current planning details may be unavailable until you re-import the program."
+                ),
+                Int64(pending.activeAssignments)
+            )
+        }
+
+        if pending.historicalAssignments > 0 {
+            return String(
+                format: String(
+                    localized: "This program has %1$lld historical assignment(s). Removing the template will keep execution history readable through saved snapshots.",
+                    defaultValue: "This program has %1$lld historical assignment(s). Removing the template will keep execution history readable through saved snapshots."
+                ),
+                Int64(pending.historicalAssignments)
+            )
+        }
+
+        return String(localized: "Remove this program template from the installed library?", defaultValue: "Remove this program template from the installed library?")
     }
 
     private var catalogSection: some View {
@@ -222,11 +288,9 @@ final class ProgramsLibraryViewModel: ObservableObject {
         }
     }
 
-    func deleteInstalled(at offsets: IndexSet) async {
+    func deleteInstalled(programID: UUID) async {
         do {
-            for i in offsets {
-                installed = try await io.removeFromLibrary(id: installed[i].id)
-            }
+            installed = try await io.removeFromLibrary(id: programID)
         } catch {
             show(error)
         }

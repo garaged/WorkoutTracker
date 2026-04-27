@@ -1743,6 +1743,11 @@ struct WorkoutSessionScreen: View {
         session.endedAt = Date()
         session.status = .completed
         session.dismissedStalePromptAt = nil
+        do {
+            try ProgramExecutionUpdateService.recordCompletedSession(session, context: modelContext)
+        } catch {
+            assertionFailure("Failed to update program execution state on finish: \(error)")
+        }
         saveOrAssert("finish")
         syncSystemIntegrations()
 
