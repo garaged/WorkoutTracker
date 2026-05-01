@@ -1,3 +1,38 @@
+# Version 2.3.0 - Programs, planning, progression, and pack import/export
+
+WorkoutTracker 2.3.0 moves beyond one-off workout logging into structured training guidance. This release adds multi-week programs, honest progress tracking, typed progression rules, import/export for program packs, and a new Home planning surface that helps the user understand what to do next without hiding missed work.
+
+## New
+
+- Added first-class training programs with reusable templates, week/day structure, prescriptions, and stable identities
+- Added program assignment and runtime execution state so template data stays separate from user progress
+- Added a deterministic program planner that computes current week/day, next actionable training day, and week completion
+- Added adherence tracking for completed days, missed days, repeat-week state, and deload cues
+- Added typed progression rules for load increases, holds, repeat-week behavior, scheduled deloads, and double progression
+- Added bundled Programs catalog support with a seeded V2 pack for core app flows and regression coverage
+- Added program pack import/export with schema-versioned JSON, validation, and explicit conflict handling
+- Added program asset installation/mapping so imported packs can resolve routines and exercises safely into the local library
+- Added a Programs library with Installed and Catalog browsing
+- Added program detail, assignment, and progress screens
+- Added a Home planning hub that surfaces the active program, current week progress, and next recommended action
+- Added program scheduling into the calendar/day timeline so a program can create planned workout activities from its structure
+
+## Improved
+
+- Program guidance is deterministic and explainable instead of relying on vague coaching copy
+- Missed required sessions remain visible and honest instead of being silently treated as complete
+- Program progress now stays connected to real routines, exercises, and scheduled workouts through stable pack asset mapping
+- Imported and bundled program packs are safer to round-trip because validation now checks structure, references, and unsupported rule configuration explicitly
+- Home now provides a calmer planning-oriented entry point into assigned program work
+
+## Fixes and reliability
+
+- Fixed multiple program-library and pack-linkage edge cases so bundled/imported programs install with the routines and exercises required for scheduling and session start flows
+- Fixed program scheduling coverage so seeded program flows create real planned workout activities that can be opened and started from the timeline
+- Improved seeded UITestHost program assertions so Programs smoke suites fail fast when catalog, assignment, or asset linkage data is missing
+- Hardened Programs UI smoke coverage for library, assignment, adherence, progression, and seeded schedule/start flows
+- Fixed the `ProgramsV2SmokeUITests` launch configuration so the seeded installed-program library is populated consistently, including the `es-MX` localized smoke path
+
 # Version 2.2.2 - Performance, responsiveness, and architecture hardening
 
 v2.2.2 is a stability-focused release for tracked activities across iPhone, widgets, and Apple Watch. It improves current-activity routing, watch/widget handoff, finish-summary reliability, and Health save/export flow, with multiple fixes to system-surface behavior and recovery after activity transitions.

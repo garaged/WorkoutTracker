@@ -126,3 +126,85 @@ final class SystemIntegrationRouteResolverTests: XCTestCase {
         )
     }
 }
+
+#if canImport(ActivityKit)
+@available(iOS 16.1, *)
+final class LiveActivityStateMapperTests: XCTestCase {
+    private let mapper = LiveActivityStateMapper()
+
+    func test_map_runningRestWithFutureEnd_preservesRunningModeAndReferenceDate() {
+        let generatedAt = Date(timeIntervalSinceReferenceDate: 10_000)
+        let sessionID = UUID()
+        let snapshot = WidgetExternalSnapshot.ActiveSession(
+            sessionID: sessionID,
+            title: "Push Day",
+            currentExerciseName: "Bench Press",
+            currentSetIndex: 2,
+            totalSets: 5,
+            elapsedSeconds: 600,
+            restState: .running,
+            restSeconds: 45,
+            isResumable: true,
+            isFinishable: true,
+            openRouteURL: "workouttracker://session",
+            resumeRouteURL: "workouttracker://session/resume",
+            restRouteURL: "workouttracker://session/rest"
+        )
+
+        let mapped = mapper.map(activeSession: snapshot, generatedAt: generatedAt)
+
+        XCTAssertEqual(mapped?.sessionID, sessionID)
+        XCTAssertEqual(mapped?.contentState.restMode, .running)
+        XCTAssertEqual(mapped?.contentState.restReferenceDate, generatedAt.addingTimeInterval(45))
+        XCTAssertEqual(mapped?.contentState.stateGeneratedAt, generatedAt)
+    }
+
+    func test_map_runningRestAtZero_promotesToOverdue() {
+        let generatedAt = Date(timeIntervalSinceReferenceDate: 10_000)
+        let snapshot = WidgetExternalSnapshot.ActiveSession(
+            sessionID: UUID(),
+            title: "Push Day",
+            currentExerciseName: "Bench Press",
+            currentSetIndex: 2,
+            totalSets: 5,
+            elapsedSeconds: 600,
+            restState: .running,
+            restSeconds: 0,
+            isResumable: true,
+            isFinishable: true,
+            openRouteURL: "workouttracker://session",
+            resumeRouteURL: "workouttracker://session/resume",
+            restRouteURL: "workouttracker://session/rest"
+        )
+
+        let mapped = mapper.map(activeSession: snapshot, generatedAt: generatedAt)
+
+        XCTAssertEqual(mapped?.contentState.restMode, .overdue)
+        XCTAssertEqual(mapped?.contentState.restReferenceDate, generatedAt)
+    }
+
+    func test_map_overdueRest_preservesPastReferenceDateForSignedCountUp() {
+        let generatedAt = Date(timeIntervalSinceReferenceDate: 10_000)
+        let snapshot = WidgetExternalSnapshot.ActiveSession(
+            sessionID: UUID(),
+            title: "Push Day",
+            currentExerciseName: "Bench Press",
+            currentSetIndex: 2,
+            totalSets: 5,
+            elapsedSeconds: 600,
+            restState: .overdue,
+            restSeconds: -12,
+            isResumable: true,
+            isFinishable: true,
+            openRouteURL: "workouttracker://session",
+            resumeRouteURL: "workouttracker://session/resume",
+            restRouteURL: "workouttracker://session/rest"
+        )
+
+        let mapped = mapper.map(activeSession: snapshot, generatedAt: generatedAt)
+
+        XCTAssertEqual(mapped?.contentState.restMode, .overdue)
+        XCTAssertEqual(mapped?.contentState.restReferenceDate, generatedAt.addingTimeInterval(-12))
+    }
+}
+#endif

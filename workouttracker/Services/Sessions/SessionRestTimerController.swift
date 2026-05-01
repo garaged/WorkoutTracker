@@ -23,6 +23,7 @@ final class SessionRestTimerController: ObservableObject {
     var remainingSeconds: Int { snapshot.remainingSeconds }
     var displaySeconds: Int { snapshot.displaySeconds }
     var totalSeconds: Int { snapshot.totalSeconds }
+    var activeEndDate: Date? { engine.activeEndDate() }
 
     func configure(seconds: Int, startImmediately: Bool, playStartCue: Bool) {
         didFinishToken = nil
@@ -77,6 +78,14 @@ final class SessionRestTimerController: ObservableObject {
         refresh(now: Date())
     }
 
+    func toggle(defaultSeconds: Int) {
+        if hasConfiguredTimer {
+            stop()
+        } else {
+            start(seconds: defaultSeconds)
+        }
+    }
+
     @discardableResult
     func finishAndCaptureElapsedSeconds() -> Int? {
         let elapsed = engine.finish(now: Date())
@@ -98,6 +107,10 @@ final class SessionRestTimerController: ObservableObject {
         let nextSnapshot = engine.snapshot(now: now)
         snapshot = nextSnapshot
 
+        if didSemanticStateChange(previous: previousSnapshot, next: nextSnapshot) {
+            NotificationCenter.default.post(name: .sessionRestTimerSemanticStateChanged, object: nil)
+        }
+
         if previousSnapshot.displaySeconds > 3,
            nextSnapshot.displaySeconds <= 3,
            nextSnapshot.displaySeconds > 0,
@@ -115,6 +128,15 @@ final class SessionRestTimerController: ObservableObject {
         } else {
             stopTicker()
         }
+    }
+
+    private func didSemanticStateChange(previous: RestTimerSnapshot, next: RestTimerSnapshot) -> Bool {
+        if previous.shouldShow != next.shouldShow { return true }
+        if previous.isRunning != next.isRunning { return true }
+
+        let previousOverdue = previous.shouldShow && previous.displaySeconds < 0
+        let nextOverdue = next.shouldShow && next.displaySeconds < 0
+        return previousOverdue != nextOverdue
     }
 
     private func startTickerIfNeeded() {

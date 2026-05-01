@@ -30,6 +30,10 @@ Non-goals:
 
 ## Changelog
 
+### v2.3.0 — Programs / progression / coaching
+
+Workout Tracker 2.3.0 adds structured training programs with assignment, progress tracking, next-step planning, typed progression rules, and program pack import/export. You can now browse programs, schedule them into your calendar, follow weekly progress, and get clearer guidance on what to do next.
+
 ### v2.2.2 — Performance, responsiveness, and architecture hardening
 
 This update makes tracked activities much more reliable on iPhone and Apple Watch. We fixed issues around finishing activities, opening the current activity from widgets and watch surfaces, and improved summary and Apple Health save flow.

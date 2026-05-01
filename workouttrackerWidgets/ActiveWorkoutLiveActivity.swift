@@ -29,11 +29,9 @@ struct ActiveWorkoutLiveActivity: Widget {
 
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 2) {
-                        if let restText = restInlineText(for: context.state) {
-                            Text(restText)
-                                .font(.caption.weight(.semibold))
-                                .lineLimit(1)
-                        }
+                        restInlineStatus(for: context.state)
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
                         elapsedTimer(for: context.state)
                             .font(.caption2.monospacedDigit())
                             .foregroundStyle(.secondary)
@@ -54,6 +52,7 @@ struct ActiveWorkoutLiveActivity: Widget {
                         if context.state.restMode != .inactive {
                             restTimerText(for: context.state)
                                 .font(.subheadline.monospacedDigit())
+                                .foregroundStyle(restTimerForeground(for: context.state))
                         } else {
                             elapsedTimer(for: context.state)
                                 .font(.subheadline.monospacedDigit())
@@ -71,7 +70,7 @@ struct ActiveWorkoutLiveActivity: Widget {
                     Image(systemName: "play.fill")
                 }
             } minimal: {
-                Image(systemName: context.state.restMode == .inactive ? "figure.strengthtraining.traditional" : "timer")
+                Image(systemName: minimalSymbol(for: context.state))
             }
             .widgetURL(openURL(for: context))
             .keylineTint(.accentColor)
@@ -105,14 +104,32 @@ struct ActiveWorkoutLiveActivity: Widget {
         return "\(current)/\(total)"
     }
 
-    private func restInlineText(for state: ActiveWorkoutActivityAttributes.ContentState) -> String? {
+    private func minimalSymbol(for state: ActiveWorkoutActivityAttributes.ContentState) -> String {
         switch state.restMode {
         case .inactive:
-            return nil
+            return "figure.strengthtraining.traditional"
         case .running:
-            return "Rest"
+            return "timer"
         case .overdue:
-            return "Overdue"
+            return "exclamationmark.triangle.fill"
+        }
+    }
+
+    private func restTimerForeground(
+        for state: ActiveWorkoutActivityAttributes.ContentState
+    ) -> some ShapeStyle {
+        state.restMode == .overdue ? Color.red : Color.primary
+    }
+
+    @ViewBuilder
+    private func restInlineStatus(for state: ActiveWorkoutActivityAttributes.ContentState) -> some View {
+        switch state.restMode {
+        case .inactive:
+            EmptyView()
+        case .running:
+            Text("Rest")
+        case .overdue:
+            Text("Overdue")
         }
     }
 
@@ -124,17 +141,11 @@ struct ActiveWorkoutLiveActivity: Widget {
     @ViewBuilder
     private func restTimerText(for state: ActiveWorkoutActivityAttributes.ContentState) -> some View {
         if let referenceDate = state.restReferenceDate {
-            switch state.restMode {
-            case .inactive:
-                EmptyView()
-            case .running:
-                Text(timerInterval: state.stateGeneratedAt...referenceDate, countsDown: true)
-            case .overdue:
-                HStack(spacing: 4) {
-                    Text("Overdue")
-                    Text(timerInterval: referenceDate...referenceDate.addingTimeInterval(24 * 60 * 60), countsDown: false)
-                }
-            }
+            LiveActivityRestTimerText(
+                restMode: state.restMode,
+                restEndDate: referenceDate,
+                stateGeneratedAt: state.stateGeneratedAt
+            )
         } else {
             EmptyView()
         }
@@ -143,14 +154,11 @@ struct ActiveWorkoutLiveActivity: Widget {
     @ViewBuilder
     private func restCompactLabel(for state: ActiveWorkoutActivityAttributes.ContentState) -> some View {
         if let referenceDate = state.restReferenceDate {
-            switch state.restMode {
-            case .inactive:
-                EmptyView()
-            case .running:
-                Text(timerInterval: state.stateGeneratedAt...referenceDate, countsDown: true)
-            case .overdue:
-                Text(timerInterval: referenceDate...referenceDate.addingTimeInterval(24 * 60 * 60), countsDown: false)
-            }
+            CompactRestTimerText(
+                restMode: state.restMode,
+                restEndDate: referenceDate,
+                stateGeneratedAt: state.stateGeneratedAt
+            )
         } else {
             Image(systemName: "timer")
         }
@@ -197,23 +205,17 @@ private struct ActiveWorkoutLiveActivityLockScreenView: View {
                 if context.state.restMode != .inactive,
                    let referenceDate = context.state.restReferenceDate {
                     Divider()
-                    if context.state.restMode == .running {
-                        Label {
-                            Text(timerInterval: context.state.stateGeneratedAt...referenceDate, countsDown: true)
-                                .monospacedDigit()
-                        } icon: {
-                            Image(systemName: "timer")
-                        }
-                        .font(.subheadline)
-                    } else {
-                        Label {
-                            Text(timerInterval: referenceDate...referenceDate.addingTimeInterval(24 * 60 * 60), countsDown: false)
-                                .monospacedDigit()
-                        } icon: {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                        }
-                        .font(.subheadline)
+                    Label {
+                        LiveActivityRestTimerText(
+                            restMode: context.state.restMode,
+                            restEndDate: referenceDate,
+                            stateGeneratedAt: context.state.stateGeneratedAt
+                        )
+                        .foregroundStyle(context.state.restMode == .overdue ? .red : .primary)
+                    } icon: {
+                        Image(systemName: context.state.restMode == .overdue ? "exclamationmark.triangle.fill" : "timer")
                     }
+                    .font(.subheadline)
                 }
             }
             .foregroundStyle(.primary)
@@ -221,4 +223,50 @@ private struct ActiveWorkoutLiveActivityLockScreenView: View {
         .padding(.vertical, 6)
     }
 }
+
+@available(iOS 16.1, *)
+private struct LiveActivityRestTimerText: View {
+    let restMode: ActiveWorkoutActivityAttributes.ContentState.RestMode
+    let restEndDate: Date
+    let stateGeneratedAt: Date
+
+    var body: some View {
+        switch restMode {
+        case .inactive:
+            EmptyView()
+        case .running:
+            Text(timerInterval: stateGeneratedAt...restEndDate, countsDown: true)
+                .lineLimit(1)
+        case .overdue:
+            HStack(spacing: 0) {
+                Text("-")
+                Text(
+                    timerInterval: restEndDate...restEndDate.addingTimeInterval(24 * 60 * 60),
+                    countsDown: false
+                )
+            }
+            .lineLimit(1)
+        }
+    }
+}
+
+@available(iOS 16.1, *)
+private struct CompactRestTimerText: View {
+    let restMode: ActiveWorkoutActivityAttributes.ContentState.RestMode
+    let restEndDate: Date
+    let stateGeneratedAt: Date
+
+    var body: some View {
+        LiveActivityRestTimerText(
+            restMode: restMode,
+            restEndDate: restEndDate,
+            stateGeneratedAt: stateGeneratedAt
+        )
+            .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .frame(maxWidth: 38, alignment: .trailing)
+    }
+}
+
 #endif

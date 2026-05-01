@@ -180,6 +180,11 @@ struct RestTimerEngine: Equatable {
         )
     }
 
+    func activeEndDate() -> Date? {
+        guard let startedAt else { return nil }
+        return startedAt.addingTimeInterval(TimeInterval(totalSeconds))
+    }
+
     private func currentDisplaySeconds(now: Date) -> Int {
         if let pausedDisplaySeconds {
             return pausedDisplaySeconds

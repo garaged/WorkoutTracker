@@ -33,10 +33,14 @@ struct LiveActivityStateMapper {
         )
 
         let sessionStartDate = generatedAt.addingTimeInterval(TimeInterval(-max(0, activeSession.elapsedSeconds)))
-        let restMode = mapRestMode(activeSession.restState)
         let restReferenceDate = deriveRestReferenceDate(
             restState: activeSession.restState,
             restSeconds: activeSession.restSeconds,
+            generatedAt: generatedAt
+        )
+        let restMode = resolvedRestMode(
+            from: activeSession.restState,
+            restReferenceDate: restReferenceDate,
             generatedAt: generatedAt
         )
 
@@ -57,6 +61,7 @@ struct LiveActivityStateMapper {
             sessionID: activeSession.sessionID,
             staleDate: deriveStaleDate(
                 restState: activeSession.restState,
+                restReferenceDate: restReferenceDate,
                 generatedAt: generatedAt
             )
         )
@@ -90,6 +95,20 @@ struct LiveActivityStateMapper {
         }
     }
 
+    private func resolvedRestMode(
+        from state: WidgetExternalSnapshot.ActiveSession.RestState,
+        restReferenceDate: Date?,
+        generatedAt: Date
+    ) -> ActiveWorkoutActivityAttributes.ContentState.RestMode {
+        let mode = mapRestMode(state)
+        guard mode == .running,
+              let restReferenceDate,
+              restReferenceDate <= generatedAt else {
+            return mode
+        }
+        return .overdue
+    }
+
     private func deriveRestReferenceDate(
         restState: WidgetExternalSnapshot.ActiveSession.RestState,
         restSeconds: Int?,
@@ -109,17 +128,17 @@ struct LiveActivityStateMapper {
 
     private func deriveStaleDate(
         restState: WidgetExternalSnapshot.ActiveSession.RestState,
+        restReferenceDate: Date?,
         generatedAt: Date
     ) -> Date {
-        let freshnessWindow: TimeInterval
         switch restState {
         case .inactive:
-            freshnessWindow = 2 * 60
-        case .running, .overdue:
-            freshnessWindow = 30
+            return generatedAt.addingTimeInterval(2 * 60)
+        case .running:
+            return restReferenceDate ?? generatedAt.addingTimeInterval(30)
+        case .overdue:
+            return generatedAt.addingTimeInterval(30)
         }
-
-        return generatedAt.addingTimeInterval(freshnessWindow)
     }
 }
 #endif

@@ -306,14 +306,10 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
         var next = displayedStateSource()
         
         if next.isRestRunning, let endEpoch = next.restEndsAtEpochSeconds {
-            let remaining = max(0, Int(Date(timeIntervalSince1970: endEpoch).timeIntervalSinceNow.rounded(.up)))
-            
-            if remaining > 0 {
-                next.restRemainingSeconds = remaining
-            } else {
-                next.isRestRunning = false
-                next.restRemainingSeconds = nil
-            }
+            next.restRemainingSeconds = signedRemainingSeconds(
+                until: Date(timeIntervalSince1970: endEpoch),
+                now: Date()
+            )
         }
         
         if next.isTrackedActivitySession,
@@ -330,9 +326,23 @@ final class WatchConnectivityClient: NSObject, ObservableObject {
         if playFinishHapticIfNeeded,
            previous.isRestRunning,
            (previous.restRemainingSeconds ?? 1) > 0,
-           !next.isRestRunning {
+           (next.restRemainingSeconds ?? 0) <= 0 {
             WKInterfaceDevice.current().play(.notification)
         }
+    }
+
+    private func signedRemainingSeconds(until endDate: Date, now: Date) -> Int {
+        let delta = endDate.timeIntervalSince(now)
+
+        if delta > 0 {
+            return Int(delta.rounded(.up))
+        }
+
+        if delta < 0 {
+            return -Int(abs(delta).rounded(.down))
+        }
+
+        return 0
     }
 }
 

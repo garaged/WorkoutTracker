@@ -11,7 +11,7 @@ final class WorkoutRemoteControlRouter {
     
     private var container: ModelContainer? = nil
     private let logging = WorkoutLoggingService()
-    private let restTimer = RestTimerController.shared
+    private let restTimer = SessionRestTimerController.shared
     private let sessionResumePlanner = SessionResumePlanner()
     private let trackedActivityRecorder = TrackedActivityRecorder()
     
@@ -41,8 +41,13 @@ final class WorkoutRemoteControlRouter {
     private init() {}
     
     func start(modelContainer: ModelContainer) {
-        guard container == nil else { return } // idempotent
+        if let container, container === modelContainer { return } // idempotent for the same store
+
+        cancellables.removeAll()
         container = modelContainer
+        pinnedSessionID = nil
+        pinnedTrackedActivitySessionID = nil
+        cursorBySessionID.removeAll()
         cachedQuickStartRoutines = nil
         lastPushedState = nil
         lastHeartbeatAt = nil
@@ -53,12 +58,8 @@ final class WorkoutRemoteControlRouter {
             self?.handle(cmd)
         }
         
-        // Push updates when rest timer changes (for watch UI).
-        restTimer.$remainingSeconds
-            .sink { [weak self] _ in self?.pushNowPlayingIfNeeded() }
-            .store(in: &cancellables)
-        
-        restTimer.$isRunning
+        // Push updates when the shared session rest timer changes so watch and phone stay aligned.
+        restTimer.$snapshot
             .sink { [weak self] _ in self?.pushNowPlayingIfNeeded() }
             .store(in: &cancellables)
         
@@ -148,7 +149,8 @@ final class WorkoutRemoteControlRouter {
             handleQuickEntry(cmd, context: context)
             return
 
-        case .toggleRestTimer, .markSetComplete, .nextSet, .previousSet:
+        case .toggleRestTimer, .startRestTimer, .pauseRestTimer, .resumeRestTimer, .stopRestTimer,
+             .markSetComplete, .nextSet, .previousSet:
             break
         }
 
@@ -173,6 +175,18 @@ final class WorkoutRemoteControlRouter {
         switch cmd.kind {
         case .toggleRestTimer:
             restTimer.toggle(defaultSeconds: defaultRestSeconds(for: session))
+
+        case .startRestTimer:
+            restTimer.start(seconds: defaultRestSeconds(for: session))
+
+        case .pauseRestTimer:
+            restTimer.pause()
+
+        case .resumeRestTimer:
+            restTimer.resume()
+
+        case .stopRestTimer:
+            restTimer.stop()
 
         case .markSetComplete:
             if let sid = cmd.setID, let setUUID = UUID(uuidString: sid) {
@@ -369,7 +383,6 @@ final class WorkoutRemoteControlRouter {
         if !wasCompleted, pair.set.completed {
             let rest = max(1, pair.set.targetRestSeconds ?? 90)
             restTimer.start(seconds: rest)
-            moveCursor(in: session, delta: +1)
         }
         postCompletionChanged(sessionID: session.id, setID: pair.set.id, isCompleted: pair.set.completed)
     }
@@ -504,7 +517,7 @@ final class WorkoutRemoteControlRouter {
                 setTitle: nil,
                 setDetail: nil,
                 isRestRunning: restTimer.isRunning,
-                restRemainingSeconds: restTimer.isRunning ? restTimer.remainingSeconds : nil,
+                restRemainingSeconds: restTimer.hasConfiguredTimer ? restTimer.displaySeconds : nil,
                 restEndsAtEpochSeconds: restTimer.activeEndDate?.timeIntervalSince1970,
                 canGoPrevious: false,
                 canGoNext: false,
@@ -536,7 +549,7 @@ final class WorkoutRemoteControlRouter {
             setTitle: "Set \(setNum) of \(total)",
             setDetail: detail,
             isRestRunning: restTimer.isRunning,
-            restRemainingSeconds: restTimer.isRunning ? restTimer.remainingSeconds : nil,
+            restRemainingSeconds: restTimer.hasConfiguredTimer ? restTimer.displaySeconds : nil,
             restEndsAtEpochSeconds: restTimer.activeEndDate?.timeIntervalSince1970,
             canGoPrevious: idx > 0,
             canGoNext: idx < ordered.count - 1,
@@ -616,7 +629,7 @@ final class WorkoutRemoteControlRouter {
         case .resumeCurrentSession:
             return sessionResumePlanner.resumeRoute(
                 for: session,
-                hasConfiguredRestTimer: restTimer.isRunning
+                hasConfiguredRestTimer: restTimer.hasConfiguredTimer
             ) ?? sessionResumePlanner.openRoute(for: session)
         case .openCurrentSession:
             return sessionResumePlanner.openRoute(for: session)
@@ -764,7 +777,8 @@ extension WorkoutRemoteControlRouter {
             }
             pushNowPlayingIfNeeded()
 
-        case .requestState, .toggleRestTimer, .markSetComplete, .nextSet, .previousSet,
+        case .requestState, .toggleRestTimer, .startRestTimer, .pauseRestTimer, .resumeRestTimer, .stopRestTimer,
+             .markSetComplete, .nextSet, .previousSet,
              .openCurrentSession, .resumeCurrentSession, .startRoutine,
              .startTrackedActivity, .resumeCurrentTrackedActivity:
             break

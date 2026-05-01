@@ -18,7 +18,12 @@ final class ProgramsV2SmokeUITests: XCTestCase {
     // MARK: - Shared flow
 
     private func runProgramsV2Smoke(languageCode: String?, localeIdentifier: String?) {
-        let app = UITestLaunch.app(start: "settings", reset: true, seed: true)
+        let app = UITestLaunch.app(
+            start: "settings",
+            reset: true,
+            seed: true,
+            extraEnv: ["UITESTS_PROGRAMS": "1"]
+        )
         if let languageCode, let localeIdentifier {
             app.launchArguments += ["-AppleLanguages", "(\(languageCode))", "-AppleLocale", localeIdentifier]
         }

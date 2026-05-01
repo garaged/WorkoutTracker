@@ -84,6 +84,9 @@ struct AppRootView: View {
             .onReceive(openTimelinePublisher, perform: handleOpenTimelineNotification)
             .onReceive(openURLForTestingPublisher, perform: handleOpenURLForTestingNotification)
             .onReceive(watchOpenRequestPublisher, perform: handleWatchOpenRequestNotification)
+            .onReceive(restTimerSemanticStatePublisher) { _ in
+                handleRestTimerSemanticStateChanged()
+            }
             .fullScreenCover(item: $timelineJump, content: timelineJumpCover)
             .task { await handleInitialTask() }
             .onAppear(perform: handleAppear)
@@ -197,6 +200,10 @@ struct AppRootView: View {
 
     private var watchOpenRequestPublisher: NotificationCenter.Publisher {
         NotificationCenter.default.publisher(for: .workoutWatchOpenRequested)
+    }
+
+    private var restTimerSemanticStatePublisher: NotificationCenter.Publisher {
+        NotificationCenter.default.publisher(for: .sessionRestTimerSemanticStateChanged)
     }
 
     private var liveActivityRefreshTimer: Publishers.Autoconnect<Timer.TimerPublisher> {
@@ -683,6 +690,12 @@ struct AppRootView: View {
         guard scenePhase == .active,
               ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
         systemSurfaceSyncCoordinator.syncLiveActivity(context: modelContext, force: true)
+    }
+
+    private func handleRestTimerSemanticStateChanged() {
+        guard ProcessInfo.processInfo.environment["UITESTS"] != "1" else { return }
+        systemSurfaceSyncCoordinator.syncActiveSessionSurfaces(context: modelContext)
+        WorkoutRemoteControlRouter.shared.refreshNowPlaying()
     }
 
     private func handleOpenURL(_ url: URL) {

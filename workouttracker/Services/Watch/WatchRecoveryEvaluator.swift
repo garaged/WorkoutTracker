@@ -101,7 +101,8 @@ struct WatchRecoveryEvaluator {
         now: Date = Date()
     ) -> Bool {
         if source.isRestRunning, let end = source.restEndsAtEpochSeconds {
-            return end > now.timeIntervalSince1970
+            let maxRecoverableOverdueInterval: TimeInterval = 20 * 60
+            return end.isFinite && end >= now.timeIntervalSince1970 - maxRecoverableOverdueInterval
         }
 
         if source.isTrackedActivitySession,

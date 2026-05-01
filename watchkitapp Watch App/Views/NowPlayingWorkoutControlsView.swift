@@ -12,6 +12,7 @@ struct NowPlayingWorkoutControlsView: View {
 
     var body: some View {
         VStack(spacing: 10) {
+            topBar
             header
             statusRow
             controlsRow
@@ -19,15 +20,28 @@ struct NowPlayingWorkoutControlsView: View {
         }
         .padding(.vertical, 8)
         .accessibilityIdentifier("Watch.NowPlaying.Screen")
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button(String(localized: "watch.now_playing.action.back", defaultValue: "Back"), action: onClose)
-            }
-        }
         .onAppear {
             client.start()
             client.requestState()
         }
+    }
+
+    private var topBar: some View {
+        HStack {
+            Button(action: onClose) {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                        .font(.footnote.weight(.semibold))
+                    Text(String(localized: "watch.now_playing.action.back", defaultValue: "Back"))
+                        .font(.footnote.weight(.semibold))
+                }
+                .foregroundStyle(.white)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("Watch.NowPlaying.Back")
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 4)
     }
 
     private var header: some View {
@@ -36,15 +50,20 @@ struct NowPlayingWorkoutControlsView: View {
                 Text(client.nowPlaying.exerciseName ?? String(localized: "watch.now_playing.fallback.workout", defaultValue: "Workout"))
                     .font(.headline)
                     .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity)
 
                 if let subtitle = client.nowPlaying.setTitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity)
                 }
             } else {
                 Text(String(localized: "watch.now_playing.title", defaultValue: "Now Playing"))
                     .font(.headline)
+                    .frame(maxWidth: .infinity)
             }
         }
     }
@@ -57,6 +76,14 @@ struct NowPlayingWorkoutControlsView: View {
             client.hasRecoverableNowPlayingSession ||
             client.isRecoveringRecentSession
         )
+    }
+
+    private var hasConfiguredRestTimer: Bool {
+        client.nowPlaying.restRemainingSeconds != nil
+    }
+
+    private var isRestPaused: Bool {
+        hasConfiguredRestTimer && !client.nowPlaying.isRestRunning
     }
 
     @ViewBuilder
@@ -83,7 +110,7 @@ struct NowPlayingWorkoutControlsView: View {
                         .font(.title3.monospacedDigit())
                 }
             }
-        } else if let restSeconds = client.nowPlaying.restRemainingSeconds, client.nowPlaying.isRestRunning {
+        } else if let restSeconds = client.nowPlaying.restRemainingSeconds, client.nowPlaying.isActiveSession {
             Text(format(seconds: restSeconds))
                 .font(.title2.monospacedDigit())
         } else {
@@ -163,27 +190,58 @@ struct NowPlayingWorkoutControlsView: View {
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
         } else {
-            Button {
-                client.send(.init(kind: .toggleRestTimer))
-            } label: {
-                HStack {
-                    Image(systemName: client.nowPlaying.isRestRunning ? "pause.fill" : "play.fill")
-                    if let secs = client.nowPlaying.restRemainingSeconds, client.nowPlaying.isActiveSession {
-                        Text(format(seconds: secs))
-                            .monospacedDigit()
+            HStack(spacing: 8) {
+                Button {
+                    let kind: WatchCommandKind
+                    if client.nowPlaying.isRestRunning {
+                        kind = .pauseRestTimer
+                    } else if isRestPaused {
+                        kind = .resumeRestTimer
                     } else {
-                        Text(String(localized: "watch.now_playing.rest", defaultValue: "Rest"))
+                        kind = .startRestTimer
                     }
+                    client.send(.init(kind: kind))
+                } label: {
+                    Label(restPrimaryActionTitle, systemImage: restPrimaryActionSymbol)
+                        .frame(maxWidth: .infinity)
                 }
+                .disabled(!client.canSendCommands || !client.nowPlaying.isActiveSession)
+                .buttonStyle(.borderedProminent)
+
+                Button {
+                    client.send(.init(kind: .stopRestTimer))
+                } label: {
+                    Label(String(localized: "session.rest.finish", defaultValue: "Stop"), systemImage: "stop.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .disabled(!client.canSendCommands || !client.nowPlaying.isActiveSession || !hasConfiguredRestTimer)
+                .buttonStyle(.bordered)
             }
-            .disabled(!client.canSendCommands || !client.nowPlaying.isActiveSession)
-            .buttonStyle(.bordered)
         }
     }
 
+    private var restPrimaryActionTitle: String {
+        if client.nowPlaying.isRestRunning {
+            return String(localized: "common.pause", defaultValue: "Pause")
+        }
+        if isRestPaused {
+            return String(localized: "common.resume", defaultValue: "Resume")
+        }
+        return String(localized: "common.start", defaultValue: "Start")
+    }
+
+    private var restPrimaryActionSymbol: String {
+        if client.nowPlaying.isRestRunning {
+            return "pause.fill"
+        }
+        return "play.fill"
+    }
+
     private func format(seconds: Int) -> String {
-        let m = seconds / 60
-        let s = seconds % 60
-        return String(format: "%d:%02d", m, s)
+        let absoluteSeconds = abs(seconds)
+        let minutes = absoluteSeconds / 60
+        let remainingSeconds = absoluteSeconds % 60
+        let base = String(format: "%d:%02d", minutes, remainingSeconds)
+        return seconds < 0 ? "-\(base)" : base
     }
 }

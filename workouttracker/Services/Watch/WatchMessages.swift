@@ -5,6 +5,10 @@ import Foundation
 enum WatchCommandKind: String, Codable {
     case requestState
     case toggleRestTimer
+    case startRestTimer
+    case pauseRestTimer
+    case resumeRestTimer
+    case stopRestTimer
     case markSetComplete
     case nextSet
     case previousSet
