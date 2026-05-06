@@ -7,6 +7,16 @@ A lightweight, on-device workout logging app built with **SwiftUI + SwiftData**.
 - ✅ Progress insights + Spanish localization in v2.0.0
 - ✅ Apache 2.0 licensed
 
+## Get the app
+
+Workout Tracker is available on the App Store.
+
+[Open Workout Tracker on the App Store](https://apps.apple.com/mx/app/workouttracker-garaged/id6759453678?l=en-GB)
+
+Scan to install:
+
+![Workout Tracker App Store QR code](docs/img/workouttracker_app_store_qr.png)
+
 ## Screenshots
 
 [Screenshots](docs/screenshots/) and reference images here.
