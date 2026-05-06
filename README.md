@@ -15,7 +15,7 @@ Workout Tracker is available on the App Store.
 
 Scan to install:
 
-![Workout Tracker App Store QR code](docs/img/workouttracker_app_store_qr.png)
+<img src="docs/img/workouttracker_app_store_qr.png" alt="Workout Tracker App Store QR code" width="400" height="400" />
 
 ## Screenshots
 
