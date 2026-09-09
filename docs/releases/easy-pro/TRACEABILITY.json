@@ -176,8 +176,15 @@
       "scenarios": [
         "EP-S01"
       ],
-      "implementation_refs": [],
-      "test_refs": [],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/QuickStart/ExperiencePreferenceState.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSelectionTests.swift",
+          "symbol": "testActiveModeChangeSurvivesEncodingUntilWorkoutEnds"
+        }
+      ],
       "evidence": []
     },
     {
@@ -202,8 +209,15 @@
       "scenarios": [
         "EP-S03"
       ],
-      "implementation_refs": [],
-      "test_refs": [],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/QuickStart/QuickStartStyle.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSelectionTests.swift",
+          "symbol": "testFavoritesPrecedeDeduplicatedSuccessfulRecents"
+        }
+      ],
       "evidence": []
     },
     {
@@ -293,8 +307,15 @@
       "scenarios": [
         "EP-S10"
       ],
-      "implementation_refs": [],
-      "test_refs": [],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/QuickStart/QuickStartStyle.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSelectionTests.swift",
+          "symbol": "testStableStyleCatalogAndBoundedDefaults"
+        }
+      ],
       "evidence": []
     },
     {
@@ -319,8 +340,15 @@
       "scenarios": [
         "EP-S12"
       ],
-      "implementation_refs": [],
-      "test_refs": [],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingState.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartTimingStateTests.swift",
+          "symbol": "testPauseExcludesTimeAndFinishIsIdempotent"
+        }
+      ],
       "evidence": []
     },
     {
@@ -332,8 +360,15 @@
       "scenarios": [
         "EP-S13"
       ],
-      "implementation_refs": [],
-      "test_refs": [],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/QuickStart/QuickStartStyle.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSelectionTests.swift",
+          "symbol": "testActiveConflictPreservesSpecificTarget"
+        }
+      ],
       "evidence": []
     },
     {
@@ -345,8 +380,15 @@
       "scenarios": [
         "EP-S14"
       ],
-      "implementation_refs": [],
-      "test_refs": [],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingState.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartTimingStateTests.swift",
+          "symbol": "testStaleCommandCannotOverwriteNewerState"
+        }
+      ],
       "evidence": []
     },
     {
