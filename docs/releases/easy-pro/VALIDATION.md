@@ -1,6 +1,6 @@
 # Specification and code validation contract
 
-Status: planned validation architecture. No new validator, native test, workflow or test-host implementation is included in this documentation-only change.
+Status: accepted validation contract. Implementation and executed evidence are tracked in EVIDENCE.md; planned validation is never reported as passed.
 
 ## Development loop
 

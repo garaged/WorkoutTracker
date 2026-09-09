@@ -2,19 +2,21 @@
   "schema_version": 1,
   "release": "easy-pro",
   "revision": "2026-09-09",
-  "phase": "proposal",
+  "phase": "implementation",
   "source_commit": "6877003faf70f15534d25a723ef92758a5ff5b70",
   "specification_files": [
     "README.md",
     "BEHAVIOR.md",
     "MILESTONES.md",
     "VALIDATION.md",
-    "TRACEABILITY.json"
+    "TRACEABILITY.json",
+    "APPROVAL.md",
+    "EVIDENCE.md"
   ],
   "approval": {
-    "status": "pending",
-    "revision": null,
-    "evidence": null
+    "status": "accepted",
+    "revision": "2026-09-09",
+    "evidence": "APPROVAL.md"
   },
   "intents": [
     {
@@ -45,42 +47,42 @@
   "decisions": [
     {
       "id": "D-01",
-      "status": "proposed",
+      "status": "accepted",
       "definition": "README.md"
     },
     {
       "id": "D-02",
-      "status": "proposed",
+      "status": "accepted",
       "definition": "README.md"
     },
     {
       "id": "D-03",
-      "status": "proposed",
+      "status": "accepted",
       "definition": "README.md"
     },
     {
       "id": "D-04",
-      "status": "proposed",
+      "status": "accepted",
       "definition": "README.md"
     },
     {
       "id": "D-05",
-      "status": "proposed",
+      "status": "accepted",
       "definition": "README.md"
     },
     {
       "id": "D-06",
-      "status": "proposed",
+      "status": "accepted",
       "definition": "README.md"
     },
     {
       "id": "D-07",
-      "status": "proposed",
+      "status": "accepted",
       "definition": "README.md"
     },
     {
       "id": "D-08",
-      "status": "proposed",
+      "status": "accepted",
       "definition": "README.md"
     }
   ],
@@ -89,7 +91,7 @@
       "id": "EP0",
       "title": "Product and intent baseline",
       "depends_on": [],
-      "spec_status": "proposed",
+      "spec_status": "accepted",
       "implementation_status": "not_started",
       "exit_status": "pending",
       "evidence": []
@@ -100,7 +102,7 @@
       "depends_on": [
         "EP0"
       ],
-      "spec_status": "proposed",
+      "spec_status": "accepted",
       "implementation_status": "not_started",
       "exit_status": "pending",
       "evidence": []
@@ -111,7 +113,7 @@
       "depends_on": [
         "EP1"
       ],
-      "spec_status": "proposed",
+      "spec_status": "accepted",
       "implementation_status": "not_started",
       "exit_status": "pending",
       "evidence": []
@@ -122,7 +124,7 @@
       "depends_on": [
         "EP2"
       ],
-      "spec_status": "proposed",
+      "spec_status": "accepted",
       "implementation_status": "not_started",
       "exit_status": "pending",
       "evidence": []
@@ -134,7 +136,7 @@
         "EP2",
         "EP3"
       ],
-      "spec_status": "proposed",
+      "spec_status": "accepted",
       "implementation_status": "not_started",
       "exit_status": "pending",
       "evidence": []
@@ -146,7 +148,7 @@
         "EP3",
         "EP4"
       ],
-      "spec_status": "proposed",
+      "spec_status": "accepted",
       "implementation_status": "not_started",
       "exit_status": "pending",
       "evidence": []
@@ -157,7 +159,7 @@
       "depends_on": [
         "EP5"
       ],
-      "spec_status": "proposed",
+      "spec_status": "accepted",
       "implementation_status": "not_started",
       "exit_status": "pending",
       "evidence": []
@@ -169,7 +171,7 @@
       "intent": "I-05",
       "milestone": "EP2",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S01"
       ],
@@ -182,7 +184,7 @@
       "intent": "I-01",
       "milestone": "EP5",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S02"
       ],
@@ -195,7 +197,7 @@
       "intent": "I-02",
       "milestone": "EP4",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S03"
       ],
@@ -208,7 +210,7 @@
       "intent": "I-01",
       "milestone": "EP5",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S04"
       ],
@@ -221,7 +223,7 @@
       "intent": "I-02",
       "milestone": "EP4",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S05"
       ],
@@ -234,7 +236,7 @@
       "intent": "I-02",
       "milestone": "EP4",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S06"
       ],
@@ -247,7 +249,7 @@
       "intent": "I-02",
       "milestone": "EP4",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S07"
       ],
@@ -260,7 +262,7 @@
       "intent": "I-04",
       "milestone": "EP4",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S08"
       ],
@@ -273,7 +275,7 @@
       "intent": "I-04",
       "milestone": "EP4",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S09"
       ],
@@ -286,7 +288,7 @@
       "intent": "I-03",
       "milestone": "EP3",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S10"
       ],
@@ -299,7 +301,7 @@
       "intent": "I-03",
       "milestone": "EP3",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S11"
       ],
@@ -312,7 +314,7 @@
       "intent": "I-04",
       "milestone": "EP2",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S12"
       ],
@@ -325,7 +327,7 @@
       "intent": "I-05",
       "milestone": "EP2",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S13"
       ],
@@ -338,7 +340,7 @@
       "intent": "I-04",
       "milestone": "EP2",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S14"
       ],
@@ -351,7 +353,7 @@
       "intent": "I-04",
       "milestone": "EP4",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S15"
       ],
@@ -364,7 +366,7 @@
       "intent": "I-04",
       "milestone": "EP5",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S16"
       ],
@@ -377,7 +379,7 @@
       "intent": "I-05",
       "milestone": "EP2",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S17"
       ],
@@ -390,7 +392,7 @@
       "intent": "I-04",
       "milestone": "EP6",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S18"
       ],
@@ -403,7 +405,7 @@
       "intent": "I-05",
       "milestone": "EP6",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S19"
       ],
@@ -416,7 +418,7 @@
       "intent": "I-05",
       "milestone": "EP6",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S20"
       ],
@@ -429,7 +431,7 @@
       "intent": "I-06",
       "milestone": "EP0",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S21"
       ],
@@ -442,7 +444,7 @@
       "intent": "I-06",
       "milestone": "EP1",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S22"
       ],
@@ -455,7 +457,7 @@
       "intent": "I-06",
       "milestone": "EP1",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S23"
       ],
@@ -468,7 +470,7 @@
       "intent": "I-06",
       "milestone": "EP6",
       "specification": "BEHAVIOR.md",
-      "status": "proposed",
+      "status": "accepted",
       "scenarios": [
         "EP-S24"
       ],

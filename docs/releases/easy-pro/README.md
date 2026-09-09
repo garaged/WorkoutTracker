@@ -1,6 +1,6 @@
 # Easy / Pro: exercise first, detail when useful
 
-Status: **proposed revision, awaiting product agreement**. No native implementation is authorized by this specification alone.
+Status: **accepted product baseline; implementation authorized on the same branch**. See [APPROVAL.md](APPROVAL.md) for the owner decision and workflow override.
 Revision: 2026-09-09. Release version: unassigned until scope is agreed.
 
 ## Start here
@@ -19,7 +19,7 @@ These release documents belong under `docs/releases/easy-pro/`, following reposi
 - 2026-09-09: owner reports the prototype workflow looks very easy to use. This is positive owner feedback, not five novice usability sessions or native validation.
 - Requested expansion: more quick starts; choose a machine/exercise spontaneously, start, finish and choose the next; start a generic exercise-style timer while following a YouTube workout.
 - Requested engineering process: intent- and specification-driven milestones, robust specification/code validation, agreement on the new app form before implementation.
-- Current authorization: write and review specifications. No feature code, UI-test code, CI implementation, native release, or prototype redesign is included in this revision.
+- Current authorization: implement the accepted specification and its tests/validation on `docs/easy-pro-intent-specs`, retaining PR #3 until full implementation is ready. Release and merge gates still apply.
 
 ## Intent catalog
 
@@ -81,7 +81,7 @@ Use a common history entry point with truthful labels: guided workout, freestyle
 | D-07 | Keep new-start convenience in Pro as well as Easy | Simplicity of entry is valuable at every experience level |
 | D-08 | Adopt the spec-first milestones and required evidence gates below | Prevent attractive UI from outrunning behavior and compatibility |
 
-These recommendations are not silently accepted by the earlier prototype approval. Product agreement should identify this document revision and D-01 through D-08. Revised decisions require affected requirements and scenarios to be updated before implementation.
+The owner accepted this revised recommendation, including D-01 through D-08, in the follow-up instruction recorded in APPROVAL.md. Revised behavior still requires its affected requirements and scenarios to change before code.
 
 ## Source-grounded integration audit
 

@@ -1,6 +1,6 @@
 # Behavioral specification
 
-Status: proposed. All MUST statements become accepted requirements only after the product/specification approval gate. IDs are stable; scenarios and milestone owners are in [TRACEABILITY.json](TRACEABILITY.json).
+Status: accepted by the owner; approval and same-branch implementation authorization are recorded in APPROVAL.md. IDs are stable; scenarios and milestone owners are in [TRACEABILITY.json](TRACEABILITY.json).
 
 ## Experience and entry
 

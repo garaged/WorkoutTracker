@@ -1,14 +1,12 @@
 # Spec-first milestones
 
-This sequence replaces the preliminary browser-prototype E0–E5 outline for the expanded release. EP0–EP6 IDs are distinct and used in TRACEABILITY.json. Every milestone has a specification phase before a code phase. Currently all implementation states are **not started**. No schedule or release version is implied.
+This sequence replaces the preliminary browser-prototype E0–E5 outline for the expanded release. EP0–EP6 IDs are distinct and used in TRACEABILITY.json. Every milestone has a specification phase before a code phase. Live implementation states and evidence are recorded in TRACEABILITY.json and EVIDENCE.md. No schedule or release version is implied.
 
 ## Universal entry and exit gates
 
 Before implementation: accepted intent; explicit scope/non-goals; Given/When/Then scenarios; reviewed design/data impacts; traceability rows; fixture/test plan; dependencies passed. Before completion: tests cover positive and negative behavior, existing relevant regressions pass, documentation/manual instructions match shipped behavior, and evidence identifies the exact commit/device/toolchain. Product disagreements or material architecture/data-loss decisions return to specification review.
 
-The baseline uses dedicated branch `docs/easy-pro-intent-specs` and a documentation-only draft PR against `main`. Keep it draft while product agreement is pending; do not merge or add application code before agreement. After the baseline is accepted and merged, create each `feature/easy-pro-epN-<scope>` branch from updated `main`, retain one coherent PR per milestone, and follow normal review/CI/merge gates. Do not carry implementation on an unmerged speculative baseline.
-
-One branch/PR per coherent milestone. Specifications, code, tests and evidence stay in that PR after the baseline is accepted. A milestone may have internal commits for intent/spec, failing tests, implementation, and verification. Do not merge an incomplete milestone merely because tests on a partial implementation are green.
+The owner superseded the separate-branch/merge-per-milestone proposal: all EP0–EP6 implementation remains on `docs/easy-pro-intent-specs` and PR #3. Use bounded commits for specification, failing tests, implementation, and evidence within this branch. Do not merge an intermediate milestone to main. Keep the PR draft until full implementation and applicable release evidence are ready. Human novice/native review remains a release gate, not fabricated evidence.
 
 ## EP0 — Revised product and intent baseline
 
