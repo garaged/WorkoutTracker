@@ -20,3 +20,14 @@ jobs:
         run: make spec-check
       - name: Exercise valid and invalid fixtures
         run: make spec-test
+  quick-start-policies:
+    name: Swift quick-start policy tests
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.3'
+      - name: Run portable Swift policy fixtures
+        run: swift test

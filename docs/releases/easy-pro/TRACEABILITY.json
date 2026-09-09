@@ -11,7 +11,8 @@
     "VALIDATION.md",
     "TRACEABILITY.json",
     "APPROVAL.md",
-    "EVIDENCE.md"
+    "EVIDENCE.md",
+    "ARCHITECTURE.md"
   ],
   "approval": {
     "status": "accepted",
@@ -103,7 +104,7 @@
         "EP0"
       ],
       "spec_status": "accepted",
-      "implementation_status": "not_started",
+      "implementation_status": "in_progress",
       "exit_status": "pending",
       "evidence": []
     },
@@ -114,7 +115,7 @@
         "EP1"
       ],
       "spec_status": "accepted",
-      "implementation_status": "not_started",
+      "implementation_status": "in_progress",
       "exit_status": "pending",
       "evidence": []
     },
