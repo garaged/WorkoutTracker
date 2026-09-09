@@ -1,0 +1,22 @@
+name: Specification quality
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  specifications:
+    name: Specification integrity and negative fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify accepted specification integrity
+        run: make spec-check
+      - name: Exercise valid and invalid fixtures
+        run: make spec-test

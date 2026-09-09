@@ -15,7 +15,7 @@ This is intent → accepted spec → behavioral test → code → evidence. Mark
 
 ## Specification validator (EP1 implementation contract)
 
-TRACEABILITY.json is currently a review manifest. EP1 must formalize its schema and validate it without network access. Proposed commands such as `make spec-check` and `make spec-test` are interfaces to implement and document, **not existing repository commands**. A small standard-library validator is preferred over adopting a framework merely to store requirements. Existing OpenSpec is not present in the inspected tree; do not claim it is installed or required. If selected later, migration must preserve these IDs and approval/evidence semantics.
+TRACEABILITY.json is the version-1 manifest. Its field/status/reference schema is enforced by scripts/spec_check.py without network access. Tests construct isolated valid and invalid manifest fixtures. Implemented commands: `make spec-check` checks readiness and traceability; `make spec-test` executes offline positive/negative fixtures; `make spec-done COMMIT=<exact-tested-sha>` enforces release completion and evidence. `scripts/spec_check.py --mode review` permits a proposed baseline; ready mode requires acceptance. A small standard-library validator is preferred over adopting a framework merely to store requirements. Existing OpenSpec is not present in the inspected tree; do not claim it is installed or required. If selected later, migration must preserve these IDs and approval/evidence semantics.
 
 Required checks:
 - Manifest version, field types/enums, required fields and stable ID formats.

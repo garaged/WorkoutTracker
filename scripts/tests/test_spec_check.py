@@ -146,6 +146,16 @@ class SpecificationGateTests(unittest.TestCase):
         self.complete()
         self.manifest['requirements'][0]['implementation_refs'] = ['../outside.swift']
         self.assertCode('path.outside')
+    def test_unmapped_normative_requirement_rejected(self):
+        (self.spec / 'BEHAVIOR.md').write_text('### EP-R01 — Example\n### EP-R02 — Orphan\n')
+        self.assertCode('requirement.orphan')
+    def test_invalid_nested_dependency_type_rejected(self):
+        self.complete()
+        self.manifest['milestones'][0]['depends_on'] = [{}]
+        self.assertCode('schema.type')
+    def test_persistence_layer_is_supported(self):
+        self.manifest['scenarios'][0]['planned_validation_layers'] = ['persistence']
+        self.assertEqual([], self.check())
     def test_approval_revision_must_match(self):
         self.accept()
         self.manifest['approval']['revision'] = 'older'
