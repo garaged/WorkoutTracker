@@ -53,3 +53,7 @@ Source head `9f8c11a38c254809c86fd08ec2a1022bb6a4eb05`. [iOS run 34703383131](ht
 ### Neutral-kind green and canonical recorder red evidence
 
 Source head `01e12b83e12b1ecfbedb520bfb5ef548f32adfd6`. [Specification quality run 34703583241](https://github.com/garaged/WorkoutTracker/actions/runs/34703583241) passed. [iOS run 34703583242](https://github.com/garaged/WorkoutTracker/actions/runs/34703583242), job 103579505085, built and executed 342 tests. The neutral-kind, unknown raw identity, Health rejection, and previous backup/payload tests passed. Six new recorder fixtures produced 15 expected failures against the deliberate stub: no canonical insertion, no conflict detection, no lifecycle persistence/reopen result, and no injected-save rollback. The next change implements those operations; it requires a separate green run. UI tests were not run.
+
+### Recorder rollback correction
+
+Source head `543fbcc9ac38113d86c55d33135b4f05f258e7b4`. [Specification quality run 34704124280](https://github.com/garaged/WorkoutTracker/actions/runs/34704124280) passed. [iOS run 34704124261](https://github.com/garaged/WorkoutTracker/actions/runs/34704124261), job 103580966678, built and executed 342 tests: 339 passed. The remaining three assertions showed that SwiftData rollback protected the store after an injected finish-save failure but left the caller's referenced model with proposed values. The correction restores the captured committed fields before rollback so both the store and UI-visible instance remain committed. A subsequent run is required.

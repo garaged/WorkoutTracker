@@ -52,6 +52,7 @@ struct QuickStartRecorder {
         let next = try payload.timing.applying(action, id: id, expectedRevision: expectedRevision, at: clock)
         guard next != payload.timing else { return }
         let encoded = try JSONEncoder().encode(QuickStartTimingPayload(styleRaw: payload.styleRaw, timing: next))
+        let committed = CommittedFields(session)
         session.quickStartTimingBlob = encoded
         session.elapsedDuration = next.accumulated
         session.activeIntervalStartedAt = next.anchor?.wall
@@ -71,6 +72,7 @@ struct QuickStartRecorder {
         }
         do { try save(context) }
         catch {
+            committed.restore(session)
             context.rollback()
             throw error
         }
@@ -85,5 +87,38 @@ struct QuickStartRecorder {
             throw RecordingError.invalidRecord
         }
         return try JSONDecoder().decode(QuickStartTimingPayload.self, from: data)
+    }
+
+    private struct CommittedFields {
+        let quickStartTimingBlob: Data?
+        let elapsedDuration: TimeInterval
+        let activeIntervalStartedAt: Date?
+        let updatedAt: Date
+        let lifecycleStateRaw: String
+        let lastResumedAt: Date?
+        let dismissedRecoveryPromptAt: Date?
+        let endedAt: Date?
+
+        init(_ session: TrackedActivitySession) {
+            quickStartTimingBlob = session.quickStartTimingBlob
+            elapsedDuration = session.elapsedDuration
+            activeIntervalStartedAt = session.activeIntervalStartedAt
+            updatedAt = session.updatedAt
+            lifecycleStateRaw = session.lifecycleStateRaw
+            lastResumedAt = session.lastResumedAt
+            dismissedRecoveryPromptAt = session.dismissedRecoveryPromptAt
+            endedAt = session.endedAt
+        }
+
+        func restore(_ session: TrackedActivitySession) {
+            session.quickStartTimingBlob = quickStartTimingBlob
+            session.elapsedDuration = elapsedDuration
+            session.activeIntervalStartedAt = activeIntervalStartedAt
+            session.updatedAt = updatedAt
+            session.lifecycleStateRaw = lifecycleStateRaw
+            session.lastResumedAt = lastResumedAt
+            session.dismissedRecoveryPromptAt = dismissedRecoveryPromptAt
+            session.endedAt = endedAt
+        }
     }
 }
