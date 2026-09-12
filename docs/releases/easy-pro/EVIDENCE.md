@@ -57,3 +57,7 @@ Source head `01e12b83e12b1ecfbedb520bfb5ef548f32adfd6`. [Specification quality r
 ### Recorder rollback correction
 
 Source head `543fbcc9ac38113d86c55d33135b4f05f258e7b4`. [Specification quality run 34704124280](https://github.com/garaged/WorkoutTracker/actions/runs/34704124280) passed. [iOS run 34704124261](https://github.com/garaged/WorkoutTracker/actions/runs/34704124261), job 103580966678, built and executed 342 tests: 339 passed. The remaining three assertions showed that SwiftData rollback protected the store after an injected finish-save failure but left the caller's referenced model with proposed values. The correction restores the captured committed fields before rollback so both the store and UI-visible instance remain committed. A subsequent run is required.
+
+### Canonical recorder green evidence
+
+Source head `a7cb234da36b7380a642258c1c4a8556fe5b6678`. [Specification quality run 34704524467](https://github.com/garaged/WorkoutTracker/actions/runs/34704524467) passed. [iOS run 34704524465](https://github.com/garaged/WorkoutTracker/actions/runs/34704524465), job 103582059294, built and executed all 342 tests with zero failures. This validates canonical quick-start identity, one-record persistence/reopen behavior, active-session conflicts, 80-second pause/resume timing, dirty-context isolation, failed-start cleanup, and failed-finish restoration. It does not validate UI, Watch command ownership, or manual background behavior.
