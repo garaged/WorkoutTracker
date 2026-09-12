@@ -69,3 +69,7 @@ Source head `7fccdc7a24fb3194d251e0828745287760e88e09`. [iOS run 34705044349](ht
 ### Experience preference store green evidence
 
 Source head `2751a95cc4802404096b45af679fe9ce598b5b8b`. [Specification quality run 34705396557](https://github.com/garaged/WorkoutTracker/actions/runs/34705396557) passed. [iOS run 34705396540](https://github.com/garaged/WorkoutTracker/actions/runs/34705396540), job 103584425973, built and executed all 346 tests with zero failures. This validates new-install Easy bootstrap, explicit upgrade evidence selecting Pro, saved-choice precedence, persisted deferred changes during an active session, idle application, and stable recovery from corrupt preference data. It does not yet validate the mode picker or Easy app shell.
+
+### Production quick-start clock red evidence
+
+Source head `238c5f3a7f097ab70938b581a53fe8b981ceb725`. [Specification quality run 34705846669](https://github.com/garaged/WorkoutTracker/actions/runs/34705846669) passed. [iOS run 34705846673](https://github.com/garaged/WorkoutTracker/actions/runs/34705846673), job 103585617341, built and executed 350 tests. Nine expected assertions failed against the deliberate fixed-value clock stub: injected wall/continuous values were ignored, the process epoch changed between samples, production wall time was zero, and a 37-second reducer interval recorded zero. The impossible-negative clamp test and all prior tests passed. This is behavioral red evidence for the production clock seam, not background/device evidence.
