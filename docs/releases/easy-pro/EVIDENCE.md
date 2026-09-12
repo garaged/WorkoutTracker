@@ -45,3 +45,7 @@ Source head `30b3cc88d4dcaefc423b7a92fd6ed836ba344b6f`; tested merge ref begins 
 ### Backup green and neutral-kind red evidence
 
 Source head `1280d1331fe2f09871a7fec81c1693607a3b988b`. [Specification quality run 34688424140](https://github.com/garaged/WorkoutTracker/actions/runs/34688424140) passed. [iOS run 34688424145](https://github.com/garaged/WorkoutTracker/actions/runs/34688424145), job 103539379010, built and executed 336 tests. All four new schema-6, legacy, and malformed-backup tests passed. Six expected assertions failed in the two new neutral-kind tests: an unknown stored raw kind still resolved to walking capabilities and produced a Health walking request. The next change adds the neutral generic kind, keeps it out of the specialized start picker, rejects unsupported Watch start values, and fails Health mapping explicitly. UI tests were not run.
+
+### Neutral-kind integration compile correction
+
+Source head `9f8c11a38c254809c86fd08ec2a1022bb6a4eb05`. [iOS run 34703383131](https://github.com/garaged/WorkoutTracker/actions/runs/34703383131), job 103578998252, stopped before tests because the new generic case was missing from the Progress dashboard tint switch. This was a source failure, not recorder red evidence. The correction adds the neutral tint; no check is bypassed.
