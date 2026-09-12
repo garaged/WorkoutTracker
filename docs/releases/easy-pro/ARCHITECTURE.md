@@ -17,6 +17,12 @@ Before schema changes, add a versioned timing payload and explicit backup mappin
 
 ## Validation boundary
 
+### Experience preference persistence contract (EP-R01–EP-R03)
+
+ExperiencePreferenceStore is a versioned UserDefaults-backed presentation preference; it contains no workouts, entitlements or feature access. The first bootstrap uses explicit installation evidence from the pre-seed starter-pack marker: new installations default to Easy and upgrades default to Pro even with zero workout history. A saved choice always wins over later bootstrap evidence. Invalid or unsupported preference data falls back once from the same explicit evidence and is replaced with a valid snapshot.
+
+Mode changes requested during any active tracked or strength session persist as pending and apply only after all sessions become idle; selecting the effective mode cancels a pending change. Both shells use the same ModelContainer, services, routes and domain IDs. Pro remains the existing shell; Easy is an additive presentation. Store tests must pass before AppRootView or Settings consumes it.
+
 ### Canonical recorder transaction contract (EP-R12–EP-R14)
 
 QuickStartRecorder performs synchronous MainActor commands against the caller's canonical ModelContext. It refuses a context with unrelated pending edits; only a clean starting context may be rolled back after an injected or real save failure. Compute and encode a validated proposed payload before changing the record, publish success only after save, and restore committed state on failure. The injected save seam exists for deterministic disk-failure tests.

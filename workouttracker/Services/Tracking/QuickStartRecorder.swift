@@ -14,11 +14,76 @@ struct QuickStartRecorder {
 
     func start(style: QuickStartStyle, id: UUID, at clock: QuickStartClockSample,
                context: ModelContext) throws -> TrackedActivitySession {
-        TrackedActivitySession(id: id, activityKind: .generic)
+        try requireClean(context)
+        let tracked = try context.fetch(FetchDescriptor<TrackedActivitySession>())
+        if let existing = tracked.first(where: { $0.id == id }) {
+            let payload = try readPayload(existing)
+            guard payload.styleRaw == style.rawValue else { throw RecordingError.identityConflict }
+            return existing
+        }
+        let strength = try context.fetch(FetchDescriptor<WorkoutSession>())
+        let activeIDs = (tracked.filter(\.isActive).map(\.id) + strength.filter(\.isUnfinished).map(\.id))
+            .sorted { $0.uuidString < $1.uuidString }
+        guard activeIDs.isEmpty else { throw RecordingError.activeSessionConflict(activeIDs) }
+
+        let timing = try QuickStartTimingState().applying(.start, id: id, expectedRevision: 0, at: clock)
+        let encoded = try JSONEncoder().encode(QuickStartTimingPayload(styleRaw: style.rawValue, timing: timing))
+        let session = TrackedActivitySession(id: id, createdAt: clock.wall, updatedAt: clock.wall,
+            startedAt: clock.wall, activeIntervalStartedAt: clock.wall, activityKind: .generic,
+            environment: .unspecified, lifecycleState: .inProgress, lastResumedAt: clock.wall)
+        session.quickStartTimingBlob = encoded
+        context.insert(session)
+        do { try save(context) }
+        catch {
+            context.rollback()
+            throw error
+        }
+        return session
     }
 
     func apply(_ action: QuickStartTimingState.Action, to session: TrackedActivitySession,
                id: UUID, expectedRevision: Int, at clock: QuickStartClockSample,
                context: ModelContext) throws {
+        try requireClean(context)
+        guard session.modelContext === context, session.lifecycleState != .discarded else {
+            throw RecordingError.invalidRecord
+        }
+        let payload = try readPayload(session)
+        let next = try payload.timing.applying(action, id: id, expectedRevision: expectedRevision, at: clock)
+        guard next != payload.timing else { return }
+        let encoded = try JSONEncoder().encode(QuickStartTimingPayload(styleRaw: payload.styleRaw, timing: next))
+        session.quickStartTimingBlob = encoded
+        session.elapsedDuration = next.accumulated
+        session.activeIntervalStartedAt = next.anchor?.wall
+        session.updatedAt = clock.wall
+        switch next.phase {
+        case .idle: throw RecordingError.invalidRecord
+        case .running:
+            session.lifecycleStateRaw = TrackedActivityLifecycleState.inProgress.rawValue
+            session.lastResumedAt = clock.wall
+            session.dismissedRecoveryPromptAt = nil
+        case .paused:
+            session.lifecycleStateRaw = TrackedActivityLifecycleState.paused.rawValue
+        case .completed:
+            session.lifecycleStateRaw = TrackedActivityLifecycleState.completed.rawValue
+            session.endedAt = session.endedAt ?? clock.wall
+            session.dismissedRecoveryPromptAt = nil
+        }
+        do { try save(context) }
+        catch {
+            context.rollback()
+            throw error
+        }
+    }
+
+    private func requireClean(_ context: ModelContext) throws {
+        guard !context.hasChanges else { throw RecordingError.pendingChanges }
+    }
+
+    private func readPayload(_ session: TrackedActivitySession) throws -> QuickStartTimingPayload {
+        guard let data = session.quickStartTimingBlob, session.activityKind == .generic else {
+            throw RecordingError.invalidRecord
+        }
+        return try JSONDecoder().decode(QuickStartTimingPayload.self, from: data)
     }
 }

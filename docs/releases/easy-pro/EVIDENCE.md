@@ -49,3 +49,7 @@ Source head `1280d1331fe2f09871a7fec81c1693607a3b988b`. [Specification quality r
 ### Neutral-kind integration compile correction
 
 Source head `9f8c11a38c254809c86fd08ec2a1022bb6a4eb05`. [iOS run 34703383131](https://github.com/garaged/WorkoutTracker/actions/runs/34703383131), job 103578998252, stopped before tests because the new generic case was missing from the Progress dashboard tint switch. This was a source failure, not recorder red evidence. The correction adds the neutral tint; no check is bypassed.
+
+### Neutral-kind green and canonical recorder red evidence
+
+Source head `01e12b83e12b1ecfbedb520bfb5ef548f32adfd6`. [Specification quality run 34703583241](https://github.com/garaged/WorkoutTracker/actions/runs/34703583241) passed. [iOS run 34703583242](https://github.com/garaged/WorkoutTracker/actions/runs/34703583242), job 103579505085, built and executed 342 tests. The neutral-kind, unknown raw identity, Health rejection, and previous backup/payload tests passed. Six new recorder fixtures produced 15 expected failures against the deliberate stub: no canonical insertion, no conflict detection, no lifecycle persistence/reopen result, and no injected-save rollback. The next change implements those operations; it requires a separate green run. UI tests were not run.
