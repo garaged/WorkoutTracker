@@ -56,12 +56,22 @@ jobs:
           echo "== Schemes =="
           xcodebuild -project "${XCODE_PROJECT}" -list
 
+      - name: Identify compiler cache environment
+        id: compiler-cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          XCODE_FINGERPRINT="$(xcodebuild -version | shasum -a 256 | cut -d ' ' -f 1)"
+          echo "namespace=xcode-v2-${ImageOS}-${ImageVersion}-${RUNNER_ARCH}-${XCODE_FINGERPRINT}" >> "${GITHUB_OUTPUT}"
+
+      # SDK mtimes change with runner images, even when the Xcode version is unchanged.
+      # Never restore precompiled modules from a different image/toolchain.
       - name: Restore Xcode caches (DerivedData + SourcePackages)
         uses: irgaly/xcode-cache@v1
         with:
-          key: xcode-cache-${{ github.workflow }}-${{ github.ref_name }}-${{ github.sha }}
+          key: ${{ steps.compiler-cache.outputs.namespace }}-${{ github.workflow }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            xcode-cache-${{ github.workflow }}-${{ github.ref_name }}-
+            ${{ steps.compiler-cache.outputs.namespace }}-${{ github.workflow }}-${{ github.ref_name }}-
 
       - name: Resolve Swift Package dependencies
         shell: bash

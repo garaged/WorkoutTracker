@@ -24,4 +24,10 @@ The Specification quality workflow now runs these gates on PRs. This is evidence
 
 Source head `73953a70fa8dadc6f7ce50000099494769b527a9`; tested PR merge ref `ca18bc7abce9f991d3b2d2f3f811998fa049e546`. [Specification quality run 34357918897](https://github.com/garaged/WorkoutTracker/actions/runs/34357918897), Swift policy job 102487196379: compile succeeded; 10 timing tests executed with 56 expected assertions failing against the stub. This is observed behavioral red evidence, not a compiler/import failure.
 
-The next implementation adds the interval reducer, mode-preference value policy, stable style catalog and selection/conflict policy with 17 total Swift fixtures. Green evidence is pending the next hosted run. No shipping UI or persistence adapter is wired by this policy slice.
+The implementation adds the interval reducer, mode-preference value policy, stable style catalog and selection/conflict policy with 17 total Swift fixtures. No shipping UI or persistence adapter is wired by this policy slice.
+
+### Swift policy green and iOS infrastructure failure
+
+Source head `17d2db8720dfd7aff875e5995a321fa659dece25`; tested PR merge ref `cc6c872115554da5f79e277b390afe9eadbe9079`. [Specification quality run 34358259633](https://github.com/garaged/WorkoutTracker/actions/runs/34358259633) passed both the specification integrity/negative fixtures and Swift quick-start policy jobs. This validates the isolated policies, not persistence or native UI integration.
+
+[iOS run 34358259656](https://github.com/garaged/WorkoutTracker/actions/runs/34358259656), job 102489539997, failed before tests: the restored WatchSimulator SwiftShims module referenced an SDK module map whose mtime changed between runner images. The workflow cache namespace now includes runner image version, architecture, and selected Xcode fingerprint; its restore prefix has the same boundary. No test gate is skipped. A subsequent iOS run is required to establish app build/test evidence.
