@@ -6,12 +6,16 @@ enum TrackedActivityKind: String, Codable, CaseIterable, Sendable {
     case running
     case hiking
     case yoga
+    case generic
+
+    /// Generic styles belong to the dedicated quick-start picker.
+    static let specializedStartKinds: [Self] = [.walking, .running, .hiking, .yoga]
 
     var supportsDistance: Bool {
         switch self {
         case .walking, .running, .hiking:
             return true
-        case .yoga:
+        case .yoga, .generic:
             return false
         }
     }
@@ -20,7 +24,7 @@ enum TrackedActivityKind: String, Codable, CaseIterable, Sendable {
         switch self {
         case .walking, .running, .hiking:
             return true
-        case .yoga:
+        case .yoga, .generic:
             return false
         }
     }
@@ -29,7 +33,7 @@ enum TrackedActivityKind: String, Codable, CaseIterable, Sendable {
         switch self {
         case .running:
             return true
-        case .walking, .hiking, .yoga:
+        case .walking, .hiking, .yoga, .generic:
             return false
         }
     }
@@ -40,6 +44,8 @@ enum TrackedActivityKind: String, Codable, CaseIterable, Sendable {
             return .outdoor
         case .yoga:
             return .indoor
+        case .generic:
+            return .unspecified
         }
     }
 }

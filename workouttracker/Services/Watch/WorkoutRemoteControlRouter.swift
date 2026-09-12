@@ -713,7 +713,11 @@ extension WorkoutRemoteControlRouter {
     }
 
     private func handleStartTrackedActivity(_ cmd: WatchCommand, context: ModelContext) {
-        let kind = TrackedActivityKind(rawValue: cmd.trackedActivityKindRaw ?? "") ?? .walking
+        guard let kind = TrackedActivityKind(rawValue: cmd.trackedActivityKindRaw ?? ""),
+              TrackedActivityKind.specializedStartKinds.contains(kind) else {
+            pushNowPlayingIfNeeded()
+            return
+        }
         let environment = ActivityEnvironment(rawValue: cmd.activityEnvironmentRaw ?? "") ?? kind.defaultEnvironment
 
         guard let session = try? trackedActivityRecorder.createSession(

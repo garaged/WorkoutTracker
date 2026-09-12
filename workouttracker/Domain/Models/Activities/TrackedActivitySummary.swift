@@ -50,7 +50,7 @@ struct TrackedActivitySummary: Equatable, Codable, Sendable {
             }
             if let stepCount = totals.stepCount, stepCount > 0 { metrics.append(.stepCount) }
 
-        case .yoga:
+        case .yoga, .generic:
             if let activeEnergy = totals.activeEnergyKilocalories, activeEnergy > 0 {
                 metrics.append(.activeEnergy)
             }

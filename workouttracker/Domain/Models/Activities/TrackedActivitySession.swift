@@ -101,7 +101,7 @@ final class TrackedActivitySession {
     }
 
     var activityKind: TrackedActivityKind {
-        get { TrackedActivityKind(rawValue: activityKindRaw) ?? .walking }
+        get { TrackedActivityKind(rawValue: activityKindRaw) ?? .generic }
         set {
             activityKindRaw = newValue.rawValue
             touch()

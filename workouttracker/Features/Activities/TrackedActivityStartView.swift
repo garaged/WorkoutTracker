@@ -22,7 +22,7 @@ struct TrackedActivityStartView: View {
         Form {
             Section(String(localized: "activities.start.section.activity", defaultValue: "Activity")) {
                 Picker(String(localized: "activities.start.type", defaultValue: "Type"), selection: $selectedKind) {
-                    ForEach(TrackedActivityKind.allCases, id: \.self) { kind in
+                    ForEach(TrackedActivityKind.specializedStartKinds, id: \.self) { kind in
                         Label(kind.displayName, systemImage: kind.systemImage)
                             .tag(kind)
                     }
