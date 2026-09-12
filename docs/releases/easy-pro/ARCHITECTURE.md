@@ -17,4 +17,10 @@ Before schema changes, add a versioned timing payload and explicit backup mappin
 
 ## Validation boundary
 
+### Versioned timer persistence contract (EP-R10, EP-R12, EP-R14)
+
+The canonical tracked record will store one optional encoded QuickStartTimingPayload. Version 1 contains the exact style raw ID and the timing value; it contains no metrics or duplicate history identity. Known styles resolve to the catalog; unknown nonempty IDs remain unchanged and use a generic presentation. Empty IDs, unsupported payload versions, malformed JSON, invalid clock anchors, negative/nonfinite duration, duplicate command IDs and inconsistent phase/revision/command history must fail decoding. Reading invalid data must not silently reset the timer or rewrite the original bytes. Legacy records without a payload keep their existing timing path. Typed backup export/import must carry the payload bytes unchanged before the adapter is enabled.
+
+The payload validates structural timing integrity without estimating elapsed time. A structurally valid old anchor can still require explicit clock recovery when used. Payload validation alone is not migration or SwiftData round-trip evidence.
+
 Swift policy tests are native XCTest fixtures and must run on the repository's Xcode CI before this slice is called verified. No local Swift compiler is available in this workspace. Test creation/inspection is not passing evidence. UI wiring, migration, Health/Watch behavior, and human validation remain pending until their own scenarios pass.
