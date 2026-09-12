@@ -308,12 +308,17 @@
         "EP-S10"
       ],
       "implementation_refs": [
-        "workouttracker/Domain/Models/QuickStart/QuickStartStyle.swift"
+        "workouttracker/Domain/Models/QuickStart/QuickStartStyle.swift",
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingPayload.swift"
       ],
       "test_refs": [
         {
           "path": "workouttrackerTests/QuickStart/QuickStartSelectionTests.swift",
           "symbol": "testStableStyleCatalogAndBoundedDefaults"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartTimingPayloadTests.swift",
+          "symbol": "testUnknownStyleSurvivesWithoutSubstitution"
         }
       ],
       "evidence": []
@@ -341,12 +346,17 @@
         "EP-S12"
       ],
       "implementation_refs": [
-        "workouttracker/Domain/Models/QuickStart/QuickStartTimingState.swift"
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingState.swift",
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingPayload.swift"
       ],
       "test_refs": [
         {
           "path": "workouttrackerTests/QuickStart/QuickStartTimingStateTests.swift",
           "symbol": "testPauseExcludesTimeAndFinishIsIdempotent"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartTimingPayloadTests.swift",
+          "symbol": "testOldStructurallyValidAnchorIsPreservedForRecoveryReview"
         }
       ],
       "evidence": []
@@ -381,12 +391,17 @@
         "EP-S14"
       ],
       "implementation_refs": [
-        "workouttracker/Domain/Models/QuickStart/QuickStartTimingState.swift"
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingState.swift",
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingPayload.swift"
       ],
       "test_refs": [
         {
           "path": "workouttrackerTests/QuickStart/QuickStartTimingStateTests.swift",
           "symbol": "testStaleCommandCannotOverwriteNewerState"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartTimingPayloadTests.swift",
+          "symbol": "testInvalidTimingStateIsRejectedAtPersistenceBoundary"
         }
       ],
       "evidence": []

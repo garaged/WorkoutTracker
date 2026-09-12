@@ -74,3 +74,9 @@ The backup round-trip regression test exists to verify that a seeded workout gra
 
 If that test fails after a refactor, treat it as a backup contract regression unless proven otherwise.
 
+
+## Quick-start timing extension (schema 6)
+
+`TrackedActivitySession.quickStartTimingBlob` is optional in the local store. Typed backup schema 6 encodes its exact bytes as a base64 string, or null when absent. Version-5 backups without the field remain valid and restore with no quick-start payload. Schema 6 deliberately causes older applications that support only version 5 to reject the import rather than silently discard timer state.
+
+The backup layer preserves unknown activity-kind raw IDs and opaque payload bytes, including unknown payload versions and damaged inner JSON. The quick-start runtime validates the inner payload before use; importing a backup is not permission to reset or reinterpret unreadable timing data. Invalid outer base64 or a non-string/non-null attribute is rejected during parsing, before any existing records are deleted. No additional model or alternate history store is introduced, so BackupManifest membership is unchanged.

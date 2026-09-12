@@ -93,10 +93,33 @@ struct QuickStartTimingState: Codable, Equatable, Sendable {
     }
 
     private func validate(_ sample: QuickStartClockSample) throws {
+        try validatePersistedState()
         guard sample.wall.timeIntervalSince1970.isFinite,
-              sample.uptime.isFinite, sample.uptime >= 0,
-              accumulated.isFinite, accumulated >= 0, revision >= 0 else {
+              sample.uptime.isFinite, sample.uptime >= 0 else {
             throw QuickStartTimingError.invalidClock
+        }
+    }
+
+    /// Structural validation only; an old valid anchor is retained for clock recovery.
+    func validatePersistedState() throws {
+        guard accumulated.isFinite, accumulated >= 0, revision >= 0 else {
+            throw QuickStartTimingError.invalidClock
+        }
+        guard revision == appliedCommands.count,
+              Set(appliedCommands.map(\.id)).count == appliedCommands.count else {
+            throw QuickStartTimingError.invalidTransition
+        }
+        var recordedPhase: Phase = .idle
+        for command in appliedCommands {
+            switch (recordedPhase, command.action) {
+            case (.idle, .start), (.paused, .resume): recordedPhase = .running
+            case (.running, .pause): recordedPhase = .paused
+            case (.running, .finish), (.paused, .finish): recordedPhase = .completed
+            default: throw QuickStartTimingError.invalidTransition
+            }
+        }
+        guard recordedPhase == phase, phase != .idle || accumulated == 0 else {
+            throw QuickStartTimingError.invalidTransition
         }
         guard (phase == .running) == (anchor != nil) else {
             throw QuickStartTimingError.recoveryRequired

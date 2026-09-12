@@ -17,6 +17,8 @@ final class TrackedActivitySession {
     var healthKitExportStateRaw: String
 
     var elapsedDuration: TimeInterval
+    /// Additive, versioned quick-start state. Nil preserves legacy activity behavior.
+    var quickStartTimingBlob: Data? = nil
     var distanceMeters: Double?
     var activeEnergyKilocalories: Double?
     var stepCount: Int?

@@ -104,6 +104,6 @@ English/Spanish, iPhone/iPad, largest supported text, VoiceOver and reduced moti
 
 ## Evidence and present status
 
-This PR contains only specifications. Any structural checks performed now are document checks, not the future installed validator or native tests. No native code is changed; native tests, builds and UI tests are not run. Existing repository CI may trigger on the documentation PR; report its actual state separately without dispatching a full suite just to imply feature validation.
+Implementation is active on the accepted dedicated branch. Specification validation and isolated Swift policy tests run in hosted CI; their exact revisions and outcomes are recorded in EVIDENCE.md. Canonical persistence, native UI, platform integrations and manual acceptance require their own evidence before the corresponding requirements can be marked complete. No policy test result implies that a novice workflow has passed.
 
 On implementation approval, robust tests/validation are part of the requested work; use targeted gates and persist their evidence. Do not ask for repeated blanket permission where the session already authorizes required validation. Any still-applicable repository restriction must be reconciled explicitly, not silently ignored.
