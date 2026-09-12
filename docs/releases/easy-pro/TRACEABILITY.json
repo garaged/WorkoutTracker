@@ -380,6 +380,14 @@
         {
           "path": "workouttrackerTests/Tracking/QuickStartClockSourceTests.swift",
           "symbol": "testSamplesDriveReducerWithoutDisplayTickAccumulation"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartTimingStateTests.swift",
+          "symbol": "testRecoveryCanPauseAtLastSavedTimeThenResumeCleanly"
+        },
+        {
+          "path": "workouttrackerTests/Tracking/QuickStartRecorderTests.swift",
+          "symbol": "testExplicitRecoveryFinishesWithoutCountingUncertainGap"
         }
       ],
       "evidence": []
@@ -435,6 +443,10 @@
         {
           "path": "workouttrackerTests/Tracking/QuickStartRecorderTests.swift",
           "symbol": "testFailedFinishRestoresCommittedStateBeforeRetry"
+        },
+        {
+          "path": "workouttrackerTests/Tracking/QuickStartRecorderTests.swift",
+          "symbol": "testFailedRecoveryRestoresCommittedRunningState"
         }
       ],
       "evidence": []

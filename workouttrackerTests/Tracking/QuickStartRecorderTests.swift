@@ -82,6 +82,75 @@ final class QuickStartRecorderTests: XCTestCase {
         XCTAssertEqual(session.elapsedDuration, 45, accuracy: 0.001)
     }
 
+    func testExplicitRecoveryFinishesWithoutCountingUncertainGap() throws {
+        let store = try container(), context = ModelContext(store)
+        let recorder = QuickStartRecorder()
+        let session = try recorder.start(style: .other, id: UUID(), at: clock(0), context: context)
+        let recoveryClock = QuickStartClockSample(
+            wall: Date(timeIntervalSince1970: 51_000),
+            uptime: 1,
+            epoch: UUID()
+        )
+        XCTAssertThrowsError(
+            try recorder.apply(
+                .finish,
+                to: session,
+                id: UUID(),
+                expectedRevision: 1,
+                at: recoveryClock,
+                context: context
+            )
+        ) {
+            XCTAssertEqual($0 as? QuickStartTimingError, .recoveryRequired)
+        }
+
+        try recorder.resolveRecovery(
+            .finishAtLastSavedTime,
+            for: session,
+            id: UUID(),
+            expectedRevision: 1,
+            at: recoveryClock,
+            context: context
+        )
+        XCTAssertEqual(session.lifecycleState, .completed)
+        XCTAssertEqual(session.elapsedDuration, 0)
+        XCTAssertEqual(try payload(session).timing.phase, .completed)
+        XCTAssertEqual(try payload(session).timing.revision, 2)
+    }
+
+    func testFailedRecoveryRestoresCommittedRunningState() throws {
+        enum Fault: Error { case disk }
+        let store = try container(), context = ModelContext(store)
+        let session = try QuickStartRecorder().start(
+            style: .mobilityStretching,
+            id: UUID(),
+            at: clock(0),
+            context: context
+        )
+        let before = session.quickStartTimingBlob
+        let recoveryClock = QuickStartClockSample(
+            wall: Date(timeIntervalSince1970: 51_000),
+            uptime: 1,
+            epoch: UUID()
+        )
+        let failing = QuickStartRecorder(save: { _ in throw Fault.disk })
+
+        XCTAssertThrowsError(
+            try failing.resolveRecovery(
+                .pauseAtLastSavedTime,
+                for: session,
+                id: UUID(),
+                expectedRevision: 1,
+                at: recoveryClock,
+                context: context
+            )
+        )
+        XCTAssertFalse(context.hasChanges)
+        XCTAssertEqual(session.quickStartTimingBlob, before)
+        XCTAssertEqual(session.lifecycleState, .inProgress)
+        XCTAssertEqual(try payload(session).timing.phase, .running)
+    }
+
     func testActiveStrengthOrTrackedSessionBlocksNewStart() throws {
         let store = try container(), context = ModelContext(store)
         let strength = WorkoutSession()

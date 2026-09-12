@@ -78,6 +78,15 @@ struct QuickStartRecorder {
         }
     }
 
+    func resolveRecovery(
+        _ resolution: QuickStartTimingState.RecoveryResolution,
+        for session: TrackedActivitySession,
+        id: UUID,
+        expectedRevision: Int,
+        at clock: QuickStartClockSample,
+        context: ModelContext
+    ) throws {}
+
     private func requireClean(_ context: ModelContext) throws {
         guard !context.hasChanges else { throw RecordingError.pendingChanges }
     }

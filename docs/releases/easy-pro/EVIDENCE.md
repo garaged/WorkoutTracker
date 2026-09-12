@@ -73,3 +73,8 @@ Source head `2751a95cc4802404096b45af679fe9ce598b5b8b`. [Specification quality r
 ### Production quick-start clock red evidence
 
 Source head `238c5f3a7f097ab70938b581a53fe8b981ceb725`. [Specification quality run 34705846669](https://github.com/garaged/WorkoutTracker/actions/runs/34705846669) passed. [iOS run 34705846673](https://github.com/garaged/WorkoutTracker/actions/runs/34705846673), job 103585617341, built and executed 350 tests. Nine expected assertions failed against the deliberate fixed-value clock stub: injected wall/continuous values were ignored, the process epoch changed between samples, production wall time was zero, and a 37-second reducer interval recorded zero. The impossible-negative clamp test and all prior tests passed. This is behavioral red evidence for the production clock seam, not background/device evidence.
+
+
+### Production quick-start clock green evidence
+
+Source head `d7051baa003053b1601381b704be52e6446ebb75`. [Specification quality run 34706154341](https://github.com/garaged/WorkoutTracker/actions/runs/34706154341) passed. [iOS run 34706154337](https://github.com/garaged/WorkoutTracker/actions/runs/34706154337), job 103586454807, built and executed all 350 tests with zero failures. The four adapter tests validate injected wall/continuous samples, precise duration conversion, a stable process epoch, nonnegative elapsed values, and a 37-second interval derived by the reducer rather than display ticks. Real-device sleep/background and cross-launch review remain manual EP3/EP6 evidence.

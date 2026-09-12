@@ -64,6 +64,78 @@ final class QuickStartTimingStateTests: XCTestCase {
         XCTAssertThrowsError(try state.elapsed(at: sample(-20, epoch: UUID())))
         XCTAssertThrowsError(try state.elapsed(at: sample(43_201, epoch: UUID())))
     }
+    func testRecoveryCanPauseAtLastSavedTimeThenResumeCleanly() throws {
+        var state = try apply(QuickStartTimingState(), .start, at: 0)
+        let newEpoch = UUID()
+        let recoverySample = sample(50_000, epoch: newEpoch)
+        XCTAssertThrowsError(try state.elapsed(at: recoverySample)) {
+            XCTAssertEqual($0 as? QuickStartTimingError, .recoveryRequired)
+        }
+
+        state = try state.resolvingRecovery(
+            .pauseAtLastSavedTime,
+            id: UUID(),
+            expectedRevision: state.revision,
+            at: recoverySample
+        )
+        XCTAssertEqual(state.phase, .paused)
+        XCTAssertEqual(state.accumulated, 0)
+        XCTAssertNil(state.anchor)
+
+        state = try state.applying(.resume, id: UUID(), expectedRevision: state.revision, at: recoverySample)
+        state = try state.applying(
+            .finish,
+            id: UUID(),
+            expectedRevision: state.revision,
+            at: sample(50_010, epoch: newEpoch)
+        )
+        XCTAssertEqual(state.accumulated, 10, accuracy: 0.001)
+    }
+    func testRecoveryCanFinishWithoutCountingUncertainGapAndRetryIsIdempotent() throws {
+        let running = try apply(QuickStartTimingState(), .start, at: 0)
+        let command = UUID()
+        let recovered = try running.resolvingRecovery(
+            .finishAtLastSavedTime,
+            id: command,
+            expectedRevision: running.revision,
+            at: sample(50_000, epoch: UUID())
+        )
+        XCTAssertEqual(recovered.phase, .completed)
+        XCTAssertEqual(recovered.accumulated, 0)
+        XCTAssertEqual(recovered.revision, 2)
+        XCTAssertEqual(
+            try recovered.resolvingRecovery(
+                .finishAtLastSavedTime,
+                id: command,
+                expectedRevision: running.revision,
+                at: sample(60_000, epoch: UUID())
+            ),
+            recovered
+        )
+    }
+    func testRecoveryResolutionRequiresRunningStateAndCurrentRevision() throws {
+        XCTAssertThrowsError(
+            try QuickStartTimingState().resolvingRecovery(
+                .pauseAtLastSavedTime,
+                id: UUID(),
+                expectedRevision: 0,
+                at: sample(0)
+            )
+        ) {
+            XCTAssertEqual($0 as? QuickStartTimingError, .invalidTransition)
+        }
+        let running = try apply(QuickStartTimingState(), .start, at: 0)
+        XCTAssertThrowsError(
+            try running.resolvingRecovery(
+                .finishAtLastSavedTime,
+                id: UUID(),
+                expectedRevision: 0,
+                at: sample(50_000, epoch: UUID())
+            )
+        ) {
+            XCTAssertEqual($0 as? QuickStartTimingError, .staleRevision)
+        }
+    }
     func testNonFiniteClockIsRejected() throws {
         let invalid = QuickStartClockSample(wall: Date(), uptime: .nan, epoch: epoch)
         XCTAssertThrowsError(try QuickStartTimingState().applying(.start, id: UUID(), expectedRevision: 0, at: invalid))

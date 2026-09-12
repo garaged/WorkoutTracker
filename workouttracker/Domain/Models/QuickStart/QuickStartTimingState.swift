@@ -17,6 +17,7 @@ enum QuickStartTimingError: Error, Equatable {
 struct QuickStartTimingState: Codable, Equatable, Sendable {
     enum Phase: String, Codable, Sendable { case idle, running, paused, completed }
     enum Action: String, Codable, Sendable { case start, pause, resume, finish }
+    enum RecoveryResolution: Sendable { case pauseAtLastSavedTime, finishAtLastSavedTime }
     struct AppliedCommand: Codable, Equatable, Sendable {
         let id: UUID
         let action: Action
@@ -90,6 +91,15 @@ struct QuickStartTimingState: Codable, Equatable, Sendable {
         next.revision += 1
         next.appliedCommands.append(AppliedCommand(id: id, action: action))
         return next
+    }
+
+    func resolvingRecovery(
+        _ resolution: RecoveryResolution,
+        id: UUID,
+        expectedRevision: Int,
+        at sample: QuickStartClockSample
+    ) throws -> QuickStartTimingState {
+        self
     }
 
     private func validate(_ sample: QuickStartClockSample) throws {
