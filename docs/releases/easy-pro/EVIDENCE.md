@@ -61,3 +61,7 @@ Source head `543fbcc9ac38113d86c55d33135b4f05f258e7b4`. [Specification quality r
 ### Canonical recorder green evidence
 
 Source head `a7cb234da36b7380a642258c1c4a8556fe5b6678`. [Specification quality run 34704524467](https://github.com/garaged/WorkoutTracker/actions/runs/34704524467) passed. [iOS run 34704524465](https://github.com/garaged/WorkoutTracker/actions/runs/34704524465), job 103582059294, built and executed all 342 tests with zero failures. This validates canonical quick-start identity, one-record persistence/reopen behavior, active-session conflicts, 80-second pause/resume timing, dirty-context isolation, failed-start cleanup, and failed-finish restoration. It does not validate UI, Watch command ownership, or manual background behavior.
+
+### Experience preference store red evidence
+
+Source head `7fccdc7a24fb3194d251e0828745287760e88e09`. [iOS run 34705044349](https://github.com/garaged/WorkoutTracker/actions/runs/34705044349), job 103583472751, built and executed 346 tests. The four new preference-store tests ran against the deliberate no-op store: the explicit new/existing-install bootstrap test passed, while five expected assertions failed across saved-choice relaunch, pending active-session changes, idle application, and corrupt-snapshot recovery. All prior native tests passed. This is behavioral red evidence for versioned mode persistence; it is not Easy/Pro UI evidence.

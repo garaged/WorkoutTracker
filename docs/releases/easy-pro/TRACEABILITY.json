@@ -177,12 +177,21 @@
         "EP-S01"
       ],
       "implementation_refs": [
-        "workouttracker/Domain/Models/QuickStart/ExperiencePreferenceState.swift"
+        "workouttracker/Domain/Models/QuickStart/ExperiencePreferenceState.swift",
+        "workouttracker/Services/Settings/ExperiencePreferenceStore.swift"
       ],
       "test_refs": [
         {
           "path": "workouttrackerTests/QuickStart/QuickStartSelectionTests.swift",
           "symbol": "testActiveModeChangeSurvivesEncodingUntilWorkoutEnds"
+        },
+        {
+          "path": "workouttrackerTests/Settings/ExperiencePreferenceStoreTests.swift",
+          "symbol": "testActiveChangePersistsPendingUntilIdleThenCommits"
+        },
+        {
+          "path": "workouttrackerTests/Settings/ExperiencePreferenceStoreTests.swift",
+          "symbol": "testNewAndExistingInstallationsBootstrapWithoutWorkoutHeuristics"
         }
       ],
       "evidence": []
