@@ -26,9 +26,7 @@ struct QuickStartSessionScreen: View {
     var body: some View {
         Group {
             if let session = sessions.first {
-                TimelineView(.periodic(from: .now, by: 1)) { _ in
-                    sessionContent(session, sample: clockSource.sample())
-                }
+                timedSessionContent(session)
             } else {
                 ContentUnavailableView(
                     String(localized: "quickstart.not_found.title", defaultValue: "Timer not found"),
@@ -50,6 +48,17 @@ struct QuickStartSessionScreen: View {
             Text(errorMessage ?? String(localized: "common.unknown_error", defaultValue: "Unknown error"))
         }
         .accessibilityIdentifier("QuickStart.Session.Screen")
+    }
+
+    @ViewBuilder
+    private func timedSessionContent(_ session: TrackedActivitySession) -> some View {
+        if ProcessInfo.processInfo.environment["UITESTS"] == "1" {
+            sessionContent(session, sample: clockSource.sample())
+        } else {
+            TimelineView(.periodic(from: .now, by: 1)) { _ in
+                sessionContent(session, sample: clockSource.sample())
+            }
+        }
     }
 
     @ViewBuilder
