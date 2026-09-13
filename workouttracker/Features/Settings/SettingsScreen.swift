@@ -206,7 +206,7 @@ struct SettingsScreen: View {
         } label: {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected ? .tint : .secondary)
+                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
                     .font(.title3)
                     .accessibilityHidden(true)
 
