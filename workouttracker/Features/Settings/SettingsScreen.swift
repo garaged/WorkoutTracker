@@ -5,6 +5,10 @@ import SwiftData
 struct SettingsScreen: View {
     @Environment(\.modelContext) private var context
     @StateObject private var prefs = UserPreferences.shared
+    @StateObject private var experienceStore = ExperiencePreferenceStore.shared
+
+    @Query private var workoutSessions: [WorkoutSession]
+    @Query private var trackedActivitySessions: [TrackedActivitySession]
 
     @AppStorage(TrackedActivityHealthPreferences.autoSaveCompletedActivitiesKey)
     private var autoSaveToAppleHealth = false
@@ -13,6 +17,31 @@ struct SettingsScreen: View {
 
     var body: some View {
         List {
+            Section(String(localized: "settings.experience.section", defaultValue: "App experience")) {
+                Text(String(localized: "settings.experience.help", defaultValue: "Choose the level of detail that feels right for you. Your workout history stays the same."))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                experienceOption(
+                    .easy,
+                    title: String(localized: "settings.experience.easy", defaultValue: "Easy mode"),
+                    detail: String(localized: "settings.experience.easy.detail", defaultValue: "Simple starts and a focused workout flow.")
+                )
+
+                experienceOption(
+                    .pro,
+                    title: String(localized: "settings.experience.pro", defaultValue: "Pro mode"),
+                    detail: String(localized: "settings.experience.pro.detail", defaultValue: "The full dashboard and advanced workout tools.")
+                )
+
+                if experienceStore.state.requested != nil {
+                    Text(String(localized: "settings.experience.pending", defaultValue: "Your choice will apply after the active workout is finished."))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("Settings.Experience.Pending")
+                }
+            }
+
             Section(String(localized: "settings.section.backup")) {
                 NavigationLink {
                     BackupRestoreScreen()
@@ -158,6 +187,46 @@ struct SettingsScreen: View {
         .readableWidth()
         .navigationTitle(String(localized: "settings.title"))
         .scrollDismissesKeyboard(.interactively)
+    }
+
+    private var hasActiveSession: Bool {
+        workoutSessions.contains(where: \.isUnfinished)
+            || trackedActivitySessions.contains(where: \.isActive)
+    }
+
+    private func experienceOption(
+        _ mode: ExperiencePreferenceState.Mode,
+        title: String,
+        detail: String
+    ) -> some View {
+        let isSelected = experienceStore.state.effective == mode
+
+        return Button {
+            experienceStore.request(mode, hasActiveSession: hasActiveSession)
+        } label: {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? .tint : .secondary)
+                    .font(.title3)
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.headline)
+                    Text(detail)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 4)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("Settings.Experience.\(mode == .easy ? "Easy" : "Pro")")
+        .accessibilityLabel(title)
+        .accessibilityValue(isSelected ? String(localized: "settings.experience.selected", defaultValue: "Selected") : String(localized: "settings.experience.not_selected", defaultValue: "Not selected"))
+        .accessibilityHint(hasActiveSession ? String(localized: "settings.experience.deferred_hint", defaultValue: "This change will apply after the active workout is finished.") : String(localized: "settings.experience.immediate_hint", defaultValue: "Changes the app experience immediately."))
     }
 
     private var appVersionLabel: String {
