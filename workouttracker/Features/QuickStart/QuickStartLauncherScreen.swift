@@ -116,7 +116,7 @@ private func styleTitle(_ style: QuickStartStyle) -> String {
 }
 
 private func styleIcon(_ style: QuickStartStyle) -> String {
-    switch style {
+    return switch style {
     case .cardio: "heart.fill"
     case .strengthWeights: "dumbbell.fill"
     case .bodyweightFunctional: "figure.strengthtraining.traditional"
