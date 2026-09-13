@@ -5,7 +5,7 @@ import SwiftData
 struct SettingsScreen: View {
     @Environment(\.modelContext) private var context
     @StateObject private var prefs = UserPreferences.shared
-    @StateObject private var experienceStore = ExperiencePreferenceStore.shared
+    @ObservedObject private var experienceStore = ExperiencePreferenceStore.shared
 
     @Query private var workoutSessions: [WorkoutSession]
     @Query private var trackedActivitySessions: [TrackedActivitySession]

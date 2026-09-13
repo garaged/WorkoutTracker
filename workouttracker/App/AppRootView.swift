@@ -38,7 +38,7 @@ enum RootDestination: String, CaseIterable, Identifiable {
 }
 
 struct AppRootView: View {
-    @StateObject private var experienceStore = ExperiencePreferenceStore.shared
+    @ObservedObject private var experienceStore = ExperiencePreferenceStore.shared
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.platform) private var platform
