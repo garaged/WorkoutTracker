@@ -56,7 +56,7 @@ struct EasyHomeScreen: View {
                     tint: .orange,
                     identifier: "Easy.Home.GymFreestyle"
                 ) {
-                    GymFreestyleDraftScreen()
+                    GymFreestyleLauncherScreen()
                 }
 
                 entryCard(
@@ -135,13 +135,141 @@ struct EasyHomeScreen: View {
     }
 }
 
-private struct GymFreestyleDraftScreen: View {
+struct GymFreestyleLauncherScreen: View {
+    @Environment(\.modelContext) private var context
+
+    @Query(sort: [SortDescriptor(\\WorkoutSession.startedAt, order: .reverse)])
+    private var workoutSessions: [WorkoutSession]
+
+    @State private var launchedSessionID: UUID?
+    @State private var errorMessage: String?
+
     var body: some View {
-        ContentUnavailableView(
-            String(localized: "easy.freestyle.draft.title", defaultValue: "Gym freestyle"),
-            systemImage: "dumbbell.fill",
-            description: Text(String(localized: "easy.freestyle.draft.message", defaultValue: "Exercise-by-exercise quick logging is the next implementation milestone in this draft."))
-        )
+        VStack(alignment: .leading, spacing: 20) {
+            Text(String(localized: "easy.freestyle.intro", defaultValue: "Start with the machine in front of you. You can add details later."))
+                .foregroundStyle(.secondary)
+
+            Button {
+                startUnnamedExercise()
+            } label: {
+                Label(String(localized: "easy.freestyle.start_unnamed", defaultValue: "Start unnamed exercise"), systemImage: "play.fill")
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+            }
+            .buttonStyle(.borderedProminent)
+            .accessibilityIdentifier("GymFreestyle.StartUnnamed")
+
+            Text(String(localized: "easy.freestyle.start_unnamed.help", defaultValue: "This starts a duration-only exercise. It does not add sets, weight, reps, or a personal record."))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+        }
+        .padding()
         .navigationTitle(String(localized: "easy.home.freestyle.title", defaultValue: "Gym freestyle"))
+        .navigationDestination(item: $launchedSessionID) { sessionID in
+            GymFreestyleSessionScreen(sessionID: sessionID)
+        }
+        .alert(String(localized: "easy.freestyle.unavailable", defaultValue: "Cannot start exercise"), isPresented: Binding(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )) {
+            Button(String(localized: "common.ok", defaultValue: "OK"), role: .cancel) {}
+        } message: {
+            Text(errorMessage ?? "")
+        }
+    }
+
+    private func startUnnamedExercise() {
+        guard !workoutSessions.contains(where: \.isUnfinished) else {
+            errorMessage = String(localized: "easy.freestyle.active_conflict", defaultValue: "Finish or resume the active workout before starting another exercise.")
+            return
+        }
+
+        let session = WorkoutSession(sourceRoutineNameSnapshot: String(localized: "easy.freestyle.session_name", defaultValue: "Freestyle workout"))
+        let exercise = WorkoutSessionExercise(
+            order: 0,
+            exerciseId: UUID(),
+            exerciseNameSnapshot: String(localized: "easy.freestyle.generic_name", defaultValue: "Unnamed exercise"),
+            trackingStyle: .timeOnly,
+            session: session
+        )
+        session.exercises = [exercise]
+
+        context.insert(session)
+        context.insert(exercise)
+
+        do {
+            try context.save()
+            launchedSessionID = session.id
+        } catch {
+            errorMessage = String(localized: "easy.freestyle.save_failed", defaultValue: "The exercise was not saved. Please try again.")
+        }
+    }
+}
+
+struct GymFreestyleSessionScreen: View {
+    let sessionID: UUID
+
+    @Environment(\.modelContext) private var context
+    @Query private var workoutSessions: [WorkoutSession]
+    @State private var didFinishExercise = false
+
+    private var session: WorkoutSession? {
+        workoutSessions.first(where: { $0.id == sessionID })
+    }
+
+    var body: some View {
+        Group {
+            if let session, let exercise = session.exercises.sorted(by: { $0.order < $1.order }).first {
+                sessionContent(session: session, exercise: exercise)
+            } else {
+                ContentUnavailableView(
+                    String(localized: "easy.freestyle.recovery.title", defaultValue: "Exercise unavailable"),
+                    systemImage: "exclamationmark.triangle",
+                    description: Text(String(localized: "easy.freestyle.recovery.message", defaultValue: "Return to Today and try starting the exercise again."))
+                )
+            }
+        }
+        .navigationTitle(String(localized: "easy.home.freestyle.title", defaultValue: "Gym freestyle"))
+        .accessibilityIdentifier("GymFreestyle.Session.Screen")
+    }
+
+    @ViewBuilder
+    private func sessionContent(session: WorkoutSession, exercise: WorkoutSessionExercise) -> some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text(exercise.exerciseNameSnapshot)
+                .font(.title.bold())
+
+            if didFinishExercise {
+                Label(String(localized: "easy.freestyle.exercise_finished", defaultValue: "Exercise finished"), systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+
+                Text(String(localized: "easy.freestyle.finished.detail", defaultValue: "No sets or metrics were added. You can finish the workout when you are ready."))
+                    .foregroundStyle(.secondary)
+            } else {
+                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    LabeledContent(String(localized: "easy.freestyle.elapsed", defaultValue: "Exercise time")) {
+                        Text(AppFormatting.duration(seconds: session.elapsedSeconds()))
+                            .monospacedDigit()
+                    }
+                }
+
+                Text(String(localized: "easy.freestyle.duration_only", defaultValue: "Duration only — no sets, reps, weight, or rest are being recorded."))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                Button(String(localized: "easy.freestyle.finish_exercise", defaultValue: "Finish exercise")) {
+                    exercise.actualDurationSeconds = session.elapsedSeconds()
+                    didFinishExercise = true
+                    try? context.save()
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("GymFreestyle.FinishExercise")
+            }
+
+            Spacer()
+        }
+        .padding()
     }
 }
