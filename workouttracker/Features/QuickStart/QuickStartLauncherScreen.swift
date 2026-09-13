@@ -6,7 +6,6 @@ struct QuickStartLauncherScreen: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var launchedSessionID: UUID?
-    @State private var showSession = false
     @State private var showConflict = false
     @State private var errorMessage: String?
 
@@ -35,10 +34,8 @@ struct QuickStartLauncherScreen: View {
         }
         .navigationTitle(String(localized: "quickstart.title", defaultValue: "Start a timer"))
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(isPresented: $showSession) {
-            if let launchedSessionID {
-                QuickStartSessionScreen(sessionID: launchedSessionID)
-            }
+        .navigationDestination(item: $launchedSessionID) { sessionID in
+            QuickStartSessionScreen(sessionID: sessionID)
         }
         .alert(
             String(localized: "quickstart.conflict.title", defaultValue: "A workout is already active"),
@@ -85,7 +82,6 @@ struct QuickStartLauncherScreen: View {
                 context: modelContext
             )
             launchedSessionID = session.id
-            showSession = true
         } catch QuickStartRecorder.RecordingError.activeSessionConflict(_) {
             showConflict = true
         } catch {
