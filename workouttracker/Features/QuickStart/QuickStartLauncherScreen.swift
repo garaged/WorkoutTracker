@@ -98,7 +98,7 @@ func quickStartStyleTitle(_ style: QuickStartStyle?) -> String {
     guard let style else {
         return String(localized: "quickstart.style.other", defaultValue: "Other activity")
     }
-    switch style {
+    return switch style {
     case .cardio: String(localized: "quickstart.style.cardio", defaultValue: "Cardio")
     case .strengthWeights: String(localized: "quickstart.style.strength_weights", defaultValue: "Weights and machines")
     case .bodyweightFunctional: String(localized: "quickstart.style.bodyweight_functional", defaultValue: "Bodyweight and functional")
@@ -112,7 +112,7 @@ func quickStartStyleTitle(_ style: QuickStartStyle?) -> String {
 }
 
 private func styleTitle(_ style: QuickStartStyle) -> String {
-    quickStartStyleTitle(style)
+    return quickStartStyleTitle(style)
 }
 
 private func styleIcon(_ style: QuickStartStyle) -> String {
