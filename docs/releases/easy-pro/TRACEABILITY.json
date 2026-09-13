@@ -126,7 +126,7 @@
         "EP2"
       ],
       "spec_status": "accepted",
-      "implementation_status": "not_started",
+      "implementation_status": "in_progress",
       "exit_status": "pending",
       "evidence": []
     },
@@ -150,7 +150,7 @@
         "EP4"
       ],
       "spec_status": "accepted",
-      "implementation_status": "not_started",
+      "implementation_status": "in_progress",
       "exit_status": "pending",
       "evidence": []
     },
@@ -178,7 +178,8 @@
       ],
       "implementation_refs": [
         "workouttracker/Domain/Models/QuickStart/ExperiencePreferenceState.swift",
-        "workouttracker/Services/Settings/ExperiencePreferenceStore.swift"
+        "workouttracker/Services/Settings/ExperiencePreferenceStore.swift",
+        "workouttracker/App/AppRootView.swift"
       ],
       "test_refs": [
         {
@@ -205,7 +206,10 @@
       "scenarios": [
         "EP-S02"
       ],
-      "implementation_refs": [],
+      "implementation_refs": [
+        "workouttracker/App/AppRootView.swift",
+        "workouttracker/Features/EasyMode/EasyHomeScreen.swift"
+      ],
       "test_refs": [
         {
           "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
@@ -324,7 +328,9 @@
       "implementation_refs": [
         "workouttracker/Domain/Models/QuickStart/QuickStartStyle.swift",
         "workouttracker/Domain/Models/QuickStart/QuickStartTimingPayload.swift",
-        "workouttracker/Domain/Models/QuickStart/QuickStartSessionPresentation.swift"
+        "workouttracker/Domain/Models/QuickStart/QuickStartSessionPresentation.swift",
+        "workouttracker/Features/QuickStart/QuickStartLauncherScreen.swift",
+        "workouttracker/Features/QuickStart/QuickStartSessionScreen.swift"
       ],
       "test_refs": [
         {
@@ -381,7 +387,8 @@
         "workouttracker/Domain/Models/QuickStart/QuickStartTimingPayload.swift",
         "workouttracker/Services/Tracking/QuickStartClockSource.swift",
         "workouttracker/Services/Tracking/QuickStartRecorder.swift",
-        "workouttracker/Domain/Models/QuickStart/QuickStartSessionPresentation.swift"
+        "workouttracker/Domain/Models/QuickStart/QuickStartSessionPresentation.swift",
+        "workouttracker/Features/QuickStart/QuickStartSessionScreen.swift"
       ],
       "test_refs": [
         {
@@ -543,7 +550,9 @@
       "scenarios": [
         "EP-S19"
       ],
-      "implementation_refs": [],
+      "implementation_refs": [
+        "workouttracker/Features/Activities/TrackedActivityDestinationView.swift"
+      ],
       "test_refs": [],
       "evidence": []
     },
@@ -556,7 +565,12 @@
       "scenarios": [
         "EP-S20"
       ],
-      "implementation_refs": [],
+      "implementation_refs": [
+        "workouttracker/App/AppRootView.swift",
+        "workouttracker/Features/EasyMode/EasyHomeScreen.swift",
+        "workouttracker/Features/QuickStart/QuickStartLauncherScreen.swift",
+        "workouttracker/Features/QuickStart/QuickStartSessionScreen.swift"
+      ],
       "test_refs": [
         {
           "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
