@@ -88,3 +88,8 @@ Source head `9a2a37434088deab3cd61bbdb1bd11a26e6ed8f4`. [Specification quality r
 ### Explicit clock-recovery green evidence
 
 Source head `97d834b561fbaa29adc2eef293b377200b55fd95`. [Specification quality run 34729798436](https://github.com/garaged/WorkoutTracker/actions/runs/34729798436) passed, including all 26 portable policy tests. [iOS run 34729798428](https://github.com/garaged/WorkoutTracker/actions/runs/34729798428), job 103650361655, built and executed all 355 tests with zero failures. This validates explicit pause-at-last-saved-time and finish-at-last-saved-time recovery, idempotent recovery command identity, revision/state rejection, canonical lifecycle persistence, and rollback after injected recovery-save failure. The user-facing recovery choice remains part of the timer UI slice.
+
+
+### Quick-start timer presentation red evidence
+
+Source head `85c1295940809a34a4cbcaaab0ec4805c60c3881`. [Specification quality run 34730147458](https://github.com/garaged/WorkoutTracker/actions/runs/34730147458), Swift job 103651311794, compiled and executed 31 portable policy tests. Fifteen expected assertions failed, confined to the five new presentation tests: the deliberate stub lost style identity, reported idle/zero for running and completed timers, exposed no pause/resume/done action, failed to distinguish recovery, and accepted a non-finite clock. All 26 prior portable tests passed. The implementation follows in a separate commit.

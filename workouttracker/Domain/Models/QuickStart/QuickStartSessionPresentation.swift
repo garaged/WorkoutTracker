@@ -19,11 +19,27 @@ struct QuickStartSessionPresentation: Equatable, Sendable {
     let timingStatus: TimingStatus
 
     init(payload: QuickStartTimingPayload, at sample: QuickStartClockSample) throws {
-        styleRaw = ""
-        style = nil
-        phase = .idle
-        timingStatus = .elapsed(0)
+        styleRaw = payload.styleRaw
+        style = payload.style
+        phase = payload.timing.phase
+        do {
+            timingStatus = .elapsed(try payload.timing.elapsed(at: sample))
+        } catch let error as QuickStartTimingError where error == .recoveryRequired {
+            timingStatus = .recoveryRequired
+        } catch {
+            throw error
+        }
     }
 
-    var primaryAction: PrimaryAction? { nil }
+    var primaryAction: PrimaryAction? {
+        if timingStatus == .recoveryRequired {
+            return .resolveRecovery
+        }
+        return switch phase {
+        case .idle: nil
+        case .running: .pause
+        case .paused: .resume
+        case .completed: .done
+        }
+    }
 }
