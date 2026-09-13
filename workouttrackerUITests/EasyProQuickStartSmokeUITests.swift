@@ -111,6 +111,36 @@ final class EasyProQuickStartSmokeUITests: XCTestCase {
         XCTAssertTrue(calendar.exists)
     }
 
+
+    func testProSettingsSwitchesToEasyWhenIdle() {
+        let app = UITestLaunch.app(start: "home", reset: true, seed: false)
+        app.launch()
+
+        let settings = app.el("Home.Tile.Settings")
+        XCTAssertTrue(settings.waitForExistence(timeout: 6))
+        settings.tap()
+
+        let easy = app.el("Settings.Experience.Easy")
+        if !easy.waitForExistence(timeout: 6) {
+            attachUITestDebug(app, name: "EasyPro_ReverseModeSwitchMissing")
+        }
+        XCTAssertTrue(easy.exists)
+        easy.tap()
+
+        let back = app.buttons["BackButton"]
+        if !back.waitForExistence(timeout: 4) {
+            attachUITestDebug(app, name: "EasyPro_ReverseSettingsBackMissing")
+        }
+        XCTAssertTrue(back.exists)
+        back.tap()
+
+        let quickStart = app.el("Easy.Home.JustStartTimer")
+        if !quickStart.waitForExistence(timeout: 6) {
+            attachUITestDebug(app, name: "EasyPro_EasyHomeAfterReturningFromSettingsMissing")
+        }
+        XCTAssertTrue(quickStart.exists)
+    }
+
     private func easyApp() -> XCUIApplication {
         UITestLaunch.app(
             start: "home",
