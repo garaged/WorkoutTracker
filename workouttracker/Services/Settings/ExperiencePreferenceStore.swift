@@ -32,18 +32,33 @@ final class ExperiencePreferenceStore: ObservableObject {
     }
 
     func request(_ mode: ExperiencePreferenceState.Mode, hasActiveSession: Bool) {
+        let previous = state
         state.request(mode, hasActiveSession: hasActiveSession)
         persist()
+        notifyIfEffectiveModeChanged(from: previous)
     }
 
     func applyPendingIfIdle(hasActiveSession: Bool) {
         let previous = state
         state.applyPendingIfIdle(hasActiveSession: hasActiveSession)
-        if state != previous { persist() }
+        if state != previous {
+            persist()
+            notifyIfEffectiveModeChanged(from: previous)
+        }
+    }
+
+    private func notifyIfEffectiveModeChanged(from previous: ExperiencePreferenceState) {
+        guard previous.effective != state.effective else { return }
+        NotificationCenter.default.post(name: .workouttrackerExperiencePreferenceDidChange, object: nil)
     }
 
     private func persist() {
         guard let data = try? JSONEncoder().encode(Snapshot(version: 1, state: state)) else { return }
         defaults.set(data, forKey: Self.storageKey)
     }
+}
+
+
+extension Notification.Name {
+    static let workouttrackerExperiencePreferenceDidChange = Notification.Name("workouttracker.experiencePreferenceDidChange")
 }

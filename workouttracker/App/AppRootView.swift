@@ -57,6 +57,7 @@ struct AppRootView: View {
     private var trackedActivitySessions: [TrackedActivitySession]
 
     @State private var didSeed = false
+    @State private var experienceShellGeneration = 0
     @AppStorage("workouttracker.starterPackVersion") private var starterPackVersion = 0
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var selection: RootDestination? = .home
@@ -84,6 +85,9 @@ struct AppRootView: View {
     var body: some View {
         rootContent
             .onReceive(openTimelinePublisher, perform: handleOpenTimelineNotification)
+            .onReceive(NotificationCenter.default.publisher(for: .workouttrackerExperiencePreferenceDidChange)) { _ in
+                experienceShellGeneration &+= 1
+            }
             .onReceive(openURLForTestingPublisher, perform: handleOpenURLForTestingNotification)
             .onReceive(watchOpenRequestPublisher, perform: handleWatchOpenRequestNotification)
             .onReceive(restTimerSemanticStatePublisher) { _ in
@@ -546,7 +550,7 @@ struct AppRootView: View {
                 compactRoot
             }
         }
-        .id(experienceStore.state.effective)
+        .id(experienceShellGeneration)
     }
 
     private var easyRoot: some View {
