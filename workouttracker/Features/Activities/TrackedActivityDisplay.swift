@@ -11,6 +11,8 @@ extension TrackedActivityKind {
             return String(localized: "activities.kind.hiking", defaultValue: "Hiking")
         case .yoga:
             return String(localized: "activities.kind.yoga", defaultValue: "Yoga")
+        case .generic:
+            return String(localized: "activities.kind.generic", defaultValue: "Exercise")
         }
     }
 
@@ -24,6 +26,8 @@ extension TrackedActivityKind {
             return "figure.hiking"
         case .yoga:
             return "figure.yoga"
+        case .generic:
+            return "stopwatch"
         }
     }
 
@@ -37,6 +41,8 @@ extension TrackedActivityKind {
             return String(localized: "activities.action.start_hike", defaultValue: "Start hike")
         case .yoga:
             return String(localized: "activities.action.start_yoga", defaultValue: "Start yoga")
+        case .generic:
+            return String(localized: "activities.action.start_generic", defaultValue: "Start exercise")
         }
     }
 
@@ -62,6 +68,8 @@ extension TrackedActivityKind {
                 localized: "activities.helper.yoga",
                 defaultValue: "Duration is always tracked. Energy and notes can be added after you finish."
             )
+        case .generic:
+            return String(localized: "activities.helper.generic", defaultValue: "Track your time. Notes are optional.")
         }
     }
 }

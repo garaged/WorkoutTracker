@@ -436,7 +436,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				35BA2D5F2F11D33300EEE02C /* PBXTargetDependency */,
 				35D84C392F3CCB60000BEFC0 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (

@@ -1,0 +1,33 @@
+name: Specification quality
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  specifications:
+    name: Specification integrity and negative fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify accepted specification integrity
+        run: make spec-check
+      - name: Exercise valid and invalid fixtures
+        run: make spec-test
+  quick-start-policies:
+    name: Swift quick-start policy tests
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.3'
+      - name: Run portable Swift policy fixtures
+        run: swift test

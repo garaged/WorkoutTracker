@@ -1,0 +1,1016 @@
+{
+  "schema_version": 1,
+  "release": "easy-pro",
+  "revision": "2026-09-09",
+  "phase": "implementation",
+  "source_commit": "6877003faf70f15534d25a723ef92758a5ff5b70",
+  "specification_files": [
+    "README.md",
+    "BEHAVIOR.md",
+    "MILESTONES.md",
+    "VALIDATION.md",
+    "TRACEABILITY.json",
+    "APPROVAL.md",
+    "EVIDENCE.md",
+    "ARCHITECTURE.md"
+  ],
+  "approval": {
+    "status": "accepted",
+    "revision": "2026-09-09",
+    "evidence": "APPROVAL.md"
+  },
+  "intents": [
+    {
+      "id": "I-01",
+      "definition": "README.md"
+    },
+    {
+      "id": "I-02",
+      "definition": "README.md"
+    },
+    {
+      "id": "I-03",
+      "definition": "README.md"
+    },
+    {
+      "id": "I-04",
+      "definition": "README.md"
+    },
+    {
+      "id": "I-05",
+      "definition": "README.md"
+    },
+    {
+      "id": "I-06",
+      "definition": "README.md"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D-01",
+      "status": "accepted",
+      "definition": "README.md"
+    },
+    {
+      "id": "D-02",
+      "status": "accepted",
+      "definition": "README.md"
+    },
+    {
+      "id": "D-03",
+      "status": "accepted",
+      "definition": "README.md"
+    },
+    {
+      "id": "D-04",
+      "status": "accepted",
+      "definition": "README.md"
+    },
+    {
+      "id": "D-05",
+      "status": "accepted",
+      "definition": "README.md"
+    },
+    {
+      "id": "D-06",
+      "status": "accepted",
+      "definition": "README.md"
+    },
+    {
+      "id": "D-07",
+      "status": "accepted",
+      "definition": "README.md"
+    },
+    {
+      "id": "D-08",
+      "status": "accepted",
+      "definition": "README.md"
+    }
+  ],
+  "milestones": [
+    {
+      "id": "EP0",
+      "title": "Product and intent baseline",
+      "depends_on": [],
+      "spec_status": "accepted",
+      "implementation_status": "not_started",
+      "exit_status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "EP1",
+      "title": "Spec validation and expanded-flow review",
+      "depends_on": [
+        "EP0"
+      ],
+      "spec_status": "accepted",
+      "implementation_status": "in_progress",
+      "exit_status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "EP2",
+      "title": "Shared lifecycle/schema/experience",
+      "depends_on": [
+        "EP1"
+      ],
+      "spec_status": "accepted",
+      "implementation_status": "in_progress",
+      "exit_status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "EP3",
+      "title": "Generic timer",
+      "depends_on": [
+        "EP2"
+      ],
+      "spec_status": "accepted",
+      "implementation_status": "in_progress",
+      "exit_status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "EP4",
+      "title": "Gym freestyle",
+      "depends_on": [
+        "EP2",
+        "EP3"
+      ],
+      "spec_status": "accepted",
+      "implementation_status": "not_started",
+      "exit_status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "EP5",
+      "title": "Guided Easy and daily use",
+      "depends_on": [
+        "EP3",
+        "EP4"
+      ],
+      "spec_status": "accepted",
+      "implementation_status": "in_progress",
+      "exit_status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "EP6",
+      "title": "System integration and release",
+      "depends_on": [
+        "EP5"
+      ],
+      "spec_status": "accepted",
+      "implementation_status": "not_started",
+      "exit_status": "pending",
+      "evidence": []
+    }
+  ],
+  "requirements": [
+    {
+      "id": "EP-R01",
+      "intent": "I-05",
+      "milestone": "EP2",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S01"
+      ],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/QuickStart/ExperiencePreferenceState.swift",
+        "workouttracker/Services/Settings/ExperiencePreferenceStore.swift",
+        "workouttracker/App/AppRootView.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSelectionTests.swift",
+          "symbol": "testActiveModeChangeSurvivesEncodingUntilWorkoutEnds"
+        },
+        {
+          "path": "workouttrackerTests/Settings/ExperiencePreferenceStoreTests.swift",
+          "symbol": "testActiveChangePersistsPendingUntilIdleThenCommits"
+        },
+        {
+          "path": "workouttrackerTests/Settings/ExperiencePreferenceStoreTests.swift",
+          "symbol": "testNewAndExistingInstallationsBootstrapWithoutWorkoutHeuristics"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "EP-R02",
+      "intent": "I-01",
+      "milestone": "EP5",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S02"
+      ],
+      "implementation_refs": [
+        "workouttracker/App/AppRootView.swift",
+        "workouttracker/Features/EasyMode/EasyHomeScreen.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
+          "symbol": "testEasyHomeExposesThreeStartsAndLaunchesCardioTimer"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "EP-R03",
+      "intent": "I-02",
+      "milestone": "EP4",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S03"
+      ],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/QuickStart/QuickStartStyle.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSelectionTests.swift",
+          "symbol": "testFavoritesPrecedeDeduplicatedSuccessfulRecents"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "EP-R04",
+      "intent": "I-01",
+      "milestone": "EP5",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S04"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R05",
+      "intent": "I-02",
+      "milestone": "EP4",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S05"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R06",
+      "intent": "I-02",
+      "milestone": "EP4",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S06"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R07",
+      "intent": "I-02",
+      "milestone": "EP4",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S07"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R08",
+      "intent": "I-04",
+      "milestone": "EP4",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S08"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R09",
+      "intent": "I-04",
+      "milestone": "EP4",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S09"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R10",
+      "intent": "I-03",
+      "milestone": "EP3",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S10"
+      ],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/QuickStart/QuickStartStyle.swift",
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingPayload.swift",
+        "workouttracker/Domain/Models/QuickStart/QuickStartSessionPresentation.swift",
+        "workouttracker/Features/QuickStart/QuickStartLauncherScreen.swift",
+        "workouttracker/Features/QuickStart/QuickStartSessionScreen.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSelectionTests.swift",
+          "symbol": "testStableStyleCatalogAndBoundedDefaults"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartTimingPayloadTests.swift",
+          "symbol": "testUnknownStyleSurvivesWithoutSubstitution"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSessionPresentationTests.swift",
+          "symbol": "testRunningPresentationUsesPersistedTimerAndStyleIdentity"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSessionPresentationTests.swift",
+          "symbol": "testUnknownStyleIdentityIsPreservedWithoutSubstitution"
+        },
+        {
+          "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
+          "symbol": "testEasyHomeExposesThreeStartsAndLaunchesCardioTimer"
+        },
+        {
+          "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
+          "symbol": "testEasyTimerPauseResumeAndFinishExposeCommittedState"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "EP-R11",
+      "intent": "I-03",
+      "milestone": "EP3",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S11"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R12",
+      "intent": "I-04",
+      "milestone": "EP2",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S12"
+      ],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingState.swift",
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingPayload.swift",
+        "workouttracker/Services/Tracking/QuickStartClockSource.swift",
+        "workouttracker/Services/Tracking/QuickStartRecorder.swift",
+        "workouttracker/Domain/Models/QuickStart/QuickStartSessionPresentation.swift",
+        "workouttracker/Features/QuickStart/QuickStartSessionScreen.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartTimingStateTests.swift",
+          "symbol": "testPauseExcludesTimeAndFinishIsIdempotent"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartTimingPayloadTests.swift",
+          "symbol": "testOldStructurallyValidAnchorIsPreservedForRecoveryReview"
+        },
+        {
+          "path": "workouttrackerTests/Tracking/QuickStartRecorderTests.swift",
+          "symbol": "testPauseResumeFinishAndReopenPreserveEightyActiveSeconds"
+        },
+        {
+          "path": "workouttrackerTests/Tracking/QuickStartClockSourceTests.swift",
+          "symbol": "testInjectedSourceUsesWallAndContinuousDurationWithStableEpoch"
+        },
+        {
+          "path": "workouttrackerTests/Tracking/QuickStartClockSourceTests.swift",
+          "symbol": "testSamplesDriveReducerWithoutDisplayTickAccumulation"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartTimingStateTests.swift",
+          "symbol": "testRecoveryCanPauseAtLastSavedTimeThenResumeCleanly"
+        },
+        {
+          "path": "workouttrackerTests/Tracking/QuickStartRecorderTests.swift",
+          "symbol": "testExplicitRecoveryFinishesWithoutCountingUncertainGap"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSessionPresentationTests.swift",
+          "symbol": "testClockDiscontinuityBecomesDedicatedRecoveryPresentation"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSessionPresentationTests.swift",
+          "symbol": "testPausedPresentationDoesNotAccumulateLaterWallTime"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "EP-R13",
+      "intent": "I-05",
+      "milestone": "EP2",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S13"
+      ],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/QuickStart/QuickStartStyle.swift",
+        "workouttracker/Services/Tracking/QuickStartRecorder.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSelectionTests.swift",
+          "symbol": "testActiveConflictPreservesSpecificTarget"
+        },
+        {
+          "path": "workouttrackerTests/Tracking/QuickStartRecorderTests.swift",
+          "symbol": "testActiveStrengthOrTrackedSessionBlocksNewStart"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "EP-R14",
+      "intent": "I-04",
+      "milestone": "EP2",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S14"
+      ],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingState.swift",
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingPayload.swift",
+        "workouttracker/Services/Tracking/QuickStartRecorder.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartTimingStateTests.swift",
+          "symbol": "testStaleCommandCannotOverwriteNewerState"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartTimingPayloadTests.swift",
+          "symbol": "testInvalidTimingStateIsRejectedAtPersistenceBoundary"
+        },
+        {
+          "path": "workouttrackerTests/Tracking/QuickStartRecorderTests.swift",
+          "symbol": "testFailedFinishRestoresCommittedStateBeforeRetry"
+        },
+        {
+          "path": "workouttrackerTests/Tracking/QuickStartRecorderTests.swift",
+          "symbol": "testFailedRecoveryRestoresCommittedRunningState"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "EP-R15",
+      "intent": "I-04",
+      "milestone": "EP4",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S15"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R16",
+      "intent": "I-04",
+      "milestone": "EP5",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S16"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R17",
+      "intent": "I-05",
+      "milestone": "EP2",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S17"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R18",
+      "intent": "I-04",
+      "milestone": "EP6",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S18"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R19",
+      "intent": "I-05",
+      "milestone": "EP6",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S19"
+      ],
+      "implementation_refs": [
+        "workouttracker/Features/Activities/TrackedActivityDestinationView.swift"
+      ],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R20",
+      "intent": "I-05",
+      "milestone": "EP6",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S20"
+      ],
+      "implementation_refs": [
+        "workouttracker/App/AppRootView.swift",
+        "workouttracker/Features/EasyMode/EasyHomeScreen.swift",
+        "workouttracker/Features/QuickStart/QuickStartLauncherScreen.swift",
+        "workouttracker/Features/QuickStart/QuickStartSessionScreen.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
+          "symbol": "testEasyHomeExposesThreeStartsAndLaunchesCardioTimer"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "EP-R21",
+      "intent": "I-06",
+      "milestone": "EP0",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S21"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R22",
+      "intent": "I-06",
+      "milestone": "EP1",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S22"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R23",
+      "intent": "I-06",
+      "milestone": "EP1",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S23"
+      ],
+      "implementation_refs": [],
+      "test_refs": [],
+      "evidence": []
+    },
+    {
+      "id": "EP-R24",
+      "intent": "I-06",
+      "milestone": "EP6",
+      "specification": "BEHAVIOR.md",
+      "status": "accepted",
+      "scenarios": [
+        "EP-S24"
+      ],
+      "implementation_refs": [],
+      "test_refs": [
+        {
+          "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
+          "symbol": "testProBaselinePreservesExistingHomeShell"
+        }
+      ],
+      "evidence": []
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "EP-S01",
+      "requirements": [
+        "EP-R01"
+      ],
+      "given": "An existing installation has no workouts and Pro preference; a separate fixture represents a new installation.",
+      "when": "Upgrade both, switch modes around a saved record, and restart during a pending mode change.",
+      "then": "Existing install retains Pro; new install recommends Easy; record IDs/values remain; active presentation stays pinned and requested mode survives restart.",
+      "planned_validation_layers": [
+        "unit",
+        "persistence",
+        "ui"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S02",
+      "requirements": [
+        "EP-R02"
+      ],
+      "given": "A clean Easy installation has valid starter data and no active session.",
+      "when": "Open Today and enter each of the three quick-start paths without granting optional permissions.",
+      "then": "All paths are reachable without a routine builder or permission wall; active data fixture instead presents Resume first.",
+      "planned_validation_layers": [
+        "unit",
+        "ui",
+        "manual"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S03",
+      "requirements": [
+        "EP-R03"
+      ],
+      "given": "Pickers contain favorites, repeated recents and a deleted catalog reference.",
+      "when": "Render twice, start a valid recent, then browse/cancel an unavailable choice.",
+      "then": "At most four top choices have stable deduplicated order; one valid start is committed; browsing creates nothing; missing reference has explicit recovery.",
+      "planned_validation_layers": [
+        "unit",
+        "integration",
+        "ui"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S04",
+      "requirements": [
+        "EP-R04"
+      ],
+      "given": "A prepared program workout has linked warm-up/main/cool-down and explicit targets.",
+      "when": "Confirm changed actuals, skip one exercise, interrupt rest and resume, then finish.",
+      "then": "Order/provenance/rest ownership persist; unconfirmed targets are not actuals; skipped work is not completed; existing progression uses only valid program evidence.",
+      "planned_validation_layers": [
+        "integration",
+        "ui",
+        "manual"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S05",
+      "requirements": [
+        "EP-R05"
+      ],
+      "given": "No workout is active and a known machine can be started directly.",
+      "when": "Start it without a routine, finish, then start the same catalog machine again.",
+      "then": "One freestyle workout contains two distinct ordered session-exercise IDs and explicit interval anchors; no planned sets are silently completed.",
+      "planned_validation_layers": [
+        "unit",
+        "integration",
+        "ui"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S06",
+      "requirements": [
+        "EP-R06"
+      ],
+      "given": "A user cannot identify a machine in the catalog.",
+      "when": "Start unnamed exercise, finish it, rename it, then edit its name to whitespace only.",
+      "then": "Start succeeds with stable generic identity; naming is session-local; empty name retains a readable fallback; no catalog creation or history duplication occurs.",
+      "planned_validation_layers": [
+        "unit",
+        "persistence",
+        "ui"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S07",
+      "requirements": [
+        "EP-R07"
+      ],
+      "given": "An exercise is running with one recorded set and active rest.",
+      "when": "Finish it twice, open/cancel Next, then send the same next-start command twice.",
+      "then": "Exercise/rest close once; cancel creates nothing; next starts only on explicit command; exactly one next entry exists.",
+      "planned_validation_layers": [
+        "unit",
+        "integration",
+        "ui"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S08",
+      "requirements": [
+        "EP-R08"
+      ],
+      "given": "A new freestyle exercise has no actual reps/load or sets.",
+      "when": "Run for 45 seconds and finish without adding a set; inspect summary and analytics.",
+      "then": "One completed exercise has 45 seconds, zero completed sets and nil reps/load; no volume/PR is created; known-zero and unknown load remain distinct.",
+      "planned_validation_layers": [
+        "unit",
+        "integration",
+        "ui"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S09",
+      "requirements": [
+        "EP-R09"
+      ],
+      "given": "A set-based exercise has configured rest, followed by a duration-only exercise.",
+      "when": "Log a set, continue rest, then finish the exercise and start the duration-only entry.",
+      "then": "Rest records only its own elapsed period; it never completes the exercise; old notifications/callbacks cannot affect the next entry; no new rest is invented.",
+      "planned_validation_layers": [
+        "unit",
+        "integration",
+        "ui"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S10",
+      "requirements": [
+        "EP-R10"
+      ],
+      "given": "No session is active; the preset catalog contains the nine specified stable categories.",
+      "when": "Start each style from its labeled shortcut in isolated fixtures and finish once.",
+      "then": "A count-up timer starts with no mandatory target/link/catalog/permission; exactly one canonical timed activity exists per run with the correct raw style.",
+      "planned_validation_layers": [
+        "unit",
+        "integration",
+        "ui"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S11",
+      "requirements": [
+        "EP-R11"
+      ],
+      "given": "A generic timer is running and external video audio is playing.",
+      "when": "Switch to the video app, lock/unlock and return to WorkoutTracker.",
+      "then": "Timer retains its recording state and elapsed interval; playback is not taken over; video progress/completion does not mutate workout completion.",
+      "planned_validation_layers": [
+        "integration",
+        "manual"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S12",
+      "requirements": [
+        "EP-R12"
+      ],
+      "given": "An injected clock and isolated store represent a new timer.",
+      "when": "Run 60 seconds, pause 30, resume 20, finish twice and reopen; separately inject backward time and a discontinuity.",
+      "then": "Active duration is 80 seconds with one completion; no negative totals or duplicate intervals; inconsistent recovery requires the specified review instead of invented elapsed time.",
+      "planned_validation_layers": [
+        "unit",
+        "integration",
+        "property"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S13",
+      "requirements": [
+        "EP-R13"
+      ],
+      "given": "A phone session is paused while a competing quick-start action arrives from another supported surface.",
+      "when": "Cancel conflict, resume existing, then attempt finish-and-start with an injected finish save failure.",
+      "then": "No concurrent new quick start is created; original remains recoverable; failed finish prevents new start; explicit links retain their exact targets.",
+      "planned_validation_layers": [
+        "unit",
+        "integration",
+        "ui"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S14",
+      "requirements": [
+        "EP-R14"
+      ],
+      "given": "A pending transition is assigned a command ID and the store can inject a save failure.",
+      "when": "Fail a start/finish write, retry the same command, and deliver it again with a stale revision.",
+      "then": "No false Saved status, input loss or duplicate record/time/export; at most one committed transition; stale revision is safely rejected.",
+      "planned_validation_layers": [
+        "unit",
+        "integration",
+        "property"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S15",
+      "requirements": [
+        "EP-R15"
+      ],
+      "given": "A session contains completed work, a running interval and associated rest.",
+      "when": "Finish twice, reopen summary, then apply a permitted history correction; separately finish an empty fixture.",
+      "then": "One summary closes all intervals and notifications; correction recomputes totals/export dirty state; empty/partial work is truthfully labeled and does not inflate records.",
+      "planned_validation_layers": [
+        "integration",
+        "ui"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S16",
+      "requirements": [
+        "EP-R16"
+      ],
+      "given": "An assigned program and its adherence history exist beside unrelated quick-start activity.",
+      "when": "Complete a duration-only freestyle entry and a generic style timer, then inspect both modes and program progress.",
+      "then": "Quick-start time appears once in history; no fabricated metrics/PR or implicit program advancement; both modes expose the same records.",
+      "planned_validation_layers": [
+        "unit",
+        "integration"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S17",
+      "requirements": [
+        "EP-R17"
+      ],
+      "given": "Legacy backups, new generic categories, nil metrics and an unsupported raw category are available.",
+      "when": "Migrate, export/restore, delete a catalog source and inspect the persisted records.",
+      "then": "Supported round trips preserve IDs, snapshots, nulls and raw categories; unsupported category never becomes walking; incompatible formats fail explicitly without destructive import.",
+      "planned_validation_layers": [
+        "integration",
+        "contract"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S18",
+      "requirements": [
+        "EP-R18"
+      ],
+      "given": "A new style has either a reviewed Health mapping or explicitly unsupported export; permission may be denied.",
+      "when": "Finish locally, request supported export, inject failure/retry, then edit after successful export.",
+      "then": "Local record always remains; no guessed GPS/energy/steps; unsupported export is explained; retry is idempotent and edits enter existing reconciliation state.",
+      "planned_validation_layers": [
+        "unit",
+        "integration",
+        "manual"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S19",
+      "requirements": [
+        "EP-R19"
+      ],
+      "given": "Phone, Watch and system surfaces reference a running canonical record.",
+      "when": "Finish from one surface, send a stale action from another, and open a specific guided rest link.",
+      "then": "Surfaces converge without duplicate completion; stale action is safe; rest link resolves exact session and destination in either mode.",
+      "planned_validation_layers": [
+        "integration",
+        "ui",
+        "manual"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S20",
+      "requirements": [
+        "EP-R20"
+      ],
+      "given": "The candidate exposes English/Spanish, large text and VoiceOver layouts with valid recent shortcuts.",
+      "when": "Complete each start path and a next-exercise transition using applicable input/accessibility modes; observe novices.",
+      "then": "Controls remain usable; timer is not announced every second; tap targets and timing goals are measured; at least 4/5 novice completions per applicable path are unaided with correct saved-data understanding.",
+      "planned_validation_layers": [
+        "ui",
+        "manual"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S21",
+      "requirements": [
+        "EP-R21"
+      ],
+      "given": "A milestone has proposed requirements but no revision-specific product agreement.",
+      "when": "Review its definition of ready and attempt to classify implementation as authorized.",
+      "then": "Implementation remains not started; approval must identify the revised decisions/spec; later changes update intent/scenarios before code.",
+      "planned_validation_layers": [
+        "spec",
+        "review"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S22",
+      "requirements": [
+        "EP-R22"
+      ],
+      "given": "Valid proposed/completed manifests and independent invalid fixtures are available.",
+      "when": "Run the validator on duplicate IDs, missing references, cycles, blank assertions and false-completion evidence.",
+      "then": "Valid fixtures pass their mode; every invalid fixture fails with a useful location/diagnostic; planned references are never counted as executed coverage.",
+      "planned_validation_layers": [
+        "spec"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S23",
+      "requirements": [
+        "EP-R23"
+      ],
+      "given": "An accepted behavioral change has a mapped scenario and controlled failure fixture.",
+      "when": "Record its failing test before implementation, implement, then run targeted and relevant regression gates.",
+      "then": "The behavioral test passes for the right reason; current-commit evidence and test identity are retained; no disabled assertion or blanket retry hides failure.",
+      "planned_validation_layers": [
+        "spec",
+        "review"
+      ],
+      "result": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "EP-S24",
+      "requirements": [
+        "EP-R24"
+      ],
+      "given": "A UI scenario depends on seeded data and launches the host target.",
+      "when": "Run with missing required seed data, then valid data; inspect failure and release evidence.",
+      "then": "Missing data fails clearly in workouttrackerUITestHost; valid fixtures use existing suite patterns; artifacts identify failures and release remains blocked for unmet critical scenarios.",
+      "planned_validation_layers": [
+        "ui",
+        "review"
+      ],
+      "result": "not_run",
+      "evidence": []
+    }
+  ]
+}

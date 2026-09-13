@@ -378,6 +378,7 @@ struct TrackedActivitySummaryCard: View {
         case .running: return .orange
         case .hiking: return .brown
         case .yoga: return .purple
+        case .generic: return .secondary
         }
     }
 }
