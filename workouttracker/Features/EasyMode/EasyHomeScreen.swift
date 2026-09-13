@@ -138,7 +138,7 @@ struct EasyHomeScreen: View {
 struct GymFreestyleLauncherScreen: View {
     @Environment(\.modelContext) private var context
 
-    @Query(sort: [SortDescriptor(\\WorkoutSession.startedAt, order: .reverse)])
+    @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
     private var workoutSessions: [WorkoutSession]
 
     @State private var launchedSessionID: UUID?
@@ -250,7 +250,7 @@ struct GymFreestyleSessionScreen: View {
             } else {
                 TimelineView(.periodic(from: .now, by: 1)) { _ in
                     LabeledContent(String(localized: "easy.freestyle.elapsed", defaultValue: "Exercise time")) {
-                        Text(AppFormatting.duration(seconds: session.elapsedSeconds()))
+                        Text(TrackedActivitySummaryBuilder.formatDuration(session.elapsedSeconds()))
                             .monospacedDigit()
                     }
                 }
