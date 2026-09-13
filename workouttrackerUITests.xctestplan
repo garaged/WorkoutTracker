@@ -17,8 +17,8 @@
     "performanceAntipatternCheckerEnabled" : true,
     "targetForVariableExpansion" : {
       "containerPath" : "container:workouttracker.xcodeproj",
-      "identifier" : "35BA2D432F11D33200EEE02C",
-      "name" : "workouttracker"
+      "identifier" : "35D84B842F3C2BCE000BEFC0",
+      "name" : "workouttrackerUITestHost"
     }
   },
   "testTargets" : [
