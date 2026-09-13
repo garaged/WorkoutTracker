@@ -151,6 +151,9 @@ jobs:
             -sdk iphonesimulator \
             -destination "${{ steps.sim.outputs.destination }}" \
             -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 120 \
+            -maximum-test-execution-time-allowance 180 \
             -retry-tests-on-failure \
             -resultBundlePath "TestResults/ui.xcresult" \
             -only-testing:"${UI_TEST_BUNDLE}" \
@@ -171,6 +174,9 @@ jobs:
             -sdk iphonesimulator \
             -destination "${{ steps.sim.outputs.destination }}" \
             -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 120 \
+            -maximum-test-execution-time-allowance 180 \
             -resultBundlePath "TestResults/easy-pro-ui.xcresult" \
             -only-testing:"${UI_TEST_BUNDLE}/EasyProQuickStartSmokeUITests" \
             CODE_SIGNING_ALLOWED=NO \
