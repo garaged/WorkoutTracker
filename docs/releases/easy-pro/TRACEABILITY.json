@@ -206,7 +206,12 @@
         "EP-S02"
       ],
       "implementation_refs": [],
-      "test_refs": [],
+      "test_refs": [
+        {
+          "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
+          "symbol": "testEasyHomeExposesThreeStartsAndLaunchesCardioTimer"
+        }
+      ],
       "evidence": []
     },
     {
@@ -337,6 +342,14 @@
         {
           "path": "workouttrackerTests/QuickStart/QuickStartSessionPresentationTests.swift",
           "symbol": "testUnknownStyleIdentityIsPreservedWithoutSubstitution"
+        },
+        {
+          "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
+          "symbol": "testEasyHomeExposesThreeStartsAndLaunchesCardioTimer"
+        },
+        {
+          "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
+          "symbol": "testEasyTimerPauseResumeAndFinishExposeCommittedState"
         }
       ],
       "evidence": []
@@ -544,7 +557,12 @@
         "EP-S20"
       ],
       "implementation_refs": [],
-      "test_refs": [],
+      "test_refs": [
+        {
+          "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
+          "symbol": "testEasyHomeExposesThreeStartsAndLaunchesCardioTimer"
+        }
+      ],
       "evidence": []
     },
     {
@@ -596,7 +614,12 @@
         "EP-S24"
       ],
       "implementation_refs": [],
-      "test_refs": [],
+      "test_refs": [
+        {
+          "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
+          "symbol": "testProBaselinePreservesExistingHomeShell"
+        }
+      ],
       "evidence": []
     }
   ],

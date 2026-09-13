@@ -136,6 +136,24 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             test
 
+      - name: Run Easy/Pro quick-start UI contract tests
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p TestResults
+
+          xcodebuild -project "${XCODE_PROJECT}" \
+            -scheme "${SCHEME_UI}" \
+            -configuration "${CONFIGURATION}" \
+            -sdk iphonesimulator \
+            -destination "${{ steps.sim.outputs.destination }}" \
+            -parallel-testing-enabled NO \
+            -resultBundlePath "TestResults/easy-pro-ui.xcresult" \
+            -only-testing:"${UI_TEST_BUNDLE}/EasyProQuickStartSmokeUITests" \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
       - name: Run UI smoke tests (manual)
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_ui_tests == 'true' }}
         shell: bash

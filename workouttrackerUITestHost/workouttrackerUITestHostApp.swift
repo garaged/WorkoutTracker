@@ -28,6 +28,28 @@ struct workouttrackerUITestHostApp: App {
             UserDefaults.standard.synchronize()
         }
 
+        // Keep existing UI suites on the Pro shell. Easy-mode suites opt in explicitly.
+        if env["UITESTS"] == "1" {
+            let starterPackKey = "workouttracker.starterPackVersion"
+            let experienceKey = "workouttracker.experiencePreference.v1"
+            if env["UITESTS_EASY_MODE"] == "1" {
+                UserDefaults.standard.removeObject(forKey: starterPackKey)
+                if env["UITESTS_RESET"] == "1" {
+                    UserDefaults.standard.removeObject(forKey: experienceKey)
+                }
+            } else {
+                UserDefaults.standard.set(1, forKey: starterPackKey)
+            }
+
+            if env["UITESTS_RESET"] == "1" {
+                let hasUpgradeEvidence = UserDefaults.standard.object(forKey: starterPackKey) != nil
+                let expectsEasy = env["UITESTS_EASY_MODE"] == "1"
+                if hasUpgradeEvidence == expectsEasy {
+                    fatalError("UITESTS assertion failed: Easy/Pro installation evidence does not match the requested UI-test mode.")
+                }
+            }
+        }
+
         if env["UITESTS"] == "1", env["UITESTS_REST_TIMER_SHORT"] == "1" {
             UserDefaults.standard.set(2, forKey: "prefs.defaultRestSeconds")
             UserDefaults.standard.set(true, forKey: "prefs.autoStartRest")

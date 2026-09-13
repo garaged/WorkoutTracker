@@ -93,3 +93,8 @@ Source head `97d834b561fbaa29adc2eef293b377200b55fd95`. [Specification quality r
 ### Quick-start timer presentation red evidence
 
 Source head `85c1295940809a34a4cbcaaab0ec4805c60c3881`. [Specification quality run 34730147458](https://github.com/garaged/WorkoutTracker/actions/runs/34730147458), Swift job 103651311794, compiled and executed 31 portable policy tests. Fifteen expected assertions failed, confined to the five new presentation tests: the deliberate stub lost style identity, reported idle/zero for running and completed timers, exposed no pause/resume/done action, failed to distinguish recovery, and accepted a non-finite clock. All 26 prior portable tests passed. The implementation follows in a separate commit.
+
+
+### Quick-start timer presentation green evidence
+
+Source head `dac26933476e04fd562dcfbbe0e9eef05883a9c9`. [Specification quality run 34730219815](https://github.com/garaged/WorkoutTracker/actions/runs/34730219815) passed all 31 portable policy tests. This validates persisted running/paused/completed presentation, unknown raw style preservation, dedicated recovery presentation, and invalid-clock propagation. The superseded native run is not counted as evidence; the next native/UI slice includes the same source.
