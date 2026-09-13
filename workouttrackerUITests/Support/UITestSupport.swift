@@ -51,7 +51,12 @@ extension XCTestCase {
         a1.lifetime = .keepAlways
         add(a1)
 
-        let a2 = XCTAttachment(string: app.debugDescription)
+        let hierarchy = app.debugDescription
+        print("UITEST_HIERARCHY_BEGIN \(name)")
+        print(hierarchy)
+        print("UITEST_HIERARCHY_END \(name)")
+
+        let a2 = XCTAttachment(string: hierarchy)
         a2.name = "\(name) hierarchy"
         a2.lifetime = .keepAlways
         add(a2)
