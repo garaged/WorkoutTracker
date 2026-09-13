@@ -21,6 +21,7 @@ env:
   SCHEME_UI: workouttrackerUITestHost
   CONFIGURATION: Debug
   UI_TEST_BUNDLE: workouttrackerUITests
+  UI_TEST_PLAN: workouttrackerUITests
   SIM_DEVICE: iPhone SE (3rd generation)
   SIM_RUNTIME: iOS 26.2
 
@@ -144,7 +145,8 @@ jobs:
           mkdir -p TestResults
 
           xcodebuild -project "${XCODE_PROJECT}" \
-            -scheme "${SCHEME_UI}" \
+            -scheme "${SCHEME_UNIT}" \
+            -testPlan "${UI_TEST_PLAN}" \
             -configuration "${CONFIGURATION}" \
             -sdk iphonesimulator \
             -destination "${{ steps.sim.outputs.destination }}" \
@@ -162,7 +164,8 @@ jobs:
           mkdir -p TestResults
 
           xcodebuild -project "${XCODE_PROJECT}" \
-            -scheme "${SCHEME_UI}" \
+            -scheme "${SCHEME_UNIT}" \
+            -testPlan "${UI_TEST_PLAN}" \
             -configuration "${CONFIGURATION}" \
             -sdk iphonesimulator \
             -destination "${{ steps.sim.outputs.destination }}" \

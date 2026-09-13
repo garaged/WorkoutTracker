@@ -98,3 +98,8 @@ Source head `85c1295940809a34a4cbcaaab0ec4805c60c3881`. [Specification quality r
 ### Quick-start timer presentation green evidence
 
 Source head `dac26933476e04fd562dcfbbe0e9eef05883a9c9`. [Specification quality run 34730219815](https://github.com/garaged/WorkoutTracker/actions/runs/34730219815) passed all 31 portable policy tests. This validates persisted running/paused/completed presentation, unknown raw style preservation, dedicated recovery presentation, and invalid-clock propagation. The superseded native run is not counted as evidence; the next native/UI slice includes the same source.
+
+
+### Focused UI gate infrastructure correction
+
+Source head `c5812c30f5a566c564ef18b16a160811c1f96a62`. [iOS run 34730319609](https://github.com/garaged/WorkoutTracker/actions/runs/34730319609), job 103651949586, built and passed all 360 native unit tests, then stopped before UI-test launch with exit 66 because the workflow invoked the `workouttrackerUITestHost` app scheme, which has no test action. No UI assertion ran, so this is not behavioral red evidence and there are no UI failure screenshot/hierarchy attachments. The checked-in `workouttrackerUITests.xctestplan` owns the UI-test bundle and its target launches `workouttrackerUITestHost`; the workflow correction invokes that plan through the test-capable main scheme for both focused PR and manual UI runs.
