@@ -49,6 +49,30 @@ final class EasyProQuickStartSmokeUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Cardio"].exists)
     }
 
+
+    func testEasyGymFreestyleStartsUnnamedExercise() {
+        let app = easyApp()
+        app.launch()
+
+        let gym = app.el("Easy.Home.GymFreestyle")
+        XCTAssertTrue(gym.waitForExistence(timeout: 6))
+        gym.tap()
+
+        let startUnnamed = app.el("GymFreestyle.StartUnnamed")
+        if !startUnnamed.waitForExistence(timeout: 4) {
+            attachUITestDebug(app, name: "EasyPro_GymFreestyleStartMissing")
+        }
+        XCTAssertTrue(startUnnamed.exists)
+        startUnnamed.tap()
+
+        let session = app.el("GymFreestyle.Session.Screen")
+        if !session.waitForExistence(timeout: 6) {
+            attachUITestDebug(app, name: "EasyPro_GymFreestyleSessionMissing")
+        }
+        XCTAssertTrue(session.exists)
+        XCTAssertTrue(app.el("GymFreestyle.FinishExercise").exists)
+    }
+
     func testEasyTimerPauseResumeAndFinishExposeCommittedState() {
         let app = easyApp()
         app.launch()
