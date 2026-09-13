@@ -546,6 +546,7 @@ struct AppRootView: View {
                 compactRoot
             }
         }
+        .id(experienceStore.state.effective)
     }
 
     private var easyRoot: some View {
