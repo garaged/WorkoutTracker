@@ -99,7 +99,34 @@ struct QuickStartTimingState: Codable, Equatable, Sendable {
         expectedRevision: Int,
         at sample: QuickStartClockSample
     ) throws -> QuickStartTimingState {
-        self
+        try validate(sample)
+        let action: Action = switch resolution {
+        case .pauseAtLastSavedTime: .pause
+        case .finishAtLastSavedTime: .finish
+        }
+        if let previous = appliedCommands.first(where: { $0.id == id }) {
+            guard previous.action == action else {
+                throw QuickStartTimingError.commandIdentityReused
+            }
+            return self
+        }
+        guard expectedRevision == revision else {
+            throw QuickStartTimingError.staleRevision
+        }
+        guard phase == .running, revision < Int.max else {
+            throw QuickStartTimingError.invalidTransition
+        }
+
+        var next = self
+        next.accumulated = accumulated
+        next.anchor = nil
+        switch resolution {
+        case .pauseAtLastSavedTime: next.phase = .paused
+        case .finishAtLastSavedTime: next.phase = .completed
+        }
+        next.revision += 1
+        next.appliedCommands.append(AppliedCommand(id: id, action: action))
+        return next
     }
 
     private func validate(_ sample: QuickStartClockSample) throws {
