@@ -318,7 +318,8 @@
       ],
       "implementation_refs": [
         "workouttracker/Domain/Models/QuickStart/QuickStartStyle.swift",
-        "workouttracker/Domain/Models/QuickStart/QuickStartTimingPayload.swift"
+        "workouttracker/Domain/Models/QuickStart/QuickStartTimingPayload.swift",
+        "workouttracker/Domain/Models/QuickStart/QuickStartSessionPresentation.swift"
       ],
       "test_refs": [
         {
@@ -328,6 +329,14 @@
         {
           "path": "workouttrackerTests/QuickStart/QuickStartTimingPayloadTests.swift",
           "symbol": "testUnknownStyleSurvivesWithoutSubstitution"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSessionPresentationTests.swift",
+          "symbol": "testRunningPresentationUsesPersistedTimerAndStyleIdentity"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSessionPresentationTests.swift",
+          "symbol": "testUnknownStyleIdentityIsPreservedWithoutSubstitution"
         }
       ],
       "evidence": []
@@ -358,7 +367,8 @@
         "workouttracker/Domain/Models/QuickStart/QuickStartTimingState.swift",
         "workouttracker/Domain/Models/QuickStart/QuickStartTimingPayload.swift",
         "workouttracker/Services/Tracking/QuickStartClockSource.swift",
-        "workouttracker/Services/Tracking/QuickStartRecorder.swift"
+        "workouttracker/Services/Tracking/QuickStartRecorder.swift",
+        "workouttracker/Domain/Models/QuickStart/QuickStartSessionPresentation.swift"
       ],
       "test_refs": [
         {
@@ -388,6 +398,14 @@
         {
           "path": "workouttrackerTests/Tracking/QuickStartRecorderTests.swift",
           "symbol": "testExplicitRecoveryFinishesWithoutCountingUncertainGap"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSessionPresentationTests.swift",
+          "symbol": "testClockDiscontinuityBecomesDedicatedRecoveryPresentation"
+        },
+        {
+          "path": "workouttrackerTests/QuickStart/QuickStartSessionPresentationTests.swift",
+          "symbol": "testPausedPresentationDoesNotAccumulateLaterWallTime"
         }
       ],
       "evidence": []
