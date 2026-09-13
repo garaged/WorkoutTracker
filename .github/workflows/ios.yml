@@ -18,7 +18,7 @@ concurrency:
 env:
   XCODE_PROJECT: workouttracker.xcodeproj
   SCHEME_UNIT: workouttracker
-  SCHEME_UI: workouttrackerUITestHost
+  SCHEME_UI: workouttrackerUITests
   CONFIGURATION: Debug
   UI_TEST_BUNDLE: workouttrackerUITests
   UI_TEST_PLAN: workouttrackerUITests
@@ -137,25 +137,6 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             test
 
-      - name: Run Easy/Pro quick-start UI contract tests
-        if: ${{ github.event_name == 'pull_request' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p TestResults
-
-          xcodebuild -project "${XCODE_PROJECT}" \
-            -scheme "${SCHEME_UNIT}" \
-            -testPlan "${UI_TEST_PLAN}" \
-            -configuration "${CONFIGURATION}" \
-            -sdk iphonesimulator \
-            -destination "${{ steps.sim.outputs.destination }}" \
-            -parallel-testing-enabled NO \
-            -resultBundlePath "TestResults/easy-pro-ui.xcresult" \
-            -only-testing:"${UI_TEST_BUNDLE}/EasyProQuickStartSmokeUITests" \
-            CODE_SIGNING_ALLOWED=NO \
-            test
-
       - name: Run UI smoke tests (manual)
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_ui_tests == 'true' }}
         shell: bash
@@ -164,7 +145,7 @@ jobs:
           mkdir -p TestResults
 
           xcodebuild -project "${XCODE_PROJECT}" \
-            -scheme "${SCHEME_UNIT}" \
+            -scheme "${SCHEME_UI}" \
             -testPlan "${UI_TEST_PLAN}" \
             -configuration "${CONFIGURATION}" \
             -sdk iphonesimulator \
@@ -176,10 +157,28 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             test
 
+      - name: Run Easy/Pro quick-start UI contract tests
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p TestResults
+
+          xcodebuild -project "${XCODE_PROJECT}" \
+            -scheme "${SCHEME_UI}" \
+            -testPlan "${UI_TEST_PLAN}" \
+            -configuration "${CONFIGURATION}" \
+            -sdk iphonesimulator \
+            -destination "${{ steps.sim.outputs.destination }}" \
+            -parallel-testing-enabled NO \
+            -resultBundlePath "TestResults/easy-pro-ui.xcresult" \
+            -only-testing:"${UI_TEST_BUNDLE}/EasyProQuickStartSmokeUITests" \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
       - name: Upload xcresult bundles (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: xcresults
           path: TestResults/*.xcresult
-
