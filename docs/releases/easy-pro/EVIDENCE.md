@@ -120,3 +120,10 @@ Source head `e562c3cc33d7d0b5f53f9f58fddf98b467bdd67f`. [Specification quality r
 
 The focused UI command now has deterministic per-test time bounds (120 seconds default, 180 seconds maximum). Earlier attempts exposed two compiler-only missing-return corrections and then an XCTest idleness issue after a programmatic timer handoff. The resolved route is driven directly by the canonical session ID; the UI-only display seam suppresses one-second repainting during automation without changing the production timer. The green run is the acceptance evidence for this delivered Easy timer slice; Gym freestyle, mode selection, manual accessibility/novice evaluation, and system integration remain separate milestones.
 
+
+
+### Easy/Pro mode selection green evidence
+
+The initial Settings behavior test was intentionally red at source head `d400c5f8b2164ae2b45718dd2db659a96b9a273e`: [iOS run 34757067152](https://github.com/garaged/WorkoutTracker/actions/runs/34757067152), job 103723168244, passed all 360 native tests and three existing UI contracts, while `testEasySettingsSwitchesToProWhenIdle` failed because the `Settings.Experience.Pro` control did not exist. The retained hierarchy confirmed the existing Settings screen had no experience selector.
+
+Source head `3153803cf30da32bbeed4090489cf2195b55feb2`. [Specification quality run 34760260749](https://github.com/garaged/WorkoutTracker/actions/runs/34760260749) passed. [iOS run 34760260754](https://github.com/garaged/WorkoutTracker/actions/runs/34760260754), job 103731743734, built and passed all 360 native unit tests and all four focused UI contracts in `workouttrackerUITestHost`. The added contract selects Pro mode from Easy Settings, preserves the Settings context, returns once, and verifies the Pro home’s `Home.Tile.Calendar`; the prior Easy Home, generic Cardio timer, pause/resume/finish, and Pro baseline contracts also passed. The selector gives plain-language mode descriptions, keeps the canonical workout data unchanged, and defers a requested change until an active workout has finished.
