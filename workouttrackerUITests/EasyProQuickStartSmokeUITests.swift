@@ -81,6 +81,29 @@ final class EasyProQuickStartSmokeUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Completed"].exists)
     }
 
+
+    func testEasySettingsSwitchesToProWhenIdle() {
+        let app = easyApp()
+        app.launch()
+
+        let settings = app.el("Easy.Home.Settings")
+        XCTAssertTrue(settings.waitForExistence(timeout: 6))
+        settings.tap()
+
+        let pro = app.el("Settings.Experience.Pro")
+        if !pro.waitForExistence(timeout: 6) {
+            attachUITestDebug(app, name: "EasyPro_ModeSwitchMissing")
+        }
+        XCTAssertTrue(pro.exists)
+        pro.tap()
+
+        let calendar = app.el("Home.Tile.Calendar")
+        if !calendar.waitForExistence(timeout: 6) {
+            attachUITestDebug(app, name: "EasyPro_ProHomeAfterSwitchMissing")
+        }
+        XCTAssertTrue(calendar.exists)
+    }
+
     private func easyApp() -> XCUIApplication {
         UITestLaunch.app(
             start: "home",
