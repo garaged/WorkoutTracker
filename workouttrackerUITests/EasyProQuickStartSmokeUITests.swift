@@ -97,9 +97,16 @@ final class EasyProQuickStartSmokeUITests: XCTestCase {
         XCTAssertTrue(pro.exists)
         pro.tap()
 
+        let back = app.buttons["BackButton"]
+        if !back.waitForExistence(timeout: 4) {
+            attachUITestDebug(app, name: "EasyPro_SettingsBackMissing")
+        }
+        XCTAssertTrue(back.exists)
+        back.tap()
+
         let calendar = app.el("Home.Tile.Calendar")
         if !calendar.waitForExistence(timeout: 6) {
-            attachUITestDebug(app, name: "EasyPro_ProHomeAfterSwitchMissing")
+            attachUITestDebug(app, name: "EasyPro_ProHomeAfterReturningFromSettingsMissing")
         }
         XCTAssertTrue(calendar.exists)
     }
