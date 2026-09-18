@@ -232,7 +232,6 @@ struct GymFreestyleSessionScreen: View {
             }
         }
         .navigationTitle(String(localized: "easy.home.freestyle.title", defaultValue: "Gym freestyle"))
-        .accessibilityIdentifier("GymFreestyle.Session.Screen")
         .alert(String(localized: "easy.freestyle.save_failed", defaultValue: "The exercise was not saved. Please try again."), isPresented: Binding(
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }
@@ -248,6 +247,7 @@ struct GymFreestyleSessionScreen: View {
         VStack(alignment: .leading, spacing: 20) {
             Text(exercise.exerciseNameSnapshot)
                 .font(.title.bold())
+                .accessibilityIdentifier("GymFreestyle.Session.Screen")
 
             if didFinishExercise {
                 Label(String(localized: "easy.freestyle.exercise_finished", defaultValue: "Exercise finished"), systemImage: "checkmark.circle.fill")
