@@ -132,3 +132,10 @@ Source head `3153803cf30da32bbeed4090489cf2195b55feb2`. [Specification quality r
 ### Reciprocal mode-switch contract evidence
 
 Source head `69cc33d34a2f73ce6ebeeee47ae4d017e746f83c`. [Specification quality run 34760872853](https://github.com/garaged/WorkoutTracker/actions/runs/34760872853) passed. [iOS run 34760872783](https://github.com/garaged/WorkoutTracker/actions/runs/34760872783), job 103733398661, passed all 360 native unit tests and all five focused Easy/Pro UI contracts. The additional contract starts in Pro, selects Easy in Settings, returns once, and verifies the Easy quick-start entry point. Both directions therefore preserve the current Settings context while changing the home experience on return; the existing Easy quick-start and Pro baseline contracts remain green.
+
+
+### Gym Freestyle unnamed-exercise entry and completion evidence
+
+Source head `61967fe749a9d97e14a6c02b2a58e5a6615d7412`. [Specification quality run 35331691181](https://github.com/garaged/WorkoutTracker/actions/runs/35331691181) passed. [iOS run 35331691186](https://github.com/garaged/WorkoutTracker/actions/runs/35331691186), job 105557243663, built and passed all 363 native tests and all six focused Easy/Pro UI contracts.
+
+The new Gym Freestyle contract starts an unnamed exercise from Easy Home, verifies the canonical duration-only session, exposes Finish Exercise, finishes it, and observes the committed “Exercise finished” state. New recorder fixtures cover one canonical session/exercise, blank-name fallback, duration persistence, absence of sets and invented distance/metrics, active-workout conflict, and injected-save rollback. This is the first EP4 entry/completion slice only: choosing a subsequent machine and per-exercise interval anchors remain a later, separately specified slice.
