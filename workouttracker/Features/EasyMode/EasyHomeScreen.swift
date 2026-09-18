@@ -213,6 +213,7 @@ struct GymFreestyleSessionScreen: View {
 
     @Environment(\.modelContext) private var context
     @State private var didFinishExercise = false
+    @State private var errorMessage: String?
 
     private var exercise: WorkoutSessionExercise? {
         session.exercises.sorted(by: { $0.order < $1.order }).first
