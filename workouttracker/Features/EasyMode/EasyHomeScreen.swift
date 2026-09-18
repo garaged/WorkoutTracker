@@ -250,7 +250,7 @@ struct GymFreestyleSessionScreen: View {
             } else {
                 TimelineView(.periodic(from: .now, by: 1)) { _ in
                     LabeledContent(String(localized: "easy.freestyle.elapsed", defaultValue: "Exercise time")) {
-                        Text(TrackedActivitySummaryBuilder.formatDuration(session.elapsedSeconds()))
+                        Text(TrackedActivitySummaryBuilder.formatDuration(TimeInterval(session.elapsedSeconds())))
                             .monospacedDigit()
                     }
                 }
