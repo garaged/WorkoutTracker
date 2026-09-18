@@ -141,7 +141,7 @@ struct GymFreestyleLauncherScreen: View {
     @Query(sort: [SortDescriptor(\WorkoutSession.startedAt, order: .reverse)])
     private var workoutSessions: [WorkoutSession]
 
-    @State private var launchedSessionID: UUID?
+    @State private var launchedSession: WorkoutSession?
     @State private var errorMessage: String?
 
     var body: some View {
@@ -167,8 +167,8 @@ struct GymFreestyleLauncherScreen: View {
         }
         .padding()
         .navigationTitle(String(localized: "easy.home.freestyle.title", defaultValue: "Gym freestyle"))
-        .navigationDestination(item: $launchedSessionID) { sessionID in
-            GymFreestyleSessionScreen(sessionID: sessionID)
+        .navigationDestination(item: $launchedSession) { session in
+            GymFreestyleSessionScreen(session: session)
         }
         .alert(String(localized: "easy.freestyle.unavailable", defaultValue: "Cannot start exercise"), isPresented: Binding(
             get: { errorMessage != nil },
@@ -201,7 +201,7 @@ struct GymFreestyleLauncherScreen: View {
 
         do {
             try context.save()
-            launchedSessionID = session.id
+            launchedSession = session
         } catch {
             errorMessage = String(localized: "easy.freestyle.save_failed", defaultValue: "The exercise was not saved. Please try again.")
         }
@@ -209,20 +209,19 @@ struct GymFreestyleLauncherScreen: View {
 }
 
 struct GymFreestyleSessionScreen: View {
-    let sessionID: UUID
+    let session: WorkoutSession
 
     @Environment(\.modelContext) private var context
-    @Query private var workoutSessions: [WorkoutSession]
     @State private var didFinishExercise = false
 
-    private var session: WorkoutSession? {
-        workoutSessions.first(where: { $0.id == sessionID })
+    private var exercise: WorkoutSessionExercise? {
+        session.exercises.sorted(by: { $0.order < $1.order }).first
     }
 
     var body: some View {
         Group {
-            if let session, let exercise = session.exercises.sorted(by: { $0.order < $1.order }).first {
-                sessionContent(session: session, exercise: exercise)
+            if let exercise {
+                sessionContent(exercise: exercise)
             } else {
                 ContentUnavailableView(
                     String(localized: "easy.freestyle.recovery.title", defaultValue: "Exercise unavailable"),
@@ -236,7 +235,7 @@ struct GymFreestyleSessionScreen: View {
     }
 
     @ViewBuilder
-    private func sessionContent(session: WorkoutSession, exercise: WorkoutSessionExercise) -> some View {
+    private func sessionContent(exercise: WorkoutSessionExercise) -> some View {
         VStack(alignment: .leading, spacing: 20) {
             Text(exercise.exerciseNameSnapshot)
                 .font(.title.bold())
