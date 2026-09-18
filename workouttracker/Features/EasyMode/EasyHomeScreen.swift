@@ -232,6 +232,14 @@ struct GymFreestyleSessionScreen: View {
         }
         .navigationTitle(String(localized: "easy.home.freestyle.title", defaultValue: "Gym freestyle"))
         .accessibilityIdentifier("GymFreestyle.Session.Screen")
+        .alert(String(localized: "easy.freestyle.save_failed", defaultValue: "The exercise was not saved. Please try again."), isPresented: Binding(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )) {
+            Button(String(localized: "common.ok", defaultValue: "OK"), role: .cancel) {}
+        } message: {
+            Text(errorMessage ?? "")
+        }
     }
 
     @ViewBuilder
@@ -259,9 +267,12 @@ struct GymFreestyleSessionScreen: View {
                     .foregroundStyle(.secondary)
 
                 Button(String(localized: "easy.freestyle.finish_exercise", defaultValue: "Finish exercise")) {
-                    exercise.actualDurationSeconds = session.elapsedSeconds()
-                    didFinishExercise = true
-                    try? context.save()
+                    do {
+                        try FreestyleWorkoutRecorder().finish(exercise, in: session, context: context)
+                        didFinishExercise = true
+                    } catch {
+                        errorMessage = String(localized: "easy.freestyle.save_failed", defaultValue: "The exercise was not saved. Please try again.")
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("GymFreestyle.FinishExercise")

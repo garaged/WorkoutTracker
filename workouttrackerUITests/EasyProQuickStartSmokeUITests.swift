@@ -70,7 +70,15 @@ final class EasyProQuickStartSmokeUITests: XCTestCase {
             attachUITestDebug(app, name: "EasyPro_GymFreestyleSessionMissing")
         }
         XCTAssertTrue(session.exists)
-        XCTAssertTrue(app.el("GymFreestyle.FinishExercise").exists)
+
+        let finish = app.el("GymFreestyle.FinishExercise")
+        if !finish.waitForExistence(timeout: 4) {
+            attachUITestDebug(app, name: "EasyPro_GymFreestyleFinishMissing")
+        }
+        XCTAssertTrue(finish.exists)
+        finish.tap()
+
+        XCTAssertTrue(app.staticTexts["Exercise finished"].waitForExistence(timeout: 4))
     }
 
     func testEasyTimerPauseResumeAndFinishExposeCommittedState() {
