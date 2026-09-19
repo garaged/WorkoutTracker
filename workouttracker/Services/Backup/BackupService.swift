@@ -416,6 +416,9 @@ final class BackupService {
             model.actualDurationSeconds = raw.actualDurationSeconds
             model.targetDistance = raw.targetDistance
             model.actualDistance = raw.actualDistance
+            model.freestyleStartedAt = raw.freestyleStartedAt
+            model.freestyleEndedAt = raw.freestyleEndedAt
+            model.freestyleStartedSessionElapsedSeconds = raw.freestyleStartedSessionElapsedSeconds
             context.insert(model)
             sessionExerciseByID[raw.id] = model
         }
@@ -750,7 +753,10 @@ final class BackupService {
                 "targetDurationSeconds": model.targetDurationSeconds.map { .number(Double($0)) } ?? .null,
                 "actualDurationSeconds": model.actualDurationSeconds.map { .number(Double($0)) } ?? .null,
                 "targetDistance": model.targetDistance.map(JSONValue.number) ?? .null,
-                "actualDistance": model.actualDistance.map(JSONValue.number) ?? .null
+                "actualDistance": model.actualDistance.map(JSONValue.number) ?? .null,
+                "freestyleStartedAt": model.freestyleStartedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
+                "freestyleEndedAt": model.freestyleEndedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
+                "freestyleStartedSessionElapsedSeconds": model.freestyleStartedSessionElapsedSeconds.map { .number(Double($0)) } ?? .null
             ]
         }
 
@@ -1040,6 +1046,9 @@ final class BackupService {
         let actualDurationSeconds: Int?
         let targetDistance: Double?
         let actualDistance: Double?
+        let freestyleStartedAt: Date?
+        let freestyleEndedAt: Date?
+        let freestyleStartedSessionElapsedSeconds: Int?
     }
 
     private struct WorkoutSetLogRecord {
@@ -1243,7 +1252,10 @@ final class BackupService {
                 targetDurationSeconds: int("targetDurationSeconds", in: e),
                 actualDurationSeconds: int("actualDurationSeconds", in: e),
                 targetDistance: double("targetDistance", in: e),
-                actualDistance: double("actualDistance", in: e)
+                actualDistance: double("actualDistance", in: e),
+                freestyleStartedAt: date("freestyleStartedAt", in: e),
+                freestyleEndedAt: date("freestyleEndedAt", in: e),
+                freestyleStartedSessionElapsedSeconds: int("freestyleStartedSessionElapsedSeconds", in: e)
             )
         }
     }
