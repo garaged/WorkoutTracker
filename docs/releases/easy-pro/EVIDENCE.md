@@ -139,3 +139,12 @@ Source head `69cc33d34a2f73ce6ebeeee47ae4d017e746f83c`. [Specification quality r
 Source head `61967fe749a9d97e14a6c02b2a58e5a6615d7412`. [Specification quality run 35331691181](https://github.com/garaged/WorkoutTracker/actions/runs/35331691181) passed. [iOS run 35331691186](https://github.com/garaged/WorkoutTracker/actions/runs/35331691186), job 105557243663, built and passed all 363 native tests and all six focused Easy/Pro UI contracts.
 
 The new Gym Freestyle contract starts an unnamed exercise from Easy Home, verifies the canonical duration-only session, exposes Finish Exercise, finishes it, and observes the committed “Exercise finished” state. New recorder fixtures cover one canonical session/exercise, blank-name fallback, duration persistence, absence of sets and invented distance/metrics, active-workout conflict, and injected-save rollback. This is the first EP4 entry/completion slice only: choosing a subsequent machine and per-exercise interval anchors remain a later, separately specified slice.
+
+
+## Gym freestyle interval and next-exercise slice
+
+Source commit `2562723b3d53c17dcadf88872926eba1c7fa5cfc`.
+
+- [Specification quality run 35445719382](https://github.com/garaged/WorkoutTracker/actions/runs/35445719382) passed.
+- [iOS CI run 35445719383](https://github.com/garaged/WorkoutTracker/actions/runs/35445719383) passed: 365 native tests and 6 focused Easy/Pro UI contract tests, all with zero failures.
+- The automated coverage verifies duration-only freestyle intervals, idempotent finish behavior, ordered distinct next entries, pending-change rollback, backup round-trip of interval fields, and the Gym picker open/cancel transition. It does not replace the planned simulator acceptance pass for the full end-to-end gym flow.
