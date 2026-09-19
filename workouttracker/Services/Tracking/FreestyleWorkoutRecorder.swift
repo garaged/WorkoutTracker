@@ -53,7 +53,7 @@ struct FreestyleWorkoutRecorder {
         let next = WorkoutSessionExercise(
             order: (session.exercises.map(\.order).max() ?? -1) + 1,
             exerciseId: catalogExercise?.id ?? UUID(),
-            exerciseNameSnapshot: catalogExercise.map(ExerciseLocalizationService.displayName(for:)) ?? normalizedName(genericExerciseName),
+            exerciseNameSnapshot: catalogExercise.map(\.name) ?? normalizedName(genericExerciseName),
             trackingStyle: .timeOnly,
             session: session
         )
