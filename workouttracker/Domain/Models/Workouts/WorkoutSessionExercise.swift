@@ -37,6 +37,11 @@ final class WorkoutSessionExercise {
     var targetDistance: Double? = nil
     var actualDistance: Double? = nil
 
+    // Explicit interval anchors for duration-only Gym Freestyle entries.
+    var freestyleStartedAt: Date? = nil
+    var freestyleEndedAt: Date? = nil
+    var freestyleStartedSessionElapsedSeconds: Int? = nil
+
     // Public API the rest of the app keeps using (not persisted)
     @Transient
     var setLogs: [WorkoutSetLog] {
@@ -73,6 +78,9 @@ final class WorkoutSessionExercise {
         self.session = session
 
         self.setLogsStorage = setLogsStorage
+        self.freestyleStartedAt = nil
+        self.freestyleEndedAt = nil
+        self.freestyleStartedSessionElapsedSeconds = nil
 
         // Keep backrefs consistent even without inverses
         for log in self.setLogsStorage {

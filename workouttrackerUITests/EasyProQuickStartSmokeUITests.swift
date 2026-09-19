@@ -78,6 +78,12 @@ final class EasyProQuickStartSmokeUITests: XCTestCase {
         XCTAssertTrue(finish.exists)
         finish.tap()
 
+        let picker = app.el("ExercisePicker.Screen")
+        if !picker.waitForExistence(timeout: 4) {
+            attachUITestDebug(app, name: "EasyPro_GymFreestyleNextPickerMissing")
+        }
+        XCTAssertTrue(picker.exists)
+        app.buttons["Close"].tap()
         XCTAssertTrue(app.staticTexts["Exercise finished"].waitForExistence(timeout: 4))
     }
 
