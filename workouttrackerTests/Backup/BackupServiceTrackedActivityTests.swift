@@ -188,6 +188,105 @@ final class BackupServiceTrackedActivityTests: XCTestCase {
         XCTAssertEqual(restoredSession.stepCount, 1500)
     }
 
+    func testQuickStartBackupPreservesPayloadUnknownKindIdentityAndAbsentMetrics() throws {
+        let sourceContainer = try makeModelContainer()
+        let source = ModelContext(sourceContainer)
+        let service = BackupService()
+        let session = TrackedActivitySession(activityKind: .yoga)
+        session.activityKindRaw = "future_kind"
+        let timing = try QuickStartTimingState().applying(.start, id: UUID(), expectedRevision: 0,
+            at: QuickStartClockSample(wall: Date(timeIntervalSince1970: 1000), uptime: 10, epoch: UUID()))
+        let payload = try QuickStartTimingPayload(styleRaw: "future_style", timing: timing)
+        let bytes = try JSONEncoder().encode(payload)
+        session.quickStartTimingBlob = bytes
+        source.insert(session)
+        try source.save()
+        let data = try service.exportJSON(context: source, types: BackupManifest.userDataTypes(), prettyPrinted: false)
+        XCTAssertEqual(try JSONDecoder().decode(BackupService.BackupFile.self, from: data).schemaVersion, 6)
+        let destinationContainer = try makeModelContainer()
+        let destination = ModelContext(destinationContainer)
+        try service.restoreWorkoutData(data, context: destination)
+        let records = try destination.fetch(FetchDescriptor<TrackedActivitySession>())
+        XCTAssertEqual(records.count, 1)
+        let restored = try XCTUnwrap(records.first)
+        XCTAssertEqual(restored.id, session.id)
+        XCTAssertEqual(restored.activityKindRaw, "future_kind")
+        XCTAssertEqual(restored.quickStartTimingBlob, bytes)
+        XCTAssertNil(restored.distanceMeters)
+        XCTAssertNil(restored.stepCount)
+        XCTAssertNil(restored.activeEnergyKilocalories)
+        let secondExport = try service.exportBackupFile(context: destination, types: BackupManifest.userDataTypes())
+        let entity = try XCTUnwrap(secondExport.entities.first { $0.type == "TrackedActivitySession" })
+        assertString(entity.attributes["quickStartTimingBlob"], equals: bytes.base64EncodedString())
+    }
+
+    func testBackupPreservesUnreadablePayloadBytesForRecovery() throws {
+        let sourceContainer = try makeModelContainer()
+        let source = ModelContext(sourceContainer)
+        let session = TrackedActivitySession(activityKind: .yoga)
+        let bytes = Data([0, 255, 1, 127])
+        session.quickStartTimingBlob = bytes
+        source.insert(session)
+        try source.save()
+        let service = BackupService()
+        let data = try service.exportJSON(context: source, types: BackupManifest.userDataTypes(), prettyPrinted: false)
+        let destinationContainer = try makeModelContainer()
+        let destination = ModelContext(destinationContainer)
+        try service.restoreWorkoutData(data, context: destination)
+        let restored = try XCTUnwrap(destination.fetch(FetchDescriptor<TrackedActivitySession>()).first)
+        XCTAssertEqual(restored.quickStartTimingBlob, bytes)
+    }
+
+    func testLegacyBackupWithoutPayloadRestoresAsLegacyActivity() throws {
+        let container = try makeModelContainer()
+        let context = ModelContext(container)
+        let service = BackupService()
+        let session = TrackedActivitySession(activityKind: .running)
+        let sessionID = session.id
+        context.insert(session)
+        try context.save()
+        let file = try service.exportBackupFile(context: context, types: BackupManifest.userDataTypes())
+        let legacy = replacingPayload(in: file, with: nil, schemaVersion: 5)
+        try service.restoreWorkoutData(JSONEncoder().encode(legacy), context: context)
+        let restored = try XCTUnwrap(context.fetch(FetchDescriptor<TrackedActivitySession>()).first)
+        XCTAssertEqual(restored.id, sessionID)
+        XCTAssertEqual(restored.activityKind, .running)
+        XCTAssertNil(restored.quickStartTimingBlob)
+    }
+
+    func testInvalidPayloadEncodingFailsBeforeReplacingExistingData() throws {
+        let container = try makeModelContainer()
+        let context = ModelContext(container)
+        let service = BackupService()
+        let session = TrackedActivitySession(activityKind: .running)
+        let sessionID = session.id
+        session.notes = "Keep existing data"
+        context.insert(session)
+        try context.save()
+        let file = try service.exportBackupFile(context: context, types: BackupManifest.userDataTypes())
+        let invalidValues: [BackupService.JSONValue] = [.string("%%%"), .number(12), .object([:])]
+        for value in invalidValues {
+            let invalid = replacingPayload(in: file, with: value)
+            XCTAssertThrowsError(try service.restoreWorkoutData(JSONEncoder().encode(invalid), context: context))
+            let records = try context.fetch(FetchDescriptor<TrackedActivitySession>())
+            XCTAssertEqual(records.count, 1)
+            XCTAssertEqual(records.first?.id, sessionID)
+            XCTAssertEqual(records.first?.notes, "Keep existing data")
+        }
+    }
+
+    private func replacingPayload(in file: BackupService.BackupFile,
+                                  with value: BackupService.JSONValue?, schemaVersion: Int? = nil) -> BackupService.BackupFile {
+        let entities = file.entities.map { entity in
+            guard entity.type == "TrackedActivitySession" else { return entity }
+            var attributes = entity.attributes
+            attributes["quickStartTimingBlob"] = value
+            return BackupService.Entity(type: entity.type, id: entity.id, attributes: attributes)
+        }
+        return BackupService.BackupFile(schemaVersion: schemaVersion ?? file.schemaVersion, createdAtISO8601: file.createdAtISO8601,
+            metadata: file.metadata, preferences: file.preferences, entities: entities)
+    }
+
     private func makeModelContainer() throws -> ModelContainer {
         let schema = Schema([
             Exercise.self,

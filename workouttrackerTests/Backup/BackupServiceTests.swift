@@ -606,4 +606,43 @@ final class BackupServiceTests: XCTestCase {
         XCTAssertEqual(restoredRowLogs[0].weight, 32.5)
         XCTAssertEqual(restoredRowLogs[0].targetRestSeconds, 120)
     }
+    func testBackupRoundTripsOptionalFreestyleExerciseIntervalFields() throws {
+        let store = try TestSupport.makeInMemoryStore()
+        let context = store.context
+        let startedAt = TestSupport.date(2026, 9, 19, 8, 0)
+        let session = WorkoutSession(startedAt: startedAt, sourceRoutineNameSnapshot: "Freestyle workout")
+        let entry = WorkoutSessionExercise(
+            order: 0,
+            exerciseId: UUID(),
+            exerciseNameSnapshot: "Unnamed exercise",
+            trackingStyle: .timeOnly,
+            session: session
+        )
+        entry.freestyleStartedAt = startedAt
+        entry.freestyleStartedSessionElapsedSeconds = 0
+        entry.freestyleEndedAt = startedAt.addingTimeInterval(45)
+        entry.actualDurationSeconds = 45
+        session.exercises = [entry]
+        context.insert(session)
+        context.insert(entry)
+        try context.save()
+
+        let service = BackupService()
+        let exported = try service.exportJSON(
+            context: context,
+            types: fullWorkoutBackupTypes(),
+            preferences: nil,
+            prettyPrinted: false
+        )
+        try wipeWorkoutGraph(from: context)
+        try service.restoreWorkoutData(exported, context: context)
+
+        let restored = try XCTUnwrap(try fetchAll(WorkoutSession.self, from: context).first)
+        let restoredEntry = try XCTUnwrap(restored.exercises.first)
+        XCTAssertEqual(restoredEntry.freestyleStartedAt, startedAt)
+        XCTAssertEqual(restoredEntry.freestyleEndedAt, startedAt.addingTimeInterval(45))
+        XCTAssertEqual(restoredEntry.freestyleStartedSessionElapsedSeconds, 0)
+        XCTAssertEqual(restoredEntry.actualDurationSeconds, 45)
+    }
+
 }

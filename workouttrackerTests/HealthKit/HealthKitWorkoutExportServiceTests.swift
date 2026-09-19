@@ -93,6 +93,19 @@ final class HealthKitWorkoutExportServiceTests: XCTestCase {
         }
     }
 
+    func testUnknownActivityCannotExportAsWalking() async {
+        let store = MockExportHealthKitStoreProxy()
+        let service = HealthKitWorkoutExportService(store: store)
+        let session = completedYogaSession()
+        session.activityKindRaw = "future_kind"
+        await XCTAssertThrowsErrorAsync(
+            try await service.saveWorkout(from: TrackedActivityHealthExportPayload.make(from: session))
+        ) { error in
+            XCTAssertEqual(error as? HealthKitWorkoutExportError, .unsupportedActivity)
+        }
+        XCTAssertTrue(store.savedRequests.isEmpty)
+    }
+
     private func completedYogaSession() -> TrackedActivitySession {
         TrackedActivitySession(
             createdAt: referenceDate,

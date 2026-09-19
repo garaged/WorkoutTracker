@@ -73,7 +73,7 @@ final class BackupService {
     /// distinguish warm-up, main, and cool-down work after restore.
     /// v5 adds first-class tracked activity sessions so the broader activity
     /// domain can round-trip alongside strength workouts.
-    private let schemaVersion = 5
+    private let schemaVersion = 6
 
     struct BackupFile: Codable {
         let schemaVersion: Int
@@ -360,6 +360,8 @@ final class BackupService {
             model.lastResumedAt = raw.lastResumedAt
             model.lastBackgroundedAt = raw.lastBackgroundedAt
             model.dismissedRecoveryPromptAt = raw.dismissedRecoveryPromptAt
+            model.activityKindRaw = raw.activityKindRaw
+            model.quickStartTimingBlob = raw.quickStartTimingBlob
             context.insert(model)
         }
 
@@ -414,6 +416,9 @@ final class BackupService {
             model.actualDurationSeconds = raw.actualDurationSeconds
             model.targetDistance = raw.targetDistance
             model.actualDistance = raw.actualDistance
+            model.freestyleStartedAt = raw.freestyleStartedAt
+            model.freestyleEndedAt = raw.freestyleEndedAt
+            model.freestyleStartedSessionElapsedSeconds = raw.freestyleStartedSessionElapsedSeconds
             context.insert(model)
             sessionExerciseByID[raw.id] = model
         }
@@ -748,7 +753,10 @@ final class BackupService {
                 "targetDurationSeconds": model.targetDurationSeconds.map { .number(Double($0)) } ?? .null,
                 "actualDurationSeconds": model.actualDurationSeconds.map { .number(Double($0)) } ?? .null,
                 "targetDistance": model.targetDistance.map(JSONValue.number) ?? .null,
-                "actualDistance": model.actualDistance.map(JSONValue.number) ?? .null
+                "actualDistance": model.actualDistance.map(JSONValue.number) ?? .null,
+                "freestyleStartedAt": model.freestyleStartedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
+                "freestyleEndedAt": model.freestyleEndedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
+                "freestyleStartedSessionElapsedSeconds": model.freestyleStartedSessionElapsedSeconds.map { .number(Double($0)) } ?? .null
             ]
         }
 
@@ -793,6 +801,7 @@ final class BackupService {
                 "lastBackgroundedAt": model.lastBackgroundedAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
                 "dismissedRecoveryPromptAt": model.dismissedRecoveryPromptAt.map { .string(Self.iso8601.string(from: $0)) } ?? .null,
                 "activityKindRaw": .string(model.activityKindRaw),
+                "quickStartTimingBlob": model.quickStartTimingBlob.map { .string($0.base64EncodedString()) } ?? .null,
                 "environmentRaw": .string(model.environmentRaw),
                 "lifecycleStateRaw": .string(model.lifecycleStateRaw),
                 "healthKitExportStateRaw": .string(model.healthKitExportStateRaw),
@@ -1037,6 +1046,9 @@ final class BackupService {
         let actualDurationSeconds: Int?
         let targetDistance: Double?
         let actualDistance: Double?
+        let freestyleStartedAt: Date?
+        let freestyleEndedAt: Date?
+        let freestyleStartedSessionElapsedSeconds: Int?
     }
 
     private struct WorkoutSetLogRecord {
@@ -1072,6 +1084,7 @@ final class BackupService {
         let lastBackgroundedAt: Date?
         let dismissedRecoveryPromptAt: Date?
         let activityKindRaw: String
+        let quickStartTimingBlob: Data?
         let environmentRaw: String
         let lifecycleStateRaw: String
         let healthKitExportStateRaw: String
@@ -1239,7 +1252,10 @@ final class BackupService {
                 targetDurationSeconds: int("targetDurationSeconds", in: e),
                 actualDurationSeconds: int("actualDurationSeconds", in: e),
                 targetDistance: double("targetDistance", in: e),
-                actualDistance: double("actualDistance", in: e)
+                actualDistance: double("actualDistance", in: e),
+                freestyleStartedAt: date("freestyleStartedAt", in: e),
+                freestyleEndedAt: date("freestyleEndedAt", in: e),
+                freestyleStartedSessionElapsedSeconds: int("freestyleStartedSessionElapsedSeconds", in: e)
             )
         }
     }
@@ -1283,6 +1299,7 @@ final class BackupService {
                 lastBackgroundedAt: date("lastBackgroundedAt", in: e),
                 dismissedRecoveryPromptAt: date("dismissedRecoveryPromptAt", in: e),
                 activityKindRaw: string("activityKindRaw", in: e) ?? TrackedActivityKind.walking.rawValue,
+                quickStartTimingBlob: try optionalBlob("quickStartTimingBlob", in: e),
                 environmentRaw: string("environmentRaw", in: e) ?? ActivityEnvironment.unspecified.rawValue,
                 lifecycleStateRaw: string("lifecycleStateRaw", in: e) ?? TrackedActivityLifecycleState.planned.rawValue,
                 healthKitExportStateRaw: string("healthKitExportStateRaw", in: e) ?? HealthKitExportState.notRequested.rawValue,
@@ -1414,6 +1431,18 @@ final class BackupService {
             id: entity.id,
             reason: "Missing or invalid \(key)"
         )
+    }
+
+    /// Missing/null is legacy. Invalid encoding must fail before snapshot replacement.
+    /// Inner payload bytes stay opaque here so unknown versions remain recoverable.
+    private func optionalBlob(_ key: String, in entity: Entity) throws -> Data? {
+        guard let value = entity.attributes[key] else { return nil }
+        if case .null = value { return nil }
+        guard case .string(let encoded) = value, let data = Data(base64Encoded: encoded) else {
+            throw RestoreError.invalidEntityShape(type: entity.type, id: entity.id,
+                reason: "Invalid base64 encoding for \(key)")
+        }
+        return data
     }
 
     private func string(_ key: String, in entity: Entity) -> String? {

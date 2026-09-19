@@ -38,6 +38,8 @@ enum RootDestination: String, CaseIterable, Identifiable {
 }
 
 struct AppRootView: View {
+    @ObservedObject private var experienceStore = ExperiencePreferenceStore.shared
+
     @Environment(\.modelContext) private var modelContext
     @Environment(\.platform) private var platform
     @Environment(\.scenePhase) private var scenePhase
@@ -55,6 +57,7 @@ struct AppRootView: View {
     private var trackedActivitySessions: [TrackedActivitySession]
 
     @State private var didSeed = false
+    @State private var experienceShellGeneration = 0
     @AppStorage("workouttracker.starterPackVersion") private var starterPackVersion = 0
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var selection: RootDestination? = .home
@@ -82,6 +85,9 @@ struct AppRootView: View {
     var body: some View {
         rootContent
             .onReceive(openTimelinePublisher, perform: handleOpenTimelineNotification)
+            .onReceive(NotificationCenter.default.publisher(for: .workouttrackerExperiencePreferenceDidChange)) { _ in
+                experienceShellGeneration &+= 1
+            }
             .onReceive(openURLForTestingPublisher, perform: handleOpenURLForTestingNotification)
             .onReceive(watchOpenRequestPublisher, perform: handleWatchOpenRequestNotification)
             .onReceive(restTimerSemanticStatePublisher) { _ in
@@ -95,12 +101,14 @@ struct AppRootView: View {
             }
             .onChange(of: sessions.count) { _, _ in
                 handleSessionsChanged()
+                experienceStore.applyPendingIfIdle(hasActiveSession: hasActiveSession)
             }
             .onChange(of: watchSessionFingerprint) { _, _ in
                 handleWatchSessionFingerprintChanged()
             }
             .onChange(of: watchTrackedActivityFingerprint) { _, _ in
                 handleWatchTrackedActivityFingerprintChanged()
+                experienceStore.applyPendingIfIdle(hasActiveSession: hasActiveSession)
             }
             .onChange(of: routines.count) { _, _ in
                 handleRoutinesChanged()
@@ -357,7 +365,7 @@ struct AppRootView: View {
                 )
             }
             .navigationDestination(item: $presentedTrackedActivity) { presentation in
-                TrackedActivitySessionScreen(sessionID: presentation.id)
+                TrackedActivityDestinationView(sessionID: presentation.id)
             }
         }
     }
@@ -376,7 +384,7 @@ struct AppRootView: View {
                         )
                     }
                     .navigationDestination(item: $presentedTrackedActivity) { presentation in
-                        TrackedActivitySessionScreen(sessionID: presentation.id)
+                        TrackedActivityDestinationView(sessionID: presentation.id)
                     }
             }
         }
@@ -534,12 +542,26 @@ struct AppRootView: View {
 
     private var appShellRoot: some View {
         Group {
-            if platform.isPad && platform.prefersSplitNavigation {
+            if experienceStore.state.effective == .easy {
+                easyRoot
+            } else if platform.isPad && platform.prefersSplitNavigation {
                 splitRoot
             } else {
                 compactRoot
             }
         }
+        .id(experienceShellGeneration)
+    }
+
+    private var easyRoot: some View {
+        NavigationStack {
+            EasyHomeScreen()
+        }
+    }
+
+    private var hasActiveSession: Bool {
+        sessions.contains(where: \.isUnfinished) ||
+        trackedActivitySessions.contains(where: \.isActive)
     }
 
     private var shortcutRoutineFingerprint: [String] {
@@ -627,6 +649,7 @@ struct AppRootView: View {
     }
 
     private func handleAppear() {
+        experienceStore.applyPendingIfIdle(hasActiveSession: hasActiveSession)
         refreshPendingIntentURLIfNeeded()
         attemptPendingIntentRouteResolution()
         systemSurfaceSyncCoordinator.syncAll(context: modelContext)

@@ -18,9 +18,10 @@ concurrency:
 env:
   XCODE_PROJECT: workouttracker.xcodeproj
   SCHEME_UNIT: workouttracker
-  SCHEME_UI: workouttrackerUITestHost
+  SCHEME_UI: workouttrackerUITests
   CONFIGURATION: Debug
   UI_TEST_BUNDLE: workouttrackerUITests
+  UI_TEST_PLAN: workouttrackerUITests
   SIM_DEVICE: iPhone SE (3rd generation)
   SIM_RUNTIME: iOS 26.2
 
@@ -56,12 +57,22 @@ jobs:
           echo "== Schemes =="
           xcodebuild -project "${XCODE_PROJECT}" -list
 
+      - name: Identify compiler cache environment
+        id: compiler-cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          XCODE_FINGERPRINT="$(xcodebuild -version | shasum -a 256 | cut -d ' ' -f 1)"
+          echo "namespace=xcode-v2-${ImageOS}-${ImageVersion}-${RUNNER_ARCH}-${XCODE_FINGERPRINT}" >> "${GITHUB_OUTPUT}"
+
+      # SDK mtimes change with runner images, even when the Xcode version is unchanged.
+      # Never restore precompiled modules from a different image/toolchain.
       - name: Restore Xcode caches (DerivedData + SourcePackages)
         uses: irgaly/xcode-cache@v1
         with:
-          key: xcode-cache-${{ github.workflow }}-${{ github.ref_name }}-${{ github.sha }}
+          key: ${{ steps.compiler-cache.outputs.namespace }}-${{ github.workflow }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            xcode-cache-${{ github.workflow }}-${{ github.ref_name }}-
+            ${{ steps.compiler-cache.outputs.namespace }}-${{ github.workflow }}-${{ github.ref_name }}-
 
       - name: Resolve Swift Package dependencies
         shell: bash
@@ -135,13 +146,39 @@ jobs:
 
           xcodebuild -project "${XCODE_PROJECT}" \
             -scheme "${SCHEME_UI}" \
+            -testPlan "${UI_TEST_PLAN}" \
             -configuration "${CONFIGURATION}" \
             -sdk iphonesimulator \
             -destination "${{ steps.sim.outputs.destination }}" \
             -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 120 \
+            -maximum-test-execution-time-allowance 180 \
             -retry-tests-on-failure \
             -resultBundlePath "TestResults/ui.xcresult" \
             -only-testing:"${UI_TEST_BUNDLE}" \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
+      - name: Run Easy/Pro quick-start UI contract tests
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p TestResults
+
+          xcodebuild -project "${XCODE_PROJECT}" \
+            -scheme "${SCHEME_UI}" \
+            -testPlan "${UI_TEST_PLAN}" \
+            -configuration "${CONFIGURATION}" \
+            -sdk iphonesimulator \
+            -destination "${{ steps.sim.outputs.destination }}" \
+            -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 120 \
+            -maximum-test-execution-time-allowance 180 \
+            -resultBundlePath "TestResults/easy-pro-ui.xcresult" \
+            -only-testing:"${UI_TEST_BUNDLE}/EasyProQuickStartSmokeUITests" \
             CODE_SIGNING_ALLOWED=NO \
             test
 
@@ -151,4 +188,3 @@ jobs:
         with:
           name: xcresults
           path: TestResults/*.xcresult
-

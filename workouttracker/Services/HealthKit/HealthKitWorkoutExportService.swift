@@ -101,6 +101,8 @@ struct HealthKitWorkoutExportService {
             return .hiking
         case .yoga:
             return .yoga
+        case .generic:
+            throw HealthKitWorkoutExportError.unsupportedActivity
         }
     }
 
