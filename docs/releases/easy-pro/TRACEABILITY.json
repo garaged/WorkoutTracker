@@ -138,7 +138,7 @@
         "EP3"
       ],
       "spec_status": "accepted",
-      "implementation_status": "not_started",
+      "implementation_status": "in_progress",
       "exit_status": "pending",
       "evidence": []
     },
@@ -260,8 +260,17 @@
       "scenarios": [
         "EP-S05"
       ],
-      "implementation_refs": [],
-      "test_refs": [],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/Workouts/WorkoutSessionExercise.swift",
+        "workouttracker/Services/Tracking/FreestyleWorkoutRecorder.swift",
+        "workouttracker/Features/EasyMode/EasyHomeScreen.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/Tracking/FreestyleWorkoutRecorderTests.swift",
+          "symbol": "testStartFinishAndNextPersistIndependentDurationOnlyIntervals"
+        }
+      ],
       "evidence": []
     },
     {
@@ -273,8 +282,17 @@
       "scenarios": [
         "EP-S06"
       ],
-      "implementation_refs": [],
-      "test_refs": [],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/Workouts/WorkoutSessionExercise.swift",
+        "workouttracker/Services/Tracking/FreestyleWorkoutRecorder.swift",
+        "workouttracker/Features/EasyMode/EasyHomeScreen.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/Tracking/FreestyleWorkoutRecorderTests.swift",
+          "symbol": "testStartFinishAndNextPersistIndependentDurationOnlyIntervals"
+        }
+      ],
       "evidence": []
     },
     {
@@ -286,8 +304,21 @@
       "scenarios": [
         "EP-S07"
       ],
-      "implementation_refs": [],
-      "test_refs": [],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/Workouts/WorkoutSessionExercise.swift",
+        "workouttracker/Services/Tracking/FreestyleWorkoutRecorder.swift",
+        "workouttracker/Features/EasyMode/EasyHomeScreen.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/Tracking/FreestyleWorkoutRecorderTests.swift",
+          "symbol": "testFinishIsIdempotentAndNextRequiresFinishedExercise"
+        },
+        {
+          "path": "workouttrackerUITests/EasyProQuickStartSmokeUITests.swift",
+          "symbol": "testEasyGymFreestyleStartsUnnamedExercise"
+        }
+      ],
       "evidence": []
     },
     {
@@ -299,8 +330,17 @@
       "scenarios": [
         "EP-S08"
       ],
-      "implementation_refs": [],
-      "test_refs": [],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/Workouts/WorkoutSessionExercise.swift",
+        "workouttracker/Services/Tracking/FreestyleWorkoutRecorder.swift",
+        "workouttracker/Features/EasyMode/EasyHomeScreen.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/Tracking/FreestyleWorkoutRecorderTests.swift",
+          "symbol": "testStartFinishAndNextPersistIndependentDurationOnlyIntervals"
+        }
+      ],
       "evidence": []
     },
     {
@@ -312,8 +352,17 @@
       "scenarios": [
         "EP-S09"
       ],
-      "implementation_refs": [],
-      "test_refs": [],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/Workouts/WorkoutSessionExercise.swift",
+        "workouttracker/Services/Tracking/FreestyleWorkoutRecorder.swift",
+        "workouttracker/Features/EasyMode/EasyHomeScreen.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/Tracking/FreestyleWorkoutRecorderTests.swift",
+          "symbol": "testStartFinishAndNextPersistIndependentDurationOnlyIntervals"
+        }
+      ],
       "evidence": []
     },
     {
@@ -524,8 +573,16 @@
       "scenarios": [
         "EP-S17"
       ],
-      "implementation_refs": [],
-      "test_refs": [],
+      "implementation_refs": [
+        "workouttracker/Domain/Models/Workouts/WorkoutSessionExercise.swift",
+        "workouttracker/Services/Backup/BackupService.swift"
+      ],
+      "test_refs": [
+        {
+          "path": "workouttrackerTests/Backup/BackupServiceTests.swift",
+          "symbol": "testBackupRoundTripsOptionalFreestyleExerciseIntervalFields"
+        }
+      ],
       "evidence": []
     },
     {
